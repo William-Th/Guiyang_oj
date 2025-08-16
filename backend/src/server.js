@@ -5,22 +5,62 @@ const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const logger = require('./utils/logger');
 
-dotenv.config();
+// Load environment variables based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'production' 
+  ? '.env.production' 
+  : process.env.NODE_ENV === 'development' 
+    ? '.env.development' 
+    : '.env';
+
+dotenv.config({ path: envFile });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  logger.error('Missing required environment variables:', missingEnvVars);
+  process.exit(1);
+}
+
+// Initialize database connection
+require('./database/connection');
+
 // Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
 }));
 
-// Rate limiting
+// CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : [process.env.CORS_ORIGIN || 'http://localhost:3000'];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
+// Rate limiting with environment configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: { message: '请求过于频繁，请稍后重试' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api', limiter);
 
@@ -36,25 +76,91 @@ app.use('/api/questions', require('./routes/questions'));
 app.use('/api/results', require('./routes/results'));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    const { pool } = require('./database/connection');
+    const dbResult = await pool.query('SELECT 1');
+    
+    res.json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      version: process.env.APP_VERSION || '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: 'connected',
+      uptime: process.uptime()
+    });
+  } catch (error) {
+    logger.error('Health check failed:', error);
+    res.status(503).json({ 
+      status: 'ERROR', 
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: 'Database connection failed'
+    });
+  }
+});
+
+// Maintenance mode check
+app.use((req, res, next) => {
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    return res.status(503).json({
+      message: '系统维护中，请稍后再试',
+      maintenanceMode: true
+    });
+  }
+  next();
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  logger.error(err.stack);
+  logger.error('Unhandled error:', {
+    error: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip
+  });
+  
   res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    message: err.message || '服务器内部错误',
+    ...(process.env.NODE_ENV === 'development' && { 
+      stack: err.stack,
+      details: err.details
+    })
   });
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  logger.warn('Route not found:', { url: req.url, method: req.method });
+  res.status(404).json({ message: '接口不存在' });
 });
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    logger.info('Process terminated');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    logger.info('Process terminated');
+    process.exit(0);
+  });
+});
+
+const server = app.listen(PORT, () => {
+  logger.info(`Server started`, {
+    port: PORT,
+    environment: process.env.NODE_ENV,
+    version: process.env.APP_VERSION
+  });
+  console.log(`🚀 ${process.env.APP_NAME || 'Server'} running on http://localhost:${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/health`);
 });
