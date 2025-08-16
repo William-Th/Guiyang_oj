@@ -14,42 +14,60 @@ const LoginPage: React.FC = () => {
   const handleStudentLogin = async (values: any) => {
     dispatch(loginStart())
     try {
-      // TODO: Call API
-      console.log('Student login:', values)
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: values.idCard, 
+          password: values.password, 
+          loginType: 'idCard' 
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || '登录失败')
+      }
+      
       dispatch(loginSuccess({
-        user: {
-          id: '1',
-          username: values.idCard,
-          role: 'student',
-          realName: '测试学生',
-        },
-        token: 'mock-token'
+        user: data.user,
+        token: data.token
       }))
-      message.success('登录成功')
+      message.success(data.message || '登录成功')
       navigate('/')
-    } catch (error) {
-      message.error('登录失败')
+    } catch (error: any) {
+      message.error(error.message || '登录失败')
     }
   }
 
   const handleTeacherLogin = async (values: any) => {
     dispatch(loginStart())
     try {
-      // TODO: Call API
-      console.log('Teacher login:', values)
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: values.username, 
+          password: values.password, 
+          loginType: 'username' 
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || '登录失败')
+      }
+      
       dispatch(loginSuccess({
-        user: {
-          id: '2',
-          username: values.username,
-          role: 'teacher',
-          realName: '测试教师',
-        },
-        token: 'mock-token'
+        user: data.user,
+        token: data.token
       }))
-      message.success('登录成功')
+      message.success(data.message || '登录成功')
       navigate('/')
-    } catch (error) {
-      message.error('登录失败')
+    } catch (error: any) {
+      message.error(error.message || '登录失败')
     }
   }
 

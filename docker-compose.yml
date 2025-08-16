@@ -45,7 +45,9 @@ services:
       DB_PASSWORD: postgres123
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: your_jwt_secret_here_change_in_production
+      JWT_SECRET: mgJr+op91DSZOG17gWx2sPYTdbk09DC0AdE7YCtyMtgtVuk/osI14+KW+v3Os3UkfJgp3L5nwmZJugQauLv14g==
+      JWT_REFRESH_SECRET: QGVhyNuSuMkl+MO88NAEDZ/yCqXqJWcHzrIoyCTHJX3ukBcTmNDtQHbTYLu2SEDziRA3dmvVM2uhED0O0eGFOQ==
+      SESSION_SECRET: 5NaIDq0BGigN3x2FBTkfvfqDtvohHigZmjdss/jGXAQ=
     depends_on:
       - postgres
       - redis

@@ -3,6 +3,8 @@ const router = express.Router();
 const { body, validationResult, param } = require('express-validator');
 const { authMiddleware, requireRole, optionalAuth } = require('../middleware/auth');
 const Exam = require('../models/Exam');
+const StudentExam = require('../models/StudentExam');
+const Answer = require('../models/Answer');
 const logger = require('../utils/logger');
 
 // Get all available exams
@@ -151,12 +153,40 @@ router.post('/:id/start', [
       return res.status(400).json({ message: '考试尚未开始或已结束' });
     }
     
-    // TODO: Create student_exam record and return exam session
-    // This is a placeholder response
+    // Check if student is registered for this exam
+    const existingRecord = await StudentExam.findByStudentAndExam(req.user.id, id);
+    
+    if (!existingRecord) {
+      return res.status(400).json({ message: '请先报名参加此考试' });
+    }
+    
+    if (existingRecord.status === 'submitted') {
+      return res.status(400).json({ message: '您已完成此考试' });
+    }
+    
+    if (existingRecord.status === 'in_progress') {
+      return res.status(400).json({ message: '考试已在进行中' });
+    }
+    
+    // Start the exam
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    const startedExam = await StudentExam.start(req.user.id, id, ipAddress);
+    
+    if (!startedExam) {
+      return res.status(400).json({ message: '无法开始考试，请检查考试状态' });
+    }
+    
+    logger.info('Student started exam', { 
+      studentId: req.user.id, 
+      examId: id,
+      startTime: startedExam.start_time
+    });
+    
     res.json({ 
       message: '考试开始',
       examId: id,
-      startTime: new Date(),
+      studentExamId: startedExam.id,
+      startTime: startedExam.start_time,
       duration: exam.duration
     });
   } catch (error) {
@@ -170,7 +200,9 @@ router.post('/:id/submit', [
   param('id').isInt().withMessage('Invalid exam ID'),
   authMiddleware,
   requireRole(['student']),
-  body('answers').isArray().withMessage('答案必须是数组格式')
+  body('answers').isArray().withMessage('答案必须是数组格式'),
+  body('answers.*.questionId').isInt().withMessage('问题ID必须是整数'),
+  body('answers.*.answer').notEmpty().withMessage('答案不能为空')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -181,13 +213,47 @@ router.post('/:id/submit', [
     const { id } = req.params;
     const { answers } = req.body;
     
-    // TODO: Process answers and calculate score
-    // This is a placeholder response
+    // Check if student has an in-progress exam
+    const studentExam = await StudentExam.findByStudentAndExam(req.user.id, id);
+    
+    if (!studentExam) {
+      return res.status(400).json({ message: '考试记录不存在' });
+    }
+    
+    if (studentExam.status !== 'in_progress') {
+      return res.status(400).json({ message: '考试未在进行中或已提交' });
+    }
+    
+    // Save answers
+    const savedAnswers = await Answer.saveAnswers(studentExam.id, answers);
+    
+    // Grade automatic questions (single/multiple choice)
+    const gradedAnswers = await Answer.gradeAnswers(studentExam.id);
+    
+    // Calculate total score
+    const totalScore = await Answer.calculateTotalScore(studentExam.id);
+    
+    // Submit the exam
+    const submittedExam = await StudentExam.submit(req.user.id, id, totalScore);
+    
+    if (!submittedExam) {
+      return res.status(400).json({ message: '提交考试失败' });
+    }
+    
+    logger.info('Student submitted exam', { 
+      studentId: req.user.id, 
+      examId: id,
+      score: totalScore,
+      submitTime: submittedExam.submit_time
+    });
+    
     res.json({ 
       message: '考试提交成功',
       examId: id,
-      score: 85,
-      submittedAt: new Date()
+      score: totalScore,
+      submittedAt: submittedExam.submit_time,
+      answersProcessed: savedAnswers.length,
+      autoGradedAnswers: gradedAnswers.filter(a => a.score !== null).length
     });
   } catch (error) {
     logger.error('Submit exam error:', error);
@@ -218,10 +284,28 @@ router.post('/:id/register', [
       return res.status(400).json({ message: '考试尚未发布或已结束' });
     }
     
-    // TODO: Create student exam registration record
+    // Check if student is already registered
+    const existingRecord = await StudentExam.findByStudentAndExam(req.user.id, id);
+    
+    if (existingRecord) {
+      return res.status(400).json({ message: '您已报名此考试' });
+    }
+    
+    // Register student for exam
+    const registration = await StudentExam.register(req.user.id, id);
+    
+    logger.info('Student registered for exam', { 
+      studentId: req.user.id, 
+      examId: id,
+      registrationId: registration.id
+    });
+    
     res.json({ 
       message: '报名成功',
-      examId: id
+      examId: id,
+      registrationId: registration.id,
+      status: registration.status,
+      registeredAt: registration.created_at
     });
   } catch (error) {
     logger.error('Register exam error:', error);
