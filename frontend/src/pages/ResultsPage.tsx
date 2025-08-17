@@ -2,10 +2,16 @@ import React, { useState } from 'react'
 import { Card, Table, Tag, Button, Row, Col, Statistic, message } from 'antd'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { certificateApi } from '../services/api'
 
 const ResultsPage: React.FC = () => {
+  const navigate = useNavigate()
   const [downloadLoading, setDownloadLoading] = useState<Record<number, boolean>>({})
+
+  const handleViewDetail = (examId: number) => {
+    navigate(`/exam-detail/${examId}`)
+  }
 
   const handleDownloadCertificate = async (examId: number, examName: string) => {
     try {
@@ -88,7 +94,11 @@ const ResultsPage: React.FC = () => {
       key: 'action',
       render: (_: any, record: any) => (
         <>
-          <Button type="link" icon={<FileTextOutlined />}>
+          <Button 
+            type="link" 
+            icon={<FileTextOutlined />}
+            onClick={() => handleViewDetail(record.id)}
+          >
             查看详情
           </Button>
           <Button 

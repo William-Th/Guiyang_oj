@@ -8,6 +8,10 @@ interface User {
   school?: string
   grade?: string
   class?: string
+  email?: string
+  phone?: string
+  idCard?: string
+  createdAt?: string
 }
 
 interface AuthState {
