@@ -1,9 +1,41 @@
-import React from 'react'
-import { Card, Table, Tag, Button, Row, Col, Statistic } from 'antd'
+import React, { useState } from 'react'
+import { Card, Table, Tag, Button, Row, Col, Statistic, message } from 'antd'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons'
+import { certificateApi } from '../services/api'
 
 const ResultsPage: React.FC = () => {
+  const [downloadLoading, setDownloadLoading] = useState<Record<number, boolean>>({})
+
+  const handleDownloadCertificate = async (examId: number, examName: string) => {
+    try {
+      setDownloadLoading(prev => ({ ...prev, [examId]: true }))
+      
+      const blob = await certificateApi.download(examId)
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${examName}_证书.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      message.success('证书下载成功')
+    } catch (error: any) {
+      console.error('Certificate download failed:', error)
+      if (error?.response?.status === 404) {
+        message.warning('该考试暂无可下载的证书，请先申请证书')
+      } else {
+        message.error('证书下载失败，请稍后重试')
+      }
+    } finally {
+      setDownloadLoading(prev => ({ ...prev, [examId]: false }))
+    }
+  }
+
   const columns = [
     {
       title: '考试名称',
@@ -54,12 +86,17 @@ const ResultsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: () => (
+      render: (_: any, record: any) => (
         <>
           <Button type="link" icon={<FileTextOutlined />}>
             查看详情
           </Button>
-          <Button type="link" icon={<DownloadOutlined />}>
+          <Button 
+            type="link" 
+            icon={<DownloadOutlined />}
+            loading={downloadLoading[record.id]}
+            onClick={() => handleDownloadCertificate(record.id, record.examName)}
+          >
             下载证书
           </Button>
         </>
