@@ -146,3 +146,4 @@ All demo accounts use password: `password123`
 
 This is a comprehensive online testing platform for elementary students in Guiyang, designed for scalability and security with proper role-based access controls.
 - document file (markdown) should always try to write in Chinese except file names and terminologies
+- @PROGRESS.md is the development process so far. @MVP_Plan.md is the overall implementation plan

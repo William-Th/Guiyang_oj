@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Card, Radio, Button, Space, Progress, Modal, Checkbox } from 'antd'
+import { Card, Button, Space, Progress, Modal } from 'antd'
 import { ClockCircleOutlined } from '@ant-design/icons'
+import QuestionDisplay from '../components/questions/QuestionDisplay'
 
 const ExamPage: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0)
@@ -16,17 +17,29 @@ const ExamPage: React.FC = () => {
     },
     {
       id: 2,
-      type: 'single',
-      content: '3 + 5 等于多少？',
-      options: ['A. 6', 'B. 7', 'C. 8', 'D. 9'],
-      score: 5,
-    },
-    {
-      id: 3,
       type: 'multiple',
       content: '下列哪些是水果？（多选）',
       options: ['A. 苹果', 'B. 香蕉', 'C. 土豆', 'D. 橙子'],
       score: 10,
+    },
+    {
+      id: 3,
+      type: 'true_false',
+      content: '地球是圆的。',
+      score: 5,
+    },
+    {
+      id: 4,
+      type: 'blank',
+      content: '中国的首都是____，有____座著名的天安门。',
+      score: 10,
+      blanks_count: 2,
+    },
+    {
+      id: 5,
+      type: 'essay',
+      content: '请简述你对环保的理解，以及在日常生活中可以采取哪些环保措施？',
+      score: 20,
     },
   ]
 
@@ -81,37 +94,11 @@ const ExamPage: React.FC = () => {
           第 {currentQuestion + 1} 题（共 {mockQuestions.length} 题，{question.score} 分）
         </div>
 
-        <div style={{ fontSize: '18px', marginBottom: '24px' }}>
-          {question.content}
-        </div>
-
-        {question.type === 'single' ? (
-          <Radio.Group
-            onChange={(e) => handleAnswer(e.target.value)}
-            value={answers[currentQuestion]}
-          >
-            <Space direction="vertical">
-              {question.options.map((option, index) => (
-                <Radio key={index} value={option} style={{ fontSize: '16px' }}>
-                  {option}
-                </Radio>
-              ))}
-            </Space>
-          </Radio.Group>
-        ) : (
-          <Checkbox.Group
-            onChange={handleAnswer}
-            value={answers[currentQuestion]}
-          >
-            <Space direction="vertical">
-              {question.options.map((option, index) => (
-                <Checkbox key={index} value={option} style={{ fontSize: '16px' }}>
-                  {option}
-                </Checkbox>
-              ))}
-            </Space>
-          </Checkbox.Group>
-        )}
+        <QuestionDisplay
+          question={question as any}
+          value={answers[currentQuestion]}
+          onChange={handleAnswer}
+        />
 
         <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'space-between' }}>
           <Button onClick={handlePrev} disabled={currentQuestion === 0}>

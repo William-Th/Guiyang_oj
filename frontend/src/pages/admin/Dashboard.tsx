@@ -1,8 +1,13 @@
-import React from 'react'
-import { Card, Row, Col, Statistic, Table } from 'antd'
+import React, { useState } from 'react'
+import { Card, Row, Col, Statistic, Table, Tabs } from 'antd'
 import { UserOutlined, FileTextOutlined, TrophyOutlined, TeamOutlined } from '@ant-design/icons'
+import ExamManagement from './ExamManagement'
+
+const { TabPane } = Tabs
 
 const AdminDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('overview')
+  
   const recentExams = [
     { id: 1, name: '语文期中考试', participants: 245, avgScore: 82.5, date: '2024-03-10' },
     { id: 2, name: '数学期中考试', participants: 238, avgScore: 78.3, date: '2024-03-08' },
@@ -15,7 +20,7 @@ const AdminDashboard: React.FC = () => {
     { title: '日期', dataIndex: 'date', key: 'date' },
   ]
 
-  return (
+  const renderOverview = () => (
     <div>
       <h2>管理后台</h2>
       <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
@@ -65,6 +70,17 @@ const AdminDashboard: React.FC = () => {
         <Table columns={columns} dataSource={recentExams} rowKey="id" pagination={false} />
       </Card>
     </div>
+  )
+
+  return (
+    <Tabs activeKey={activeTab} onChange={setActiveTab}>
+      <TabPane tab="数据概览" key="overview">
+        {renderOverview()}
+      </TabPane>
+      <TabPane tab="考试与题库管理" key="management">
+        <ExamManagement />
+      </TabPane>
+    </Tabs>
   )
 }
 
