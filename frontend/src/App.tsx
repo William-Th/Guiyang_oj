@@ -11,6 +11,7 @@ import ResultsPage from './pages/ResultsPage'
 import ProfilePage from './pages/ProfilePage'
 import ExamDetailPage from './pages/ExamDetailPage'
 import AdminDashboard from './pages/admin/Dashboard'
+import CertificateVerifyPage from './pages/CertificateVerifyPage'
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,8 @@ const App: React.FC = () => {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/verify" element={<CertificateVerifyPage />} />
+          <Route path="/verify/:certNumber" element={<CertificateVerifyPage />} />
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="exams" element={<ExamListPage />} />

@@ -68,6 +68,9 @@ app.use('/api', limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Static file serving for uploads
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
@@ -75,6 +78,8 @@ app.use('/api/exams', require('./routes/exams'));
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/question-bank', require('./routes/questionBank_simple'));
 app.use('/api/results', require('./routes/results'));
+// app.use('/api/certificates', require('./routes/certificates')); // 暂时禁用证书功能
+app.use('/api/certificate', require('./routes/certificate_verify')); // 简化的证书功能
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
