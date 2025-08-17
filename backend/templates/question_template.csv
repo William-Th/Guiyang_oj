@@ -1,0 +1,6 @@
+type,subject,grade,content,options,correct_answer,difficulty,score,explanation,tags
+single,math,一年级,5 + 3 = ?,6|7|8|9,8,easy,2,5加3等于8，这是基本的加法运算,加法|基础运算
+multiple,chinese,二年级,以下哪些是形容词？,红色|跑步|美丽|快速,红色|美丽|快速,medium,3,红色、美丽、快速都是形容词，跑步是动词,词性|形容词
+blank,english,三年级,The capital of China is ___.,Beijing,Beijing,easy,2,中国的首都是北京,地理|首都
+true_false,science,四年级,太阳从西边升起,false,false,easy,1,太阳从东边升起，西边落下,天文|常识
+essay,chinese,五年级,请描述你最喜欢的季节，并说明原因（不少于100字）,,,,hard,10,学生需要描述季节特点并说明喜欢的原因，注意语言表达和逻辑性,写作|描述文

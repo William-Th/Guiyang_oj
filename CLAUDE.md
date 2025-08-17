@@ -145,3 +145,4 @@ All demo accounts use password: `password123`
 - Error handling and loading states
 
 This is a comprehensive online testing platform for elementary students in Guiyang, designed for scalability and security with proper role-based access controls.
+- document file (markdown) should always try to write in Chinese except file names and terminologies

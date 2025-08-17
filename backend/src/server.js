@@ -73,6 +73,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/exams', require('./routes/exams'));
 app.use('/api/questions', require('./routes/questions'));
+app.use('/api/question-bank', require('./routes/questionBank_simple'));
 app.use('/api/results', require('./routes/results'));
 
 // Health check endpoint
