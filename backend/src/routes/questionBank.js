@@ -4,28 +4,27 @@ const QuestionBank = require('../models/QuestionBank');
 const QuestionCategory = require('../models/QuestionCategory');
 const ImportLog = require('../models/ImportLog');
 const { authMiddleware } = require('../middleware/auth');
-// Import functionality temporarily disabled - will be added in next phase
-// const multer = require('multer');
-// const XLSX = require('xlsx');
-// const csv = require('csv-parser');
-// const fs = require('fs');
-// const path = require('path');
-// const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const XLSX = require('xlsx');
+const csv = require('csv-parser');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
-// Configure multer for file uploads - temporarily disabled
-// const upload = multer({
-//   dest: 'uploads/',
-//   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-//   fileFilter: (req, file, cb) => {
-//     const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 
-//                          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-//     if (allowedTypes.includes(file.mimetype)) {
-//       cb(null, true);
-//     } else {
-//       cb(new Error('Invalid file type. Only CSV and Excel files are allowed.'));
-//     }
-//   }
-// });
+// Configure multer for file uploads
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 
+                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only CSV and Excel files are allowed.'));
+    }
+  }
+});
 
 // Get all questions from the bank
 router.get('/bank', authMiddleware, async (req, res) => {
@@ -188,8 +187,8 @@ router.get('/exam/:examId/questions', authMiddleware, async (req, res) => {
   }
 });
 
-// Import questions from file - temporarily disabled
-/* router.post('/import', authMiddleware, upload.single('file'), async (req, res) => {
+// Import questions from file
+router.post('/import', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, error: 'Unauthorized' });
