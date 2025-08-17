@@ -24,6 +24,8 @@ import {
 } from '@ant-design/icons'
 import QuestionEditor from '../../components/questions/QuestionEditor'
 import QuestionDisplay from '../../components/questions/QuestionDisplay'
+import ExamQuestionManager from '../../components/questions/ExamQuestionManager'
+import QuestionImport from '../../components/questions/QuestionImport'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
@@ -63,6 +65,9 @@ const ExamManagement: React.FC = () => {
   const [editingExam, setEditingExam] = useState<Exam | null>(null)
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null)
+  const [examQuestionManagerVisible, setExamQuestionManagerVisible] = useState(false)
+  const [managingExam, setManagingExam] = useState<Exam | null>(null)
+  const [questionImportVisible, setQuestionImportVisible] = useState(false)
   const [examForm] = Form.useForm()
 
   // 模拟数据
@@ -333,8 +338,8 @@ const ExamManagement: React.FC = () => {
   }
 
   const handleManageQuestions = (exam: Exam) => {
-    message.info(`管理考试题目: ${exam.title}`)
-    // 这里可以打开一个新的模态框来管理该考试的题目
+    setManagingExam(exam)
+    setExamQuestionManagerVisible(true)
   }
 
   const handleDeleteExam = (examId: number) => {
@@ -410,6 +415,17 @@ const ExamManagement: React.FC = () => {
     }
   }
 
+  const handleImportComplete = (importedQuestions: any[]) => {
+    const newQuestions = importedQuestions.map(q => ({
+      id: Date.now() + Math.random(), // 临时ID
+      ...q,
+      created_at: new Date().toISOString().split('T')[0]
+    }))
+    setQuestions([...newQuestions, ...questions])
+    setQuestionImportVisible(false)
+    message.success(`成功导入 ${importedQuestions.length} 道题目`)
+  }
+
   return (
     <div>
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
@@ -439,13 +455,21 @@ const ExamManagement: React.FC = () => {
           <Card
             title="题库管理"
             extra={
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={handleCreateQuestion}
-              >
-                添加题目
-              </Button>
+              <Space>
+                <Button 
+                  icon={<PlusOutlined />}
+                  onClick={() => setQuestionImportVisible(true)}
+                >
+                  批量导入
+                </Button>
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  onClick={handleCreateQuestion}
+                >
+                  添加题目
+                </Button>
+              </Space>
             }
           >
             <Table
@@ -571,6 +595,24 @@ const ExamManagement: React.FC = () => {
           />
         )}
       </Modal>
+
+      {/* 考试题目管理模态框 */}
+      {managingExam && (
+        <ExamQuestionManager
+          visible={examQuestionManagerVisible}
+          onCancel={() => setExamQuestionManagerVisible(false)}
+          examId={managingExam.id}
+          examTitle={managingExam.title}
+          examSubject={managingExam.subject}
+        />
+      )}
+
+      {/* 题目批量导入模态框 */}
+      <QuestionImport
+        visible={questionImportVisible}
+        onCancel={() => setQuestionImportVisible(false)}
+        onImportComplete={handleImportComplete}
+      />
     </div>
   )
 }
