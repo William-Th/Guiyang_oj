@@ -51,7 +51,7 @@ export const certificateAPI = {
 
   // Download certificate by certificate number
   download: async (certNumber: string) => {
-    const response = await axios.get(`${API_BASE_URL}/api/certificate/download/${certNumber}`, {
+    const response = await axios.get(`/api/certificate/download/${certNumber}`, {
       responseType: 'blob'
     });
     return response;
@@ -59,7 +59,7 @@ export const certificateAPI = {
 
   // Verify certificate by certificate number (public API, no auth required)
   verify: async (certNumber: string) => {
-    const response = await axios.get(`${API_BASE_URL}/api/certificate/verify/${certNumber}`);
+    const response = await axios.get(`/api/certificate/verify/${certNumber}`);
     return response;
   },
 

@@ -4,6 +4,59 @@ const Certificate = require('../models/Certificate');
 const path = require('path');
 const fs = require('fs').promises;
 
+// 简单的内存存储限速器
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15分钟
+const MAX_ATTEMPTS = 10; // 15分钟内最多10次验证
+
+// 清理过期的限速记录
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of rateLimitMap.entries()) {
+    if (now - data.firstAttempt > RATE_LIMIT_WINDOW) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000); // 每5分钟清理一次
+
+// 限速中间件
+const verifyRateLimit = (req, res, next) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  
+  if (!rateLimitMap.has(clientIP)) {
+    rateLimitMap.set(clientIP, {
+      count: 1,
+      firstAttempt: now
+    });
+    return next();
+  }
+  
+  const data = rateLimitMap.get(clientIP);
+  
+  // 如果超过时间窗口，重置计数
+  if (now - data.firstAttempt > RATE_LIMIT_WINDOW) {
+    rateLimitMap.set(clientIP, {
+      count: 1,
+      firstAttempt: now
+    });
+    return next();
+  }
+  
+  // 检查是否超过限制
+  if (data.count >= MAX_ATTEMPTS) {
+    return res.status(429).json({
+      valid: false,
+      message: '请求过于频繁，请稍后再试',
+      retryAfter: Math.ceil((RATE_LIMIT_WINDOW - (now - data.firstAttempt)) / 1000)
+    });
+  }
+  
+  // 增加计数
+  data.count++;
+  next();
+};
+
 // 公开的证书下载端点（无需认证）
 router.get('/download/:certNumber', async (req, res) => {
   try {
@@ -36,8 +89,8 @@ router.get('/download/:certNumber', async (req, res) => {
   }
 });
 
-// 公开的证书验证端点（无需认证）
-router.get('/verify/:certNumber', async (req, res) => {
+// 公开的证书验证端点（无需认证）- 带限速保护
+router.get('/verify/:certNumber', verifyRateLimit, async (req, res) => {
   try {
     const { certNumber } = req.params;
         

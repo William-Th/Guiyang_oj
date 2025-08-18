@@ -3,7 +3,7 @@ import { Card, Table, Tag, Button, Row, Col, Statistic, message } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { certificateApi } from '../services/api';
+import { certificateApi, certificateAPI } from '../services/api';
 
 const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,23 +13,42 @@ const ResultsPage: React.FC = () => {
     navigate(`/exam-detail/${examId}`);
   };
 
-  const handleDownloadCertificate = async (examId: number, examName: string) => {
+  const handleDownloadCertificate = async (examId: number, examName: string, certNumber?: string) => {
     try {
       setDownloadLoading(prev => ({ ...prev, [examId]: true }));
       
-      const blob = await certificateApi.download(examId);
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${examName}_证书.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      message.success('证书下载成功');
+      if (certNumber) {
+        // Use the better certificate download approach with HTML format
+        const response = await certificateAPI.download(certNumber);
+        
+        // Create download link for HTML certificate
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/html' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `certificate_${certNumber}.html`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+        // Show enhanced success message
+        message.success('证书下载成功！提示：打开下载的HTML文件，使用浏览器"打印"功能可保存为PDF');
+      } else {
+        // Fallback to old method if no certificate number available
+        const blob = await certificateApi.download(examId);
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${examName}_证书.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        message.success('证书下载成功');
+      }
     } catch (error: any) {
       console.error('Certificate download failed:', error);
       if (error?.response?.status === 404) {
@@ -90,6 +109,20 @@ const ResultsPage: React.FC = () => {
       },
     },
     {
+      title: '证书编号',
+      dataIndex: 'certNumber',
+      key: 'certNumber',
+      render: (certNumber: string) => (
+        certNumber ? (
+          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+            {certNumber}
+          </span>
+        ) : (
+          <span style={{ color: '#999' }}>暂无</span>
+        )
+      ),
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_: any, record: any) => (
@@ -105,7 +138,7 @@ const ResultsPage: React.FC = () => {
             type="link" 
             icon={<DownloadOutlined />}
             loading={downloadLoading[record.id]}
-            onClick={() => handleDownloadCertificate(record.id, record.examName)}
+            onClick={() => handleDownloadCertificate(record.id, record.examName, record.certNumber)}
           >
             下载证书
           </Button>
@@ -124,6 +157,7 @@ const ResultsPage: React.FC = () => {
       totalScore: 100,
       rank: 12,
       status: 'good',
+      certNumber: 'GY-2025-0RO1LEXF', // Real certificate for testing download
     },
     {
       id: 2,
@@ -134,6 +168,7 @@ const ResultsPage: React.FC = () => {
       totalScore: 100,
       rank: 5,
       status: 'excellent',
+      certNumber: 'GY-2025-E22UMUM3', // Real certificate for testing download
     },
   ];
 

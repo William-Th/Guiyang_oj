@@ -133,8 +133,35 @@ class Certificate {
     return result.rows[0];
   }
 
-  // 验证证书有效性
+  // 验证证书有效性 - 隐私保护版本
   static async verifyCertificate(certNumber) {
+    const certificate = await this.findByCertNumber(certNumber);
+        
+    if (!certificate) {
+      return {
+        valid: false,
+        message: '证书不存在或编号无效'
+      };
+    }
+
+    // 隐私保护：只返回基本验证信息，不暴露敏感个人信息
+    return {
+      valid: true,
+      certificate: {
+        cert_no: certificate.cert_no,
+        student_name: this.maskStudentName(certificate.student_name),
+        exam_name: certificate.exam_name,
+        exam_date: certificate.exam_date,
+        level: certificate.level,
+        issue_date: certificate.issue_date,
+        // 移除敏感信息：具体分数、学校名称
+        verified_at: new Date().toISOString()
+      }
+    };
+  }
+
+  // 完整验证证书有效性 - 仅供内部使用或认证用户
+  static async verifyFullCertificate(certNumber) {
     const certificate = await this.findByCertNumber(certNumber);
         
     if (!certificate) {
@@ -157,6 +184,13 @@ class Certificate {
         school_name: certificate.school_name
       }
     };
+  }
+
+  // 姓名脱敏处理
+  static maskStudentName(name) {
+    if (!name || name.length < 2) return '***';
+    if (name.length === 2) return name[0] + '*';
+    return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
   }
 
   // 获取证书统计信息
