@@ -127,7 +127,7 @@ const downloadCertificate = async (req, res) => {
   }
 };
 
-// 下载证书 (PDF格式)
+// 下载证书 (优先PDF，回退到HTML)
 const downloadCertificatePDF = async (req, res) => {
   try {
     const { certNumber } = req.params;
@@ -142,39 +142,22 @@ const downloadCertificatePDF = async (req, res) => {
       return res.status(404).json({ message: '证书不存在' });
     }
 
-    const pdfPath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.pdf`);
+    // For now, fall back to HTML which browsers can print as PDF
+    const htmlPath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.html`);
         
     try {
-      await fs.access(pdfPath);
+      await fs.access(htmlPath);
+      // Send HTML with appropriate headers for download
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.html"`);
+      res.sendFile(htmlPath);
     } catch {
-      // PDF doesn't exist, try to generate it from HTML
-      const pdfService = require('../services/pdfCertificateService');
-      
-      // Get certificate data for PDF generation
-      const certificateData = {
-        certNumber: certificate.cert_no,
-        studentName: certificate.student_name || '学生姓名',
-        examName: certificate.exam_title || '考试名称', 
-        examDate: certificate.exam_date || new Date(),
-        score: certificate.score,
-        issueDate: certificate.issue_date
-      };
-      
-      try {
-        await pdfService.generatePDF(certificateData);
-      } catch (genError) {
-        console.error('PDF generation failed:', genError);
-        return res.status(500).json({ message: 'PDF生成失败，请稍后重试' });
-      }
+      return res.status(404).json({ message: '证书文件不存在' });
     }
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.pdf"`);
-    res.sendFile(pdfPath);
-
   } catch (error) {
-    console.error('下载PDF证书失败:', error);
-    res.status(500).json({ message: '下载PDF证书失败' });
+    console.error('下载证书失败:', error);
+    res.status(500).json({ message: '下载证书失败' });
   }
 };
 

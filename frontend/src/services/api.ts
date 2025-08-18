@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -51,7 +51,7 @@ export const certificateAPI = {
 
   // Download certificate by certificate number
   download: async (certNumber: string) => {
-    const response = await axios.get(`/api/certificate/download/${certNumber}`, {
+    const response = await api.get(`/certificate/download/${certNumber}`, {
       responseType: 'blob'
     });
     return response;
@@ -59,7 +59,7 @@ export const certificateAPI = {
 
   // Verify certificate by certificate number (public API, no auth required)
   verify: async (certNumber: string) => {
-    const response = await axios.get(`/api/certificate/verify/${certNumber}`);
+    const response = await api.get(`/certificate/verify/${certNumber}`);
     return response;
   },
 

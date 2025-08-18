@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const {
   generateCertificate,
   downloadCertificatePDF,
@@ -18,7 +18,7 @@ router.get('/verify/:certNumber', verifyCertificate);
 router.get('/download/:certNumber', downloadCertificatePDF);
 
 // 需要登录的路由
-router.use(auth);
+router.use(authMiddleware);
 
 // 生成单个证书
 router.post('/generate/:studentExamId', generateCertificate);
