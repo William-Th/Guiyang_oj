@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
-import { Card, Button, Space, Progress, Modal } from 'antd'
-import { ClockCircleOutlined } from '@ant-design/icons'
-import QuestionDisplay from '../components/questions/QuestionDisplay'
+import React, { useState } from 'react';
+import { Card, Button, Space, Progress, Modal } from 'antd';
+import { ClockCircleOutlined } from '@ant-design/icons';
+import QuestionDisplay from '../components/questions/QuestionDisplay';
 
 const ExamPage: React.FC = () => {
-  const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [answers, setAnswers] = useState<Record<number, any>>({})
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, any>>({});
 
   const mockQuestions = [
     {
@@ -41,35 +41,35 @@ const ExamPage: React.FC = () => {
       content: '请简述你对环保的理解，以及在日常生活中可以采取哪些环保措施？',
       score: 20,
     },
-  ]
+  ];
 
   const handleAnswer = (value: any) => {
-    setAnswers({ ...answers, [currentQuestion]: value })
-  }
+    setAnswers({ ...answers, [currentQuestion]: value });
+  };
 
   const handleNext = () => {
     if (currentQuestion < mockQuestions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1)
+      setCurrentQuestion(currentQuestion + 1);
     }
-  }
+  };
 
   const handlePrev = () => {
     if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1)
+      setCurrentQuestion(currentQuestion - 1);
     }
-  }
+  };
 
   const handleSubmit = () => {
     Modal.confirm({
       title: '确认提交',
       content: '确定要提交试卷吗？提交后将无法修改答案。',
       onOk() {
-        console.log('提交答案', answers)
+        console.log('提交答案', answers);
       },
-    })
-  }
+    });
+  };
 
-  const question = mockQuestions[currentQuestion]
+  const question = mockQuestions[currentQuestion];
 
   return (
     <div>
@@ -128,7 +128,7 @@ const ExamPage: React.FC = () => {
         </div>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default ExamPage
+export default ExamPage;

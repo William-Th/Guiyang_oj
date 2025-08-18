@@ -1,46 +1,46 @@
-import React, { useState } from 'react'
-import { Card, Table, Tag, Button, Row, Col, Statistic, message } from 'antd'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { certificateApi } from '../services/api'
+import React, { useState } from 'react';
+import { Card, Table, Tag, Button, Row, Col, Statistic, message } from 'antd';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { certificateApi } from '../services/api';
 
 const ResultsPage: React.FC = () => {
-  const navigate = useNavigate()
-  const [downloadLoading, setDownloadLoading] = useState<Record<number, boolean>>({})
+  const navigate = useNavigate();
+  const [downloadLoading, setDownloadLoading] = useState<Record<number, boolean>>({});
 
   const handleViewDetail = (examId: number) => {
-    navigate(`/exam-detail/${examId}`)
-  }
+    navigate(`/exam-detail/${examId}`);
+  };
 
   const handleDownloadCertificate = async (examId: number, examName: string) => {
     try {
-      setDownloadLoading(prev => ({ ...prev, [examId]: true }))
+      setDownloadLoading(prev => ({ ...prev, [examId]: true }));
       
-      const blob = await certificateApi.download(examId)
+      const blob = await certificateApi.download(examId);
       
       // Create download link
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${examName}_证书.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${examName}_证书.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
-      message.success('证书下载成功')
+      message.success('证书下载成功');
     } catch (error: any) {
-      console.error('Certificate download failed:', error)
+      console.error('Certificate download failed:', error);
       if (error?.response?.status === 404) {
-        message.warning('该考试暂无可下载的证书，请先申请证书')
+        message.warning('该考试暂无可下载的证书，请先申请证书');
       } else {
-        message.error('证书下载失败，请稍后重试')
+        message.error('证书下载失败，请稍后重试');
       }
     } finally {
-      setDownloadLoading(prev => ({ ...prev, [examId]: false }))
+      setDownloadLoading(prev => ({ ...prev, [examId]: false }));
     }
-  }
+  };
 
   const columns = [
     {
@@ -84,9 +84,9 @@ const ResultsPage: React.FC = () => {
           good: { color: 'green', text: '良好' },
           pass: { color: 'blue', text: '及格' },
           fail: { color: 'red', text: '不及格' },
-        }
-        const config = statusConfig[status]
-        return <Tag color={config.color}>{config.text}</Tag>
+        };
+        const config = statusConfig[status];
+        return <Tag color={config.color}>{config.text}</Tag>;
       },
     },
     {
@@ -112,7 +112,7 @@ const ResultsPage: React.FC = () => {
         </>
       ),
     },
-  ]
+  ];
 
   const mockData = [
     {
@@ -135,7 +135,7 @@ const ResultsPage: React.FC = () => {
       rank: 5,
       status: 'excellent',
     },
-  ]
+  ];
 
   const chartData = [
     { month: '1月', score: 75 },
@@ -143,7 +143,7 @@ const ResultsPage: React.FC = () => {
     { month: '3月', score: 85 },
     { month: '4月', score: 88 },
     { month: '5月', score: 92 },
-  ]
+  ];
 
   return (
     <div>
@@ -182,7 +182,7 @@ const ResultsPage: React.FC = () => {
         <Table columns={columns} dataSource={mockData} rowKey="id" />
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default ResultsPage
+export default ResultsPage;

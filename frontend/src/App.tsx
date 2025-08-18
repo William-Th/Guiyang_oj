@@ -1,17 +1,17 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Provider } from 'react-redux'
-import { store } from './store'
-import MainLayout from './components/layout/MainLayout'
-import LoginPage from './pages/LoginPage'
-import HomePage from './pages/HomePage'
-import ExamListPage from './pages/ExamListPage'
-import ExamPage from './pages/ExamPage'
-import ResultsPage from './pages/ResultsPage'
-import ProfilePage from './pages/ProfilePage'
-import ExamDetailPage from './pages/ExamDetailPage'
-import AdminDashboard from './pages/admin/Dashboard'
-import CertificateVerifyPage from './pages/CertificateVerifyPage'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import MainLayout from './components/layout/MainLayout';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import ExamListPage from './pages/ExamListPage';
+import ExamPage from './pages/ExamPage';
+import ResultsPage from './pages/ResultsPage';
+import ProfilePage from './pages/ProfilePage';
+import ExamDetailPage from './pages/ExamDetailPage';
+import AdminDashboard from './pages/admin/Dashboard';
+import CertificateVerifyPage from './pages/CertificateVerifyPage';
 
 const App: React.FC = () => {
   return (
@@ -33,7 +33,7 @@ const App: React.FC = () => {
         </Routes>
       </Router>
     </Provider>
-  )
-}
+  );
+};
 
-export default App
+export default App;

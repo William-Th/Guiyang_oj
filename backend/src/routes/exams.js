@@ -78,7 +78,7 @@ router.get('/:id/questions', [
     // Remove correct answers for students
     if (req.user.role === 'student') {
       exam.questions = exam.questions.map(q => {
-        const { correct_answer, explanation, ...question } = q;
+        const { correct_answer: _correct, explanation: _exp, ...question } = q;
         return question;
       });
     }

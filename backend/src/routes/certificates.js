@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const {
-    generateCertificate,
-    downloadCertificate,
-    verifyCertificate,
-    getStudentCertificates,
-    getExamCertificates,
-    batchGenerateCertificates,
-    getCertificateStatistics
+  generateCertificate,
+  downloadCertificate,
+  verifyCertificate,
+  getStudentCertificates,
+  getExamCertificates,
+  batchGenerateCertificates,
+  getCertificateStatistics
 } = require('../controllers/certificateController');
 
 // 公开路由：证书验证（无需登录）

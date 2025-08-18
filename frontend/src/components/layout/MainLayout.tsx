@@ -1,6 +1,6 @@
-import React from 'react'
-import { Layout, Menu, Avatar, Dropdown, Space } from 'antd'
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import React from 'react';
+import { Layout, Menu, Avatar, Dropdown, Space } from 'antd';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   HomeOutlined,
   FileTextOutlined,
@@ -8,42 +8,42 @@ import {
   UserOutlined,
   LogoutOutlined,
   DashboardOutlined,
-} from '@ant-design/icons'
-import { useSelector, useDispatch } from 'react-redux'
-import { RootState } from '@/store'
-import { logout } from '@/store/authSlice'
+} from '@ant-design/icons';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@/store';
+import { logout } from '@/store/authSlice';
 
-const { Header, Content, Footer } = Layout
+const { Header, Content, Footer } = Layout;
 
 const MainLayout: React.FC = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const dispatch = useDispatch()
-  const { user } = useSelector((state: RootState) => state.auth)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const menuItems = [
     { key: '/', icon: <HomeOutlined />, label: '首页' },
     { key: '/exams', icon: <FileTextOutlined />, label: '考试中心' },
     { key: '/results', icon: <TrophyOutlined />, label: '成绩查询' },
-  ]
+  ];
 
   if (user?.role === 'admin' || user?.role === 'teacher') {
-    menuItems.push({ key: '/admin', icon: <DashboardOutlined />, label: '管理后台' })
+    menuItems.push({ key: '/admin', icon: <DashboardOutlined />, label: '管理后台' });
   }
 
   const userMenuItems = [
     { key: 'profile', icon: <UserOutlined />, label: '个人信息' },
     { key: 'logout', icon: <LogoutOutlined />, label: '退出登录' },
-  ]
+  ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key === 'logout') {
-      dispatch(logout())
-      navigate('/login')
+      dispatch(logout());
+      navigate('/login');
     } else if (key === 'profile') {
-      navigate('/profile')
+      navigate('/profile');
     }
-  }
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -78,7 +78,7 @@ const MainLayout: React.FC = () => {
         贵阳市教育局 ©2024 小学生测评服务平台
       </Footer>
     </Layout>
-  )
-}
+  );
+};
 
-export default MainLayout
+export default MainLayout;

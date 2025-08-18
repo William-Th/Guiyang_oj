@@ -1,11 +1,11 @@
-import React from 'react'
-import { Card, Descriptions, Table, Tag, Button, Row, Col, Statistic } from 'antd'
-import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons'
-import { useParams, useNavigate } from 'react-router-dom'
+import React from 'react';
+import { Card, Descriptions, Table, Tag, Button, Row, Col, Statistic } from 'antd';
+import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const ExamDetailPage: React.FC = () => {
-  const { examId } = useParams<{ examId: string }>()
-  const navigate = useNavigate()
+  const { examId } = useParams<{ examId: string }>();
+  const navigate = useNavigate();
 
   // Mock data - in real implementation, fetch from API based on examId
   const examDetail = {
@@ -24,7 +24,7 @@ const ExamDetailPage: React.FC = () => {
     correctAnswers: 20,
     wrongAnswers: 3,
     blankAnswers: 2,
-  }
+  };
 
   const questionDetails = [
     {
@@ -71,7 +71,7 @@ const ExamDetailPage: React.FC = () => {
       maxScore: 4,
       isCorrect: false,
     },
-  ]
+  ];
 
   const columns = [
     {
@@ -123,16 +123,16 @@ const ExamDetailPage: React.FC = () => {
       width: 80,
       render: (isCorrect: boolean, record: any) => {
         if (record.yourAnswer === '') {
-          return <Tag color="default">未答</Tag>
+          return <Tag color="default">未答</Tag>;
         }
         return (
           <Tag color={isCorrect ? 'success' : 'error'}>
             {isCorrect ? '正确' : '错误'}
           </Tag>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const getStatusConfig = (status: string) => {
     const statusConfig: Record<string, { color: string; text: string }> = {
@@ -140,11 +140,11 @@ const ExamDetailPage: React.FC = () => {
       good: { color: 'green', text: '良好' },
       pass: { color: 'blue', text: '及格' },
       fail: { color: 'red', text: '不及格' },
-    }
-    return statusConfig[status] || { color: 'default', text: '未知' }
-  }
+    };
+    return statusConfig[status] || { color: 'default', text: '未知' };
+  };
 
-  const statusConfig = getStatusConfig(examDetail.status)
+  const statusConfig = getStatusConfig(examDetail.status);
 
   return (
     <div>
@@ -245,7 +245,7 @@ const ExamDetailPage: React.FC = () => {
         />
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default ExamDetailPage
+export default ExamDetailPage;

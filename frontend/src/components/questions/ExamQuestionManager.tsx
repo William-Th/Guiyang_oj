@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Table,
@@ -12,16 +12,16 @@ import {
   Popconfirm,
   Tag,
   InputNumber,
-} from 'antd'
+} from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
   EyeOutlined,
   SortAscendingOutlined,
   BookOutlined
-} from '@ant-design/icons'
-import QuestionBankSelector from './QuestionBankSelector'
-import QuestionDisplay from './QuestionDisplay'
+} from '@ant-design/icons';
+import QuestionBankSelector from './QuestionBankSelector';
+import QuestionDisplay from './QuestionDisplay';
 
 interface ExamQuestion {
   id: number
@@ -58,20 +58,20 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
   examTitle,
   examSubject
 }) => {
-  const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([])
-  const [loading, setLoading] = useState(false)
-  const [bankSelectorVisible, setBankSelectorVisible] = useState(false)
-  const [previewQuestion, setPreviewQuestion] = useState<ExamQuestion | null>(null)
+  const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [bankSelectorVisible, setBankSelectorVisible] = useState(false);
+  const [previewQuestion, setPreviewQuestion] = useState<ExamQuestion | null>(null);
 
   // 模拟数据
   useEffect(() => {
     if (visible) {
-      loadExamQuestions()
+      loadExamQuestions();
     }
-  }, [visible, examId])
+  }, [visible, examId]);
 
   const loadExamQuestions = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // 模拟API调用
       const mockExamQuestions: ExamQuestion[] = [
@@ -113,18 +113,18 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
             explanation: '苹果和香蕉是水果，萝卜和白菜是蔬菜。'
           }
         }
-      ]
+      ];
       
-      setExamQuestions(mockExamQuestions)
+      setExamQuestions(mockExamQuestions);
     } catch (error) {
-      message.error('加载考试题目失败')
+      message.error('加载考试题目失败');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleAddQuestionsFromBank = (questions: any[]) => {
-    const maxOrder = Math.max(0, ...examQuestions.map(eq => eq.order))
+    const maxOrder = Math.max(0, ...examQuestions.map(eq => eq.order));
     
     const newExamQuestions: ExamQuestion[] = questions.map((q, index) => ({
       id: Date.now() + index, // 临时ID
@@ -133,43 +133,43 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
       order: maxOrder + index + 1,
       score: q.score,
       question: q
-    }))
+    }));
 
-    setExamQuestions([...examQuestions, ...newExamQuestions])
-    setBankSelectorVisible(false)
-    message.success(`成功添加 ${questions.length} 道题目`)
-  }
+    setExamQuestions([...examQuestions, ...newExamQuestions]);
+    setBankSelectorVisible(false);
+    message.success(`成功添加 ${questions.length} 道题目`);
+  };
 
   const handleRemoveQuestion = (examQuestionId: number) => {
-    setExamQuestions(examQuestions.filter(eq => eq.id !== examQuestionId))
-    message.success('题目移除成功')
-  }
+    setExamQuestions(examQuestions.filter(eq => eq.id !== examQuestionId));
+    message.success('题目移除成功');
+  };
 
   const handleScoreChange = (examQuestionId: number, newScore: number) => {
     setExamQuestions(examQuestions.map(eq => 
       eq.id === examQuestionId ? { ...eq, score: newScore } : eq
-    ))
-  }
+    ));
+  };
 
   const handleReorderQuestions = () => {
     // 简单的重新排序：按当前顺序重新分配order
     const reorderedQuestions = examQuestions.map((eq, index) => ({
       ...eq,
       order: index + 1
-    }))
-    setExamQuestions(reorderedQuestions)
-    message.success('题目顺序已重新排列')
-  }
+    }));
+    setExamQuestions(reorderedQuestions);
+    message.success('题目顺序已重新排列');
+  };
 
-  const totalScore = examQuestions.reduce((sum, eq) => sum + eq.score, 0)
-  const totalQuestions = examQuestions.length
-  const selectedQuestionIds = examQuestions.map(eq => eq.question_id)
+  const totalScore = examQuestions.reduce((sum, eq) => sum + eq.score, 0);
+  const totalQuestions = examQuestions.length;
+  const selectedQuestionIds = examQuestions.map(eq => eq.question_id);
 
   const questionTypeStats = examQuestions.reduce((stats, eq) => {
-    const type = eq.question.type
-    stats[type] = (stats[type] || 0) + 1
-    return stats
-  }, {} as Record<string, number>)
+    const type = eq.question.type;
+    stats[type] = (stats[type] || 0) + 1;
+    return stats;
+  }, {} as Record<string, number>);
 
   const columns = [
     {
@@ -199,8 +199,8 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
           true_false: '判断题',
           code: '编程题',
           matching: '匹配题'
-        }
-        return typeMap[record.question.type] || record.question.type
+        };
+        return typeMap[record.question.type] || record.question.type;
       }
     },
     {
@@ -212,9 +212,9 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
           easy: { text: '简单', color: 'green' },
           medium: { text: '中等', color: 'orange' },
           hard: { text: '困难', color: 'red' }
-        }
-        const { text, color } = difficultyMap[record.question.difficulty]
-        return <Tag color={color}>{text}</Tag>
+        };
+        const { text, color } = difficultyMap[record.question.difficulty];
+        return <Tag color={color}>{text}</Tag>;
       }
     },
     {
@@ -273,7 +273,7 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
         </Space>
       ),
     },
-  ]
+  ];
 
   return (
     <>
@@ -311,12 +311,12 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
                       true_false: '判断',
                       code: '编程',
                       matching: '匹配'
-                    }
+                    };
                     return (
                       <Tag key={type} color="blue">
                         {typeMap[type] || type}: {count}
                       </Tag>
-                    )
+                    );
                   })}
                 </Space>
               </div>
@@ -344,7 +344,7 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
               icon={<BookOutlined />}
               onClick={() => {
                 // 导出题目功能
-                message.info('导出功能开发中...')
+                message.info('导出功能开发中...');
               }}
             >
               导出题目
@@ -400,7 +400,7 @@ const ExamQuestionManager: React.FC<ExamQuestionManagerProps> = ({
         )}
       </Modal>
     </>
-  )
-}
+  );
+};
 
-export default ExamQuestionManager
+export default ExamQuestionManager;

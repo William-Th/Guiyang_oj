@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🧪 Running backend tests before push..."
+cd backend && npm test
+BACKEND_TEST=$?
+
+if [ $BACKEND_TEST -ne 0 ]; then
+  echo "❌ Backend tests failed! Please fix the tests before pushing."
+  exit 1
+fi
+
+echo "✅ All tests passed! Proceeding with push..."

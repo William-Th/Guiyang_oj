@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   Modal,
   Upload,
@@ -16,19 +16,19 @@ import {
   Col,
   Statistic,
   Typography
-} from 'antd'
+} from 'antd';
 import {
   InboxOutlined,
   DownloadOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   FileExcelOutlined
-} from '@ant-design/icons'
-import type { UploadProps } from 'antd'
+} from '@ant-design/icons';
+import type { UploadProps } from 'antd';
 
-const { Dragger } = Upload
-const { Step } = Steps
-const { Text } = Typography
+const { Dragger } = Upload;
+const { Step } = Steps;
+const { Text } = Typography;
 
 interface ImportQuestion {
   rowIndex: number
@@ -56,11 +56,11 @@ const QuestionImport: React.FC<QuestionImportProps> = ({
   onCancel,
   onImportComplete
 }) => {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [fileList, setFileList] = useState<any[]>([])
-  const [importQuestions, setImportQuestions] = useState<ImportQuestion[]>([])
-  const [loading, setLoading] = useState(false)
-  const [importProgress, setImportProgress] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0);
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [importQuestions, setImportQuestions] = useState<ImportQuestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
 
   const steps = [
     {
@@ -75,7 +75,7 @@ const QuestionImport: React.FC<QuestionImportProps> = ({
       title: '导入完成',
       description: '查看导入结果'
     }
-  ]
+  ];
 
   // 模拟文件解析
   const parseFile = async (_file: File): Promise<ImportQuestion[]> => {
@@ -144,11 +144,11 @@ const QuestionImport: React.FC<QuestionImportProps> = ({
             tags: ['地理'],
             status: 'success'
           }
-        ]
-        resolve(mockData)
-      }, 1500)
-    })
-  }
+        ];
+        resolve(mockData);
+      }, 1500);
+    });
+  };
 
   const uploadProps: UploadProps = {
     name: 'file',
@@ -158,80 +158,80 @@ const QuestionImport: React.FC<QuestionImportProps> = ({
     beforeUpload: (file) => {
       const isValidType = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
                          file.type === 'application/vnd.ms-excel' ||
-                         file.type === 'text/csv'
+                         file.type === 'text/csv';
       
       if (!isValidType) {
-        message.error('只支持 Excel 和 CSV 文件格式！')
-        return false
+        message.error('只支持 Excel 和 CSV 文件格式！');
+        return false;
       }
 
-      const isLt10M = file.size / 1024 / 1024 < 10
+      const isLt10M = file.size / 1024 / 1024 < 10;
       if (!isLt10M) {
-        message.error('文件大小不能超过 10MB！')
-        return false
+        message.error('文件大小不能超过 10MB！');
+        return false;
       }
 
-      setFileList([file])
-      return false // 阻止自动上传
+      setFileList([file]);
+      return false; // 阻止自动上传
     },
     onRemove: () => {
-      setFileList([])
-      setCurrentStep(0)
-      setImportQuestions([])
+      setFileList([]);
+      setCurrentStep(0);
+      setImportQuestions([]);
     }
-  }
+  };
 
   const handleNext = async () => {
     if (currentStep === 0 && fileList.length > 0) {
-      setLoading(true)
+      setLoading(true);
       try {
-        const questions = await parseFile(fileList[0])
-        setImportQuestions(questions)
-        setCurrentStep(1)
+        const questions = await parseFile(fileList[0]);
+        setImportQuestions(questions);
+        setCurrentStep(1);
       } catch (error) {
-        message.error('文件解析失败，请检查文件格式')
+        message.error('文件解析失败，请检查文件格式');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     } else if (currentStep === 1) {
       // 执行导入
-      setLoading(true)
-      setImportProgress(0)
+      setLoading(true);
+      setImportProgress(0);
       
       try {
-        const validQuestions = importQuestions.filter(q => q.status === 'success')
+        const validQuestions = importQuestions.filter(q => q.status === 'success');
         
         // 模拟导入进度
         for (let i = 0; i <= 100; i += 10) {
-          setImportProgress(i)
-          await new Promise(resolve => setTimeout(resolve, 100))
+          setImportProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        onImportComplete(validQuestions)
-        setCurrentStep(2)
-        message.success(`成功导入 ${validQuestions.length} 道题目`)
+        onImportComplete(validQuestions);
+        setCurrentStep(2);
+        message.success(`成功导入 ${validQuestions.length} 道题目`);
       } catch (error) {
-        message.error('导入失败，请重试')
+        message.error('导入失败，请重试');
       } finally {
-        setLoading(false)
-        setImportProgress(0)
+        setLoading(false);
+        setImportProgress(0);
       }
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
-  }
+  };
 
   const handleClose = () => {
-    setCurrentStep(0)
-    setFileList([])
-    setImportQuestions([])
-    setImportProgress(0)
-    onCancel()
-  }
+    setCurrentStep(0);
+    setFileList([]);
+    setImportQuestions([]);
+    setImportProgress(0);
+    onCancel();
+  };
 
   const downloadTemplate = () => {
     // 创建模板下载
@@ -239,15 +239,15 @@ const QuestionImport: React.FC<QuestionImportProps> = ({
 single,下列哪个是中国的首都？,北京,上海,广州,深圳,北京,北京是中华人民共和国的首都,5,chinese,easy,"地理,基础知识"
 multiple,下列哪些是水果？,苹果,萝卜,香蕉,白菜,"苹果,香蕉",苹果和香蕉是水果,10,science,medium,生物
 true_false,地球是圆的。,,,,true,地球是一个近似球体,5,science,easy,地理
-blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
+blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
     
-    const blob = new Blob([templateData], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = '题目导入模板.csv'
-    link.click()
-    URL.revokeObjectURL(link.href)
-  }
+    const blob = new Blob([templateData], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = '题目导入模板.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
   const columns = [
     {
@@ -266,9 +266,9 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
           success: { icon: <CheckCircleOutlined />, color: 'success', text: '成功' },
           error: { icon: <ExclamationCircleOutlined />, color: 'error', text: '错误' },
           warning: { icon: <ExclamationCircleOutlined />, color: 'warning', text: '警告' }
-        }
-        const { icon, color, text } = statusMap[status as keyof typeof statusMap]
-        return <Tag icon={icon} color={color}>{text}</Tag>
+        };
+        const { icon, color, text } = statusMap[status as keyof typeof statusMap];
+        return <Tag icon={icon} color={color}>{text}</Tag>;
       }
     },
     {
@@ -285,8 +285,8 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
           true_false: '判断',
           code: '编程',
           matching: '匹配'
-        }
-        return typeMap[type] || type
+        };
+        return typeMap[type] || type;
       }
     },
     {
@@ -322,9 +322,9 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
           easy: { text: '简单', color: 'green' },
           medium: { text: '中等', color: 'orange' },
           hard: { text: '困难', color: 'red' }
-        }
-        const { text, color } = difficultyMap[difficulty as keyof typeof difficultyMap] || { text: difficulty, color: 'default' }
-        return <Tag color={color}>{text}</Tag>
+        };
+        const { text, color } = difficultyMap[difficulty as keyof typeof difficultyMap] || { text: difficulty, color: 'default' };
+        return <Tag color={color}>{text}</Tag>;
       }
     },
     {
@@ -341,11 +341,11 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
         </div>
       ) : null
     }
-  ]
+  ];
 
-  const successCount = importQuestions.filter(q => q.status === 'success').length
-  const errorCount = importQuestions.filter(q => q.status === 'error').length
-  const totalCount = importQuestions.length
+  const successCount = importQuestions.filter(q => q.status === 'success').length;
+  const errorCount = importQuestions.filter(q => q.status === 'error').length;
+  const totalCount = importQuestions.length;
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -379,7 +379,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
                 type="link"
                 onClick={() => {
                   // 打开格式说明
-                  message.info('格式说明：请参考下载的模板文件')
+                  message.info('格式说明：请参考下载的模板文件');
                 }}
               >
                 查看格式说明
@@ -396,7 +396,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
               </p>
             </Dragger>
           </div>
-        )
+        );
 
       case 1:
         return (
@@ -471,7 +471,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
               </>
             )}
           </div>
-        )
+        );
 
       case 2:
         return (
@@ -485,12 +485,12 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
               )}
             </Descriptions>
           </div>
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <Modal
@@ -535,7 +535,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`
 
       {renderStepContent()}
     </Modal>
-  )
-}
+  );
+};
 
-export default QuestionImport
+export default QuestionImport;

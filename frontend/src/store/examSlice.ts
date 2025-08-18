@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface Question {
   id: string
@@ -29,35 +29,35 @@ const initialState: ExamState = {
   answers: {},
   timeRemaining: 0,
   isSubmitting: false,
-}
+};
 
 const examSlice = createSlice({
   name: 'exam',
   initialState,
   reducers: {
     setCurrentExam: (state, action: PayloadAction<Exam>) => {
-      state.currentExam = action.payload
-      state.timeRemaining = action.payload.duration * 60
+      state.currentExam = action.payload;
+      state.timeRemaining = action.payload.duration * 60;
     },
     updateAnswer: (state, action: PayloadAction<{ questionId: string; answer: any }>) => {
-      state.answers[action.payload.questionId] = action.payload.answer
+      state.answers[action.payload.questionId] = action.payload.answer;
     },
     decrementTime: (state) => {
       if (state.timeRemaining > 0) {
-        state.timeRemaining -= 1
+        state.timeRemaining -= 1;
       }
     },
     submitExam: (state) => {
-      state.isSubmitting = true
+      state.isSubmitting = true;
     },
     resetExam: (state) => {
-      state.currentExam = null
-      state.answers = {}
-      state.timeRemaining = 0
-      state.isSubmitting = false
+      state.currentExam = null;
+      state.answers = {};
+      state.timeRemaining = 0;
+      state.isSubmitting = false;
     },
   },
-})
+});
 
-export const { setCurrentExam, updateAnswer, decrementTime, submitExam, resetExam } = examSlice.actions
-export default examSlice.reducer
+export const { setCurrentExam, updateAnswer, decrementTime, submitExam, resetExam } = examSlice.actions;
+export default examSlice.reducer;

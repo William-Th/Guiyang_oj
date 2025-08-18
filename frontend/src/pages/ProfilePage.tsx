@@ -1,17 +1,17 @@
-import React, { useState } from 'react'
-import { Card, Form, Input, Button, Avatar, Row, Col, message, Descriptions } from 'antd'
-import { UserOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons'
-import { useSelector } from 'react-redux'
-import { RootState } from '../store'
+import React, { useState } from 'react';
+import { Card, Form, Input, Button, Avatar, Row, Col, message, Descriptions } from 'antd';
+import { UserOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 const ProfilePage: React.FC = () => {
-  const [form] = Form.useForm()
-  const [isEditing, setIsEditing] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const { user } = useSelector((state: RootState) => state.auth)
+  const [form] = Form.useForm();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const handleEdit = () => {
-    setIsEditing(true)
+    setIsEditing(true);
     form.setFieldsValue({
       realName: user?.realName || '',
       username: user?.username || '',
@@ -20,40 +20,40 @@ const ProfilePage: React.FC = () => {
       school: user?.school || '',
       grade: user?.grade || '',
       class: user?.class || '',
-    })
-  }
+    });
+  };
 
   const handleSave = async (values: any) => {
     try {
-      setLoading(true)
+      setLoading(true);
       // TODO: Call API to update user profile
-      console.log('Updating profile with:', values)
+      console.log('Updating profile with:', values);
       
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      message.success('个人信息更新成功')
-      setIsEditing(false)
+      message.success('个人信息更新成功');
+      setIsEditing(false);
     } catch (error) {
-      message.error('更新失败，请稍后重试')
+      message.error('更新失败，请稍后重试');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
-    setIsEditing(false)
-    form.resetFields()
-  }
+    setIsEditing(false);
+    form.resetFields();
+  };
 
   const getUserRole = (role: string) => {
     const roleMap: Record<string, string> = {
       student: '学生',
       teacher: '教师',
       admin: '管理员'
-    }
-    return roleMap[role] || role
-  }
+    };
+    return roleMap[role] || role;
+  };
 
   return (
     <div>
@@ -201,7 +201,7 @@ const ProfilePage: React.FC = () => {
         </Col>
       </Row>
     </div>
-  )
-}
+  );
+};
 
-export default ProfilePage
+export default ProfilePage;

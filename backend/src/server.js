@@ -34,13 +34,13 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
-    },
-  },
+      defaultSrc: ['\'self\''],
+      styleSrc: ['\'self\'', '\'unsafe-inline\''],
+      scriptSrc: ['\'self\''],
+      objectSrc: ['\'none\''],
+      upgradeInsecureRequests: []
+    }
+  }
 }));
 
 // CORS configuration
@@ -60,7 +60,7 @@ const limiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: { message: '请求过于频繁，请稍后重试' },
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: false
 });
 app.use('/api', limiter);
 
@@ -86,7 +86,7 @@ app.get('/health', async (req, res) => {
   try {
     // Check database connection
     const { pool } = require('./database/connection');
-    const dbResult = await pool.query('SELECT 1');
+    await pool.query('SELECT 1');
     
     res.json({ 
       status: 'OK', 
@@ -119,7 +119,7 @@ app.use((req, res, next) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error('Unhandled error:', {
     error: err.message,
     stack: err.stack,
@@ -162,7 +162,7 @@ process.on('SIGINT', () => {
 });
 
 const server = app.listen(PORT, () => {
-  logger.info(`Server started`, {
+  logger.info('Server started', {
     port: PORT,
     environment: process.env.NODE_ENV,
     version: process.env.APP_VERSION

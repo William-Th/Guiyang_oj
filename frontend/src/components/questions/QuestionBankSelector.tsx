@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Table,
@@ -12,11 +12,11 @@ import {
   Card,
   Row,
   Col
-} from 'antd'
-import { SearchOutlined, FilterOutlined, PlusOutlined } from '@ant-design/icons'
-import QuestionDisplay from './QuestionDisplay'
+} from 'antd';
+import { SearchOutlined, FilterOutlined, PlusOutlined } from '@ant-design/icons';
+import QuestionDisplay from './QuestionDisplay';
 
-const { Option } = Select
+const { Option } = Select;
 
 interface Question {
   id: number
@@ -47,12 +47,12 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
   examSubject,
   selectedQuestionIds = []
 }) => {
-  const [questions, setQuestions] = useState<Question[]>([])
-  const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedRows, setSelectedRows] = useState<Question[]>([])
-  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([])
-  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null)
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Question[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
   
   // 过滤条件
   const [filters, setFilters] = useState({
@@ -60,17 +60,17 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
     difficulty: '',
     subject: examSubject || '',
     searchText: ''
-  })
+  });
 
   // 模拟数据 - 实际应该从API获取
   useEffect(() => {
     if (visible) {
-      loadQuestions()
+      loadQuestions();
     }
-  }, [visible])
+  }, [visible]);
 
   const loadQuestions = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // 模拟API调用
       const mockQuestions: Question[] = [
@@ -135,50 +135,50 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
           created_at: '2024-03-14',
           explanation: '参考答案：春季：万物复苏、温度回暖、花开草绿；夏季：气温炎热、阳光充足、植物茂盛；秋季：果实成熟、叶子变黄、天气凉爽；冬季：天气寒冷、雪花飞舞、植物休眠。'
         }
-      ]
+      ];
       
-      setQuestions(mockQuestions)
-      setFilteredQuestions(mockQuestions)
+      setQuestions(mockQuestions);
+      setFilteredQuestions(mockQuestions);
     } catch (error) {
-      message.error('加载题目失败')
+      message.error('加载题目失败');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // 应用过滤条件
   useEffect(() => {
-    let filtered = questions
+    let filtered = questions;
 
     // 科目过滤
     if (filters.subject) {
-      filtered = filtered.filter(q => q.subject === filters.subject)
+      filtered = filtered.filter(q => q.subject === filters.subject);
     }
 
     // 题型过滤
     if (filters.type) {
-      filtered = filtered.filter(q => q.type === filters.type)
+      filtered = filtered.filter(q => q.type === filters.type);
     }
 
     // 难度过滤
     if (filters.difficulty) {
-      filtered = filtered.filter(q => q.difficulty === filters.difficulty)
+      filtered = filtered.filter(q => q.difficulty === filters.difficulty);
     }
 
     // 搜索过滤
     if (filters.searchText) {
-      const searchLower = filters.searchText.toLowerCase()
+      const searchLower = filters.searchText.toLowerCase();
       filtered = filtered.filter(q => 
         q.content.toLowerCase().includes(searchLower) ||
         q.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      )
+      );
     }
 
     // 排除已添加的题目
-    filtered = filtered.filter(q => !selectedQuestionIds.includes(q.id))
+    filtered = filtered.filter(q => !selectedQuestionIds.includes(q.id));
 
-    setFilteredQuestions(filtered)
-  }, [filters, questions, selectedQuestionIds])
+    setFilteredQuestions(filtered);
+  }, [filters, questions, selectedQuestionIds]);
 
   const columns = [
     {
@@ -202,8 +202,8 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
           true_false: '判断题',
           code: '编程题',
           matching: '匹配题'
-        }
-        return typeMap[type] || type
+        };
+        return typeMap[type] || type;
       }
     },
     {
@@ -221,8 +221,8 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
           art: '美术',
           music: '音乐',
           pe: '体育'
-        }
-        return subjectMap[subject] || subject
+        };
+        return subjectMap[subject] || subject;
       }
     },
     {
@@ -235,9 +235,9 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
           easy: { text: '简单', color: 'green' },
           medium: { text: '中等', color: 'orange' },
           hard: { text: '困难', color: 'red' }
-        }
-        const { text, color } = difficultyMap[difficulty as keyof typeof difficultyMap]
-        return <Tag color={color}>{text}</Tag>
+        };
+        const { text, color } = difficultyMap[difficulty as keyof typeof difficultyMap];
+        return <Tag color={color}>{text}</Tag>;
       }
     },
     {
@@ -273,29 +273,29 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
         </Button>
       ),
     },
-  ]
+  ];
 
   const handleAddSelected = () => {
     if (selectedRows.length === 0) {
-      message.warning('请选择要添加的题目')
-      return
+      message.warning('请选择要添加的题目');
+      return;
     }
     
-    onAddQuestions(selectedRows)
-    setSelectedRows([])
-    setSelectedRowKeys([])
-    message.success(`成功添加 ${selectedRows.length} 道题目`)
-  }
+    onAddQuestions(selectedRows);
+    setSelectedRows([]);
+    setSelectedRowKeys([]);
+    message.success(`成功添加 ${selectedRows.length} 道题目`);
+  };
 
-  const totalScore = selectedRows.reduce((sum, q) => sum + q.score, 0)
+  const totalScore = selectedRows.reduce((sum, q) => sum + q.score, 0);
 
   const rowSelection = {
     selectedRowKeys,
     onChange: (selectedRowKeys: React.Key[], selectedRows: Question[]) => {
-      setSelectedRowKeys(selectedRowKeys as number[])
-      setSelectedRows(selectedRows)
+      setSelectedRowKeys(selectedRowKeys as number[]);
+      setSelectedRows(selectedRows);
     },
-  }
+  };
 
   return (
     <>
@@ -443,7 +443,7 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
         )}
       </Modal>
     </>
-  )
-}
+  );
+};
 
-export default QuestionBankSelector
+export default QuestionBankSelector;

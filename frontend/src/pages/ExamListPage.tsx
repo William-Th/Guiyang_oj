@@ -1,9 +1,9 @@
-import React from 'react'
-import { Card, Table, Tag, Button, Space } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import React from 'react';
+import { Card, Table, Tag, Button, Space } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const ExamListPage: React.FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const columns = [
     {
@@ -21,8 +21,8 @@ const ExamListPage: React.FC = () => {
           '数学': 'green',
           '科学': 'purple',
           '英语': 'orange',
-        }
-        return <Tag color={colors[subject] || 'default'}>{subject}</Tag>
+        };
+        return <Tag color={colors[subject] || 'default'}>{subject}</Tag>;
       },
     },
     {
@@ -50,9 +50,9 @@ const ExamListPage: React.FC = () => {
           upcoming: { color: 'blue', text: '即将开始' },
           ongoing: { color: 'green', text: '进行中' },
           finished: { color: 'default', text: '已结束' },
-        }
-        const config = statusConfig[status] || statusConfig.finished
-        return <Tag color={config.color}>{config.text}</Tag>
+        };
+        const config = statusConfig[status] || statusConfig.finished;
+        return <Tag color={config.color}>{config.text}</Tag>;
       },
     },
     {
@@ -78,7 +78,7 @@ const ExamListPage: React.FC = () => {
         </Space>
       ),
     },
-  ]
+  ];
 
   const mockData = [
     {
@@ -108,7 +108,7 @@ const ExamListPage: React.FC = () => {
       duration: 45,
       status: 'finished',
     },
-  ]
+  ];
 
   return (
     <div>
@@ -116,7 +116,7 @@ const ExamListPage: React.FC = () => {
         <Table columns={columns} dataSource={mockData} rowKey="id" />
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default ExamListPage
+export default ExamListPage;

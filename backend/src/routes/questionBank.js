@@ -17,7 +17,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 
-                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -309,43 +309,43 @@ function validateQuestion(question) {
   }
 
   switch (type) {
-    case 'single':
-      if (!question.options || question.options.length < 2) {
-        return 'Single choice questions must have at least 2 options';
-      }
-      if (!correct_answer) {
-        return 'Single choice questions must have a correct answer';
-      }
-      break;
+  case 'single':
+    if (!question.options || question.options.length < 2) {
+      return 'Single choice questions must have at least 2 options';
+    }
+    if (!correct_answer) {
+      return 'Single choice questions must have a correct answer';
+    }
+    break;
 
-    case 'multiple':
-      if (!question.options || question.options.length < 2) {
-        return 'Multiple choice questions must have at least 2 options';
-      }
-      if (!correct_answer || !Array.isArray(correct_answer) || correct_answer.length === 0) {
-        return 'Multiple choice questions must have at least one correct answer';
-      }
-      break;
+  case 'multiple':
+    if (!question.options || question.options.length < 2) {
+      return 'Multiple choice questions must have at least 2 options';
+    }
+    if (!correct_answer || !Array.isArray(correct_answer) || correct_answer.length === 0) {
+      return 'Multiple choice questions must have at least one correct answer';
+    }
+    break;
 
-    case 'blank':
-      if (!correct_answer || (Array.isArray(correct_answer) && correct_answer.length === 0)) {
-        return 'Fill-in-the-blank questions must have at least one correct answer';
-      }
-      break;
+  case 'blank':
+    if (!correct_answer || (Array.isArray(correct_answer) && correct_answer.length === 0)) {
+      return 'Fill-in-the-blank questions must have at least one correct answer';
+    }
+    break;
 
-    case 'true_false':
-      if (typeof correct_answer !== 'boolean') {
-        return 'True/false questions must have a boolean correct answer';
-      }
-      break;
+  case 'true_false':
+    if (typeof correct_answer !== 'boolean') {
+      return 'True/false questions must have a boolean correct answer';
+    }
+    break;
 
-    case 'essay':
-    case 'code':
-      // These don't require a correct answer as they're manually graded
-      break;
+  case 'essay':
+  case 'code':
+    // These don't require a correct answer as they're manually graded
+    break;
 
-    default:
-      return 'Invalid question type';
+  default:
+    return 'Invalid question type';
   }
 
   return null;
@@ -398,17 +398,17 @@ function parseQuestionRow(row) {
   const answerStr = row.correct_answer || row['正确答案'];
   
   switch (question.type) {
-    case 'multiple':
-      question.correct_answer = answerStr ? answerStr.split(',').map(a => a.trim()) : [];
-      break;
-    case 'blank':
-      question.correct_answer = answerStr ? answerStr.split('|').map(a => a.trim()) : [];
-      break;
-    case 'true_false':
-      question.correct_answer = answerStr?.toLowerCase() === 'true' || answerStr === '正确';
-      break;
-    default:
-      question.correct_answer = answerStr;
+  case 'multiple':
+    question.correct_answer = answerStr ? answerStr.split(',').map(a => a.trim()) : [];
+    break;
+  case 'blank':
+    question.correct_answer = answerStr ? answerStr.split('|').map(a => a.trim()) : [];
+    break;
+  case 'true_false':
+    question.correct_answer = answerStr?.toLowerCase() === 'true' || answerStr === '正确';
+    break;
+  default:
+    question.correct_answer = answerStr;
   }
 
   return question;

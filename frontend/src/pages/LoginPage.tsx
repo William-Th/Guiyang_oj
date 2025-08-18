@@ -1,18 +1,18 @@
-import React from 'react'
-import { Form, Input, Button, Card, Tabs, message } from 'antd'
-import { UserOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
-import { loginStart, loginSuccess } from '@/store/authSlice'
-import './LoginPage.css'
+import React from 'react';
+import { Form, Input, Button, Card, Tabs, message } from 'antd';
+import { UserOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { loginStart, loginSuccess } from '@/store/authSlice';
+import './LoginPage.css';
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const [form] = Form.useForm()
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [form] = Form.useForm();
 
   const handleStudentLogin = async (values: any) => {
-    dispatch(loginStart())
+    dispatch(loginStart());
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -22,27 +22,27 @@ const LoginPage: React.FC = () => {
           password: values.password, 
           loginType: 'idCard' 
         })
-      })
+      });
       
-      const data = await response.json()
+      const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || '登录失败')
+        throw new Error(data.message || '登录失败');
       }
       
       dispatch(loginSuccess({
         user: data.user,
         token: data.token
-      }))
-      message.success(data.message || '登录成功')
-      navigate('/')
+      }));
+      message.success(data.message || '登录成功');
+      navigate('/');
     } catch (error: any) {
-      message.error(error.message || '登录失败')
+      message.error(error.message || '登录失败');
     }
-  }
+  };
 
   const handleTeacherLogin = async (values: any) => {
-    dispatch(loginStart())
+    dispatch(loginStart());
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -52,24 +52,24 @@ const LoginPage: React.FC = () => {
           password: values.password, 
           loginType: 'username' 
         })
-      })
+      });
       
-      const data = await response.json()
+      const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || '登录失败')
+        throw new Error(data.message || '登录失败');
       }
       
       dispatch(loginSuccess({
         user: data.user,
         token: data.token
-      }))
-      message.success(data.message || '登录成功')
-      navigate('/')
+      }));
+      message.success(data.message || '登录成功');
+      navigate('/');
     } catch (error: any) {
-      message.error(error.message || '登录失败')
+      message.error(error.message || '登录失败');
     }
-  }
+  };
 
   return (
     <div className="login-container">
@@ -123,7 +123,7 @@ const LoginPage: React.FC = () => {
         </Tabs>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

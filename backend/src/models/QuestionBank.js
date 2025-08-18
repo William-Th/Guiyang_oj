@@ -140,7 +140,7 @@ class QuestionBank {
     }
 
     paramCount++;
-    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    updates.push('updated_at = CURRENT_TIMESTAMP');
 
     const sql = `
       UPDATE question_bank 

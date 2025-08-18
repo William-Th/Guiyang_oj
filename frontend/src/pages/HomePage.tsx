@@ -1,29 +1,29 @@
-import React, { useState } from 'react'
-import { Row, Col, Card, Statistic, Button, Space, Modal, message } from 'antd'
+import React, { useState } from 'react';
+import { Row, Col, Card, Statistic, Button, Space, Modal, message } from 'antd';
 import {
   BookOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
   FileTextOutlined,
   SafetyCertificateOutlined,
-} from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { certificateApi } from '../services/api'
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { certificateApi } from '../services/api';
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleApplyCertificate = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       
       // Get available certificates first
-      const availableCerts = await certificateApi.getAvailable()
+      const availableCerts = await certificateApi.getAvailable();
       
       if (availableCerts.length === 0) {
-        message.warning('您目前没有可申请的证书，请先完成考试并取得优秀成绩')
-        return
+        message.warning('您目前没有可申请的证书，请先完成考试并取得优秀成绩');
+        return;
       }
 
       // Show confirmation modal
@@ -35,23 +35,23 @@ const HomePage: React.FC = () => {
           try {
             // Apply for all available certificates
             for (const cert of availableCerts) {
-              await certificateApi.apply(cert.examId)
+              await certificateApi.apply(cert.examId);
             }
-            message.success('证书申请成功！您可以在成绩页面下载证书')
-            setTimeout(() => navigate('/results'), 2000)
+            message.success('证书申请成功！您可以在成绩页面下载证书');
+            setTimeout(() => navigate('/results'), 2000);
           } catch (error) {
-            console.error('Certificate application failed:', error)
-            message.error('证书申请失败，请稍后重试')
+            console.error('Certificate application failed:', error);
+            message.error('证书申请失败，请稍后重试');
           }
         }
-      })
+      });
     } catch (error) {
-      console.error('Failed to get available certificates:', error)
-      message.error('获取可申请证书列表失败，请稍后重试')
+      console.error('Failed to get available certificates:', error);
+      message.error('获取可申请证书列表失败，请稍后重试');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -132,7 +132,7 @@ const HomePage: React.FC = () => {
         </Col>
       </Row>
     </div>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

@@ -1,5 +1,5 @@
-import React from 'react'
-import { Radio, Checkbox, Input, Space } from 'antd'
+import React from 'react';
+import { Radio, Checkbox, Input, Space } from 'antd';
 
 interface Question {
   id: number
@@ -52,7 +52,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               ))}
             </Space>
           </Radio.Group>
-        )
+        );
 
       case 'multiple':
         return (
@@ -76,7 +76,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               ))}
             </Space>
           </Checkbox.Group>
-        )
+        );
 
       case 'true_false':
         return (
@@ -106,11 +106,11 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               </Radio>
             </Space>
           </Radio.Group>
-        )
+        );
 
-      case 'blank':
-        const blanksCount = question.blanks_count || 1
-        const blankValues = Array.isArray(value) ? value : new Array(blanksCount).fill('')
+      case 'blank': {
+        const blanksCount = question.blanks_count || 1;
+        const blankValues = Array.isArray(value) ? value : new Array(blanksCount).fill('');
         
         return (
           <Space direction="vertical" size="middle">
@@ -121,9 +121,9 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                   placeholder="请输入答案"
                   value={blankValues[index] || ''}
                   onChange={(e) => {
-                    const newValues = [...blankValues]
-                    newValues[index] = e.target.value
-                    onChange?.(newValues)
+                    const newValues = [...blankValues];
+                    newValues[index] = e.target.value;
+                    onChange?.(newValues);
                   }}
                   disabled={readonly}
                   style={{ 
@@ -139,7 +139,8 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               </div>
             ))}
           </Space>
-        )
+        );
+      }
 
       case 'essay':
         return (
@@ -158,7 +159,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               </div>
             )}
           </div>
-        )
+        );
 
       case 'code':
         return (
@@ -183,7 +184,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               </div>
             )}
           </div>
-        )
+        );
 
       case 'matching':
         return (
@@ -218,12 +219,12 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               style={{ marginTop: '12px' }}
             />
           </div>
-        )
+        );
 
       default:
-        return <div>不支持的题目类型</div>
+        return <div>不支持的题目类型</div>;
     }
-  }
+  };
 
   return (
     <div>
@@ -238,7 +239,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default QuestionDisplay
+export default QuestionDisplay;

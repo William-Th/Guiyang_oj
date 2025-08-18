@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run linting for backend
+echo "🔍 Running backend linting..."
+cd backend && npm run lint
+BACKEND_LINT=$?
+
+# Run linting for frontend
+echo "🔍 Running frontend linting..."
+cd ../frontend && npm run lint
+FRONTEND_LINT=$?
+
+# Check if both linting passed
+if [ $BACKEND_LINT -ne 0 ] || [ $FRONTEND_LINT -ne 0 ]; then
+  echo "❌ Linting failed! Please fix the issues before committing."
+  exit 1
+fi
+
+echo "✅ All linting checks passed!"

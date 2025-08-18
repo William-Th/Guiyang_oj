@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { 
   Form, 
   Input, 
@@ -10,12 +10,12 @@ import {
   Tag,
   message,
   Divider
-} from 'antd'
-import { PlusOutlined, MinusOutlined, EyeOutlined } from '@ant-design/icons'
-import QuestionDisplay from './QuestionDisplay'
+} from 'antd';
+import { PlusOutlined, MinusOutlined, EyeOutlined } from '@ant-design/icons';
+import QuestionDisplay from './QuestionDisplay';
 
-const { Option } = Select
-const { TextArea } = Input
+const { Option } = Select;
+const { TextArea } = Input;
 
 interface QuestionData {
   id?: number
@@ -42,11 +42,11 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   onSave,
   onCancel
 }) => {
-  const [form] = Form.useForm()
-  const [questionType, setQuestionType] = useState<string>(initialData?.type || 'single')
-  const [options, setOptions] = useState<string[]>(initialData?.options || ['', ''])
-  const [showPreview, setShowPreview] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [form] = Form.useForm();
+  const [questionType, setQuestionType] = useState<string>(initialData?.type || 'single');
+  const [options, setOptions] = useState<string[]>(initialData?.options || ['', '']);
+  const [showPreview, setShowPreview] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const questionTypes = [
     { value: 'single', label: '单选题' },
@@ -56,7 +56,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
     { value: 'essay', label: '问答题' },
     { value: 'code', label: '编程题' },
     { value: 'matching', label: '匹配题' }
-  ]
+  ];
 
   const subjects = [
     { value: 'math', label: '数学' },
@@ -67,48 +67,48 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
     { value: 'art', label: '美术' },
     { value: 'music', label: '音乐' },
     { value: 'pe', label: '体育' }
-  ]
+  ];
 
   const difficulties = [
     { value: 'easy', label: '简单', color: 'green' },
     { value: 'medium', label: '中等', color: 'orange' },
     { value: 'hard', label: '困难', color: 'red' }
-  ]
+  ];
 
   const addOption = () => {
-    setOptions([...options, ''])
-  }
+    setOptions([...options, '']);
+  };
 
   const removeOption = (index: number) => {
     if (options.length > 2) {
-      const newOptions = options.filter((_, i) => i !== index)
-      setOptions(newOptions)
+      const newOptions = options.filter((_, i) => i !== index);
+      setOptions(newOptions);
     }
-  }
+  };
 
   const updateOption = (index: number, value: string) => {
-    const newOptions = [...options]
-    newOptions[index] = value
-    setOptions(newOptions)
-  }
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
+  };
 
   const handleTypeChange = (type: string) => {
-    setQuestionType(type)
+    setQuestionType(type);
     
     // 根据题型设置默认选项
     if (type === 'single' || type === 'multiple') {
-      setOptions(['', '', '', ''])
+      setOptions(['', '', '', '']);
     } else if (type === 'true_false') {
-      setOptions([])
+      setOptions([]);
     } else if (type === 'matching') {
-      setOptions(['', '', '', ''])
+      setOptions(['', '', '', '']);
     } else {
-      setOptions([])
+      setOptions([]);
     }
-  }
+  };
 
   const getPreviewData = () => {
-    const formData = form.getFieldsValue()
+    const formData = form.getFieldsValue();
     return {
       id: 1,
       type: questionType as any,
@@ -117,40 +117,40 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
       score: formData.score || 5,
       explanation: formData.explanation,
       blanks_count: formData.blanks_count
-    }
-  }
+    };
+  };
 
   const handleSubmit = async (values: any) => {
     try {
-      setLoading(true)
+      setLoading(true);
       
       const questionData: QuestionData = {
         ...values,
         type: questionType as any,
         options: questionType === 'single' || questionType === 'multiple' || questionType === 'matching' ? options.filter(opt => opt.trim()) : undefined,
         id: initialData?.id
-      }
+      };
 
       // 验证必要字段
       if (!questionData.content.trim()) {
-        message.error('请输入题目内容')
-        return
+        message.error('请输入题目内容');
+        return;
       }
 
       if ((questionType === 'single' || questionType === 'multiple') && options.filter(opt => opt.trim()).length < 2) {
-        message.error('选择题至少需要2个选项')
-        return
+        message.error('选择题至少需要2个选项');
+        return;
       }
 
-      await onSave?.(questionData)
-      message.success('题目保存成功')
+      await onSave?.(questionData);
+      message.success('题目保存成功');
       
     } catch (error) {
-      message.error('保存失败，请重试')
+      message.error('保存失败，请重试');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const renderTypeSpecificFields = () => {
     switch (questionType) {
@@ -187,14 +187,14 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               </Button>
             </Space>
           </Form.Item>
-        )
+        );
 
       case 'blank':
         return (
           <Form.Item label="空格数量" name="blanks_count" initialValue={1}>
             <InputNumber min={1} max={10} />
           </Form.Item>
-        )
+        );
 
       case 'matching':
         return (
@@ -231,12 +231,12 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               </Button>
             </Space>
           </Form.Item>
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div style={{ maxWidth: '800px' }}>
@@ -412,7 +412,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default QuestionEditor
+export default QuestionEditor;

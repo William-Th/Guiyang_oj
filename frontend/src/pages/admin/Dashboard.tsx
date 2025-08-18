@@ -1,24 +1,24 @@
-import React, { useState } from 'react'
-import { Card, Row, Col, Statistic, Table, Tabs } from 'antd'
-import { UserOutlined, FileTextOutlined, TrophyOutlined, TeamOutlined } from '@ant-design/icons'
-import ExamManagement from './ExamManagement'
+import React, { useState } from 'react';
+import { Card, Row, Col, Statistic, Table, Tabs } from 'antd';
+import { UserOutlined, FileTextOutlined, TrophyOutlined, TeamOutlined } from '@ant-design/icons';
+import ExamManagement from './ExamManagement';
 
-const { TabPane } = Tabs
+const { TabPane } = Tabs;
 
 const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('overview');
   
   const recentExams = [
     { id: 1, name: '语文期中考试', participants: 245, avgScore: 82.5, date: '2024-03-10' },
     { id: 2, name: '数学期中考试', participants: 238, avgScore: 78.3, date: '2024-03-08' },
-  ]
+  ];
 
   const columns = [
     { title: '考试名称', dataIndex: 'name', key: 'name' },
     { title: '参与人数', dataIndex: 'participants', key: 'participants' },
     { title: '平均分', dataIndex: 'avgScore', key: 'avgScore' },
     { title: '日期', dataIndex: 'date', key: 'date' },
-  ]
+  ];
 
   const renderOverview = () => (
     <div>
@@ -70,7 +70,7 @@ const AdminDashboard: React.FC = () => {
         <Table columns={columns} dataSource={recentExams} rowKey="id" pagination={false} />
       </Card>
     </div>
-  )
+  );
 
   return (
     <Tabs activeKey={activeTab} onChange={setActiveTab}>
@@ -81,7 +81,7 @@ const AdminDashboard: React.FC = () => {
         <ExamManagement />
       </TabPane>
     </Tabs>
-  )
-}
+  );
+};
 
-export default AdminDashboard
+export default AdminDashboard;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Button, 
@@ -14,22 +14,22 @@ import {
   Tabs,
   Tag,
   Popconfirm
-} from 'antd'
+} from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
   DeleteOutlined, 
   EyeOutlined,
   BookOutlined 
-} from '@ant-design/icons'
-import QuestionEditor from '../../components/questions/QuestionEditor'
-import QuestionDisplay from '../../components/questions/QuestionDisplay'
-import ExamQuestionManager from '../../components/questions/ExamQuestionManager'
-import QuestionImport from '../../components/questions/QuestionImport'
+} from '@ant-design/icons';
+import QuestionEditor from '../../components/questions/QuestionEditor';
+import QuestionDisplay from '../../components/questions/QuestionDisplay';
+import ExamQuestionManager from '../../components/questions/ExamQuestionManager';
+import QuestionImport from '../../components/questions/QuestionImport';
 
-const { Option } = Select
-const { RangePicker } = DatePicker
-const { TabPane } = Tabs
+const { Option } = Select;
+const { RangePicker } = DatePicker;
+const { TabPane } = Tabs;
 
 interface Exam {
   id: number
@@ -56,19 +56,19 @@ interface Question {
 }
 
 const ExamManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('exams')
-  const [exams, setExams] = useState<Exam[]>([])
-  const [questions, setQuestions] = useState<Question[]>([])
-  const [loading, setLoading] = useState(false)
-  const [examModalVisible, setExamModalVisible] = useState(false)
-  const [questionModalVisible, setQuestionModalVisible] = useState(false)
-  const [editingExam, setEditingExam] = useState<Exam | null>(null)
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
-  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null)
-  const [examQuestionManagerVisible, setExamQuestionManagerVisible] = useState(false)
-  const [managingExam, setManagingExam] = useState<Exam | null>(null)
-  const [questionImportVisible, setQuestionImportVisible] = useState(false)
-  const [examForm] = Form.useForm()
+  const [activeTab, setActiveTab] = useState('exams');
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [examModalVisible, setExamModalVisible] = useState(false);
+  const [questionModalVisible, setQuestionModalVisible] = useState(false);
+  const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  const [examQuestionManagerVisible, setExamQuestionManagerVisible] = useState(false);
+  const [managingExam, setManagingExam] = useState<Exam | null>(null);
+  const [questionImportVisible, setQuestionImportVisible] = useState(false);
+  const [examForm] = Form.useForm();
 
   // 模拟数据
   useEffect(() => {
@@ -97,7 +97,7 @@ const ExamManagement: React.FC = () => {
         status: 'draft',
         question_count: 15
       }
-    ])
+    ]);
 
     setQuestions([
       {
@@ -120,8 +120,8 @@ const ExamManagement: React.FC = () => {
         tags: ['生物', '分类'],
         created_at: '2024-03-11'
       }
-    ])
-  }, [])
+    ]);
+  }, []);
 
   const examColumns = [
     {
@@ -139,8 +139,8 @@ const ExamManagement: React.FC = () => {
           chinese: '语文',
           english: '英语',
           science: '科学'
-        }
-        return subjectMap[subject] || subject
+        };
+        return subjectMap[subject] || subject;
       }
     },
     {
@@ -157,9 +157,9 @@ const ExamManagement: React.FC = () => {
           draft: { text: '草稿', color: 'default' },
           published: { text: '已发布', color: 'green' },
           completed: { text: '已结束', color: 'red' }
-        }
-        const { text, color } = statusMap[status as keyof typeof statusMap]
-        return <Tag color={color}>{text}</Tag>
+        };
+        const { text, color } = statusMap[status as keyof typeof statusMap];
+        return <Tag color={color}>{text}</Tag>;
       }
     },
     {
@@ -213,7 +213,7 @@ const ExamManagement: React.FC = () => {
         </Space>
       ),
     },
-  ]
+  ];
 
   const questionColumns = [
     {
@@ -236,8 +236,8 @@ const ExamManagement: React.FC = () => {
           true_false: '判断题',
           code: '编程题',
           matching: '匹配题'
-        }
-        return typeMap[type] || type
+        };
+        return typeMap[type] || type;
       }
     },
     {
@@ -250,8 +250,8 @@ const ExamManagement: React.FC = () => {
           chinese: '语文',
           english: '英语',
           science: '科学'
-        }
-        return subjectMap[subject] || subject
+        };
+        return subjectMap[subject] || subject;
       }
     },
     {
@@ -263,9 +263,9 @@ const ExamManagement: React.FC = () => {
           easy: { text: '简单', color: 'green' },
           medium: { text: '中等', color: 'orange' },
           hard: { text: '困难', color: 'red' }
-        }
-        const { text, color } = difficultyMap[difficulty as keyof typeof difficultyMap]
-        return <Tag color={color}>{text}</Tag>
+        };
+        const { text, color } = difficultyMap[difficulty as keyof typeof difficultyMap];
+        return <Tag color={color}>{text}</Tag>;
       }
     },
     {
@@ -319,44 +319,44 @@ const ExamManagement: React.FC = () => {
         </Space>
       ),
     },
-  ]
+  ];
 
   const handleCreateExam = () => {
-    setEditingExam(null)
-    examForm.resetFields()
-    setExamModalVisible(true)
-  }
+    setEditingExam(null);
+    examForm.resetFields();
+    setExamModalVisible(true);
+  };
 
   const handleEditExam = (exam: Exam) => {
-    setEditingExam(exam)
-    examForm.setFieldsValue(exam)
-    setExamModalVisible(true)
-  }
+    setEditingExam(exam);
+    examForm.setFieldsValue(exam);
+    setExamModalVisible(true);
+  };
 
   const handleViewExam = (exam: Exam) => {
-    message.info(`查看考试: ${exam.title}`)
-  }
+    message.info(`查看考试: ${exam.title}`);
+  };
 
   const handleManageQuestions = (exam: Exam) => {
-    setManagingExam(exam)
-    setExamQuestionManagerVisible(true)
-  }
+    setManagingExam(exam);
+    setExamQuestionManagerVisible(true);
+  };
 
   const handleDeleteExam = (examId: number) => {
-    setExams(exams.filter(exam => exam.id !== examId))
-    message.success('考试删除成功')
-  }
+    setExams(exams.filter(exam => exam.id !== examId));
+    message.success('考试删除成功');
+  };
 
   const handleSaveExam = async (values: any) => {
     try {
-      setLoading(true)
+      setLoading(true);
       // 这里应该调用API保存考试
       if (editingExam) {
         // 更新考试
         setExams(exams.map(exam => 
           exam.id === editingExam.id ? { ...exam, ...values } : exam
-        ))
-        message.success('考试更新成功')
+        ));
+        message.success('考试更新成功');
       } else {
         // 创建新考试
         const newExam = {
@@ -364,32 +364,32 @@ const ExamManagement: React.FC = () => {
           ...values,
           status: 'draft',
           question_count: 0
-        }
-        setExams([newExam, ...exams])
-        message.success('考试创建成功')
+        };
+        setExams([newExam, ...exams]);
+        message.success('考试创建成功');
       }
-      setExamModalVisible(false)
+      setExamModalVisible(false);
     } catch (error) {
-      message.error('保存失败')
+      message.error('保存失败');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCreateQuestion = () => {
-    setEditingQuestion(null)
-    setQuestionModalVisible(true)
-  }
+    setEditingQuestion(null);
+    setQuestionModalVisible(true);
+  };
 
   const handleEditQuestion = (question: Question) => {
-    setEditingQuestion(question)
-    setQuestionModalVisible(true)
-  }
+    setEditingQuestion(question);
+    setQuestionModalVisible(true);
+  };
 
   const handleDeleteQuestion = (questionId: number) => {
-    setQuestions(questions.filter(q => q.id !== questionId))
-    message.success('题目删除成功')
-  }
+    setQuestions(questions.filter(q => q.id !== questionId));
+    message.success('题目删除成功');
+  };
 
   const handleSaveQuestion = async (questionData: any) => {
     try {
@@ -397,34 +397,34 @@ const ExamManagement: React.FC = () => {
         // 更新题目
         setQuestions(questions.map(q => 
           q.id === editingQuestion.id ? { ...q, ...questionData } : q
-        ))
-        message.success('题目更新成功')
+        ));
+        message.success('题目更新成功');
       } else {
         // 创建新题目
         const newQuestion = {
           id: Date.now(),
           ...questionData,
           created_at: new Date().toISOString().split('T')[0]
-        }
-        setQuestions([newQuestion, ...questions])
-        message.success('题目创建成功')
+        };
+        setQuestions([newQuestion, ...questions]);
+        message.success('题目创建成功');
       }
-      setQuestionModalVisible(false)
+      setQuestionModalVisible(false);
     } catch (error) {
-      message.error('保存失败')
+      message.error('保存失败');
     }
-  }
+  };
 
   const handleImportComplete = (importedQuestions: any[]) => {
     const newQuestions = importedQuestions.map(q => ({
       id: Date.now() + Math.random(), // 临时ID
       ...q,
       created_at: new Date().toISOString().split('T')[0]
-    }))
-    setQuestions([...newQuestions, ...questions])
-    setQuestionImportVisible(false)
-    message.success(`成功导入 ${importedQuestions.length} 道题目`)
-  }
+    }));
+    setQuestions([...newQuestions, ...questions]);
+    setQuestionImportVisible(false);
+    message.success(`成功导入 ${importedQuestions.length} 道题目`);
+  };
 
   return (
     <div>
@@ -614,7 +614,7 @@ const ExamManagement: React.FC = () => {
         onImportComplete={handleImportComplete}
       />
     </div>
-  )
-}
+  );
+};
 
-export default ExamManagement
+export default ExamManagement;

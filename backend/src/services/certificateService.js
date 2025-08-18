@@ -3,60 +3,60 @@ const QRCode = require('qrcode');
 const moment = require('moment');
 const path = require('path');
 const fs = require('fs').promises;
-const { v4: uuidv4 } = require('uuid');
+// const { v4: uuidv4 } = require('uuid');
 
 class CertificateService {
-    constructor() {
-        this.uploadDir = path.join(__dirname, '../../uploads/certificates');
-        this.ensureUploadDir();
-    }
+  constructor() {
+    this.uploadDir = path.join(__dirname, '../../uploads/certificates');
+    this.ensureUploadDir();
+  }
 
-    async ensureUploadDir() {
-        try {
-            await fs.access(this.uploadDir);
-        } catch {
-            await fs.mkdir(this.uploadDir, { recursive: true });
-        }
+  async ensureUploadDir() {
+    try {
+      await fs.access(this.uploadDir);
+    } catch {
+      await fs.mkdir(this.uploadDir, { recursive: true });
     }
+  }
 
-    // 生成证书编号
-    generateCertNumber() {
-        const year = new Date().getFullYear();
-        const randomNum = Math.random().toString(36).substr(2, 8).toUpperCase();
-        return `GY-${year}-${randomNum}`;
-    }
+  // 生成证书编号
+  generateCertNumber() {
+    const year = new Date().getFullYear();
+    const randomNum = Math.random().toString(36).substr(2, 8).toUpperCase();
+    return `GY-${year}-${randomNum}`;
+  }
 
-    // 生成二维码
-    async generateQRCode(certNumber) {
-        const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${certNumber}`;
-        return await QRCode.toDataURL(verifyUrl, {
-            width: 120,
-            margin: 1,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            }
-        });
-    }
+  // 生成二维码
+  async generateQRCode(certNumber) {
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${certNumber}`;
+    return await QRCode.toDataURL(verifyUrl, {
+      width: 120,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+  }
 
-    // 根据分数获取等级
-    getGradeLevel(score) {
-        if (score >= 90) return { level: '优秀', color: '#ff6b6b' };
-        if (score >= 80) return { level: '良好', color: '#4ecdc4' };
-        if (score >= 70) return { level: '及格', color: '#45b7d1' };
-        return { level: '待提高', color: '#96ceb4' };
-    }
+  // 根据分数获取等级
+  getGradeLevel(score) {
+    if (score >= 90) return { level: '优秀', color: '#ff6b6b' };
+    if (score >= 80) return { level: '良好', color: '#4ecdc4' };
+    if (score >= 70) return { level: '及格', color: '#45b7d1' };
+    return { level: '待提高', color: '#96ceb4' };
+  }
 
-    // 生成证书HTML模板
-    async generateCertificateHTML(data) {
-        const { studentName, examName, examDate, score, certNumber, issueDate } = data;
-        const qrCodeDataURL = await this.generateQRCode(certNumber);
-        const gradeInfo = this.getGradeLevel(score);
+  // 生成证书HTML模板
+  async generateCertificateHTML(data) {
+    const { studentName, examName, examDate, score, certNumber, issueDate } = data;
+    const qrCodeDataURL = await this.generateQRCode(certNumber);
+    const gradeInfo = this.getGradeLevel(score);
         
-        const formattedExamDate = moment(examDate).format('YYYY年MM月DD日');
-        const formattedIssueDate = moment(issueDate).format('YYYY年MM月DD日');
+    const formattedExamDate = moment(examDate).format('YYYY年MM月DD日');
+    const formattedIssueDate = moment(issueDate).format('YYYY年MM月DD日');
 
-        return `
+    return `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -345,60 +345,60 @@ class CertificateService {
     </div>
 </body>
 </html>`;
-    }
+  }
 
-    // 生成PDF证书
-    async generateCertificatePDF(data) {
-        const html = await this.generateCertificateHTML(data);
-        const fileName = `certificate_${data.certNumber}.pdf`;
-        const filePath = path.join(this.uploadDir, fileName);
+  // 生成PDF证书
+  async generateCertificatePDF(data) {
+    const html = await this.generateCertificateHTML(data);
+    const fileName = `certificate_${data.certNumber}.pdf`;
+    const filePath = path.join(this.uploadDir, fileName);
 
-        const browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 
-        try {
-            const page = await browser.newPage();
-            await page.setContent(html, { waitUntil: 'networkidle0' });
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
             
-            await page.pdf({
-                path: filePath,
-                format: 'A4',
-                landscape: true,
-                printBackground: true,
-                margin: {
-                    top: '10mm',
-                    right: '10mm',
-                    bottom: '10mm',
-                    left: '10mm'
-                }
-            });
-
-            return {
-                fileName,
-                filePath,
-                relativePath: `/uploads/certificates/${fileName}`
-            };
-        } finally {
-            await browser.close();
+      await page.pdf({
+        path: filePath,
+        format: 'A4',
+        landscape: true,
+        printBackground: true,
+        margin: {
+          top: '10mm',
+          right: '10mm',
+          bottom: '10mm',
+          left: '10mm'
         }
-    }
+      });
 
-    // 生成证书数据
-    async createCertificateData(student, exam, score) {
-        const certNumber = this.generateCertNumber();
-        const issueDate = new Date();
-
-        return {
-            studentName: student.real_name || student.username,
-            examName: exam.title,
-            examDate: exam.start_time,
-            score: score,
-            certNumber: certNumber,
-            issueDate: issueDate
-        };
+      return {
+        fileName,
+        filePath,
+        relativePath: `/uploads/certificates/${fileName}`
+      };
+    } finally {
+      await browser.close();
     }
+  }
+
+  // 生成证书数据
+  async createCertificateData(student, exam, score) {
+    const certNumber = this.generateCertNumber();
+    const issueDate = new Date();
+
+    return {
+      studentName: student.real_name || student.username,
+      examName: exam.title,
+      examDate: exam.start_time,
+      score: score,
+      certNumber: certNumber,
+      issueDate: issueDate
+    };
+  }
 }
 
 module.exports = new CertificateService();
