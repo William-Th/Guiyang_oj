@@ -24,6 +24,7 @@ import {
   DownloadOutlined,
   SafetyCertificateOutlined
 } from '@ant-design/icons';
+import { message } from 'antd';
 import moment from 'moment';
 import { certificateAPI } from '../services/api';
 
@@ -89,16 +90,20 @@ const CertificateVerifyPage: React.FC = () => {
       const response = await certificateAPI.download(verifyResult.certificate.cert_no);
       
       // 创建下载链接
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/html' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `certificate_${verifyResult.certificate.cert_no}.pdf`);
+      link.setAttribute('download', `certificate_${verifyResult.certificate.cert_no}.html`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      
+      // 显示下载成功提示
+      message.success('证书下载成功！提示：打开下载的HTML文件，使用浏览器"打印"功能可保存为PDF');
     } catch (error) {
       console.error('下载证书失败:', error);
+      message.error('下载证书失败，请稍后重试');
     }
   };
 
@@ -156,7 +161,7 @@ const CertificateVerifyPage: React.FC = () => {
           <div>
             <p>• 请输入完整的证书编号进行验证</p>
             <p>• 证书编号格式：GY-年份-8位字符（如：GY-2025-ABC12345）</p>
-            <p>• 验证成功后可查看证书详细信息并下载PDF文件</p>
+            <p>• 验证成功后可查看证书详细信息并下载证书文件（可保存为PDF）</p>
             <p>• 如有疑问，请联系贵阳市教育局</p>
           </div>
         }
@@ -241,7 +246,7 @@ const CertificateVerifyPage: React.FC = () => {
                   icon={<DownloadOutlined />}
                   onClick={handleDownload}
                 >
-                  下载证书PDF
+                  下载证书文件
                 </Button>
                 <Button onClick={() => window.print()}>
                   打印此页

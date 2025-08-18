@@ -1,6 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const Certificate = require('../models/Certificate');
+const path = require('path');
+const fs = require('fs').promises;
+
+// 公开的证书下载端点（无需认证）
+router.get('/download/:certNumber', async (req, res) => {
+  try {
+    const { certNumber } = req.params;
+    
+    // 验证证书是否存在于数据库
+    const certificate = await Certificate.findByCertNumber(certNumber);
+    if (!certificate) {
+      return res.status(404).json({ message: '证书不存在' });
+    }
+
+    // 构建文件路径
+    const filePath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.html`);
+    
+    // 检查文件是否存在
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ message: '证书文件不存在' });
+    }
+
+    // 设置响应头并发送文件
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename="certificate_${certNumber}.html"`);
+    res.sendFile(filePath);
+
+  } catch (error) {
+    console.error('下载证书失败:', error);
+    res.status(500).json({ message: '下载证书失败', error: error.message });
+  }
+});
 
 // 公开的证书验证端点（无需认证）
 router.get('/verify/:certNumber', async (req, res) => {
@@ -62,7 +96,7 @@ router.post('/test/create', async (req, res) => {
       message: '测试证书创建成功',
       certificate: {
         ...certificate,
-        download_url: `/uploads/certificates/certificate_${certificate.cert_no}.html`,
+        download_url: `/api/certificate/download/${certificate.cert_no}`,
         verify_url: `/api/certificate/verify/${certificate.cert_no}`
       }
     });

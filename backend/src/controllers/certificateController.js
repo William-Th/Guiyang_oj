@@ -104,8 +104,8 @@ const downloadCertificate = async (req, res) => {
       return res.status(404).json({ message: '证书文件不存在' });
     }
 
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `inline; filename="certificate_${certNumber}.html"`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.html"`);
     res.sendFile(filePath);
 
   } catch (error) {
