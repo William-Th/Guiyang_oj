@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Menu, Avatar, Dropdown, Space } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Space, Button } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   HomeOutlined,
@@ -8,6 +8,7 @@ import {
   UserOutlined,
   LogoutOutlined,
   DashboardOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
@@ -25,6 +26,7 @@ const MainLayout: React.FC = () => {
     { key: '/', icon: <HomeOutlined />, label: '首页' },
     { key: '/exams', icon: <FileTextOutlined />, label: '考试中心' },
     { key: '/results', icon: <TrophyOutlined />, label: '成绩查询' },
+    { key: '/verify', icon: <SafetyCertificateOutlined />, label: '证书验证' },
   ];
 
   if (user?.role === 'admin' || user?.role === 'teacher') {
@@ -75,7 +77,19 @@ const MainLayout: React.FC = () => {
         </div>
       </Content>
       <Footer style={{ textAlign: 'center', background: '#f0f2f5' }}>
-        贵阳市教育局 ©2024 小学生测评服务平台
+        <div>
+          贵阳市教育局 ©2024 小学生测评服务平台
+        </div>
+        <div style={{ marginTop: '8px' }}>
+          <Button 
+            type="link" 
+            size="small" 
+            onClick={() => navigate('/verify')}
+            icon={<SafetyCertificateOutlined />}
+          >
+            证书验证
+          </Button>
+        </div>
       </Footer>
     </Layout>
   );

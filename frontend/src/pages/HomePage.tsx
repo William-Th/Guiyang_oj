@@ -116,6 +116,13 @@ const HomePage: React.FC = () => {
           >
             申请证书
           </Button>
+          <Button 
+            size="large" 
+            onClick={() => navigate('/verify')}
+            icon={<SafetyCertificateOutlined />}
+          >
+            证书验证
+          </Button>
         </Space>
       </Card>
 

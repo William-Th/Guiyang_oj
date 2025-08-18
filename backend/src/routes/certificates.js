@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const {
   generateCertificate,
-  downloadCertificate,
+  downloadCertificatePDF,
   verifyCertificate,
   getStudentCertificates,
   getExamCertificates,
@@ -14,11 +14,11 @@ const {
 // 公开路由：证书验证（无需登录）
 router.get('/verify/:certNumber', verifyCertificate);
 
-// 公开路由：证书下载（无需登录，通过证书编号）
-router.get('/download/:certNumber', downloadCertificate);
+// 公开路由：证书下载为PDF（无需登录，通过证书编号）
+router.get('/download/:certNumber', downloadCertificatePDF);
 
 // 需要登录的路由
-router.use(auth);
+router.use(authMiddleware);
 
 // 生成单个证书
 router.post('/generate/:studentExamId', generateCertificate);

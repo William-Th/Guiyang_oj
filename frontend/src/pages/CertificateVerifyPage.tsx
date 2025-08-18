@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
   Form,
@@ -22,8 +22,11 @@ import {
   CloseCircleOutlined,
   SearchOutlined,
   DownloadOutlined,
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  HomeOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons';
+import { message } from 'antd';
 import moment from 'moment';
 import { certificateAPI } from '../services/api';
 
@@ -48,6 +51,7 @@ interface VerifyResult {
 
 const CertificateVerifyPage: React.FC = () => {
   const { certNumber } = useParams<{ certNumber?: string }>();
+  const navigate = useNavigate();
   // const [searchParams] = useSearchParams();
   const [form] = Form.useForm();
   
@@ -74,10 +78,17 @@ const CertificateVerifyPage: React.FC = () => {
       const response = await certificateAPI.verify(numberToVerify);
       setVerifyResult(response.data);
     } catch (error: any) {
-      setVerifyResult({
-        valid: false,
-        message: error.response?.data?.message || '证书验证失败'
-      });
+      if (error.response?.status === 429) {
+        setVerifyResult({
+          valid: false,
+          message: `请求过于频繁，请 ${error.response.data.retryAfter} 秒后再试`
+        });
+      } else {
+        setVerifyResult({
+          valid: false,
+          message: error.response?.data?.message || '证书验证失败'
+        });
+      }
     }
     setLoading(false);
   };
@@ -89,16 +100,20 @@ const CertificateVerifyPage: React.FC = () => {
       const response = await certificateAPI.download(verifyResult.certificate.cert_no);
       
       // 创建下载链接
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/html' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `certificate_${verifyResult.certificate.cert_no}.pdf`);
+      link.setAttribute('download', `certificate_${verifyResult.certificate.cert_no}.html`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      
+      // 显示下载成功提示
+      message.success('证书下载成功！提示：打开下载的HTML文件，使用浏览器"打印"功能可保存为PDF');
     } catch (error) {
       console.error('下载证书失败:', error);
+      message.error('下载证书失败，请稍后重试');
     }
   };
 
@@ -156,7 +171,9 @@ const CertificateVerifyPage: React.FC = () => {
           <div>
             <p>• 请输入完整的证书编号进行验证</p>
             <p>• 证书编号格式：GY-年份-8位字符（如：GY-2025-ABC12345）</p>
-            <p>• 验证成功后可查看证书详细信息并下载PDF文件</p>
+            <p>• 验证成功后可查看证书基本信息确认真伪</p>
+            <p>• <strong>隐私保护：</strong>公开验证时学生姓名将部分隐藏</p>
+            <p>• 如需查看完整信息，请联系颁发机构</p>
             <p>• 如有疑问，请联系贵阳市教育局</p>
           </div>
         }
@@ -208,7 +225,12 @@ const CertificateVerifyPage: React.FC = () => {
                   <Text strong copyable>{certificate.cert_no}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="学生姓名">
-                  <Text strong>{certificate.student_name}</Text>
+                  <Space>
+                    <Text strong>{certificate.student_name}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      (隐私保护)
+                    </Text>
+                  </Space>
                 </Descriptions.Item>
                 <Descriptions.Item label="考试名称">
                   {certificate.exam_name}
@@ -216,20 +238,12 @@ const CertificateVerifyPage: React.FC = () => {
                 <Descriptions.Item label="考试日期">
                   {moment(certificate.exam_date).format('YYYY年MM月DD日')}
                 </Descriptions.Item>
-                <Descriptions.Item label="考试成绩">
-                  <Space>
-                    <Text strong style={{ fontSize: 16 }}>{certificate.score}分</Text>
-                    <Tag color={getLevelColor(certificate.level)}>{certificate.level}</Tag>
-                  </Space>
+                <Descriptions.Item label="成绩等级">
+                  <Tag color={getLevelColor(certificate.level)}>{certificate.level}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="颁发日期">
                   {moment(certificate.issue_date).format('YYYY年MM月DD日')}
                 </Descriptions.Item>
-                {certificate.school_name && (
-                  <Descriptions.Item label="学校">
-                    {certificate.school_name}
-                  </Descriptions.Item>
-                )}
                 <Descriptions.Item label="颁发机构">
                   <Text strong>贵阳市教育局</Text>
                 </Descriptions.Item>
@@ -241,7 +255,7 @@ const CertificateVerifyPage: React.FC = () => {
                   icon={<DownloadOutlined />}
                   onClick={handleDownload}
                 >
-                  下载证书PDF
+                  下载证书文件
                 </Button>
                 <Button onClick={() => window.print()}>
                   打印此页
@@ -279,26 +293,64 @@ const CertificateVerifyPage: React.FC = () => {
 
   return (
     <div style={{ 
-      padding: '24px',
-      maxWidth: 1200,
-      margin: '0 auto',
       background: '#f0f2f5',
       minHeight: '100vh'
     }}>
-      <Title level={2} style={{ textAlign: 'center', marginBottom: 32 }}>
-        贵阳市小学生能力测评证书验证系统
-      </Title>
+      {/* Navigation Header */}
+      <Card style={{ 
+        borderRadius: 0, 
+        borderBottom: '1px solid #d9d9d9',
+        marginBottom: 0
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          maxWidth: 1200,
+          margin: '0 auto'
+        }}>
+          <Title level={3} style={{ margin: 0, color: '#1677ff', cursor: 'pointer' }} onClick={() => navigate('/')}>
+            <HomeOutlined style={{ marginRight: 8 }} />
+            贵阳市小学生测评平台
+          </Title>
+          <Space>
+            <Button 
+              onClick={() => navigate('/')}
+              type="link"
+            >
+              进入平台
+            </Button>
+            <Button 
+              icon={<ArrowLeftOutlined />} 
+              onClick={() => navigate('/')}
+              type="primary"
+            >
+              返回主页
+            </Button>
+          </Space>
+        </div>
+      </Card>
+
+      <div style={{ 
+        padding: '24px',
+        maxWidth: 1200,
+        margin: '0 auto'
+      }}>
+        <Title level={2} style={{ textAlign: 'center', marginBottom: 32 }}>
+          证书验证系统
+        </Title>
       
       <Spin spinning={loading}>
         {renderSearchForm()}
         {renderVerifyResult()}
       </Spin>
       
-      <Card style={{ marginTop: 24, textAlign: 'center' }}>
-        <Text type="secondary">
-          贵阳市教育局出品 | 技术支持：贵阳市小学生测评平台
-        </Text>
-      </Card>
+        <Card style={{ marginTop: 24, textAlign: 'center' }}>
+          <Text type="secondary">
+            贵阳市教育局出品 | 技术支持：贵阳市小学生测评平台
+          </Text>
+        </Card>
+      </div>
     </div>
   );
 };
