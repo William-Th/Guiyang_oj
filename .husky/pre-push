@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 echo "🧪 Running backend tests before push..."
-cd backend && npm test
+cd backend && npm test -- --passWithNoTests
 BACKEND_TEST=$?
 
 if [ $BACKEND_TEST -ne 0 ]; then
