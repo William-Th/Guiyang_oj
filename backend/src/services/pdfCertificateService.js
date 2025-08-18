@@ -1,29 +1,36 @@
-const htmlPdf = require('html-pdf-node');
+const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs').promises;
 
 class PDFCertificateService {
   // Generate PDF from HTML certificate
   async generatePDF(certificateData) {
+    let browser;
     try {
       // Generate HTML content
       const htmlContent = this.generateCertificateHTML(certificateData);
       
-      // Configure PDF options
-      const options = {
+      // Launch Puppeteer
+      browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      
+      // Generate PDF buffer
+      const pdfBuffer = await page.pdf({
         format: 'A4',
         landscape: true,
         printBackground: true,
         margin: {
           top: '20mm',
-          right: '20mm',
+          right: '20mm', 
           bottom: '20mm',
           left: '20mm'
         }
-      };
-
-      // Generate PDF buffer
-      const pdfBuffer = await htmlPdf.generatePdf({ content: htmlContent }, options);
+      });
 
       // Save PDF file
       const fileName = `certificate_${certificateData.certNumber}.pdf`;
@@ -44,6 +51,10 @@ class PDFCertificateService {
     } catch (error) {
       console.error('PDF generation error:', error);
       throw error;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 
@@ -273,6 +284,32 @@ class PDFCertificateService {
     } else {
       return { level: '待提高', color: '#faad14' };
     }
+  }
+
+  // Generate both HTML and PDF formats for certificate
+  async generateBothFormats(certificateData) {
+    const htmlContent = this.generateCertificateHTML(certificateData);
+    const uploadsDir = path.join(__dirname, '../../uploads/certificates');
+    
+    // Ensure directory exists
+    await fs.mkdir(uploadsDir, { recursive: true });
+    
+    // Save HTML file
+    const htmlFileName = `certificate_${certificateData.certNumber}.html`;
+    const htmlFilePath = path.join(uploadsDir, htmlFileName);
+    await fs.writeFile(htmlFilePath, htmlContent, 'utf8');
+    
+    // Generate and save PDF
+    const pdfResult = await this.generatePDF(certificateData);
+    
+    return {
+      html: {
+        fileName: htmlFileName,
+        filePath: htmlFilePath,
+        relativePath: `/uploads/certificates/${htmlFileName}`
+      },
+      pdf: pdfResult
+    };
   }
 }
 

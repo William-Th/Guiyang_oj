@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Certificate = require('../models/Certificate');
-const path = require('path');
-const fs = require('fs').promises;
 
 // 简单的内存存储限速器
 const rateLimitMap = new Map();
@@ -57,42 +55,22 @@ const verifyRateLimit = (req, res, next) => {
   next();
 };
 
-// 公开的证书下载端点（无需认证）
-router.get('/download/:certNumber', async (req, res) => {
-  try {
-    const { certNumber } = req.params;
-    
-    // 验证证书是否存在于数据库
-    const certificate = await Certificate.findByCertNumber(certNumber);
-    if (!certificate) {
-      return res.status(404).json({ message: '证书不存在' });
-    }
-
-    // 构建文件路径
-    const filePath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.html`);
-    
-    // 检查文件是否存在
-    try {
-      await fs.access(filePath);
-    } catch {
-      return res.status(404).json({ message: '证书文件不存在' });
-    }
-
-    // 设置响应头并发送文件
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Content-Disposition', `inline; filename="certificate_${certNumber}.html"`);
-    res.sendFile(filePath);
-
-  } catch (error) {
-    console.error('下载证书失败:', error);
-    res.status(500).json({ message: '下载证书失败', error: error.message });
-  }
+// 注意: 证书下载功能已移至 /api/certificates/download/:certNumber
+// 这里保留重定向以保持向后兼容性
+router.get('/download/:certNumber', (req, res) => {
+  const { certNumber } = req.params;
+  res.redirect(301, `/api/certificates/download/${certNumber}`);
 });
 
 // 公开的证书验证端点（无需认证）- 带限速保护
 router.get('/verify/:certNumber', verifyRateLimit, async (req, res) => {
   try {
     const { certNumber } = req.params;
+    
+    // 验证证书编号格式 - 防止路径遍历攻击
+    if (!/^GY-\d{4}-[A-Z0-9]{8}$/.test(certNumber)) {
+      return res.status(400).json({ message: '无效的证书编号格式' });
+    }
         
     const result = await Certificate.verifyCertificate(certNumber);
         
@@ -111,7 +89,7 @@ router.get('/verify/:certNumber', verifyRateLimit, async (req, res) => {
 
   } catch (error) {
     console.error('验证证书失败:', error);
-    res.status(500).json({ message: '验证证书失败', error: error.message });
+    res.status(500).json({ message: '验证证书失败' });
   }
 });
 
@@ -134,10 +112,13 @@ router.post('/test/create', async (req, res) => {
     const fileResult = await certificateService.generateCertificateFile(testData);
     const gradeInfo = certificateService.getGradeLevel(testData.score);
 
-    // 保存到数据库
+    // 保存到数据库  
+    const testStudentId = process.env.TEST_STUDENT_ID || 4;
+    const testExamId = process.env.TEST_EXAM_ID || 1;
+    
     const certificate = await Certificate.create({
-      student_id: 4, // 使用存在的学生ID
-      exam_id: 1,    // 使用存在的考试ID
+      student_id: testStudentId,
+      exam_id: testExamId,
       cert_no: testData.certNumber,
       issue_date: testData.issueDate,
       level: gradeInfo.level,
@@ -156,7 +137,7 @@ router.post('/test/create', async (req, res) => {
 
   } catch (error) {
     console.error('创建测试证书失败:', error);
-    res.status(500).json({ message: '创建测试证书失败', error: error.message });
+    res.status(500).json({ message: '创建测试证书失败' });
   }
 });
 

@@ -55,8 +55,16 @@ const generateCertificate = async (req, res) => {
       studentExam.score
     );
 
-    // 生成证书文件
+    // 生成证书文件 (HTML for verification, PDF for download)  
     const fileResult = await certificateService.generateCertificateFile(certificateData);
+    
+    // Generate PDF version using the new PDF service
+    const pdfService = require('../services/pdfCertificateService');
+    try {
+      await pdfService.generatePDF(certificateData);
+    } catch (pdfError) {
+      console.warn('PDF generation failed, continuing with HTML only:', pdfError);
+    }
 
     // 获取等级信息
     const gradeInfo = certificateService.getGradeLevel(studentExam.score);
@@ -82,14 +90,19 @@ const generateCertificate = async (req, res) => {
 
   } catch (error) {
     console.error('生成证书失败:', error);
-    res.status(500).json({ message: '生成证书失败', error: error.message });
+    res.status(500).json({ message: '生成证书失败' });
   }
 };
 
-// 下载证书
+// 下载证书 (HTML格式)
 const downloadCertificate = async (req, res) => {
   try {
     const { certNumber } = req.params;
+    
+    // 验证证书编号格式 - 防止路径遍历攻击
+    if (!/^GY-\d{4}-[A-Z0-9]{8}$/.test(certNumber)) {
+      return res.status(400).json({ message: '无效的证书编号格式' });
+    }
         
     const certificate = await Certificate.findByCertNumber(certNumber);
     if (!certificate) {
@@ -110,7 +123,58 @@ const downloadCertificate = async (req, res) => {
 
   } catch (error) {
     console.error('下载证书失败:', error);
-    res.status(500).json({ message: '下载证书失败', error: error.message });
+    res.status(500).json({ message: '下载证书失败' });
+  }
+};
+
+// 下载证书 (PDF格式)
+const downloadCertificatePDF = async (req, res) => {
+  try {
+    const { certNumber } = req.params;
+    
+    // 验证证书编号格式 - 防止路径遍历攻击
+    if (!/^GY-\d{4}-[A-Z0-9]{8}$/.test(certNumber)) {
+      return res.status(400).json({ message: '无效的证书编号格式' });
+    }
+        
+    const certificate = await Certificate.findByCertNumber(certNumber);
+    if (!certificate) {
+      return res.status(404).json({ message: '证书不存在' });
+    }
+
+    const pdfPath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.pdf`);
+        
+    try {
+      await fs.access(pdfPath);
+    } catch {
+      // PDF doesn't exist, try to generate it from HTML
+      const pdfService = require('../services/pdfCertificateService');
+      
+      // Get certificate data for PDF generation
+      const certificateData = {
+        certNumber: certificate.cert_no,
+        studentName: certificate.student_name || '学生姓名',
+        examName: certificate.exam_title || '考试名称', 
+        examDate: certificate.exam_date || new Date(),
+        score: certificate.score,
+        issueDate: certificate.issue_date
+      };
+      
+      try {
+        await pdfService.generatePDF(certificateData);
+      } catch (genError) {
+        console.error('PDF generation failed:', genError);
+        return res.status(500).json({ message: 'PDF生成失败，请稍后重试' });
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.pdf"`);
+    res.sendFile(pdfPath);
+
+  } catch (error) {
+    console.error('下载PDF证书失败:', error);
+    res.status(500).json({ message: '下载PDF证书失败' });
   }
 };
 
@@ -118,6 +182,11 @@ const downloadCertificate = async (req, res) => {
 const verifyCertificate = async (req, res) => {
   try {
     const { certNumber } = req.params;
+    
+    // 验证证书编号格式 - 防止路径遍历攻击
+    if (!/^GY-\d{4}-[A-Z0-9]{8}$/.test(certNumber)) {
+      return res.status(400).json({ message: '无效的证书编号格式' });
+    }
         
     const result = await Certificate.verifyCertificate(certNumber);
         
@@ -136,7 +205,7 @@ const verifyCertificate = async (req, res) => {
 
   } catch (error) {
     console.error('验证证书失败:', error);
-    res.status(500).json({ message: '验证证书失败', error: error.message });
+    res.status(500).json({ message: '验证证书失败' });
   }
 };
 
@@ -164,7 +233,7 @@ const getStudentCertificates = async (req, res) => {
 
   } catch (error) {
     console.error('获取学生证书失败:', error);
-    res.status(500).json({ message: '获取学生证书失败', error: error.message });
+    res.status(500).json({ message: '获取学生证书失败' });
   }
 };
 
@@ -192,7 +261,7 @@ const getExamCertificates = async (req, res) => {
 
   } catch (error) {
     console.error('获取考试证书失败:', error);
-    res.status(500).json({ message: '获取考试证书失败', error: error.message });
+    res.status(500).json({ message: '获取考试证书失败' });
   }
 };
 
@@ -288,7 +357,7 @@ const batchGenerateCertificates = async (req, res) => {
 
   } catch (error) {
     console.error('批量生成证书失败:', error);
-    res.status(500).json({ message: '批量生成证书失败', error: error.message });
+    res.status(500).json({ message: '批量生成证书失败' });
   }
 };
 
@@ -319,13 +388,14 @@ const getCertificateStatistics = async (req, res) => {
 
   } catch (error) {
     console.error('获取证书统计失败:', error);
-    res.status(500).json({ message: '获取证书统计失败', error: error.message });
+    res.status(500).json({ message: '获取证书统计失败' });
   }
 };
 
 module.exports = {
   generateCertificate,
   downloadCertificate,
+  downloadCertificatePDF,
   verifyCertificate,
   getStudentCertificates,
   getExamCertificates,
