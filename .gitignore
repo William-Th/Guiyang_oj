@@ -33,6 +33,9 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
+# Claude Code settings
+.claude/settings.local.json
+
 # Test coverage
 coverage/
 *.lcov
