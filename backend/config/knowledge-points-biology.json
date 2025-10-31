@@ -1,0 +1,90 @@
+{
+  "subject": "生物",
+  "subject_code": "biology",
+  "knowledge_points": [
+    {
+      "id": "bio_cell",
+      "name": "细胞",
+      "category": "生命的基本单位",
+      "description": "细胞的结构、功能和分裂"
+    },
+    {
+      "id": "bio_organism",
+      "name": "生物体的结构层次",
+      "category": "生命的基本单位",
+      "description": "细胞、组织、器官、系统"
+    },
+    {
+      "id": "bio_plants",
+      "name": "植物",
+      "category": "生物圈中的生物",
+      "description": "植物的分类、结构和生理"
+    },
+    {
+      "id": "bio_animals",
+      "name": "动物",
+      "category": "生物圈中的生物",
+      "description": "动物的分类、行为和适应"
+    },
+    {
+      "id": "bio_microorganism",
+      "name": "微生物",
+      "category": "生物圈中的生物",
+      "description": "细菌、真菌、病毒"
+    },
+    {
+      "id": "bio_photosynthesis",
+      "name": "光合作用",
+      "category": "生物的生理",
+      "description": "光合作用的过程和意义"
+    },
+    {
+      "id": "bio_respiration",
+      "name": "呼吸作用",
+      "category": "生物的生理",
+      "description": "呼吸作用的过程和意义"
+    },
+    {
+      "id": "bio_nutrition",
+      "name": "营养",
+      "category": "生物的生理",
+      "description": "食物、消化、吸收"
+    },
+    {
+      "id": "bio_circulation",
+      "name": "循环系统",
+      "category": "生物的生理",
+      "description": "血液循环、心脏结构"
+    },
+    {
+      "id": "bio_reproduction",
+      "name": "生殖与发育",
+      "category": "生物的生理",
+      "description": "生殖方式、生长发育过程"
+    },
+    {
+      "id": "bio_heredity",
+      "name": "遗传与变异",
+      "category": "生命的延续",
+      "description": "基因、DNA、遗传规律"
+    },
+    {
+      "id": "bio_evolution",
+      "name": "生物进化",
+      "category": "生命的延续",
+      "description": "进化理论、生物多样性"
+    },
+    {
+      "id": "bio_ecology",
+      "name": "生态系统",
+      "category": "生物与环境",
+      "description": "生态系统的组成、食物链、物质循环"
+    },
+    {
+      "id": "bio_health",
+      "name": "健康生活",
+      "category": "人体生理卫生",
+      "description": "疾病预防、免疫、健康习惯"
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+# Activity 活动管理 E2E 测试文档
+
+## 测试概述
+
+本文档描述Activity（活动管理）系统的E2E测试用例，包括Smoke测试和Regression测试。
+
+## 测试文件位置
+
+- **Smoke Tests**: `tests/e2e/smoke/activity-smoke.spec.ts`
+- **Regression Tests**: `tests/e2e/regression/activity-management.spec.ts`
+
+## Smoke Tests（冒烟测试）
+
+### 测试目标
+快速验证Activity管理的核心功能正常工作。
+
+### 测试用例清单
+
+| 编号 | 测试用例 | 描述 | 角色 |
+|------|---------|------|------|
+| S-A01 | 教师可以访问活动管理页面 | 验证教师能够访问活动管理入口 | 教师 |
+| S-A02 | 教师可以创建练习活动 | 验证教师创建练习活动的完整流程 | 教师 |
+| S-A03 | 教师可以查看活动列表 | 验证活动列表页面正常显示 | 教师 |
+| S-A04 | 教师可以筛选活动 | 验证按类型筛选活动功能 | 教师 |
+| S-A05 | 管理员可以创建测评活动 | 验证管理员创建测评活动（需高级权限） | 管理员 |
+| S-A06 | 管理员可以查看所有活动 | 验证管理员查看和筛选所有活动 | 管理员 |
+
+### 运行命令
+
+```bash
+# 运行所有Smoke测试
+npx playwright test tests/e2e/smoke/activity-smoke.spec.ts
+
+# 运行特定测试用例
+npx playwright test tests/e2e/smoke/activity-smoke.spec.ts --grep "S-A01"
+
+# 带可视化界面运行
+npx playwright test tests/e2e/smoke/activity-smoke.spec.ts --headed
+```
+
+## Regression Tests（回归测试）
+
+### 测试目标
+全面测试Activity管理的完整生命周期和业务流程。
+
+### 测试用例清单
+
+#### 教师 - 练习活动管理
+
+| 编号 | 测试用例 | 描述 | 覆盖功能 |
+|------|---------|------|----------|
+| R-A01 | 创建带完整信息的练习活动 | 创建包含所有字段的练习活动 | 创建功能、表单验证 |
+| R-A02 | 查看活动详情 | 查看活动的基本信息、参与者、统计数据 | 详情页面、Tab切换 |
+| R-A03 | 编辑草稿状态的活动 | 编辑未发布的活动信息 | 编辑功能、状态限制 |
+| R-A04 | 发布活动 | 将草稿活动发布 | 状态变更 |
+| R-A05 | 取消发布活动 | 取消已发布的活动 | 状态回退 |
+| R-A06 | 按类型筛选活动 | 筛选练习类型的活动 | 筛选功能、类型过滤 |
+| R-A07 | 按科目筛选活动 | 按科目筛选活动列表 | 筛选功能、科目过滤 |
+| R-A08 | 按能力等级筛选活动 | 按L1-L7等级筛选 | 筛选功能、等级过滤 |
+| R-A09 | 按状态筛选活动 | 按草稿/已发布等状态筛选 | 筛选功能、状态过滤 |
+| R-A10 | 删除草稿活动 | 删除未发布的活动 | 删除功能、确认对话框 |
+
+#### 管理员 - 测评活动管理
+
+| 编号 | 测试用例 | 描述 | 覆盖功能 |
+|------|---------|------|----------|
+| R-A11 | 管理员创建测评活动 | 创建正式测评活动 | 测评创建、权限验证 |
+| R-A12 | 管理员查看活动统计 | 查看活动的统计数据 | 统计数据展示 |
+
+#### 权限控制验证
+
+| 编号 | 测试用例 | 描述 | 覆盖功能 |
+|------|---------|------|----------|
+| R-A13 | 教师不能创建测评活动 | 验证权限控制正确 | 权限控制、角色限制 |
+
+### 运行命令
+
+```bash
+# 运行所有Regression测试
+npx playwright test tests/e2e/regression/activity-management.spec.ts
+
+# 运行特定测试组
+npx playwright test tests/e2e/regression/activity-management.spec.ts --grep "教师"
+
+# 运行特定测试用例
+npx playwright test tests/e2e/regression/activity-management.spec.ts --grep "R-A01"
+
+# 带可视化界面运行
+npx playwright test tests/e2e/regression/activity-management.spec.ts --headed --timeout 180000
+```
+
+## 测试数据
+
+### 默认测试账号
+
+```typescript
+// 教师账号
+username: 'teacher01'
+password: 'password123'
+
+// 管理员账号
+username: 'admin'
+password: 'password123'
+```
+
+### 测试活动数据示例
+
+```typescript
+{
+  title: 'Regression测试-完整练习-{timestamp}',
+  description: '这是一个包含完整信息的练习活动',
+  subject: '数学',
+  grade: '三年级',
+  abilityLevel: 'L3 - 中级',
+  duration: 45,
+  totalScore: 100,
+  passScore: 60,
+  allowRetake: true,
+  maxAttempts: 3
+}
+```
+
+## 测试要点
+
+### 1. 权限控制
+- **练习活动**: 教师和所有管理员可以创建
+- **测评活动**: 仅区级及以上管理员可以创建 (district_admin, base_school_admin, municipal_school_admin, municipal_admin)
+
+### 2. 状态流转
+- **草稿 (draft)** → 可编辑、可发布、可删除
+- **已发布 (published)** → 可取消发布、不可编辑、不可删除
+- **进行中 (ongoing)** → 不可取消发布、不可编辑、不可删除
+- **已结束 (finished)** → 不可修改
+
+### 3. 能力等级
+- L1 - 基础
+- L2 - 初级
+- L3 - 中级
+- L4 - 中高级
+- L5 - 高级
+- L6 - 优秀
+- L7 - 卓越
+
+### 4. 重做机制
+- `allowRetake`: 是否允许重做
+- `maxAttempts`: 最大尝试次数（1-10次）
+
+## 已知问题和注意事项
+
+### 1. 测试前提条件
+- 确保Docker服务正常运行（frontend, backend, postgres等）
+- 确保有teacher和admin的认证state文件
+- 确保数据库已经执行了Activity系统的迁移脚本
+
+### 2. 测试依赖
+- 测试使用相对独立的数据，通过时间戳确保唯一性
+- 部分测试（如查看、编辑、删除）依赖于先有数据存在
+
+### 3. 超时设置
+- 默认测试超时: 30秒
+- 建议运行Regression测试时使用 `--timeout 180000`（3分钟）
+- 创建活动可能需要较长时间等待表单加载和提交
+
+## 测试覆盖范围
+
+### 功能覆盖
+- ✅ 活动创建（练习和测评）
+- ✅ 活动列表查看
+- ✅ 活动详情查看
+- ✅ 活动编辑
+- ✅ 活动状态管理（发布/取消发布）
+- ✅ 活动筛选（类型、科目、等级、状态）
+- ✅ 活动删除
+- ✅ 权限控制验证
+- ✅ 活动统计数据查看
+- ❌ 学生参与活动流程（待后续添加）
+- ❌ 活动重做机制验证（待后续添加）
+
+### 角色覆盖
+- ✅ 教师角色
+- ✅ 管理员角色
+- ❌ 学生角色（待后续添加）
+
+## 后续测试计划
+
+1. **学生流程测试**
+   - 学生查看可用活动
+   - 学生报名活动
+   - 学生开始活动
+   - 学生提交答案
+   - 查看活动成绩
+
+2. **高级功能测试**
+   - 测评活动的证书配置
+   - 活动的目标受众配置
+   - 活动重做机制完整流程
+   - 活动历史记录查看
+
+3. **性能和边界测试**
+   - 大量活动的列表性能
+   - 筛选功能的性能
+   - 表单验证的边界情况
+
+## 维护说明
+
+### 更新测试
+当Activity功能有变更时，需要同步更新测试用例：
+
+1. 新增功能 → 添加对应的测试用例
+2. UI变更 → 更新选择器和断言
+3. 流程变更 → 调整测试步骤
+4. 权限变更 → 更新权限验证测试
+
+### 测试报告
+测试结果保存在 `tests/test-results/` 目录：
+- HTML报告: `html/index.html`
+- JSON报告: `results.json`
+- 失败截图: `artifacts/`
+
+---
+
+*最后更新时间: 2025-10-21*
+*文档维护者: 开发团队*

@@ -1,0 +1,66 @@
+{
+  "subject": "数学",
+  "subject_code": "math",
+  "knowledge_points": [
+    {
+      "id": "math_number_operations",
+      "name": "数的运算",
+      "category": "数与代数",
+      "description": "整数、小数、分数的四则运算"
+    },
+    {
+      "id": "math_algebra_basics",
+      "name": "代数基础",
+      "category": "数与代数",
+      "description": "代数式、方程与不等式"
+    },
+    {
+      "id": "math_functions",
+      "name": "函数",
+      "category": "数与代数",
+      "description": "函数的概念、性质和图像"
+    },
+    {
+      "id": "math_geometry_plane",
+      "name": "平面几何",
+      "category": "图形与几何",
+      "description": "点、线、面、角、三角形、四边形、圆"
+    },
+    {
+      "id": "math_geometry_solid",
+      "name": "立体几何",
+      "category": "图形与几何",
+      "description": "长方体、正方体、圆柱、圆锥等立体图形"
+    },
+    {
+      "id": "math_measurement",
+      "name": "测量",
+      "category": "图形与几何",
+      "description": "长度、面积、体积、角度的测量"
+    },
+    {
+      "id": "math_statistics",
+      "name": "统计",
+      "category": "统计与概率",
+      "description": "数据收集、整理、分析与展示"
+    },
+    {
+      "id": "math_probability",
+      "name": "概率",
+      "category": "统计与概率",
+      "description": "随机事件与概率计算"
+    },
+    {
+      "id": "math_proportion",
+      "name": "比和比例",
+      "category": "数与代数",
+      "description": "比、比例、百分数的应用"
+    },
+    {
+      "id": "math_patterns",
+      "name": "规律探索",
+      "category": "综合应用",
+      "description": "数字规律、图形规律"
+    }
+  ]
+}

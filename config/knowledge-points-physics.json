@@ -1,0 +1,90 @@
+{
+  "subject": "物理",
+  "subject_code": "physics",
+  "knowledge_points": [
+    {
+      "id": "physics_mechanics_force",
+      "name": "力学-力",
+      "category": "力学",
+      "description": "力的概念、测量、合成与分解"
+    },
+    {
+      "id": "physics_mechanics_motion",
+      "name": "力学-运动",
+      "category": "力学",
+      "description": "速度、加速度、运动的描述"
+    },
+    {
+      "id": "physics_mechanics_work_energy",
+      "name": "功和能",
+      "category": "力学",
+      "description": "功、功率、机械能及其转化"
+    },
+    {
+      "id": "physics_mechanics_pressure",
+      "name": "压强",
+      "category": "力学",
+      "description": "固体压强、液体压强、大气压强"
+    },
+    {
+      "id": "physics_mechanics_buoyancy",
+      "name": "浮力",
+      "category": "力学",
+      "description": "浮力的产生及阿基米德原理"
+    },
+    {
+      "id": "physics_optics_light",
+      "name": "光的传播",
+      "category": "光学",
+      "description": "光的直线传播、反射、折射"
+    },
+    {
+      "id": "physics_optics_lens",
+      "name": "透镜",
+      "category": "光学",
+      "description": "凸透镜、凹透镜及其成像规律"
+    },
+    {
+      "id": "physics_electricity_circuit",
+      "name": "电路",
+      "category": "电学",
+      "description": "电路的组成、串联和并联"
+    },
+    {
+      "id": "physics_electricity_current",
+      "name": "电流与电压",
+      "category": "电学",
+      "description": "电流、电压、电阻及欧姆定律"
+    },
+    {
+      "id": "physics_electricity_power",
+      "name": "电功率",
+      "category": "电学",
+      "description": "电功、电功率、焦耳定律"
+    },
+    {
+      "id": "physics_heat_temperature",
+      "name": "温度与热量",
+      "category": "热学",
+      "description": "温度、热量、比热容"
+    },
+    {
+      "id": "physics_heat_state_change",
+      "name": "物态变化",
+      "category": "热学",
+      "description": "熔化、凝固、汽化、液化、升华、凝华"
+    },
+    {
+      "id": "physics_sound",
+      "name": "声现象",
+      "category": "声学",
+      "description": "声音的产生、传播和特性"
+    },
+    {
+      "id": "physics_magnetism",
+      "name": "磁现象",
+      "category": "电磁学",
+      "description": "磁场、磁感线、电磁感应"
+    }
+  ]
+}

@@ -1,35 +1,31 @@
 import React from 'react';
-import { Form, Input, Button, Card, Tabs, message } from 'antd';
-import { UserOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, Tabs, message, Space, Typography } from 'antd';
+import { UserOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginStart, loginSuccess } from '@/store/authSlice';
+import api from '@/services/api';
 import './LoginPage.css';
+
+const { Text } = Typography;
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [form] = Form.useForm();
+  const [studentForm] = Form.useForm();
+  const [teacherForm] = Form.useForm();
 
   const handleStudentLogin = async (values: any) => {
     dispatch(loginStart());
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: values.idCard, 
-          password: values.password, 
-          loginType: 'idCard' 
-        })
+      const response = await api.post('/auth/login', {
+        username: values.phone,
+        password: values.password,
+        loginType: 'username'
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || '登录失败');
-      }
-      
+
+      const data = response.data;
+
       dispatch(loginSuccess({
         user: data.user,
         token: data.token
@@ -37,29 +33,21 @@ const LoginPage: React.FC = () => {
       message.success(data.message || '登录成功');
       navigate('/');
     } catch (error: any) {
-      message.error(error.message || '登录失败');
+      message.error(error.response?.data?.message || error.message || '登录失败');
     }
   };
 
   const handleTeacherLogin = async (values: any) => {
     dispatch(loginStart());
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: values.username, 
-          password: values.password, 
-          loginType: 'username' 
-        })
+      const response = await api.post('/auth/login', {
+        username: values.username,
+        password: values.password,
+        loginType: 'username'
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || '登录失败');
-      }
-      
+
+      const data = response.data;
+
       dispatch(loginSuccess({
         user: data.user,
         token: data.token
@@ -67,7 +55,7 @@ const LoginPage: React.FC = () => {
       message.success(data.message || '登录成功');
       navigate('/');
     } catch (error: any) {
-      message.error(error.message || '登录失败');
+      message.error(error.response?.data?.message || error.message || '登录失败');
     }
   };
 
@@ -76,17 +64,19 @@ const LoginPage: React.FC = () => {
       <Card className="login-card" title="贵阳市小学生测评平台">
         <Tabs defaultActiveKey="student">
           <Tabs.TabPane tab="学生入口" key="student">
-            <Form form={form} onFinish={handleStudentLogin} size="large">
+            <Form form={studentForm} onFinish={handleStudentLogin} size="large">
               <Form.Item
-                name="idCard"
+                key="student-phone"
+                name="phone"
                 rules={[
-                  { required: true, message: '请输入身份证号' },
-                  { pattern: /^\d{18}$/, message: '请输入正确的身份证号' }
+                  { required: true, message: '请输入手机号' },
+                  { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式' }
                 ]}
               >
-                <Input prefix={<IdcardOutlined />} placeholder="身份证号" />
+                <Input prefix={<PhoneOutlined />} placeholder="手机号" />
               </Form.Item>
               <Form.Item
+                key="student-password"
                 name="password"
                 rules={[{ required: true, message: '请输入密码' }]}
               >
@@ -100,14 +90,16 @@ const LoginPage: React.FC = () => {
             </Form>
           </Tabs.TabPane>
           <Tabs.TabPane tab="教师入口" key="teacher">
-            <Form onFinish={handleTeacherLogin} size="large">
+            <Form form={teacherForm} onFinish={handleTeacherLogin} size="large">
               <Form.Item
+                key="teacher-username"
                 name="username"
                 rules={[{ required: true, message: '请输入用户名' }]}
               >
                 <Input prefix={<UserOutlined />} placeholder="用户名" />
               </Form.Item>
               <Form.Item
+                key="teacher-password"
                 name="password"
                 rules={[{ required: true, message: '请输入密码' }]}
               >
@@ -121,6 +113,16 @@ const LoginPage: React.FC = () => {
             </Form>
           </Tabs.TabPane>
         </Tabs>
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <Space direction="vertical">
+            <Text type="secondary">
+              还没有账号？
+              <Button type="link" onClick={() => navigate('/register')}>
+                学生注册
+              </Button>
+            </Text>
+          </Space>
+        </div>
       </Card>
     </div>
   );

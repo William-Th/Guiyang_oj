@@ -1,0 +1,84 @@
+{
+  "subject": "化学",
+  "subject_code": "chemistry",
+  "knowledge_points": [
+    {
+      "id": "chem_matter_composition",
+      "name": "物质的组成",
+      "category": "物质构成",
+      "description": "分子、原子、离子、元素"
+    },
+    {
+      "id": "chem_matter_classification",
+      "name": "物质的分类",
+      "category": "物质构成",
+      "description": "纯净物与混合物、单质与化合物"
+    },
+    {
+      "id": "chem_matter_structure",
+      "name": "原子结构",
+      "category": "物质构成",
+      "description": "原子核、电子层、元素周期表"
+    },
+    {
+      "id": "chem_chemical_change",
+      "name": "化学变化",
+      "category": "化学反应",
+      "description": "化学反应的本质和特征"
+    },
+    {
+      "id": "chem_reaction_types",
+      "name": "化学反应类型",
+      "category": "化学反应",
+      "description": "化合、分解、置换、复分解反应"
+    },
+    {
+      "id": "chem_reaction_equation",
+      "name": "化学方程式",
+      "category": "化学反应",
+      "description": "化学方程式的书写和配平"
+    },
+    {
+      "id": "chem_oxygen",
+      "name": "氧气",
+      "category": "常见物质",
+      "description": "氧气的性质、制取和用途"
+    },
+    {
+      "id": "chem_water",
+      "name": "水",
+      "category": "常见物质",
+      "description": "水的组成、性质和净化"
+    },
+    {
+      "id": "chem_carbon",
+      "name": "碳和碳的氧化物",
+      "category": "常见物质",
+      "description": "碳单质、二氧化碳、一氧化碳"
+    },
+    {
+      "id": "chem_metal",
+      "name": "金属",
+      "category": "常见物质",
+      "description": "金属的性质、活动性顺序、冶炼"
+    },
+    {
+      "id": "chem_acid_base",
+      "name": "酸碱盐",
+      "category": "常见物质",
+      "description": "酸、碱、盐的性质和相互反应"
+    },
+    {
+      "id": "chem_solution",
+      "name": "溶液",
+      "category": "化学基础",
+      "description": "溶解、溶液、溶解度、浓度"
+    },
+    {
+      "id": "chem_calculation",
+      "name": "化学计算",
+      "category": "化学基础",
+      "description": "相对分子质量、质量分数、化学方程式计算"
+    }
+  ]
+}

@@ -48,11 +48,13 @@ services:
       JWT_SECRET: mgJr+op91DSZOG17gWx2sPYTdbk09DC0AdE7YCtyMtgtVuk/osI14+KW+v3Os3UkfJgp3L5nwmZJugQauLv14g==
       JWT_REFRESH_SECRET: QGVhyNuSuMkl+MO88NAEDZ/yCqXqJWcHzrIoyCTHJX3ukBcTmNDtQHbTYLu2SEDziRA3dmvVM2uhED0O0eGFOQ==
       SESSION_SECRET: 5NaIDq0BGigN3x2FBTkfvfqDtvohHigZmjdss/jGXAQ=
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost,http://127.0.0.1:3000,http://127.0.0.1:80,http://127.0.0.1
     depends_on:
       - postgres
       - redis
     volumes:
       - ./backend:/app
+      - ./config:/app/config
       - /app/node_modules
     networks:
       - guiyang_network
@@ -66,7 +68,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      VITE_API_URL: http://localhost:3001
+      VITE_API_URL: http://localhost
     depends_on:
       - backend
     volumes:

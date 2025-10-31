@@ -1,18 +1,97 @@
 const express = require('express');
 const router = express.Router();
+const { authMiddleware } = require('../middleware/auth');
+const StudentExam = require('../models/StudentExam');
+const Answer = require('../models/Answer');
+const Activity = require('../models/Activity');
 // const path = require('path');
 // const fs = require('fs').promises;
 
 // Get exam results for a student
-router.get('/student/:studentId', (req, res) => {
-  // TODO: Implement get student results
-  res.json({ message: 'Get student results endpoint', studentId: req.params.studentId });
+router.get('/student/:studentId', authMiddleware, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Verify user can access this data
+    if (req.user.role !== 'admin' && req.user.role !== 'teacher' && req.user.id !== parseInt(studentId)) {
+      return res.status(403).json({ message: '没有权限访问此数据' });
+    }
+
+    const results = await StudentExam.getStudentExamHistory(studentId);
+    res.json({ results });
+  } catch (error) {
+    console.error('Get student results error:', error);
+    res.status(500).json({ message: '获取学生成绩失败' });
+  }
 });
 
-// Get exam results
-router.get('/exam/:examId', (req, res) => {
-  // TODO: Implement get exam results
-  res.json({ message: 'Get exam results endpoint', examId: req.params.examId });
+// Get exam results with detailed answers
+router.get('/exam/:examId', authMiddleware, async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const studentId = req.user.id;
+
+    // Get student exam record
+    const studentExam = await StudentExam.findByStudentAndExam(studentId, examId);
+    if (!studentExam) {
+      return res.status(404).json({ message: '未找到考试记录' });
+    }
+
+    // Only allow viewing results if exam is submitted
+    if (studentExam.status !== 'submitted' && studentExam.status !== 'graded') {
+      return res.status(400).json({ message: '考试尚未提交' });
+    }
+
+    // Get activity details
+    const exam = await Activity.findById(examId);
+    if (!exam) {
+      return res.status(404).json({ message: '活动不存在' });
+    }
+
+    // Get answers with question details
+    const answers = await Answer.getAnswersByStudentExam(studentExam.id);
+
+    // Calculate statistics
+    const correctAnswers = answers.filter(a => a.is_correct === true).length;
+    const wrongAnswers = answers.filter(a => a.is_correct === false).length;
+    const blankAnswers = answers.filter(a => a.is_correct === null).length;
+
+    res.json({
+      exam: {
+        id: exam.id,
+        title: exam.title,
+        subject: exam.subject,
+        grade: exam.grade,
+        duration: exam.duration,
+        totalScore: exam.total_score,
+        passScore: exam.pass_score,
+      },
+      result: {
+        score: studentExam.score,
+        rank: studentExam.rank,
+        status: studentExam.status,
+        startTime: studentExam.start_time,
+        submitTime: studentExam.submit_time,
+        totalQuestions: answers.length,
+        correctAnswers,
+        wrongAnswers,
+        blankAnswers,
+      },
+      answers: answers.map(a => ({
+        questionId: a.question_id,
+        questionType: a.question_type,
+        questionContent: a.question_content,
+        yourAnswer: a.answer,
+        correctAnswer: a.correct_answer,
+        isCorrect: a.is_correct,
+        score: a.score,
+        explanation: a.explanation,
+      })),
+    });
+  } catch (error) {
+    console.error('Get exam results error:', error);
+    res.status(500).json({ message: '获取考试成绩失败' });
+  }
 });
 
 // Get statistics for an exam
