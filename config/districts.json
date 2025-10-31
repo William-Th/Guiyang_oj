@@ -1,0 +1,17 @@
+{
+  "districts": [
+    {"code": "YY", "name": "云岩区"},
+    {"code": "NM", "name": "南明区"},
+    {"code": "GSH", "name": "观山湖区"},
+    {"code": "BY", "name": "白云区"},
+    {"code": "HX", "name": "花溪区"},
+    {"code": "WD", "name": "乌当区"},
+    {"code": "GYSJ", "name": "贵阳市教育局"},
+    {"code": "QZ", "name": "清镇市"},
+    {"code": "XW", "name": "修文县"},
+    {"code": "XF", "name": "息烽县"},
+    {"code": "KY", "name": "开阳县"},
+    {"code": "GAXQ", "name": "贵安新区"},
+    {"code": "GYSZSX", "name": "贵阳市直属学校"}
+  ]
+}

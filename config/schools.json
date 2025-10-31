@@ -1,0 +1,117 @@
+{
+  "schools": [
+    {
+      "districtId": "YY",
+      "districtName": "云岩区",
+      "schools": [
+        {"code": "GY001", "name": "贵阳市第一小学"},
+        {"code": "YY-PS-01", "name": "云岩区第一小学"},
+        {"code": "YY-MS-01", "name": "云岩区第一中学"},
+        {"code": "YY-HS-01", "name": "云岩区第一高中"}
+      ]
+    },
+    {
+      "districtId": "NM",
+      "districtName": "南明区",
+      "schools": [
+        {"code": "GY002", "name": "贵阳市第二小学"},
+        {"code": "NM-PS-01", "name": "南明区第一小学"},
+        {"code": "NM-MS-01", "name": "南明区第一中学"},
+        {"code": "NM-HS-01", "name": "南明区第一高中"}
+      ]
+    },
+    {
+      "districtId": "GSH",
+      "districtName": "观山湖区",
+      "schools": [
+        {"code": "GY003", "name": "贵阳市实验小学"},
+        {"code": "GSH-PS-01", "name": "观山湖区第一小学"},
+        {"code": "GSH-MS-01", "name": "观山湖区第一中学"},
+        {"code": "GSH-HS-01", "name": "观山湖区第一高中"},
+        {"code": "GY005", "name": "贵阳市信息技术基地校"}
+      ]
+    },
+    {
+      "districtId": "BY",
+      "districtName": "白云区",
+      "schools": [
+        {"code": "GY004", "name": "贵阳市第三小学"},
+        {"code": "BY-PS-01", "name": "白云区第一小学"},
+        {"code": "BY-MS-01", "name": "白云区第一中学"},
+        {"code": "BY-HS-01", "name": "白云区第一高中"}
+      ]
+    },
+    {
+      "districtId": "HX",
+      "districtName": "花溪区",
+      "schools": [
+        {"code": "HX-PS-01", "name": "花溪区第一小学"},
+        {"code": "HX-MS-01", "name": "花溪区第一中学"},
+        {"code": "HX-HS-01", "name": "花溪区第一高中"}
+      ]
+    },
+    {
+      "districtId": "WD",
+      "districtName": "乌当区",
+      "schools": [
+        {"code": "WD-PS-01", "name": "乌当区第一小学"},
+        {"code": "WD-MS-01", "name": "乌当区第一中学"},
+        {"code": "WD-HS-01", "name": "乌当区第一高中"}
+      ]
+    },
+    {
+      "districtId": "QZ",
+      "districtName": "清镇市",
+      "schools": [
+        {"code": "QZ-PS-01", "name": "清镇市第一小学"},
+        {"code": "QZ-MS-01", "name": "清镇市第一中学"},
+        {"code": "QZ-HS-01", "name": "清镇市第一高中"}
+      ]
+    },
+    {
+      "districtId": "XW",
+      "districtName": "修文县",
+      "schools": [
+        {"code": "XW-PS-01", "name": "修文县第一小学"},
+        {"code": "XW-MS-01", "name": "修文县第一中学"},
+        {"code": "XW-HS-01", "name": "修文县第一高中"}
+      ]
+    },
+    {
+      "districtId": "XF",
+      "districtName": "息烽县",
+      "schools": [
+        {"code": "XF-PS-01", "name": "息烽县第一小学"},
+        {"code": "XF-MS-01", "name": "息烽县第一中学"},
+        {"code": "XF-HS-01", "name": "息烽县第一高中"}
+      ]
+    },
+    {
+      "districtId": "KY",
+      "districtName": "开阳县",
+      "schools": [
+        {"code": "KY-PS-01", "name": "开阳县第一小学"},
+        {"code": "KY-MS-01", "name": "开阳县第一中学"},
+        {"code": "KY-HS-01", "name": "开阳县第一高中"}
+      ]
+    },
+    {
+      "districtId": "GAXQ",
+      "districtName": "贵安新区",
+      "schools": [
+        {"code": "GAXQ-PS-01", "name": "贵安新区第一小学"},
+        {"code": "GAXQ-MS-01", "name": "贵安新区第一中学"},
+        {"code": "GAXQ-HS-01", "name": "贵安新区第一高中"}
+      ]
+    },
+    {
+      "districtId": "GYSZSX",
+      "districtName": "贵阳市直属学校",
+      "schools": [
+        {"code": "GYSZSX-PS-01", "name": "贵阳市直属第一小学"},
+        {"code": "GYSZSX-MS-01", "name": "贵阳市直属第一中学"},
+        {"code": "GYSZSX-HS-01", "name": "贵阳市直属第一高中"}
+      ]
+    }
+  ]
+}

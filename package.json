@@ -2,9 +2,43 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@playwright/test": "^1.55.1",
     "husky": "^9.1.7"
   },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:smoke": "bash run-smoke-tests.sh",
+    "test:smoke:api": "node tests/api/smoke-test.js",
+    "test:smoke:frontend": "node tests/frontend/smoke-test.js",
+    "test:smoke:e2e": "playwright test tests/e2e/smoke --config=tests/playwright.config.ts",
+    "test:smoke:e2e:headed": "playwright test tests/e2e/smoke --config=tests/playwright.config.ts --headed",
+    "test:regression": "playwright test tests/e2e/regression --config=tests/playwright.config.ts",
+    "test:regression:headed": "playwright test tests/e2e/regression --config=tests/playwright.config.ts --headed",
+    "test:e2e": "playwright test --config=tests/playwright.config.ts",
+    "test:e2e:ui": "playwright test --config=tests/playwright.config.ts --ui",
+    "test:e2e:headed": "playwright test --config=tests/playwright.config.ts --headed",
+    "test:e2e:debug": "playwright test --config=tests/playwright.config.ts --debug",
+    "test:e2e:report": "playwright show-report tests/test-results/html",
+    "test:install": "playwright install"
+  },
+  "name": "git",
+  "version": "1.0.0",
+  "description": "一个为贵阳市小学生设计的在线测评服务平台，支持多科目在线考试、自动评分、成绩查询和证书生成等功能。",
+  "main": "commitlint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huangbow/guiyang_oj.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/huangbow/guiyang_oj/issues"
+  },
+  "homepage": "https://github.com/huangbow/guiyang_oj#readme",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "pg": "^8.16.3",
+    "playwright": "^1.55.1"
   }
 }

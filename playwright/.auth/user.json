@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost",
+      "localStorage": [
+        {
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjExLCJ1c2VybmFtZSI6IjUyMDEwMjIwMDgwMTAxMTIzNCIsInJvbGUiOiJzdHVkZW50IiwiaWF0IjoxNzYwODAwOTIxLCJleHAiOjE3NjE0MDU3MjF9._XvrP4uuCCGu17kEfIm1La9tmbFOBgwZP1ZVJ73fQmI"
+        },
+        {
+          "name": "user",
+          "value": "{\"id\":11,\"username\":\"520102200801011234\",\"role\":\"student\",\"realName\":\"张小明\",\"idCard\":\"520102200801011234\"}"
+        }
+      ]
+    }
+  ]
+}

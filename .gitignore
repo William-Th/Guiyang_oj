@@ -78,5 +78,14 @@ public/uploads/
 *.bak
 backup/
 
+# Playwright
+/tests/test-results/
+/tests/.auth/
+/playwright-report/
+/playwright/.cache/
+/screenshots/
+
 # Playwright MCP
 .playwright-mcp/
+documents/status/
+nul
