@@ -1,0 +1,84 @@
+{
+  "roleHierarchy": {
+    "level5": {
+      "code": "system_admin",
+      "name": "系统总管理员",
+      "level": 5,
+      "description": "系统最高权限，可管理所有用户和功能",
+      "permissions": [
+        "manage_all_users",
+        "manage_all_districts",
+        "manage_all_schools",
+        "manage_system_config",
+        "view_all_statistics"
+      ],
+      "canCreate": ["municipal_admin", "district_admin", "school_admin", "teacher"]
+    },
+    "level4": {
+      "code": "municipal_admin",
+      "name": "市级管理员",
+      "level": 4,
+      "description": "贵阳市级管理员，管理全市教育事务",
+      "permissions": [
+        "manage_districts",
+        "manage_district_admins",
+        "view_city_statistics",
+        "manage_municipal_schools"
+      ],
+      "canCreate": ["district_admin", "school_admin", "teacher"]
+    },
+    "level3": {
+      "code": "district_admin",
+      "name": "区县级管理员",
+      "level": 3,
+      "description": "区县级管理员，管理所辖区域内的学校和教育资源",
+      "permissions": [
+        "manage_schools_in_district",
+        "manage_school_admins",
+        "view_district_statistics",
+        "approve_school_requests"
+      ],
+      "canCreate": ["school_admin", "teacher"]
+    },
+    "level2": {
+      "code": "school_admin",
+      "name": "校级管理员",
+      "level": 2,
+      "description": "学校管理员，管理本校教师和学生",
+      "permissions": [
+        "manage_school_teachers",
+        "manage_school_students",
+        "view_school_statistics",
+        "approve_student_registration"
+      ],
+      "canCreate": ["teacher"]
+    },
+    "level1": {
+      "code": "teacher",
+      "name": "教师账号",
+      "level": 1,
+      "description": "教师账号，负责教学和练习活动管理",
+      "permissions": [
+        "manage_practice_activities",
+        "manage_question_bank",
+        "view_student_results",
+        "grade_essays"
+      ],
+      "canCreate": []
+    }
+  },
+  "roleMapping": {
+    "system_admin": "level5",
+    "municipal_admin": "level4",
+    "district_admin": "level3",
+    "school_admin": "level2",
+    "teacher": "level1",
+    "student": "level0"
+  },
+  "metadata": {
+    "totalLevels": 5,
+    "description": "贵阳市小学生测评平台用户角色层级体系",
+    "lastUpdated": "2025-10-27",
+    "notes": "每一级管理员可以创建下一级管理员账号"
+  }
+}

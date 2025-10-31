@@ -1,0 +1,279 @@
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col } from 'antd';
+import { EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { gradingApi } from '../../services/api';
+
+interface PendingSubmission {
+  student_activity_id: number;
+  student_id: number;
+  activity_id: number;
+  status: string;
+  grading_status: string;
+  score: number | null;
+  submit_time: string;
+  attempt_number: number;
+  student_name: string;
+  student_username: string;
+  activity_title: string;
+  activity_type: string;
+  subject: string;
+  grade: string;
+  pending_answers: number;
+  total_answers: number;
+}
+
+const GradingListPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<PendingSubmission[]>([]);
+  const [filters, setFilters] = useState<{
+    activityId?: number;
+    subject?: string;
+    grade?: string;
+    grading_status?: string;
+  }>({});
+
+  useEffect(() => {
+    loadPendingGrading();
+  }, [filters]);
+
+  const loadPendingGrading = async () => {
+    try {
+      setLoading(true);
+      const response = await gradingApi.getPendingGrading(filters);
+      setSubmissions(response.submissions || []);
+    } catch (error: any) {
+      console.error('Load pending grading error:', error);
+      message.error(error.response?.data?.message || '加载待评卷列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGrade = (studentActivityId: number) => {
+    navigate(`/teacher/grading/${studentActivityId}`);
+  };
+
+  const getGradingStatusTag = (status: string) => {
+    const statusMap: Record<string, { color: string; text: string }> = {
+      pending: { color: 'orange', text: '待评卷' },
+      auto_graded: { color: 'blue', text: '自动评分' },
+      partial_graded: { color: 'cyan', text: '部分评分' },
+      completed: { color: 'green', text: '已完成' },
+    };
+    const config = statusMap[status] || { color: 'default', text: status };
+    return <Tag color={config.color}>{config.text}</Tag>;
+  };
+
+  const formatDateTime = (dateTimeString: string) => {
+    if (!dateTimeString) return '-';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const columns = [
+    {
+      title: '活动名称',
+      dataIndex: 'activity_title',
+      key: 'activity_title',
+      width: 200,
+    },
+    {
+      title: '学生',
+      dataIndex: 'student_name',
+      key: 'student_name',
+      width: 120,
+      render: (name: string, record: PendingSubmission) => (
+        <div>
+          <div>{name}</div>
+          <div style={{ fontSize: '12px', color: '#999' }}>{record.student_username}</div>
+        </div>
+      ),
+    },
+    {
+      title: '科目',
+      dataIndex: 'subject',
+      key: 'subject',
+      width: 100,
+    },
+    {
+      title: '年级',
+      dataIndex: 'grade',
+      key: 'grade',
+      width: 100,
+    },
+    {
+      title: '提交时间',
+      dataIndex: 'submit_time',
+      key: 'submit_time',
+      width: 160,
+      render: (time: string) => formatDateTime(time),
+    },
+    {
+      title: '评卷状态',
+      dataIndex: 'grading_status',
+      key: 'grading_status',
+      width: 120,
+      render: (status: string) => getGradingStatusTag(status),
+    },
+    {
+      title: '待评题目',
+      key: 'pending',
+      width: 120,
+      render: (_: any, record: PendingSubmission) => (
+        <span>
+          {record.pending_answers} / {record.total_answers}
+        </span>
+      ),
+    },
+    {
+      title: '当前得分',
+      dataIndex: 'score',
+      key: 'score',
+      width: 100,
+      render: (score: number | null) => score !== null ? score : '-',
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      fixed: 'right' as const,
+      render: (_: any, record: PendingSubmission) => (
+        <Space>
+          <Button
+            size="small"
+            type="primary"
+            icon={<EyeOutlined />}
+            onClick={() => handleGrade(record.student_activity_id)}
+          >
+            评卷
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  // Calculate statistics
+  const stats = {
+    total: submissions.length,
+    pending: submissions.filter(s => s.grading_status === 'pending').length,
+    autoGraded: submissions.filter(s => s.grading_status === 'auto_graded').length,
+    partialGraded: submissions.filter(s => s.grading_status === 'partial_graded').length,
+    completed: submissions.filter(s => s.grading_status === 'completed').length,
+  };
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px 0' }}>
+        <Spin size="large" tip="加载评卷列表中..." />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card>
+            <Statistic title="总提交数" value={stats.total} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="待评卷"
+              value={stats.pending}
+              valueStyle={{ color: '#fa8c16' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="部分评分"
+              value={stats.partialGraded}
+              valueStyle={{ color: '#13c2c2' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="已完成"
+              value={stats.completed}
+              valueStyle={{ color: '#52c41a' }}
+              prefix={<CheckCircleOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card
+        title="待评卷列表"
+        extra={
+          <Space>
+            <Select
+              placeholder="科目"
+              allowClear
+              style={{ width: 120 }}
+              onChange={(value) => setFilters({ ...filters, subject: value })}
+              virtual={false}
+            >
+              <Select.Option value="语文">语文</Select.Option>
+              <Select.Option value="数学">数学</Select.Option>
+              <Select.Option value="英语">英语</Select.Option>
+              <Select.Option value="科学">科学</Select.Option>
+              <Select.Option value="计算机">计算机</Select.Option>
+            </Select>
+            <Select
+              placeholder="年级"
+              allowClear
+              style={{ width: 120 }}
+              onChange={(value) => setFilters({ ...filters, grade: value })}
+              virtual={false}
+            >
+              <Select.Option value="一年级">一年级</Select.Option>
+              <Select.Option value="二年级">二年级</Select.Option>
+              <Select.Option value="三年级">三年级</Select.Option>
+              <Select.Option value="四年级">四年级</Select.Option>
+              <Select.Option value="五年级">五年级</Select.Option>
+              <Select.Option value="六年级">六年级</Select.Option>
+            </Select>
+            <Select
+              placeholder="评卷状态"
+              allowClear
+              style={{ width: 120 }}
+              onChange={(value) => setFilters({ ...filters, grading_status: value })}
+              virtual={false}
+            >
+              <Select.Option value="pending">待评卷</Select.Option>
+              <Select.Option value="auto_graded">自动评分</Select.Option>
+              <Select.Option value="partial_graded">部分评分</Select.Option>
+            </Select>
+          </Space>
+        }
+      >
+        <Table
+          columns={columns}
+          dataSource={submissions}
+          rowKey="student_activity_id"
+          scroll={{ x: 1200 }}
+          locale={{ emptyText: '暂无待评卷提交' }}
+          pagination={{
+            showSizeChanger: true,
+            showTotal: (total) => `共 ${total} 个提交`,
+          }}
+        />
+      </Card>
+    </div>
+  );
+};
+
+export default GradingListPage;

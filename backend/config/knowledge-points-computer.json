@@ -1,0 +1,102 @@
+{
+  "subject": "计算机",
+  "subject_code": "computer",
+  "knowledge_points": [
+    {
+      "id": "cs_basics",
+      "name": "计算机基础",
+      "category": "计算机系统",
+      "description": "计算机的组成、工作原理、发展历史"
+    },
+    {
+      "id": "cs_operating_system",
+      "name": "操作系统",
+      "category": "计算机系统",
+      "description": "操作系统的功能和基本操作"
+    },
+    {
+      "id": "cs_file_management",
+      "name": "文件管理",
+      "category": "计算机系统",
+      "description": "文件和文件夹的创建、管理"
+    },
+    {
+      "id": "cs_network_basics",
+      "name": "网络基础",
+      "category": "网络与通信",
+      "description": "计算机网络、互联网、网络协议"
+    },
+    {
+      "id": "cs_internet_security",
+      "name": "网络安全",
+      "category": "网络与通信",
+      "description": "信息安全、网络道德、隐私保护"
+    },
+    {
+      "id": "cs_programming_basics",
+      "name": "编程基础",
+      "category": "编程",
+      "description": "程序、算法、编程语言基本概念"
+    },
+    {
+      "id": "cs_variables_datatypes",
+      "name": "变量与数据类型",
+      "category": "编程",
+      "description": "变量、常量、基本数据类型"
+    },
+    {
+      "id": "cs_control_structures",
+      "name": "控制结构",
+      "category": "编程",
+      "description": "顺序、分支、循环结构"
+    },
+    {
+      "id": "cs_functions",
+      "name": "函数与模块",
+      "category": "编程",
+      "description": "函数定义、调用、参数、返回值"
+    },
+    {
+      "id": "cs_data_structures",
+      "name": "数据结构",
+      "category": "编程",
+      "description": "数组、列表、字典等基本数据结构"
+    },
+    {
+      "id": "cs_algorithms",
+      "name": "算法设计",
+      "category": "算法",
+      "description": "排序、查找等基本算法"
+    },
+    {
+      "id": "cs_problem_solving",
+      "name": "问题分析与解决",
+      "category": "算法",
+      "description": "问题分解、算法设计方法"
+    },
+    {
+      "id": "cs_scratch",
+      "name": "图形化编程",
+      "category": "编程工具",
+      "description": "Scratch等图形化编程工具的使用"
+    },
+    {
+      "id": "cs_python",
+      "name": "Python编程",
+      "category": "编程工具",
+      "description": "Python语言的基本语法和应用"
+    },
+    {
+      "id": "cs_multimedia",
+      "name": "多媒体技术",
+      "category": "信息技术应用",
+      "description": "图像、音频、视频的处理"
+    },
+    {
+      "id": "cs_office_software",
+      "name": "办公软件",
+      "category": "信息技术应用",
+      "description": "文字处理、电子表格、演示文稿"
+    }
+  ]
+}

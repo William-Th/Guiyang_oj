@@ -3,6 +3,8 @@ const router = express.Router();
 const QuestionBank = require('../models/QuestionBank');
 const QuestionCategory = require('../models/QuestionCategory');
 const ImportLog = require('../models/ImportLog');
+const ConfigService = require('../services/configService');
+const questionCodeService = require('../services/questionCodeService');
 const { authMiddleware } = require('../middleware/auth');
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -26,6 +28,39 @@ const upload = multer({
   }
 });
 
+// Configuration endpoints - Get abilities
+router.get('/config/abilities', authMiddleware, async (req, res) => {
+  try {
+    const abilities = ConfigService.getAbilities();
+    res.json({ success: true, data: abilities });
+  } catch (error) {
+    console.error('Error fetching abilities:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get knowledge points for a specific subject
+router.get('/config/knowledge-points/:subject', authMiddleware, async (req, res) => {
+  try {
+    const knowledgePoints = ConfigService.getKnowledgePointsBySubject(req.params.subject);
+    res.json({ success: true, data: knowledgePoints });
+  } catch (error) {
+    console.error('Error fetching knowledge points:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get all knowledge points (for all subjects)
+router.get('/config/knowledge-points', authMiddleware, async (req, res) => {
+  try {
+    const allKnowledgePoints = ConfigService.getAllKnowledgePoints();
+    res.json({ success: true, data: allKnowledgePoints });
+  } catch (error) {
+    console.error('Error fetching all knowledge points:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get all questions from the bank
 router.get('/bank', authMiddleware, async (req, res) => {
   try {
@@ -35,7 +70,10 @@ router.get('/bank', authMiddleware, async (req, res) => {
       difficulty: req.query.difficulty,
       type: req.query.type,
       category_id: req.query.category_id,
+      status: req.query.status,
       tags: req.query.tags ? req.query.tags.split(',') : null,
+      abilities: req.query.abilities ? req.query.abilities.split(',') : null,
+      knowledge_points: req.query.knowledge_points ? req.query.knowledge_points.split(',') : null,
       limit: parseInt(req.query.limit) || 50,
       offset: parseInt(req.query.offset) || 0
     };
@@ -65,15 +103,15 @@ router.get('/bank/search', authMiddleware, async (req, res) => {
   }
 });
 
-// Get a single question
+// Get a single question by ID
 router.get('/bank/:id', authMiddleware, async (req, res) => {
   try {
     const question = await QuestionBank.findById(req.params.id);
-    
+
     if (!question) {
       return res.status(404).json({ success: false, error: 'Question not found' });
     }
-    
+
     res.json({ success: true, data: question });
   } catch (error) {
     console.error('Error fetching question:', error);
@@ -81,11 +119,42 @@ router.get('/bank/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Get a single question by code
+router.get('/bank/code/:code', authMiddleware, async (req, res) => {
+  try {
+    const question = await questionCodeService.getQuestionByCode(req.params.code);
+
+    if (!question) {
+      return res.status(404).json({ success: false, error: 'Question not found' });
+    }
+
+    res.json({ success: true, data: question });
+  } catch (error) {
+    console.error('Error fetching question by code:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Parse question code to get info
+router.get('/code/parse/:code', authMiddleware, async (req, res) => {
+  try {
+    const codeInfo = questionCodeService.parseQuestionCode(req.params.code);
+    res.json({ success: true, data: codeInfo });
+  } catch (error) {
+    console.error('Error parsing question code:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 // Create a new question (teacher/admin only)
 router.post('/bank', authMiddleware, async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    // Check if user is teacher or admin role
+    const isTeacherOrAdmin = ['teacher', 'school_admin', 'district_admin',
+      'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
+
+    if (!isTeacherOrAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can create questions' });
     }
 
     const questionData = {
@@ -107,11 +176,33 @@ router.post('/bank', authMiddleware, async (req, res) => {
   }
 });
 
-// Update a question (teacher/admin only)
+// Update a question (teacher/admin only, or question creator)
 router.put('/bank/:id', authMiddleware, async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    // Check if user is teacher or admin role
+    const isTeacherOrAdmin = ['teacher', 'school_admin', 'district_admin',
+      'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
+
+    if (!isTeacherOrAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can update questions' });
+    }
+
+    // Get the existing question to check ownership
+    const existingQuestion = await QuestionBank.findById(req.params.id);
+
+    if (!existingQuestion) {
+      return res.status(404).json({ success: false, error: 'Question not found' });
+    }
+
+    // Check permission: system_admin can update all, others can only update their own questions
+    const isSystemAdmin = req.user.role === 'system_admin';
+    const isCreator = existingQuestion.created_by === req.user.id;
+
+    if (!isSystemAdmin && !isCreator) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized: You can only update questions you created. System admins can update all questions.'
+      });
     }
 
     // Validate question if type is being changed
@@ -123,11 +214,7 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
     }
 
     const question = await QuestionBank.update(req.params.id, req.body);
-    
-    if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
-    }
-    
+
     res.json({ success: true, data: question });
   } catch (error) {
     console.error('Error updating question:', error);
@@ -135,19 +222,37 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete a question (admin only)
+// Delete a question (system_admin can delete all, others can only delete their own)
 router.delete('/bank/:id', authMiddleware, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    // Check if user is teacher or admin role
+    const isTeacherOrAdmin = ['teacher', 'school_admin', 'district_admin',
+      'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
+
+    if (!isTeacherOrAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can delete questions' });
+    }
+
+    // Get the existing question to check ownership
+    const existingQuestion = await QuestionBank.findById(req.params.id);
+
+    if (!existingQuestion) {
+      return res.status(404).json({ success: false, error: 'Question not found' });
+    }
+
+    // Check permission: system_admin can delete all, others can only delete their own questions
+    const isSystemAdmin = req.user.role === 'system_admin';
+    const isCreator = existingQuestion.created_by === req.user.id;
+
+    if (!isSystemAdmin && !isCreator) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized: You can only delete questions you created. System admins can delete all questions.'
+      });
     }
 
     const question = await QuestionBank.delete(req.params.id);
-    
-    if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
-    }
-    
+
     res.json({ success: true, message: 'Question deleted successfully' });
   } catch (error) {
     console.error('Error deleting question:', error);
@@ -158,8 +263,12 @@ router.delete('/bank/:id', authMiddleware, async (req, res) => {
 // Add questions to an exam
 router.post('/exam/:examId/questions', authMiddleware, async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    // Check if user is teacher or admin role
+    const isTeacherOrAdmin = ['teacher', 'school_admin', 'district_admin',
+      'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
+
+    if (!isTeacherOrAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can add questions to exams' });
     }
 
     const { questionIds, scores } = req.body;
@@ -190,8 +299,12 @@ router.get('/exam/:examId/questions', authMiddleware, async (req, res) => {
 // Import questions from file
 router.post('/import', authMiddleware, upload.single('file'), async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    // Check if user is teacher or admin role
+    const isTeacherOrAdmin = ['teacher', 'school_admin', 'district_admin',
+      'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
+
+    if (!isTeacherOrAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can import questions' });
     }
 
     if (!req.file) {
@@ -288,8 +401,12 @@ router.get('/categories/hierarchy', authMiddleware, async (req, res) => {
 // Create a new category
 router.post('/categories', authMiddleware, async (req, res) => {
   try {
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    // Check if user is teacher or admin role
+    const isTeacherOrAdmin = ['teacher', 'school_admin', 'district_admin',
+      'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
+
+    if (!isTeacherOrAdmin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can create categories' });
     }
 
     const category = await QuestionCategory.create(req.body);
@@ -386,7 +503,9 @@ function parseQuestionRow(row) {
     difficulty: row.difficulty || row['难度'] || 'medium',
     explanation: row.explanation || row['解析'],
     score: parseInt(row.score || row['分值']) || 1,
-    tags: row.tags ? row.tags.split(',').map(t => t.trim()) : []
+    tags: row.tags ? row.tags.split(',').map(t => t.trim()) : [],
+    abilities: row.abilities || row['能力'] ? (row.abilities || row['能力']).split(',').map(a => a.trim()) : [],
+    knowledge_points: row.knowledge_points || row['知识点'] ? (row.knowledge_points || row['知识点']).split(',').map(k => k.trim()) : []
   };
 
   // Parse options and correct answer based on type
@@ -396,7 +515,7 @@ function parseQuestionRow(row) {
   }
 
   const answerStr = row.correct_answer || row['正确答案'];
-  
+
   switch (question.type) {
   case 'multiple':
     question.correct_answer = answerStr ? answerStr.split(',').map(a => a.trim()) : [];

@@ -10,19 +10,25 @@ class QuestionBank {
       options,
       correct_answer,
       score,
+      suggested_score,
+      level,
       difficulty,
       explanation,
       tags,
       image_url,
       created_by,
-      category_id
+      category_id,
+      abilities,
+      knowledge_points,
+      status
     } = questionData;
 
     const sql = `
-      INSERT INTO question_bank 
-      (type, subject, grade, content, options, correct_answer, score, 
-       difficulty, explanation, tags, image_url, created_by, category_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      INSERT INTO question_bank
+      (type, subject, grade, content, options, correct_answer, score, suggested_score, level,
+       difficulty, explanation, tags, image_url, created_by, category_id,
+       abilities, knowledge_points, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `;
 
@@ -33,13 +39,18 @@ class QuestionBank {
       content,
       JSON.stringify(options),
       JSON.stringify(correct_answer),
-      score || 1,
+      score || suggested_score || 5,
+      suggested_score || 5,
+      level || 'L1',
       difficulty,
       explanation,
       tags,
       image_url,
       created_by,
-      category_id
+      category_id,
+      abilities || [],
+      knowledge_points || [],
+      status || 'draft'
     ];
 
     const result = await query(sql, values);
@@ -56,6 +67,35 @@ class QuestionBank {
     let sql = 'SELECT * FROM question_bank WHERE is_active = true';
     const values = [];
     let paramCount = 0;
+
+    // 默认只显示已发布的题目，除非指定了status或created_by过滤
+    if (!filters.status && !filters.created_by) {
+      sql += ` AND status = 'published'`;
+    }
+
+    if (filters.status) {
+      paramCount++;
+      sql += ` AND status = $${paramCount}`;
+      values.push(filters.status);
+    }
+
+    if (filters.created_by) {
+      paramCount++;
+      sql += ` AND created_by = $${paramCount}`;
+      values.push(filters.created_by);
+    }
+
+    if (filters.level) {
+      paramCount++;
+      sql += ` AND level = $${paramCount}`;
+      values.push(filters.level);
+    }
+
+    if (filters.scope && filters.scope.length > 0) {
+      paramCount++;
+      sql += ` AND scope && $${paramCount}`;
+      values.push(filters.scope);
+    }
 
     if (filters.subject) {
       paramCount++;
@@ -93,6 +133,18 @@ class QuestionBank {
       values.push(filters.category_id);
     }
 
+    if (filters.abilities && filters.abilities.length > 0) {
+      paramCount++;
+      sql += ` AND abilities && $${paramCount}`;
+      values.push(filters.abilities);
+    }
+
+    if (filters.knowledge_points && filters.knowledge_points.length > 0) {
+      paramCount++;
+      sql += ` AND knowledge_points && $${paramCount}`;
+      values.push(filters.knowledge_points);
+    }
+
     sql += ' ORDER BY created_at DESC';
 
     if (filters.limit) {
@@ -113,9 +165,11 @@ class QuestionBank {
 
   static async update(id, updateData) {
     const allowedFields = [
-      'type', 'subject', 'grade', 'content', 'options', 
-      'correct_answer', 'score', 'difficulty', 'explanation', 
-      'tags', 'image_url', 'category_id'
+      'type', 'subject', 'grade', 'content', 'options',
+      'correct_answer', 'score', 'suggested_score', 'level', 'difficulty', 'explanation',
+      'tags', 'image_url', 'category_id', 'abilities', 'knowledge_points',
+      'status', 'scope', 'reviewer_id', 'review_comment', 'reviewed_at',
+      'published_at', 'published_by'
     ];
 
     const updates = [];
@@ -126,7 +180,7 @@ class QuestionBank {
       if (updateData[field] !== undefined) {
         paramCount++;
         updates.push(`${field} = $${paramCount}`);
-        
+
         if (field === 'options' || field === 'correct_answer') {
           values.push(JSON.stringify(updateData[field]));
         } else {
@@ -245,11 +299,11 @@ class QuestionBank {
 
   static async searchQuestions(searchTerm, filters = {}) {
     let sql = `
-      SELECT * FROM question_bank 
-      WHERE is_active = true 
+      SELECT * FROM question_bank
+      WHERE is_active = true
       AND (content ILIKE $1 OR explanation ILIKE $1)
     `;
-    
+
     const values = [`%${searchTerm}%`];
     let paramCount = 1;
 
@@ -266,8 +320,116 @@ class QuestionBank {
     }
 
     sql += ' ORDER BY usage_count DESC, created_at DESC LIMIT 50';
-    
+
     const result = await query(sql, values);
+    return result.rows;
+  }
+
+  /**
+   * 提交题目审核
+   */
+  static async submitForReview(id, reviewerId, scope) {
+    const sql = `
+      UPDATE question_bank
+      SET status = 'pending_review',
+          reviewer_id = $2,
+          scope = $3,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await query(sql, [id, reviewerId, scope]);
+    return result.rows[0];
+  }
+
+  /**
+   * 审核题目（通过/拒绝）
+   */
+  static async reviewQuestion(id, reviewerId, status, comment) {
+    const sql = `
+      UPDATE question_bank
+      SET status = $2,
+          review_comment = $3,
+          reviewed_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND reviewer_id = $4
+      RETURNING *
+    `;
+
+    const result = await query(sql, [id, status, comment, reviewerId]);
+    return result.rows[0];
+  }
+
+  /**
+   * 发布题目
+   */
+  static async publishQuestion(id, publishedBy) {
+    const sql = `
+      UPDATE question_bank
+      SET status = 'published',
+          published_at = CURRENT_TIMESTAMP,
+          published_by = $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await query(sql, [id, publishedBy]);
+    return result.rows[0];
+  }
+
+  /**
+   * 获取我的草稿
+   */
+  static async getMyDrafts(userId) {
+    const sql = `
+      SELECT * FROM question_bank
+      WHERE created_by = $1
+      AND status = 'draft'
+      AND is_active = true
+      ORDER BY updated_at DESC
+    `;
+
+    const result = await query(sql, [userId]);
+    return result.rows;
+  }
+
+  /**
+   * 获取待审核的题目（审核人视角）
+   */
+  static async getPendingReviews(reviewerId) {
+    const sql = `
+      SELECT qb.*, u.real_name as creator_name, u.username as creator_username
+      FROM question_bank qb
+      JOIN users u ON qb.created_by = u.id
+      WHERE qb.reviewer_id = $1
+      AND qb.status = 'pending_review'
+      AND qb.is_active = true
+      ORDER BY qb.created_at DESC
+    `;
+
+    const result = await query(sql, [reviewerId]);
+    return result.rows;
+  }
+
+  /**
+   * 获取我提交的审核（创建者视角）
+   */
+  static async getMySubmissions(userId) {
+    const sql = `
+      SELECT qb.*,
+        u.real_name as reviewer_name,
+        u.username as reviewer_username
+      FROM question_bank qb
+      LEFT JOIN users u ON qb.reviewer_id = u.id
+      WHERE qb.created_by = $1
+      AND qb.status IN ('pending_review', 'approved', 'rejected')
+      AND qb.is_active = true
+      ORDER BY qb.updated_at DESC
+    `;
+
+    const result = await query(sql, [userId]);
     return result.rows;
   }
 }

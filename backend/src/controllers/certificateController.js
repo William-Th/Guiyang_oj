@@ -1,6 +1,6 @@
 const Certificate = require('../models/Certificate');
 const StudentExam = require('../models/StudentExam');
-const Exam = require('../models/Exam');
+const Activity = require('../models/Activity');
 const User = require('../models/User');
 const certificateService = require('../services/certificateService_basic');
 const path = require('path');
@@ -40,9 +40,9 @@ const generateCertificate = async (req, res) => {
       });
     }
 
-    // 获取学生和考试信息
+    // 获取学生和活动信息
     const student = await User.findById(studentExam.student_id);
-    const exam = await Exam.findById(studentExam.exam_id);
+    const exam = await Activity.findById(studentExam.exam_id);
         
     if (!student || !exam) {
       return res.status(404).json({ message: '学生或考试信息不存在' });
@@ -259,10 +259,10 @@ const batchGenerateCertificates = async (req, res) => {
       return res.status(403).json({ message: '权限不足' });
     }
 
-    // 获取考试信息
-    const exam = await Exam.findById(examId);
+    // 获取活动信息
+    const exam = await Activity.findById(examId);
     if (!exam) {
-      return res.status(404).json({ message: '考试不存在' });
+      return res.status(404).json({ message: '活动不存在' });
     }
 
     // 获取已完成的学生考试记录

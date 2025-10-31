@@ -1,0 +1,84 @@
+{
+  "abilities": [
+    {
+      "id": "abstract_thinking",
+      "name": "抽象思维能力",
+      "description": "从具体事物中抽取本质特征的能力"
+    },
+    {
+      "id": "computational_thinking",
+      "name": "计算思维能力",
+      "description": "用计算机科学的方法分析和解决问题的能力"
+    },
+    {
+      "id": "logical_reasoning",
+      "name": "逻辑推理能力",
+      "description": "根据已知条件进行合理推理的能力"
+    },
+    {
+      "id": "problem_solving",
+      "name": "问题解决能力",
+      "description": "分析问题并找到解决方案的能力"
+    },
+    {
+      "id": "spatial_imagination",
+      "name": "空间想象能力",
+      "description": "在头脑中想象和操作空间图形的能力"
+    },
+    {
+      "id": "data_analysis",
+      "name": "数据分析能力",
+      "description": "收集、整理和分析数据的能力"
+    },
+    {
+      "id": "algorithm_design",
+      "name": "算法设计能力",
+      "description": "设计有效算法解决问题的能力"
+    },
+    {
+      "id": "pattern_recognition",
+      "name": "模式识别能力",
+      "description": "识别事物规律和模式的能力"
+    },
+    {
+      "id": "creative_thinking",
+      "name": "创新思维能力",
+      "description": "提出新颖想法和解决方案的能力"
+    },
+    {
+      "id": "critical_thinking",
+      "name": "批判性思维能力",
+      "description": "客观分析和评价信息的能力"
+    },
+    {
+      "id": "memory_recall",
+      "name": "记忆与回忆能力",
+      "description": "记住和提取信息的能力"
+    },
+    {
+      "id": "comprehension",
+      "name": "理解能力",
+      "description": "理解和解释信息的能力"
+    },
+    {
+      "id": "application",
+      "name": "应用能力",
+      "description": "将知识应用到实际情境的能力"
+    },
+    {
+      "id": "analysis",
+      "name": "分析能力",
+      "description": "分解复杂问题的能力"
+    },
+    {
+      "id": "synthesis",
+      "name": "综合能力",
+      "description": "整合多个概念形成新认识的能力"
+    },
+    {
+      "id": "evaluation",
+      "name": "评价能力",
+      "description": "对信息和方法做出判断的能力"
+    }
+  ]
+}

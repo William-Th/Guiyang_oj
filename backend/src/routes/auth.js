@@ -83,7 +83,8 @@ router.post('/login', [
 router.post('/register', [
   body('username').isLength({ min: 3 }).withMessage('用户名至少3个字符'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
-  body('role').isIn(['student', 'teacher', 'admin']).withMessage('无效的用户角色'),
+  body('role').isIn(['student', 'teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'])
+    .withMessage('无效的用户角色'),
   body('realName').notEmpty().withMessage('真实姓名不能为空'),
   body('idCard').optional().matches(/^\d{18}$/).withMessage('身份证号格式不正确')
 ], async (req, res) => {

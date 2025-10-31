@@ -1,18 +1,21 @@
 import React from 'react';
-import { Layout, Menu, Avatar, Dropdown, Space, Button } from 'antd';
+import { Layout, Avatar, Dropdown, Space, Menu } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  HomeOutlined,
-  FileTextOutlined,
-  TrophyOutlined,
   UserOutlined,
   LogoutOutlined,
+  HomeOutlined,
   DashboardOutlined,
-  SafetyCertificateOutlined,
+  BookOutlined,
+  TeamOutlined,
+  SettingOutlined,
+  ProjectOutlined,
+  AuditOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { logout } from '@/store/authSlice';
+import type { MenuProps } from 'antd';
 
 const { Header, Content, Footer } = Layout;
 
@@ -22,16 +25,22 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const menuItems = [
-    { key: '/', icon: <HomeOutlined />, label: '首页' },
-    { key: '/exams', icon: <FileTextOutlined />, label: '考试中心' },
-    { key: '/results', icon: <TrophyOutlined />, label: '成绩查询' },
-    { key: '/verify', icon: <SafetyCertificateOutlined />, label: '证书验证' },
-  ];
+  // 检查是否为管理员角色
+  const isAdmin = () => {
+    const adminRoles = ['school_admin', 'district_admin', 'municipal_school_admin',
+      'base_school_admin', 'municipal_admin', 'system_admin'];
+    return user && adminRoles.includes(user.role);
+  };
 
-  if (user?.role === 'admin' || user?.role === 'teacher') {
-    menuItems.push({ key: '/admin', icon: <DashboardOutlined />, label: '管理后台' });
-  }
+  // 检查是否为教师角色
+  const isTeacher = () => {
+    return user && user.role === 'teacher';
+  };
+
+  // 检查是否为学生角色
+  const isStudent = () => {
+    return user && user.role === 'student';
+  };
 
   const userMenuItems = [
     { key: 'profile', icon: <UserOutlined />, label: '个人信息' },
@@ -47,25 +56,201 @@ const MainLayout: React.FC = () => {
     }
   };
 
+  // 管理员导航菜单项
+  const adminMenuItems: MenuProps['items'] = [
+    {
+      key: '/admin/home',
+      icon: <HomeOutlined />,
+      label: '首页',
+    },
+    {
+      key: '/admin/overview',
+      icon: <DashboardOutlined />,
+      label: '数据概览',
+    },
+    {
+      key: '/admin/assessments',
+      icon: <ProjectOutlined />,
+      label: '活动管理中心',
+    },
+    {
+      key: '/admin/question-bank',
+      icon: <BookOutlined />,
+      label: '题库管理',
+    },
+    {
+      key: '/admin/users',
+      icon: <TeamOutlined />,
+      label: '用户管理',
+    },
+    {
+      key: '/admin/permissions',
+      icon: <SettingOutlined />,
+      label: '权限管理',
+    },
+    {
+      key: '/admin/registration-approval',
+      icon: <AuditOutlined />,
+      label: '注册审核',
+    },
+  ];
+
+  // 教师导航菜单项
+  const teacherMenuItems: MenuProps['items'] = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: '首页',
+    },
+    {
+      key: '/teacher/activities',
+      icon: <ProjectOutlined />,
+      label: '活动管理中心',
+    },
+    {
+      key: '/teacher/question-bank',
+      icon: <BookOutlined />,
+      label: '题库管理',
+    },
+    {
+      key: '/teacher/grading',
+      icon: <AuditOutlined />,
+      label: '评卷管理',
+    },
+  ];
+
+  // 学生导航菜单项
+  const studentMenuItems: MenuProps['items'] = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: '首页',
+    },
+    {
+      key: '/student/practice',
+      icon: <ProjectOutlined />,
+      label: '练习中心',
+    },
+    {
+      key: '/student/assessments',
+      icon: <BookOutlined />,
+      label: '测评中心',
+    },
+  ];
+
+  // 获取当前选中的菜单项（管理员）
+  const getAdminSelectedKey = () => {
+    const path = location.pathname;
+    if (path.includes('/admin/home')) return '/admin/home';
+    if (path.includes('/admin/overview')) return '/admin/overview';
+    if (path.includes('/admin/assessments')) return '/admin/assessments';
+    if (path.includes('/admin/question-bank')) return '/admin/question-bank';
+    if (path.includes('/admin/users')) return '/admin/users';
+    if (path.includes('/admin/permissions')) return '/admin/permissions';
+    return '/admin/home';
+  };
+
+  // 获取当前选中的菜单项（教师）
+  const getTeacherSelectedKey = () => {
+    const path = location.pathname;
+    if (path.includes('/teacher/activities')) return '/teacher/activities';
+    if (path.includes('/teacher/question-bank')) return '/teacher/question-bank';
+    if (path.includes('/teacher/grading')) return '/teacher/grading';
+    if (path === '/') return '/';
+    return '/';
+  };
+
+  // 获取当前选中的菜单项（学生）
+  const getStudentSelectedKey = () => {
+    const path = location.pathname;
+    if (path.includes('/student/practice')) return '/student/practice';
+    if (path.includes('/student/assessments')) return '/student/assessments';
+    if (path === '/') return '/';
+    return '/';
+  };
+
+  // 处理管理员菜单点击
+  const handleAdminMenuClick: MenuProps['onClick'] = (e) => {
+    navigate(e.key);
+  };
+
+  // 处理教师菜单点击
+  const handleTeacherMenuClick: MenuProps['onClick'] = (e) => {
+    navigate(e.key);
+  };
+
+  // 处理学生菜单点击
+  const handleStudentMenuClick: MenuProps['onClick'] = (e) => {
+    navigate(e.key);
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', background: '#1677ff' }}>
-        <div style={{ color: 'white', fontSize: '20px', marginRight: '40px' }}>
+      <Header style={{ display: 'flex', alignItems: 'center', background: '#1677ff', padding: '0 24px' }}>
+        <div style={{ color: 'white', fontSize: '20px', marginRight: '48px', whiteSpace: 'nowrap' }}>
           贵阳市小学生测评平台
         </div>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-          style={{ flex: 1, background: 'transparent' }}
-        />
+
+        {/* 管理员导航菜单 */}
+        {isAdmin() && (
+          <Menu
+            mode="horizontal"
+            selectedKeys={[getAdminSelectedKey()]}
+            items={adminMenuItems}
+            onClick={handleAdminMenuClick}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: 'transparent',
+              borderBottom: 'none',
+              lineHeight: '64px',
+            }}
+            theme="dark"
+          />
+        )}
+
+        {/* 教师导航菜单 */}
+        {isTeacher() && (
+          <Menu
+            mode="horizontal"
+            selectedKeys={[getTeacherSelectedKey()]}
+            items={teacherMenuItems}
+            onClick={handleTeacherMenuClick}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: 'transparent',
+              borderBottom: 'none',
+              lineHeight: '64px',
+            }}
+            theme="dark"
+          />
+        )}
+
+        {/* 学生导航菜单 */}
+        {isStudent() && (
+          <Menu
+            mode="horizontal"
+            selectedKeys={[getStudentSelectedKey()]}
+            items={studentMenuItems}
+            onClick={handleStudentMenuClick}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: 'transparent',
+              borderBottom: 'none',
+              lineHeight: '64px',
+            }}
+            theme="dark"
+          />
+        )}
+
+        {/* 用户菜单 */}
         <Dropdown
           menu={{ items: userMenuItems, onClick: handleMenuClick }}
           placement="bottomRight"
         >
-          <Space style={{ color: 'white', cursor: 'pointer' }}>
+          <Space style={{ color: 'white', cursor: 'pointer', marginLeft: 'auto' }}>
             <Avatar icon={<UserOutlined />} />
             <span>{user?.realName || user?.username || '用户'}</span>
           </Space>
@@ -77,19 +262,7 @@ const MainLayout: React.FC = () => {
         </div>
       </Content>
       <Footer style={{ textAlign: 'center', background: '#f0f2f5' }}>
-        <div>
-          贵阳市教育局 ©2024 小学生测评服务平台
-        </div>
-        <div style={{ marginTop: '8px' }}>
-          <Button 
-            type="link" 
-            size="small" 
-            onClick={() => navigate('/verify')}
-            icon={<SafetyCertificateOutlined />}
-          >
-            证书验证
-          </Button>
-        </div>
+        贵阳市教育局 ©2024 小学生测评服务平台
       </Footer>
     </Layout>
   );
