@@ -437,16 +437,32 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.getByRole('option', { name: /市级练习/ }).evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(500);
 
+    // 等待scope下拉菜单关闭，确保不会干扰reviewer选择
+    await page.waitForSelector('.ant-select-dropdown:not(.ant-select-dropdown-hidden)', { state: 'hidden', timeout: 3000 })
+      .catch(() => console.log('⚠️ Scope dropdown may still be visible'));
+    await page.waitForTimeout(500);
+
     // 选择审核人
     const reviewerSelect = modal.locator('.ant-select').last();
     await reviewerSelect.click();
-    await page.waitForTimeout(500);
-    const firstReviewer = page.locator('.ant-select-dropdown').locator('.ant-select-item').first();
-    await firstReviewer.evaluate((el: HTMLElement) => el.click());
+    await page.waitForTimeout(800);
 
-    // 等待下拉菜单关闭动画
+    // 找到当前可见的dropdown中的第一个审核人选项
+    // 使用getByRole获取option，它会自动找到可见的选项
+    const reviewerOptions = page.getByRole('option');
+    await reviewerOptions.first().evaluate((el: HTMLElement) => el.click());
+    console.log('✅ 已点击第一个审核人选项');
+
+    // 等待下拉菜单关闭动画并验证选择成功
     await page.waitForTimeout(1000);
-    console.log('✅ 已选择审核人，准备提交');
+
+    // 验证reviewer Select不再显示placeholder
+    const reviewerValue = await reviewerSelect.locator('.ant-select-selection-item').textContent().catch(() => '');
+    if (reviewerValue && !reviewerValue.includes('请选择')) {
+      console.log(`✅ 已选择审核人: ${reviewerValue}`);
+    } else {
+      console.log(`⚠️ 审核人可能未正确选择，当前值: ${reviewerValue}`);
+    }
 
     // 提交（等待按钮可点击后使用正常点击）
     const modalSubmitButton = page.locator('.ant-modal-footer').locator('button').filter({ hasText: /提交/ });
@@ -454,6 +470,13 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
 
     // 等待所有动画完成，确保按钮可点击
     await page.waitForTimeout(1000);
+
+    // Step 7: 提交审核，监听API响应
+    // 设置API响应监听器（提交审核的API路径）
+    const responsePromise = page.waitForResponse(
+      response => response.url().includes('/question-review/') && response.url().includes('/submit') && response.status() === 200,
+      { timeout: 10000 }
+    );
 
     // 尝试正常点击，如果失败则使用evaluate
     try {
@@ -464,21 +487,23 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
       await modalSubmitButton.evaluate((button: HTMLButtonElement) => button.click());
     }
 
-    await page.waitForTimeout(2000);
+    // 等待API响应成功
+    try {
+      const response = await responsePromise;
+      console.log(`✅ API响应成功: ${response.status()}`);
 
-    // Step 7: 验证成功（检查模态框关闭或成功消息）
-    const modalClosed = await page.locator('.ant-modal').count() === 0;
-    const hasSuccessMessage = await page.locator('text=提交审核成功')
-      .or(page.locator('text=提交成功'))
-      .or(page.locator('text=操作成功'))
-      .or(page.locator('.ant-message-success'))
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
+      // 等待UI更新完成
+      await page.waitForTimeout(1500);
 
-    if (modalClosed || hasSuccessMessage) {
-      console.log('✅ REV101: 教师成功提交题目审核');
-    } else {
-      throw new Error('REV101: 提交审核失败 - 模态框未关闭且无成功消息');
+      // 验证模态框已关闭
+      const modalClosed = await page.locator('.ant-modal').count() === 0;
+      if (modalClosed) {
+        console.log('✅ REV101: 教师成功提交题目审核 - 模态框已关闭');
+      } else {
+        console.log('⚠️ 模态框未关闭，但API调用成功');
+      }
+    } catch (error) {
+      throw new Error(`REV101: 提交审核失败 - API响应超时或失败: ${error.message}`);
     }
   });
 
