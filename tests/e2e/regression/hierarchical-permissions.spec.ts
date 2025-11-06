@@ -182,6 +182,65 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     }
   });
 
+  test('MIG101 - 管理员无法选择废弃的权限类型', async ({ page }) => {
+    // Step 1: 管理员登录
+    await loginAsAdmin(page);
+
+    // Step 2: 导航到权限管理页面
+    const permissionMenu = page.getByRole('menuitem', { name: /权限管理/ });
+    await expect(permissionMenu).toBeVisible();
+    await permissionMenu.click();
+    await page.waitForURL(/\/admin\/permissions/);
+    await page.waitForLoadState('networkidle');
+    console.log('✅ 已进入权限管理页面');
+
+    // Step 3: 点击"授予权限"按钮
+    const grantButton = page.locator('button').filter({ hasText: /授予权限/ });
+    await grantButton.click();
+    await page.waitForTimeout(1000);
+
+    // Step 4: 等待模态框出现
+    const modal = page.locator('.ant-modal');
+    await expect(modal).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
+    console.log('✅ 授予权限模态框已打开');
+
+    // Step 5: 点击权限类型下拉框（第二个Select，第一个是教师选择）
+    const permissionTypeSelect = modal.locator('.ant-select').nth(1);
+    await permissionTypeSelect.click();
+    await page.waitForTimeout(800);
+
+    // Step 6: 获取所有可见的权限类型选项
+    const permissionOptions = page.getByRole('option');
+    const optionCount = await permissionOptions.count();
+    console.log(`✅ 找到 ${optionCount} 个权限类型选项`);
+
+    // Step 7: 验证不包含废弃的权限类型 'question_bank_review'
+    const allOptionsText: string[] = [];
+    for (let i = 0; i < optionCount; i++) {
+      const optionText = await permissionOptions.nth(i).textContent();
+      if (optionText) {
+        allOptionsText.push(optionText.trim());
+      }
+    }
+
+    console.log(`  权限类型列表: ${allOptionsText.join(', ')}`);
+
+    // 检查是否包含废弃的权限类型
+    const hasDeprecatedPermission = allOptionsText.some(
+      text => text.includes('question_bank_review') || text.includes('题库审核')
+    );
+
+    if (hasDeprecatedPermission) {
+      throw new Error('MIG101失败: 权限类型列表中仍包含废弃的"question_bank_review"权限');
+    }
+
+    console.log('✅ MIG101: 验证通过 - 废弃权限类型已从UI中移除');
+
+    // 关闭模态框
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+  });
+
   test('QBC101 - 教师创建校级题目并直接发布', async ({ page }) => {
     // Step 1: 教师登录
     await loginAsTeacher(page);
