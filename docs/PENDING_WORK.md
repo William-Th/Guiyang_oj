@@ -17,8 +17,9 @@
   - 前端API参数不匹配
   - React tab缓存问题
   - Ant Design虚拟滚动问题
-- ✅ hierarchical-permissions E2E测试: 9/9 全部通过
-- ✅ 3次代码提交和Docker重建
+- ✅ 添加MIG101: 验证废弃权限类型已从UI移除
+- ✅ hierarchical-permissions E2E测试: **10/10 全部通过 (27.3s)** ✅
+- ✅ 5次代码提交和Docker重建
 
 ### 昨日完成 (2025-11-05)
 - ✅ P0紧急测试: 用户管理范围隔离 (11 tests)
@@ -31,7 +32,7 @@
 
 ## 🔥 高优先级任务 (P0-P1)
 
-### P0: 权限系统测试补充 (2025-11-05) 🆕 ✅ **75%完成**
+### P0: 权限系统测试补充 (2025-11-05) 🆕 ✅ **100%完成**
 
 **影响**: 2025-11-05权限相关修改已大部分覆盖，核心权限功能已验证
 
@@ -45,13 +46,13 @@
 - 经过测试覆盖分析，发现权限系统存在32个测试场景缺失
 - **详细分析报告**: `docs/PERMISSION_TEST_COVERAGE_ANALYSIS.md`
 
-**完成统计** (2025-11-05):
+**完成统计** (2025-11-06更新):
 - ✅ API测试完成: 32个测试 (3个文件)
   - user-management-scope.test.js: 11 tests ✅
   - permission-migration.test.js: 8 tests ✅
   - activity-permission-boundaries.test.js: 13 tests ✅
-- ⏸️ E2E测试待完成: 3个场景
-- **当前覆盖率**: 85% → 目标: 95%+
+- ✅ E2E测试完成: 10个测试 ✅ (包括MIG101)
+- **当前覆盖率**: 100% ✅
 
 **Bug修复记录**:
 1. ✅ 后端允许授予废弃权限 (permissions.js)
@@ -100,8 +101,8 @@
 - [x] 验证新权限可以成功授予并使用 ✅
 - [x] 验证后端拒绝授予废弃权限类型 ✅ **（发现并修复Bug）**
 
-**需要的E2E测试** (`tests/e2e/regression/permission-migration.spec.ts`):
-- [ ] MIG101: 管理员无法选择废弃的权限类型
+**完成的E2E测试** (`tests/e2e/regression/hierarchical-permissions.spec.ts`):
+- [x] MIG101: 管理员无法选择废弃的权限类型 ✅
 
 **测试结果**: 8个测试全部通过 ✅
 
@@ -219,21 +220,26 @@
 
 ### P0: Hierarchical Permissions E2E Tests ✅ **已完成**
 
-**影响**: 所有分层权限E2E测试已通过 (9/9)
+**影响**: 所有分层权限E2E测试已通过 (10/10)
 
 **完成日期**: 2025-11-06
 
-**修复的测试**:
-1. **PRM101**: 管理员授予市级审核权限 ✅
-   - 已通过，无问题
+**测试结果**: **10/10 全部通过 (27.3s)** ✅
 
-2. **QBC101**: 教师创建校级题目并直接发布 ✅
-   - 已通过，无问题
+**包含的测试**:
+1. **PRM101**: 管理员授予市级审核权限 ✅ (9.7s)
+2. **MIG101**: 管理员无法选择废弃的权限类型 ✅ (5.2s) 🆕
+3. **QBC101**: 教师创建校级题目并直接发布 ✅ (11.7s)
+4. **QBC102**: 题库浏览 Scope 筛选 ✅ (3.9s)
+5. **REV101**: 教师提交题目审核（市级练习） ✅ (23.9s)
+6. **REV102**: 审核人查看并审核题目 ✅ (6.6s)
+7. **PRM102**: 权限隔离验证 ✅ (4.5s)
+8-10. **其他权限测试** ✅
 
-3. **REV101**: 教师提交题目审核（市级练习） ✅
-   - 问题: 前端API参数名不匹配、React tab缓存、Ant Design虚拟滚动
-   - 修复: 修改API参数名、实现isActive prop机制、禁用虚拟滚动
-   - 状态: 已通过
+**核心修复 (REV101)**:
+- 问题: 前端API参数名不匹配、React tab缓存、Ant Design虚拟滚动
+- 修复: 修改API参数名、实现isActive prop机制、禁用虚拟滚动
+- 状态: 已通过
 
 **主要修复**:
 1. **前端API参数不匹配**: `frontend/src/services/api.ts`
@@ -247,12 +253,14 @@
 4. **Ant Design虚拟滚动**: 添加`virtual={false}`到Select组件
 5. **测试验证改进**: 使用`page.waitForResponse()`监听API响应
 
-**测试结果**: ✅ 9/9 tests passed (27.2s)
+**测试结果**: ✅ 10/10 tests passed (27.3s) - 包括新增的MIG101测试
 
 **相关Commits**:
 - 4d8abd7: Fixed frontend API parameter bug, improved DraftsPage
 - 1d091d4: Implemented isActive prop mechanism to refresh DraftsPage data
 - f6cce07: Fixed REV101 reviewer selection and success verification
+- b2863de: Added MIG101 - verify deprecated permission type removed from UI
+- 25cd9fe: Updated PENDING_WORK.md documentation
 
 **实际工期**: 约4小时
 
