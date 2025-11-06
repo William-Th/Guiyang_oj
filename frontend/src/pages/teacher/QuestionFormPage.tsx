@@ -18,7 +18,8 @@ import {
 } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { questionBankApi } from '../../services/api';
+import { questionBankApi, questionReviewApi } from '../../services/api';
+import { SUBJECTS, getGradesBySubject } from '../../config/subjects';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -143,9 +144,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       // Format correct_answer based on question type
       let correctAnswer = values.correct_answer;
       if (questionType === 'multiple' || questionType === 'blank') {
-        if (Array.isArray(correctAnswer)) {
-          correctAnswer = correctAnswer;
-        }
+        // correctAnswer is already an array, no transformation needed
       } else if (questionType === 'true_false') {
         correctAnswer = correctAnswer === 'true' || correctAnswer === true;
       }
@@ -153,14 +152,27 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       const questionData = {
         ...values,
         correct_answer: correctAnswer,
+        target_scope: values.target_scope, // 包含 target_scope
       };
+
+      let createdQuestionId: number | undefined;
 
       if (isEditMode) {
         await questionBankApi.updateQuestion(id!, questionData);
         message.success('更新成功');
       } else {
-        await questionBankApi.createQuestion(questionData);
-        message.success('创建成功');
+        const response = await questionBankApi.createQuestion(questionData);
+        createdQuestionId = response.data?.id;
+
+        // 如果选择了校级题库，直接发布（无需审核）
+        if (values.target_scope === 'practice_school' && createdQuestionId) {
+          await questionReviewApi.publishToSchool(createdQuestionId);
+          message.success('题目已保存并发布到校级题库');
+        } else if (values.target_scope) {
+          message.success('题目已保存为草稿，可在草稿箱中提交审核');
+        } else {
+          message.success('题目已保存为草稿');
+        }
       }
 
       // Reset form after successful submission
@@ -439,12 +451,18 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
                 name="subject"
                 rules={[{ required: true, message: '请选择科目' }]}
               >
-                <Select onChange={(value) => setSelectedSubject(value)}>
-                  <Option value="数学">数学</Option>
-                  <Option value="物理">物理</Option>
-                  <Option value="化学">化学</Option>
-                  <Option value="生物">生物</Option>
-                  <Option value="计算机">计算机</Option>
+                <Select
+                  onChange={(value) => {
+                    setSelectedSubject(value);
+                    // 清空年级选择，因为不同科目支持的年级不同
+                    form.setFieldValue('grade', undefined);
+                  }}
+                >
+                  {SUBJECTS.map(subject => (
+                    <Option key={subject.value} value={subject.value}>
+                      {subject.label}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -455,19 +473,15 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
                 name="grade"
                 rules={[{ required: true, message: '请选择年级' }]}
               >
-                <Select>
-                  <Option value="一年级">一年级</Option>
-                  <Option value="二年级">二年级</Option>
-                  <Option value="三年级">三年级</Option>
-                  <Option value="四年级">四年级</Option>
-                  <Option value="五年级">五年级</Option>
-                  <Option value="六年级">六年级</Option>
-                  <Option value="七年级">七年级</Option>
-                  <Option value="八年级">八年级</Option>
-                  <Option value="九年级">九年级</Option>
-                  <Option value="高一">高一</Option>
-                  <Option value="高二">高二</Option>
-                  <Option value="高三">高三</Option>
+                <Select
+                  placeholder={selectedSubject ? '请选择年级' : '请先选择科目'}
+                  disabled={!selectedSubject}
+                >
+                  {selectedSubject && getGradesBySubject(selectedSubject).map(grade => (
+                    <Option key={grade.value} value={grade.value}>
+                      {grade.label}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -499,7 +513,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           >
             <Select
               mode="multiple"
-              placeholder={selectedSubject ? "请选择知识点" : "请先选择科目"}
+              placeholder={selectedSubject ? '请选择知识点' : '请先选择科目'}
               optionFilterProp="children"
               disabled={!selectedSubject}
               loading={loadingConfig}
@@ -580,10 +594,69 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
             <Select mode="tags" placeholder="输入标签后按回车" />
           </Form.Item>
 
+          <Form.Item
+            label="发布范围"
+            name="target_scope"
+            help="选择题目的发布范围。校级题库可直接发布，其他范围需要审核。"
+          >
+            <Select placeholder="保存为草稿（不选择）或选择发布范围" allowClear>
+              <Option value="practice_school">
+                <Tag color="green">校级题库</Tag>
+                <span style={{ color: '#666', marginLeft: 8 }}>- 直接发布到本校题库，无需审核</span>
+              </Option>
+              <Option value="practice_district">
+                <Tag color="cyan">区级练习题库</Tag>
+                <span style={{ color: '#666', marginLeft: 8 }}>- 需要区级审核人审核</span>
+              </Option>
+              <Option value="practice_municipal">
+                <Tag color="blue">市级练习题库</Tag>
+                <span style={{ color: '#666', marginLeft: 8 }}>- 需要市级审核人审核</span>
+              </Option>
+              <Option value="assessment">
+                <Tag color="orange">测评题库</Tag>
+                <span style={{ color: '#666', marginLeft: 8 }}>- 需要测评审核人审核（更高标准）</span>
+              </Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.target_scope !== currentValues.target_scope}>
+            {() => {
+              const targetScope = form.getFieldValue('target_scope');
+              if (targetScope && targetScope !== 'practice_school') {
+                return (
+                  <Alert
+                    message="提醒"
+                    description={
+                      <span>
+                        选择 <Tag color="blue">{targetScope === 'assessment' ? '测评题库' : targetScope === 'practice_municipal' ? '市级练习题库' : '区级练习题库'}</Tag> 需要经过审核。
+                        保存后可在&ldquo;草稿箱&rdquo;中提交审核。
+                      </span>
+                    }
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                  />
+                );
+              }
+              if (targetScope === 'practice_school') {
+                return (
+                  <Alert
+                    message="校级题库"
+                    description="校级题库无需审核，保存后可直接发布到本校题库供学生使用。"
+                    type="success"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                  />
+                );
+              }
+              return null;
+            }}
+          </Form.Item>
+
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={submitting}>
-                {isEditMode ? '更新' : '保存为草稿'}
+                {isEditMode ? '更新' : '保存'}
               </Button>
               <Button onClick={() => form.resetFields()}>
                 重置

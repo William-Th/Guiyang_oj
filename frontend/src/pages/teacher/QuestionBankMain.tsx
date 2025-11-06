@@ -60,7 +60,7 @@ const QuestionBankMain: React.FC = () => {
           }
           key="drafts"
         >
-          <DraftsPage onEdit={handleEdit} />
+          <DraftsPage onEdit={handleEdit} isActive={activeTab === 'drafts'} />
         </Tabs.TabPane>
 
         <Tabs.TabPane

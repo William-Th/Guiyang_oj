@@ -344,7 +344,7 @@ class ActivityQuestion {
     }
 
     // Use a transaction for atomic updates
-    const client = await query('BEGIN');
+    const _client = await query('BEGIN');
 
     try {
       const updatedQuestions = [];

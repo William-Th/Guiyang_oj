@@ -44,9 +44,10 @@ interface Reviewer {
 
 interface DraftsPageProps {
   onEdit?: (questionId: number) => void;
+  isActive?: boolean;
 }
 
-const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
+const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [drafts, setDrafts] = useState<Question[]>([]);
@@ -60,6 +61,14 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
   useEffect(() => {
     loadDrafts();
   }, []);
+
+  // 监听标签页激活状态，当标签页激活时重新加载数据
+  useEffect(() => {
+    if (isActive) {
+      console.log('📌 DraftsPage activated, reloading data...');
+      loadDrafts();
+    }
+  }, [isActive]);
 
   // 监听scope变化，动态加载对应的审核人列表
   useEffect(() => {

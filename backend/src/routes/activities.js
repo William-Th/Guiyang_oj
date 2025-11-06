@@ -4,10 +4,7 @@ const { body, validationResult, param } = require('express-validator');
 const { authMiddleware, requireRole, optionalAuth } = require('../middleware/auth');
 const {
   requireActivityPermission,
-  validateActivityType,
   validateAbilityLevel,
-  requireEditPermission,
-  requireDeletePermission,
   getScopeForUser
 } = require('../middleware/activityPermission');
 const Activity = require('../models/Activity');

@@ -296,7 +296,7 @@ router.delete('/bank/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    const question = await QuestionBank.delete(req.params.id);
+    await QuestionBank.delete(req.params.id);
 
     res.json({ success: true, message: 'Question deleted successfully' });
   } catch (error) {

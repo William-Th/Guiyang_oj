@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const School = require('../models/School');
 const { authMiddleware, requireRole, requireAdmin } = require('../middleware/auth');
-const { query, getClient } = require('../database/connection');
+const { getClient } = require('../database/connection');
 const logger = require('../utils/logger');
 
 // Get current user profile (with role-specific details)
