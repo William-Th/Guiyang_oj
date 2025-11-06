@@ -1,0 +1,11 @@
+﻿功能,数据库,后端API,API测试,前端,E2E测试,备注
+学生注册申请,✅,✅,✅,✅,✅,"POST /api/registration/student, StudentRegisterPage.tsx, REG103"
+获取区县列表,✅,✅,✅,✅,✅,"GET /api/registration/config/districts, configService.js扩展"
+获取学校列表,✅,✅,✅,✅,✅,"GET /api/registration/config/schools/:districtCode, 36所学校配置"
+查询申请状态,✅,✅,✅,✅,✅,"GET /api/registration/status/:phone, RegisterStatusPage.tsx, REG104"
+自动升级机制,✅,✅,✅,N/A,✅,"registrationEscalationService.js, cron每小时检查"
+管理员查看待审核列表,✅,✅,✅,✅,✅,"GET /api/registration/admin/requests, RegistrationApprovalPage.tsx, REG105"
+管理员搜索注册申请,✅,✅,✅,✅,✅,按手机号/姓名搜索
+管理员批准注册申请,✅,✅,✅,✅,✅,"POST /api/registration/admin/approve/:id, 自动创建学生账号, REG106-109"
+管理员拒绝注册申请,✅,✅,✅,✅,❌,"POST /api/registration/admin/reject/:id, 缺E2E测试"
+查看审核历史,✅,❌,❌,❌,❌,GET /api/registration/admin/history/:id (待开发)

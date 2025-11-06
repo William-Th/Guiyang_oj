@@ -27,45 +27,49 @@ router.get('/my-submissions', authMiddleware, async (req, res) => {
   }
 });
 
-// 获取可以审核的老师列表
+// 获取可以审核的老师列表（新版：基于 target_scope）
 router.get('/available-reviewers', authMiddleware, async (req, res) => {
   try {
-    const { subject, scope } = req.query;
+    const { subject, target_scope } = req.query;
 
-    if (!subject) {
-      return res.status(400).json({ success: false, error: 'Subject is required' });
+    if (!subject || !target_scope) {
+      return res.status(400).json({
+        success: false,
+        error: 'subject and target_scope are required'
+      });
     }
 
-    // 根据scope确定需要的权限类型
-    let permissionType = 'question_bank_review';
-    if (scope === 'assessment') {
-      permissionType = 'assessment_review';
-    } else if (scope === 'competition') {
-      permissionType = 'competition_review';
-    }
-
-    const reviewers = await TeacherPermission.getUsersByPermission(permissionType, subject);
+    // 使用新的 getReviewersForScope 方法
+    const reviewers = await TeacherPermission.getReviewersForScope(target_scope, subject);
 
     // 过滤掉自己
     const filteredReviewers = reviewers.filter(r => r.id !== req.user.id);
 
-    res.json({ success: true, data: filteredReviewers });
+    res.json({
+      success: true,
+      data: filteredReviewers,
+      meta: {
+        count: filteredReviewers.length,
+        target_scope,
+        subject
+      }
+    });
   } catch (error) {
     console.error('Error fetching reviewers:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// 提交题目审核
+// 提交题目审核（新版：支持 target_scope）
 router.post('/:id/submit', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { reviewer_id, scope } = req.body;
+    const { reviewer_id, target_scope } = req.body;
 
-    if (!reviewer_id || !scope || !Array.isArray(scope) || scope.length === 0) {
+    if (!reviewer_id || !target_scope) {
       return res.status(400).json({
         success: false,
-        error: 'Reviewer ID and scope are required'
+        error: 'reviewer_id and target_scope are required'
       });
     }
 
@@ -86,33 +90,32 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       });
     }
 
-    // 验证审核人权限
-    const scopeTypes = scope.map(s => {
-      if (s === 'practice') return 'question_bank_review';
-      if (s === 'assessment') return 'assessment_review';
-      if (s === 'competition') return 'competition_review';
-      return null;
-    }).filter(Boolean);
+    // 验证审核人权限（使用新的 canReviewQuestion 方法）
+    const canReview = await TeacherPermission.canReviewQuestion(
+      reviewer_id,
+      id,
+      target_scope
+    );
 
-    for (const permType of scopeTypes) {
-      const hasPermission = await TeacherPermission.hasPermission(
-        reviewer_id,
-        permType,
-        question.subject
-      );
-
-      if (!hasPermission) {
-        return res.status(400).json({
-          success: false,
-          error: `Reviewer does not have ${permType} permission for ${question.subject}`
-        });
-      }
+    if (!canReview) {
+      return res.status(400).json({
+        success: false,
+        error: `Reviewer does not have permission to review questions for scope: ${target_scope}`
+      });
     }
 
-    // 提交审核
-    const updatedQuestion = await QuestionBank.submitForReview(id, reviewer_id, scope);
+    // 提交审核（使用新的方法）
+    const updatedQuestion = await QuestionBank.submitForReviewWithScope(
+      id,
+      reviewer_id,
+      target_scope
+    );
 
-    res.json({ success: true, data: updatedQuestion });
+    res.json({
+      success: true,
+      data: updatedQuestion,
+      message: `Question submitted for review to ${target_scope}`
+    });
   } catch (error) {
     console.error('Error submitting for review:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -130,11 +133,48 @@ router.get('/pending', authMiddleware, async (req, res) => {
   }
 });
 
-// 审核题目（批准/拒绝）
+// 获取审核统计信息
+router.get('/stats', authMiddleware, async (req, res) => {
+  try {
+    const { query } = require('../database/connection');
+
+    // 统计当前用户作为审核人的审核情况
+    const statsResult = await query(
+      `SELECT
+        COUNT(*) FILTER (WHERE status = 'pending_review' AND reviewer_id = $1) AS pending_count,
+        COUNT(*) FILTER (WHERE status = 'approved' AND reviewer_id = $1) AS approved_count,
+        COUNT(*) FILTER (WHERE status = 'rejected' AND reviewer_id = $1) AS rejected_count
+      FROM question_bank`,
+      [req.user.id]
+    );
+
+    const stats = statsResult.rows[0];
+    const total = parseInt(stats.approved_count) + parseInt(stats.rejected_count);
+    const approval_rate = total > 0
+      ? ((parseInt(stats.approved_count) / total) * 100).toFixed(1)
+      : '0.0';
+
+    res.json({
+      success: true,
+      data: {
+        pending_count: parseInt(stats.pending_count),
+        approved_count: parseInt(stats.approved_count),
+        rejected_count: parseInt(stats.rejected_count),
+        total_reviewed: total,
+        approval_rate: parseFloat(approval_rate)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching review stats:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 审核题目（批准/拒绝，支持立即发布）
 router.post('/:id/review', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, comment } = req.body;
+    const { status, comment, publish_immediately, target_scope } = req.body;
 
     if (!status || !['approved', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -163,30 +203,129 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
       });
     }
 
-    // 审核题目
-    const reviewedQuestion = await QuestionBank.reviewQuestion(
-      id,
-      req.user.id,
-      status,
-      comment || ''
-    );
+    let reviewedQuestion;
 
-    // 记录审核历史
-    await QuestionReview.create({
-      question_id: id,
-      reviewer_id: req.user.id,
-      status,
-      comment: comment || ''
-    });
+    // 如果批准且要求立即发布
+    if (status === 'approved' && publish_immediately) {
+      if (!target_scope) {
+        return res.status(400).json({
+          success: false,
+          error: 'target_scope is required when publish_immediately is true'
+        });
+      }
 
-    // 如果批准，自动发布题目
-    if (status === 'approved') {
-      await QuestionBank.publishQuestion(id, req.user.id);
+      // 使用新的 approveAndPublish 方法（事务处理）
+      reviewedQuestion = await QuestionBank.approveAndPublish(
+        id,
+        req.user.id,
+        target_scope,
+        comment || ''
+      );
+
+      // 记录审核历史
+      await QuestionReview.create({
+        question_id: id,
+        reviewer_id: req.user.id,
+        status: 'approved',
+        comment: comment || `Approved and published to ${target_scope}`
+      });
+
+      res.json({
+        success: true,
+        data: reviewedQuestion,
+        message: `Question approved and published to ${target_scope}`
+      });
     }
+    // 普通审核（不立即发布）
+    else {
+      reviewedQuestion = await QuestionBank.reviewQuestion(
+        id,
+        req.user.id,
+        status,
+        comment || ''
+      );
 
-    res.json({ success: true, data: reviewedQuestion });
+      // 记录审核历史
+      await QuestionReview.create({
+        question_id: id,
+        reviewer_id: req.user.id,
+        status,
+        comment: comment || ''
+      });
+
+      res.json({
+        success: true,
+        data: reviewedQuestion,
+        message: status === 'approved' ? 'Question approved' : 'Question rejected'
+      });
+    }
   } catch (error) {
     console.error('Error reviewing question:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 直接发布到校级题库（无需审核）
+router.post('/:id/publish-school', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { school_id } = req.body;
+
+    // 验证教师角色
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only teachers can publish to school-level question bank'
+      });
+    }
+
+    // 检查题目是否属于当前用户
+    const question = await QuestionBank.findById(id);
+    if (!question) {
+      return res.status(404).json({ success: false, error: 'Question not found' });
+    }
+
+    if (question.created_by !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'You can only publish your own questions' });
+    }
+
+    if (question.status !== 'draft' && question.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        error: 'Only draft or approved questions can be published to school'
+      });
+    }
+
+    // 如果未指定 school_id，使用教师所在学校
+    let targetSchoolId = school_id;
+    if (!targetSchoolId) {
+      // 从 teachers 表获取教师所在学校
+      const { query } = require('../database/connection');
+      const teacherResult = await query(
+        'SELECT school_id FROM teachers WHERE user_id = $1',
+        [req.user.id]
+      );
+
+      if (teacherResult.rows.length === 0 || !teacherResult.rows[0].school_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Teacher has no associated school'
+        });
+      }
+
+      targetSchoolId = teacherResult.rows[0].school_id;
+    }
+
+    // 直接发布到校级题库（无需审核）
+    const publishedQuestion = await QuestionBank.publishToSchool(id, targetSchoolId, req.user.id);
+
+    res.json({
+      success: true,
+      data: publishedQuestion,
+      message: `Question published to school-level question bank (school_id: ${targetSchoolId})`
+    });
+  } catch (error) {
+    console.error('Error publishing to school:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

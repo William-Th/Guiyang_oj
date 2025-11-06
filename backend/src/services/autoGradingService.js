@@ -60,7 +60,7 @@ class AutoGradingService {
         // Check if this is an objective question
         // Normalize question types: blank = fill_blank, true_false = single
         const normalizedType = question_type === 'blank' ? 'fill_blank' :
-                               question_type === 'true_false' ? 'single' : question_type;
+          question_type === 'true_false' ? 'single' : question_type;
 
         if (['single', 'multiple', 'fill_blank'].includes(normalizedType)) {
           const gradingResult = await this.gradeQuestion(
@@ -150,21 +150,21 @@ class AutoGradingService {
       }
 
       switch (questionType) {
-        case 'single':
-          return this.gradeSingleChoice(studentAnswer, parsedCorrectAnswer, maxScore);
+      case 'single':
+        return this.gradeSingleChoice(studentAnswer, parsedCorrectAnswer, maxScore);
 
-        case 'multiple':
-          return this.gradeMultipleChoice(studentAnswer, parsedCorrectAnswer, maxScore);
+      case 'multiple':
+        return this.gradeMultipleChoice(studentAnswer, parsedCorrectAnswer, maxScore);
 
-        case 'fill_blank':
-          return this.gradeFillBlank(studentAnswer, parsedCorrectAnswer, maxScore);
+      case 'fill_blank':
+        return this.gradeFillBlank(studentAnswer, parsedCorrectAnswer, maxScore);
 
-        default:
-          return {
-            isCorrect: false,
-            score: 0,
-            message: 'Unsupported question type for auto-grading'
-          };
+      default:
+        return {
+          isCorrect: false,
+          score: 0,
+          message: 'Unsupported question type for auto-grading'
+        };
       }
     } catch (error) {
       logger.error('Grade question error:', error);
@@ -342,7 +342,7 @@ class AutoGradingService {
 
       // Normalize question type
       const normalizedType = answer.question_type === 'blank' ? 'fill_blank' :
-                            answer.question_type === 'true_false' ? 'single' : answer.question_type;
+        answer.question_type === 'true_false' ? 'single' : answer.question_type;
 
       // Only re-grade objective questions
       if (!['single', 'multiple', 'fill_blank'].includes(normalizedType)) {

@@ -152,11 +152,23 @@ class Activity {
       return null;
     }
 
+    // Query questions from activity_questions and question_bank (new schema)
     const questionsResult = await query(`
-      SELECT id, type, content, options, correct_answer, score, order_no, difficulty, explanation
-      FROM questions
-      WHERE activity_id = $1
-      ORDER BY order_no ASC
+      SELECT
+        qb.id,
+        qb.type,
+        qb.content,
+        qb.options,
+        qb.correct_answer,
+        qb.explanation,
+        qb.difficulty,
+        aq.score,
+        aq.order_index as order_no,
+        aq.is_required
+      FROM activity_questions aq
+      INNER JOIN question_bank qb ON aq.question_id = qb.id
+      WHERE aq.activity_id = $1
+      ORDER BY aq.order_index ASC
     `, [id]);
 
     const activity = activityResult.rows[0];

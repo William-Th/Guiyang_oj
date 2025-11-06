@@ -85,7 +85,7 @@ router.get('/pending', authMiddleware, async (req, res) => {
       params.push(grading_status);
     }
 
-    queryStr += ` ORDER BY sa.submit_time DESC`;
+    queryStr += ' ORDER BY sa.submit_time DESC';
 
     const result = await query(queryStr, params);
 

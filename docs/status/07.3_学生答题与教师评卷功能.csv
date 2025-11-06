@@ -1,0 +1,22 @@
+功能模块,功能,数据库,后端API,API测试,前端,E2E测试,备注
+学生答题流程,开始活动,✅,✅,✅,✅,✅,POST /api/student/activities/:id/start
+学生答题流程,获取题目列表,✅,✅,✅,✅,✅,GET /api/student/activities/:id/questions
+学生答题流程,提交单题答案,✅,✅,✅,✅,✅,POST /api/student/activities/:id/answers
+学生答题流程,获取已提交答案,✅,✅,✅,✅,✅,GET /api/student/activities/:id/my-answers
+学生答题流程,提交活动,✅,✅,✅,✅,✅,POST /api/student/activities/:id/submit
+学生答题流程,查看答题结果,✅,✅,✅,✅,✅,GET /api/student/activities/:id/detail
+学生答题流程,答案自动保存,✅,✅,✅,✅,✅,2秒debounce，LocalStorage备份
+学生答题流程,LocalStorage备份,N/A,N/A,N/A,✅,✅,网络故障保护
+学生答题流程,倒计时功能,✅,✅,✅,✅,✅,限时活动倒计时提醒
+教师评卷流程,待评卷列表,✅,✅,✅,✅,✅,GET /api/grading/pending
+教师评卷流程,评卷详情,✅,✅,✅,✅,✅,GET /api/grading/student-activity/:id
+教师评卷流程,单题评分,✅,✅,✅,✅,✅,PUT /api/grading/answers/:id
+教师评卷流程,批量评分,✅,✅,✅,✅,✅,PUT /api/grading/batch
+教师评卷流程,完成评卷,✅,✅,✅,✅,✅,POST /api/grading/student-activity/:id/complete
+教师评卷流程,评卷统计,✅,✅,✅,✅,✅,GET /api/grading/stats/:id
+教师评卷流程,多维度筛选,✅,✅,✅,✅,✅,科目、年级、状态筛选
+自动评分系统,单选题自动评分,✅,✅,✅,N/A,✅,autoGradingService.js
+自动评分系统,多选题自动评分,✅,✅,✅,N/A,✅,完全匹配才得分
+自动评分系统,判断题自动评分,✅,✅,✅,N/A,✅,true/false匹配
+自动评分系统,填空题自动评分,✅,✅,✅,N/A,✅,去除空格后精确匹配
+自动评分系统,主观题标记,✅,✅,✅,N/A,✅,标记为pending待人工评卷

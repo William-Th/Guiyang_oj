@@ -69,8 +69,7 @@ router.post('/login', [
         id: user.id,
         username: user.username,
         role: user.role,
-        realName: user.real_name,
-        idCard: user.id_card
+        realName: user.real_name
       }
     });
   } catch (error) {
@@ -157,7 +156,6 @@ router.get('/me', authMiddleware, async (req, res) => {
         username: user.username,
         role: user.role,
         realName: user.real_name,
-        idCard: user.id_card,
         phone: user.phone,
         email: user.email,
         createdAt: user.created_at

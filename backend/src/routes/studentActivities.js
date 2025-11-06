@@ -63,7 +63,7 @@ router.get('/practice', authMiddleware, async (req, res) => {
       params.push(ability_level);
     }
 
-    queryStr += ` ORDER BY a.created_at DESC`;
+    queryStr += ' ORDER BY a.created_at DESC';
 
     const result = await query(queryStr, params);
 
@@ -123,7 +123,7 @@ router.get('/assessment', authMiddleware, async (req, res) => {
       params.push(ability_level);
     }
 
-    queryStr += ` ORDER BY a.created_at DESC`;
+    queryStr += ' ORDER BY a.created_at DESC';
 
     const result = await query(queryStr, params);
 
@@ -361,6 +361,23 @@ router.get('/:id/questions',
         });
       }
 
+      // Get activity details
+      const activityResult = await query(`
+        SELECT id, title, description, subject, grade, start_time, end_time,
+               duration, total_score, pass_score, status, type, ability_level,
+               scope, allow_retake, max_attempts, is_official, target_audience,
+               certificate_config, time_limit_type
+        FROM activities
+        WHERE id = $1
+      `, [activityId]);
+
+      if (activityResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: '活动不存在'
+        });
+      }
+
       // Get questions (without correct_answer for security)
       const questionsResult = await query(`
         SELECT
@@ -380,9 +397,13 @@ router.get('/:id/questions',
         ORDER BY aq.order_index ASC
       `, [activityId]);
 
+      const activity = activityResult.rows[0];
+      activity.questions = questionsResult.rows;
+
       res.json({
         success: true,
-        questions: questionsResult.rows
+        activity,
+        questions: questionsResult.rows  // Keep for backward compatibility
       });
 
     } catch (error) {

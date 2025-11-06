@@ -64,7 +64,7 @@ router.get('/exam/:examId', authMiddleware, async (req, res) => {
         grade: exam.grade,
         duration: exam.duration,
         totalScore: exam.total_score,
-        passScore: exam.pass_score,
+        passScore: exam.pass_score
       },
       result: {
         score: studentExam.score,
@@ -75,7 +75,7 @@ router.get('/exam/:examId', authMiddleware, async (req, res) => {
         totalQuestions: answers.length,
         correctAnswers,
         wrongAnswers,
-        blankAnswers,
+        blankAnswers
       },
       answers: answers.map(a => ({
         questionId: a.question_id,
@@ -85,8 +85,8 @@ router.get('/exam/:examId', authMiddleware, async (req, res) => {
         correctAnswer: a.correct_answer,
         isCorrect: a.is_correct,
         score: a.score,
-        explanation: a.explanation,
-      })),
+        explanation: a.explanation
+      }))
     });
   } catch (error) {
     console.error('Get exam results error:', error);

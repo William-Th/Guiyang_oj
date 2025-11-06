@@ -95,30 +95,30 @@ const requireManagementScope = (scopeType) => {
 
       // 根据不同的管理范围类型检查权限
       switch (scopeType) {
-        case 'school':
-          if (req.user.role === 'school_admin' && permissions.school_id) {
-            req.managementScope = { type: 'school', id: permissions.school_id };
-            return next();
-          }
-          break;
-        case 'district':
-          if (req.user.role === 'district_admin' && permissions.district_id) {
-            req.managementScope = { type: 'district', id: permissions.district_id };
-            return next();
-          }
-          break;
-        case 'municipal_school':
-          if (req.user.role === 'municipal_school_admin') {
-            req.managementScope = { type: 'municipal_school' };
-            return next();
-          }
-          break;
-        case 'base_school':
-          if (req.user.role === 'base_school_admin' && permissions.school_id) {
-            req.managementScope = { type: 'base_school', id: permissions.school_id };
-            return next();
-          }
-          break;
+      case 'school':
+        if (req.user.role === 'school_admin' && permissions.school_id) {
+          req.managementScope = { type: 'school', id: permissions.school_id };
+          return next();
+        }
+        break;
+      case 'district':
+        if (req.user.role === 'district_admin' && permissions.district_id) {
+          req.managementScope = { type: 'district', id: permissions.district_id };
+          return next();
+        }
+        break;
+      case 'municipal_school':
+        if (req.user.role === 'municipal_school_admin') {
+          req.managementScope = { type: 'municipal_school' };
+          return next();
+        }
+        break;
+      case 'base_school':
+        if (req.user.role === 'base_school_admin' && permissions.school_id) {
+          req.managementScope = { type: 'base_school', id: permissions.school_id };
+          return next();
+        }
+        break;
       }
 
       return res.status(403).json({ message: 'Access denied. Insufficient management scope.' });

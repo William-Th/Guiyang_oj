@@ -1,0 +1,23 @@
+功能模块,功能,数据库,后端API,API测试,前端,E2E测试,备注
+数据库设计,添加time_limit_type字段,❌,N/A,N/A,N/A,N/A,枚举: unlimited/scheduled/timed
+数据库设计,添加数据库约束,❌,N/A,N/A,N/A,N/A,确保字段配置互斥
+数据库设计,添加started_at字段,❌,N/A,N/A,N/A,N/A,student_activities表，用于timed类型
+数据库设计,添加time_limit_deadline字段,❌,N/A,N/A,N/A,N/A,student_activities表
+数据库设计,编写数据库迁移脚本,❌,N/A,N/A,N/A,N/A,004_practice_time_limit_types.sql
+后端API开发,Activity Model验证逻辑,❌,❌,❌,N/A,N/A,三种类型的字段验证
+后端API开发,POST /api/activities接口,❌,❌,❌,N/A,N/A,支持time_limit_type参数
+后端API开发,PUT /api/activities/:id接口,❌,❌,❌,N/A,N/A,更新时验证
+后端API开发,POST /api/student-activities/start,❌,❌,❌,N/A,N/A,检查时间限制，记录started_at
+后端API开发,自动提交定时任务,❌,❌,❌,N/A,N/A,cron job每分钟检查超时
+后端API开发,后端单元测试,❌,N/A,❌,N/A,N/A,覆盖三种类型的验证逻辑
+前端开发,Activity类型定义更新,❌,N/A,N/A,❌,N/A,frontend/src/types/activity.ts
+前端开发,创建/编辑活动表单,❌,N/A,N/A,❌,N/A,时间限制类型选择器
+前端开发,倒计时组件,❌,N/A,N/A,❌,N/A,CountdownTimer.tsx
+前端开发,学生答题页面,❌,N/A,N/A,❌,N/A,显示倒计时，处理超时
+前端开发,活动列表显示,❌,N/A,N/A,❌,N/A,显示时间限制类型信息
+前端开发,异常处理,❌,N/A,N/A,❌,N/A,网络中断、页面刷新
+E2E测试,PTL001-PTL003: 创建三种类型,❌,N/A,N/A,N/A,❌,教师创建各类型活动
+E2E测试,PTL004-PTL006: 固定时间段测试,❌,N/A,N/A,N/A,❌,开始前/中/后行为测试
+E2E测试,PTL007-PTL008: 限时作答测试,❌,N/A,N/A,N/A,❌,开始计时、自动提交
+E2E测试,PTL009: 超时自动提交测试,❌,N/A,N/A,N/A,❌,模拟超时场景
+E2E测试,PTL010: 提前提交测试,❌,N/A,N/A,N/A,❌,无时间限制提交

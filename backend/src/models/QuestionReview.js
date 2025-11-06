@@ -90,7 +90,7 @@ class QuestionReview {
       params.push(dateTo);
     }
 
-    sql += ` GROUP BY status`;
+    sql += ' GROUP BY status';
 
     const result = await query(sql, params);
     return result.rows;

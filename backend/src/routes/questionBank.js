@@ -61,7 +61,7 @@ router.get('/config/knowledge-points', authMiddleware, async (req, res) => {
   }
 });
 
-// Get all questions from the bank
+// Get all questions from the bank (支持 scope 过滤和可见性控制)
 router.get('/bank', authMiddleware, async (req, res) => {
   try {
     const filters = {
@@ -78,10 +78,55 @@ router.get('/bank', authMiddleware, async (req, res) => {
       offset: parseInt(req.query.offset) || 0
     };
 
-    const questions = await QuestionBank.findAll(filters);
-    res.json({ success: true, data: questions });
+    let questions;
+
+    // 如果指定了 scope 过滤，使用新的 findByScope 方法
+    if (req.query.scope) {
+      // 处理 scope 参数：可能是字符串或数组
+      const scopeFilter = Array.isArray(req.query.scope)
+        ? req.query.scope  // 已经是数组 (如 ?scope=xxx&scope=yyy)
+        : req.query.scope.split(',');  // 字符串，需要分割 (如 ?scope=xxx,yyy)
+
+      // 获取用户可见的 scope 列表
+      const userScope = await QuestionBank.getAvailableScopes(req.user.id);
+
+      // 使用 scope-aware 查询
+      questions = await QuestionBank.findByScope(scopeFilter, userScope, filters);
+    } else {
+      // 兼容旧接口：使用 findAll 但只返回已发布的题目
+      filters.status = filters.status || 'published';
+      questions = await QuestionBank.findAll(filters);
+    }
+
+    res.json({
+      success: true,
+      data: questions,
+      meta: {
+        count: questions.length,
+        scope: req.query.scope || 'all'
+      }
+    });
   } catch (error) {
     console.error('Error fetching questions:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get user's available scopes (新增)
+router.get('/my-scopes', authMiddleware, async (req, res) => {
+  try {
+    const scopes = await QuestionBank.getAvailableScopes(req.user.id);
+
+    res.json({
+      success: true,
+      data: scopes,
+      meta: {
+        count: scopes.length,
+        user_role: req.user.role
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching available scopes:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -90,7 +135,7 @@ router.get('/bank', authMiddleware, async (req, res) => {
 router.get('/bank/search', authMiddleware, async (req, res) => {
   try {
     const { q, subject, grade } = req.query;
-    
+
     if (!q) {
       return res.status(400).json({ success: false, error: 'Search term required' });
     }

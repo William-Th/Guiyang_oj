@@ -14,7 +14,7 @@ const SUBJECT_CODE_MAP = {
   '物理': 'PHYS',
   '化学': 'CHEM',
   '生物': 'BIOL',
-  '计算机': 'COMP',
+  '计算机': 'COMP'
 };
 
 /**
@@ -111,7 +111,7 @@ function parseQuestionCode(code) {
     subjectCode,
     subject: subjectName,
     date: `${year}-${month}-${day}`,
-    sequence,
+    sequence
   };
 }
 
@@ -158,5 +158,5 @@ module.exports = {
   getQuestionByCode,
   parseQuestionCode,
   batchGenerateQuestionCodes,
-  SUBJECT_CODE_MAP,
+  SUBJECT_CODE_MAP
 };

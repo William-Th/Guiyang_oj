@@ -29,7 +29,7 @@ router.get('/admins', [
     const params = [];
     if (role) {
       params.push(role);
-      queryText += ` AND u.role = $1`;
+      queryText += ' AND u.role = $1';
     }
 
     queryText += ' ORDER BY u.created_at DESC';
@@ -55,7 +55,7 @@ router.get('/admins/:id', [
     const adminId = req.params.id;
 
     const result = await query(`
-      SELECT u.id, u.username, u.role, u.real_name, u.id_card, u.phone, u.email, u.status, u.created_at,
+      SELECT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at,
              ap.id as permission_id, ap.school_id, ap.district_id, ap.permission_scope,
              s.name as school_name, d.name as district_name
       FROM users u

@@ -10,14 +10,6 @@ class User {
     return result.rows[0];
   }
 
-  static async findByIdCard(idCard) {
-    const result = await query(
-      'SELECT * FROM users WHERE id_card = $1',
-      [idCard]
-    );
-    return result.rows[0];
-  }
-
   static async findById(id) {
     const result = await query(
       'SELECT * FROM users WHERE id = $1',
@@ -27,15 +19,15 @@ class User {
   }
 
   static async create(userData) {
-    const { username, password, role, realName, idCard, phone, email } = userData;
+    const { username, password, role, realName, phone, email } = userData;
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     const result = await query(`
-      INSERT INTO users (username, password, role, real_name, id_card, phone, email)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, username, role, real_name, id_card, phone, email, created_at
-    `, [username, hashedPassword, role, realName, idCard, phone, email]);
-    
+      INSERT INTO users (username, password, role, real_name, phone, email)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, username, role, real_name, phone, email, created_at
+    `, [username, hashedPassword, role, realName, phone, email]);
+
     return result.rows[0];
   }
 
@@ -69,7 +61,7 @@ class User {
     }
 
     const result = await query(
-      `SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.id_card, u.phone, u.email, u.status, u.created_at, u.updated_at,
+      `SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at, u.updated_at,
               sc.name as school_name, sc.id as school_id,
               d.name as district_name, d.id as district_id
        FROM users u
@@ -133,7 +125,7 @@ class User {
       UPDATE users
       SET real_name = $1, phone = $2, email = $3, status = $4, role = $5, updated_at = CURRENT_TIMESTAMP
       WHERE id = $6
-      RETURNING id, username, role, real_name, id_card, phone, email, status, updated_at
+      RETURNING id, username, role, real_name, phone, email, status, updated_at
     `, [realName, phone, email, status, role, userId]);
 
     return result.rows[0];
@@ -231,17 +223,9 @@ class User {
     return result.rows.length > 0;
   }
 
-  static async checkIdCardExists(idCard) {
-    const result = await query(
-      'SELECT id FROM users WHERE id_card = $1',
-      [idCard]
-    );
-    return result.rows.length > 0;
-  }
-
   static async getAllStudents() {
     const result = await query(`
-      SELECT u.id, u.username, u.real_name, u.id_card, u.phone, u.email, u.created_at,
+      SELECT u.id, u.username, u.real_name, u.phone, u.email, u.created_at,
              s.student_no, s.grade, s.class, s.guardian_name, s.guardian_phone,
              sc.name as school_name
       FROM users u
@@ -262,10 +246,10 @@ class User {
       // Create user
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const userResult = await client.query(`
-        INSERT INTO users (username, password, role, real_name, id_card, phone, email)
-        VALUES ($1, $2, 'student', $3, $4, $5, $6)
+        INSERT INTO users (username, password, role, real_name, phone, email)
+        VALUES ($1, $2, 'student', $3, $4, $5)
         RETURNING id
-      `, [userData.username, hashedPassword, userData.realName, userData.idCard, userData.phone, userData.email]);
+      `, [userData.username, hashedPassword, userData.realName, userData.phone, userData.email]);
 
       const userId = userResult.rows[0].id;
 
@@ -300,10 +284,10 @@ class User {
       // Create user
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const userResult = await client.query(`
-        INSERT INTO users (username, password, role, real_name, id_card, phone, email)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO users (username, password, role, real_name, phone, email)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id
-      `, [userData.username, hashedPassword, userData.role, userData.realName, userData.idCard, userData.phone, userData.email]);
+      `, [userData.username, hashedPassword, userData.role, userData.realName, userData.phone, userData.email]);
 
       const userId = userResult.rows[0].id;
 
@@ -372,7 +356,7 @@ class User {
     }
 
     const result = await query(`
-      SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.id_card, u.phone, u.email, u.status, u.created_at, u.updated_at,
+      SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at, u.updated_at,
              sc.name as school_name, sc.id as school_id,
              d.name as district_name, d.id as district_id
       FROM users u
@@ -412,7 +396,7 @@ class User {
     }
 
     const result = await query(`
-      SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.id_card, u.phone, u.email, u.status, u.created_at, u.updated_at,
+      SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at, u.updated_at,
              sc.name as school_name, sc.id as school_id,
              d.name as district_name, d.id as district_id
       FROM users u
@@ -424,6 +408,116 @@ class User {
       ORDER BY u.created_at DESC
     `, params);
     return result.rows;
+  }
+
+  // 获取用户详细资料（包含角色特定信息）
+  static async getDetailedProfile(userId) {
+    // 1. 获取基本用户信息
+    const userResult = await query(
+      'SELECT id, username, role, real_name, phone, email, avatar_url, status, created_at, updated_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return null;
+    }
+
+    const user = userResult.rows[0];
+    const profile = {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      realName: user.real_name,
+      phone: user.phone,
+      email: user.email,
+      avatarUrl: user.avatar_url,
+      status: user.status,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
+    };
+
+    // 2. 根据角色获取额外信息
+    if (user.role === 'teacher') {
+      // 教师信息
+      const teacherResult = await query(`
+        SELECT t.teacher_no, t.subjects, t.title, t.school_id,
+               s.name as school_name, s.district_id,
+               d.name as district_name
+        FROM teachers t
+        LEFT JOIN schools s ON t.school_id = s.id
+        LEFT JOIN districts d ON s.district_id = d.id
+        WHERE t.user_id = $1
+      `, [userId]);
+
+      if (teacherResult.rows.length > 0) {
+        const teacher = teacherResult.rows[0];
+        profile.teacherNo = teacher.teacher_no;
+        profile.subjects = teacher.subjects;
+        profile.title = teacher.title;
+        profile.schoolId = teacher.school_id;
+        profile.school = teacher.school_name;
+        profile.districtId = teacher.district_id;
+        profile.district = teacher.district_name;
+      }
+    } else if (user.role === 'student') {
+      // 学生信息
+      const studentResult = await query(`
+        SELECT s.student_no, s.grade, s.class, s.school_id,
+               s.guardian_name, s.guardian_phone,
+               sc.name as school_name, sc.district_id,
+               d.name as district_name
+        FROM students s
+        LEFT JOIN schools sc ON s.school_id = sc.id
+        LEFT JOIN districts d ON sc.district_id = d.id
+        WHERE s.user_id = $1
+      `, [userId]);
+
+      if (studentResult.rows.length > 0) {
+        const student = studentResult.rows[0];
+        profile.studentNo = student.student_no;
+        profile.grade = student.grade;
+        profile.class = student.class;
+        profile.schoolId = student.school_id;
+        profile.school = student.school_name;
+        profile.districtId = student.district_id;
+        profile.district = student.district_name;
+        profile.guardianName = student.guardian_name;
+        profile.guardianPhone = student.guardian_phone;
+      }
+    } else if (['school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(user.role)) {
+      // 管理员信息
+      const adminResult = await query(`
+        SELECT ap.school_id, ap.district_id, ap.permission_scope,
+               s.name as school_name, s.district_id as school_district_id,
+               d.name as district_name
+        FROM admin_permissions ap
+        LEFT JOIN schools s ON ap.school_id = s.id
+        LEFT JOIN districts d ON ap.district_id = d.id
+        WHERE ap.user_id = $1
+      `, [userId]);
+
+      if (adminResult.rows.length > 0) {
+        const admin = adminResult.rows[0];
+        profile.schoolId = admin.school_id;
+        profile.school = admin.school_name;
+        profile.districtId = admin.district_id;
+        profile.district = admin.district_name;
+        profile.permissionScope = admin.permission_scope;
+
+        // 添加管理级别信息
+        const roleLevelMap = {
+          'system_admin': 5,
+          'municipal_admin': 4,
+          'district_admin': 3,
+          'school_admin': 2,
+          'municipal_school_admin': 2,
+          'base_school_admin': 2
+        };
+        profile.managementLevel = roleLevelMap[user.role] || 0;
+      }
+    }
+
+    return profile;
   }
 }
 

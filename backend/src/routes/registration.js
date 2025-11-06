@@ -178,7 +178,7 @@ router.post('/student', async (req, res) => {
 
     // 9. 记录审核日志
     await pool.query(
-      `SELECT log_registration_action($1, $2, $3, $4, $5, $6)`,
+      'SELECT log_registration_action($1, $2, $3, $4, $5, $6)',
       [
         requestId,
         'submitted',
@@ -378,7 +378,31 @@ router.get('/admin/requests', authMiddleware, async (req, res) => {
       queryParams.push(schoolCode);
       paramIndex++;
     }
-    // 区级/市级/系统管理员可以看到所有申请（暂时不做过滤）
+    // 区级管理员只能看到本区已超时3天的申请
+    else if (role === 'district_admin') {
+      // 查询管理员所属区县
+      const adminPermResult = await pool.query(
+        'SELECT district_id FROM admin_permissions WHERE user_id = $1',
+        [userId]
+      );
+
+      if (adminPermResult.rows.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: '未找到区县权限信息'
+        });
+      }
+
+      const districtId = adminPermResult.rows[0].district_id;
+
+      // 过滤条件：属于该区县 AND 已超过3天
+      whereClause += ` AND district_id = $${paramIndex}`;
+      queryParams.push(districtId);
+      paramIndex++;
+
+      whereClause += ' AND (submitted_at + INTERVAL \'3 days\' < CURRENT_TIMESTAMP OR last_escalated_at + INTERVAL \'3 days\' < CURRENT_TIMESTAMP)';
+    }
+    // 市级/系统管理员可以看到所有申请
 
     const result = await pool.query(
       `SELECT
@@ -520,7 +544,7 @@ router.post('/admin/requests/:id/approve', async (req, res) => {
 
     // 7. 记录审核日志
     await client.query(
-      `SELECT log_registration_action($1, $2, $3, $4, $5, $6)`,
+      'SELECT log_registration_action($1, $2, $3, $4, $5, $6)',
       [
         id,
         'approved',
@@ -620,7 +644,7 @@ router.post('/admin/requests/:id/reject', async (req, res) => {
 
     // 3. 记录审核日志
     await pool.query(
-      `SELECT log_registration_action($1, $2, $3, $4, $5, $6)`,
+      'SELECT log_registration_action($1, $2, $3, $4, $5, $6)',
       [
         id,
         'rejected',
@@ -664,7 +688,7 @@ router.get('/admin/requests/:id/history', async (req, res) => {
   try {
     // 1. 获取申请基本信息
     const requestResult = await pool.query(
-      `SELECT * FROM student_registration_requests WHERE id = $1`,
+      'SELECT * FROM student_registration_requests WHERE id = $1',
       [id]
     );
 

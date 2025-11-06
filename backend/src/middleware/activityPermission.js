@@ -28,7 +28,8 @@ const PRACTICE_ALLOWED_ROLES = [
   'district_admin',
   'base_school_admin',
   'municipal_school_admin',
-  'municipal_admin'
+  'municipal_admin',
+  'system_admin'        // System administrator (highest level)
 ];
 
 const ASSESSMENT_ALLOWED_ROLES = [

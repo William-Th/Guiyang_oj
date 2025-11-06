@@ -128,6 +128,7 @@ app.use('/api/results', require('./routes/results'));
 app.use('/api/certificates', require('./routes/certificates')); // 完整的证书功能
 app.use('/api/certificate', require('./routes/certificate_verify')); // 公共验证和测试端点
 app.use('/api/registration', require('./routes/registration')); // 学生注册申请和审核
+app.use('/api/subjects', require('./routes/subjects')); // 科目配置管理
 
 // Error handling middleware
 app.use((err, req, res, _next) => {
@@ -201,8 +202,8 @@ const server = app.listen(PORT, () => {
 
   // Start cron jobs
   autoSubmitTask = startAutoSubmitCron();
-  console.log(`⏰ Auto-submit cron job started (runs every minute)`);
+  console.log('⏰ Auto-submit cron job started (runs every minute)');
 
   registrationEscalationTask = startEscalationCron();
-  console.log(`⏰ Registration escalation cron job started (runs every hour)`);
+  console.log('⏰ Registration escalation cron job started (runs every hour)');
 });

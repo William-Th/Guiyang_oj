@@ -2,19 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const School = require('../models/School');
 const { authMiddleware, requireRole, requireAdmin } = require('../middleware/auth');
+const { query, getClient } = require('../database/connection');
 const logger = require('../utils/logger');
 
-// Get current user profile
+// Get current user profile (with role-specific details)
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
+    const userProfile = await User.getDetailedProfile(req.user.id);
+    if (!userProfile) {
       return res.status(404).json({ message: '用户不存在' });
     }
 
-    // Remove password from response
-    const { password, ...userProfile } = user;
     res.json({ user: userProfile });
   } catch (error) {
     logger.error('Get profile error:', error);
@@ -59,17 +59,256 @@ router.put('/profile', [
   }
 });
 
+// Get all schools (authenticated users)
+router.get('/schools', authMiddleware, async (req, res) => {
+  try {
+    const schools = await School.findAll();
+    res.json({ schools });
+  } catch (error) {
+    logger.error('Get schools error:', error);
+    res.status(500).json({ message: '获取学校列表失败' });
+  }
+});
+
+// Update student profile (student only)
+router.put('/profile/student', [
+  authMiddleware,
+  requireRole(['student']),
+  body('realName').optional().isLength({ min: 1 }).withMessage('真实姓名不能为空'),
+  body('phone').optional().isMobilePhone('zh-CN').withMessage('手机号格式不正确'),
+  body('email').optional().isEmail().withMessage('邮箱格式不正确'),
+  body('schoolId').optional().isInt({ min: 1 }).withMessage('学校ID必须是正整数'),
+  body('grade').optional().isString().withMessage('年级格式不正确'),
+  body('class').optional().isString().withMessage('班级格式不正确'),
+  body('guardianName').optional().isString().withMessage('监护人姓名格式不正确'),
+  body('guardianPhone').optional().isMobilePhone('zh-CN').withMessage('监护人手机号格式不正确')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const client = await getClient();
+
+  try {
+    await client.query('BEGIN');
+
+    const { realName, phone, email, schoolId, grade, class: className, guardianName, guardianPhone } = req.body;
+    const userId = req.user.id;
+
+    // Update users table
+    const userFields = [];
+    const userValues = [];
+    let userParamCount = 1;
+
+    if (realName !== undefined) {
+      userFields.push(`real_name = $${userParamCount}`);
+      userValues.push(realName);
+      userParamCount++;
+    }
+    if (phone !== undefined) {
+      userFields.push(`phone = $${userParamCount}`);
+      userValues.push(phone);
+      userParamCount++;
+    }
+    if (email !== undefined) {
+      userFields.push(`email = $${userParamCount}`);
+      userValues.push(email);
+      userParamCount++;
+    }
+
+    if (userFields.length > 0) {
+      userValues.push(userId);
+      const userUpdateQuery = `
+        UPDATE users
+        SET ${userFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $${userParamCount}
+      `;
+      await client.query(userUpdateQuery, userValues);
+    }
+
+    // Update students table
+    const studentFields = [];
+    const studentValues = [];
+    let studentParamCount = 1;
+
+    if (schoolId !== undefined) {
+      studentFields.push(`school_id = $${studentParamCount}`);
+      studentValues.push(schoolId);
+      studentParamCount++;
+    }
+    if (grade !== undefined) {
+      studentFields.push(`grade = $${studentParamCount}`);
+      studentValues.push(grade);
+      studentParamCount++;
+    }
+    if (className !== undefined) {
+      studentFields.push(`class = $${studentParamCount}`);
+      studentValues.push(className);
+      studentParamCount++;
+    }
+    if (guardianName !== undefined) {
+      studentFields.push(`guardian_name = $${studentParamCount}`);
+      studentValues.push(guardianName);
+      studentParamCount++;
+    }
+    if (guardianPhone !== undefined) {
+      studentFields.push(`guardian_phone = $${studentParamCount}`);
+      studentValues.push(guardianPhone);
+      studentParamCount++;
+    }
+
+    if (studentFields.length > 0) {
+      studentValues.push(userId);
+      const studentUpdateQuery = `
+        UPDATE students
+        SET ${studentFields.join(', ')}
+        WHERE user_id = $${studentParamCount}
+      `;
+      await client.query(studentUpdateQuery, studentValues);
+    }
+
+    await client.query('COMMIT');
+
+    // Fetch updated profile
+    const updatedProfile = await User.getDetailedProfile(userId);
+
+    logger.info('Student profile updated', { userId });
+
+    res.json({
+      message: '学生信息更新成功',
+      user: updatedProfile
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error('Update student profile error:', error);
+    res.status(500).json({ message: '更新学生信息失败' });
+  } finally {
+    client.release();
+  }
+});
+
+// Update teacher profile (teacher only)
+router.put('/profile/teacher', [
+  authMiddleware,
+  requireRole(['teacher']),
+  body('realName').optional().isLength({ min: 1 }).withMessage('真实姓名不能为空'),
+  body('phone').optional().isMobilePhone('zh-CN').withMessage('手机号格式不正确'),
+  body('email').optional().isEmail().withMessage('邮箱格式不正确'),
+  body('schoolId').optional().isInt({ min: 1 }).withMessage('学校ID必须是正整数'),
+  body('subjects').optional().isArray().withMessage('科目必须是数组'),
+  body('title').optional().isString().withMessage('职称格式不正确')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const client = await getClient();
+
+  try {
+    await client.query('BEGIN');
+
+    const { realName, phone, email, schoolId, subjects, title } = req.body;
+    const userId = req.user.id;
+
+    // Update users table
+    const userFields = [];
+    const userValues = [];
+    let userParamCount = 1;
+
+    if (realName !== undefined) {
+      userFields.push(`real_name = $${userParamCount}`);
+      userValues.push(realName);
+      userParamCount++;
+    }
+    if (phone !== undefined) {
+      userFields.push(`phone = $${userParamCount}`);
+      userValues.push(phone);
+      userParamCount++;
+    }
+    if (email !== undefined) {
+      userFields.push(`email = $${userParamCount}`);
+      userValues.push(email);
+      userParamCount++;
+    }
+
+    if (userFields.length > 0) {
+      userValues.push(userId);
+      const userUpdateQuery = `
+        UPDATE users
+        SET ${userFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $${userParamCount}
+      `;
+      await client.query(userUpdateQuery, userValues);
+    }
+
+    // Update teachers table
+    const teacherFields = [];
+    const teacherValues = [];
+    let teacherParamCount = 1;
+
+    if (schoolId !== undefined) {
+      teacherFields.push(`school_id = $${teacherParamCount}`);
+      teacherValues.push(schoolId);
+      teacherParamCount++;
+    }
+    if (subjects !== undefined) {
+      teacherFields.push(`subjects = $${teacherParamCount}`);
+      teacherValues.push(subjects);
+      teacherParamCount++;
+    }
+    if (title !== undefined) {
+      teacherFields.push(`title = $${teacherParamCount}`);
+      teacherValues.push(title);
+      teacherParamCount++;
+    }
+
+    if (teacherFields.length > 0) {
+      teacherValues.push(userId);
+      const teacherUpdateQuery = `
+        UPDATE teachers
+        SET ${teacherFields.join(', ')}
+        WHERE user_id = $${teacherParamCount}
+      `;
+      await client.query(teacherUpdateQuery, teacherValues);
+    }
+
+    await client.query('COMMIT');
+
+    // Fetch updated profile
+    const updatedProfile = await User.getDetailedProfile(userId);
+
+    logger.info('Teacher profile updated', { userId });
+
+    res.json({
+      message: '教师信息更新成功',
+      user: updatedProfile
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error('Update teacher profile error:', error);
+    res.status(500).json({ message: '更新教师信息失败' });
+  } finally {
+    client.release();
+  }
+});
+
 // Get all users (admin only)
 router.get('/all', [
   authMiddleware,
   requireAdmin
 ], async (req, res) => {
   try {
-    const { role, status } = req.query;
+    const { role, status, search, phone, realName, school } = req.query;
     const filters = {};
 
     if (role) filters.role = role;
     if (status) filters.status = status;
+    if (search) filters.search = search; // 通用搜索（手机号、姓名、学校）
+    if (phone) filters.phone = phone; // 精确搜索手机号
+    if (realName) filters.realName = realName; // 模糊搜索姓名
+    if (school) filters.school = school; // 模糊搜索学校
 
     // 根据管理员角色获取对应范围的用户
     let users = [];
@@ -123,7 +362,16 @@ router.post('/create', [
   }
 
   try {
-    const { username, password, role, realName, idCard, phone, email } = req.body;
+    const { username, password, role, realName, phone, email } = req.body;
+
+    // 权限检查：只有市级管理员和系统管理员才能创建市直属学校管理员
+    if (role === 'municipal_school_admin') {
+      if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
+        return res.status(403).json({
+          message: '权限不足：只有市级管理员才能创建市直属学校管理员账号'
+        });
+      }
+    }
 
     // Check if username already exists
     const usernameExists = await User.checkUsernameExists(username);
@@ -131,20 +379,11 @@ router.post('/create', [
       return res.status(400).json({ message: '用户名已存在' });
     }
 
-    // Check if ID card already exists (if provided)
-    if (idCard) {
-      const idCardExists = await User.checkIdCardExists(idCard);
-      if (idCardExists) {
-        return res.status(400).json({ message: '身份证号已存在' });
-      }
-    }
-
     const userData = {
       username,
       password,
       role,
       realName,
-      idCard: idCard || null,
       phone: phone || null,
       email: email || null
     };

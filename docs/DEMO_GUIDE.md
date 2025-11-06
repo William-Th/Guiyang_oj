@@ -60,6 +60,7 @@
 | `yunyan_admin` | district_admin | 云岩区管理员 | `password123` | 云岩区 |
 | `nanming_admin` | district_admin | 南明区管理员 | `password123` | 南明区 |
 | `guanshanhu_admin` | district_admin | 观山湖区管理员 | `password123` | 观山湖区 |
+| `baiyun_admin` | district_admin | 白云区教育局管理员 | `password123` | 白云区 |
 | `qingzhen_admin` | district_admin | 清镇市教育局管理员 | `password123` | 清镇市 |
 | `xiuwen_admin` | district_admin | 修文县教育局管理员 | `password123` | 修文县 |
 | `xifeng_admin` | district_admin | 息烽县教育局管理员 | `password123` | 息烽县 |
@@ -72,6 +73,12 @@
 - 管理教师和学生账号
 - 查看区县统计数据
 - 审批学校请求
+
+**特殊权限**:
+- **白云区管理员** (`baiyun_admin`): 额外拥有审核数学和信息科技题目的权限
+  - 可审核、批准、拒绝这两个科目的题目
+  - 可管理白云区教师提交的题库
+  - 可查看题目审核统计
 
 **注**: 历史测试账号 `district_admin01` 和 `test_district_admin_*` 已从系统中移除。测试时请使用上述具体区县的管理员账号（如 `yunyan_admin`、`nanming_admin` 等）。
 
@@ -196,11 +203,26 @@
 
 教师账号，负责教学和练习活动管理。
 
-| 账号 | 角色 | 姓名 | 密码 | 所属学校 |
-|------|------|------|------|----------|
-| `teacher01` | teacher | 张老师 | `password123` | 云岩区第一小学 |
-| `teacher02` | teacher | 李老师 | `password123` | 南明区第一中学 |
-| `teacher03` | teacher | 王老师 | `password123` | 观山湖区第一高中 |
+### 通用教师账号
+
+| 账号 | 角色 | 姓名 | 密码 | 所属学校 | 科目 |
+|------|------|------|------|----------|------|
+| `teacher01` | teacher | 张老师 | `password123` | 云岩区第一小学 | 语文 |
+| `teacher02` | teacher | 李老师 | `password123` | 南明区第一中学 | 英语 |
+| `teacher03` | teacher | 王老师 | `password123` | 观山湖区第一高中 | 物理 |
+
+### 白云区教师账号（含题库权限）
+
+| 账号 | 角色 | 姓名 | 密码 | 所属学校 | 科目 | 特殊说明 |
+|------|------|------|------|----------|------|----------|
+| `teacher_by_ps_01` | teacher | 陈刚 | `password123` | 白云区第一小学 | 数学 | 负责小学数学和信息科技题库 |
+| `teacher_by_ms_01` | teacher | 蒋敏 | `password123` | 白云区第一中学 | 信息科技 | 负责初中数学和信息科技题库 |
+
+**题库创建说明**:
+- **陈刚老师**: 已创建一年级至六年级数学题目，以及三至六年级信息科技题目
+- **蒋敏老师**: 已创建七至九年级数学题目，以及七至九年级信息科技题目
+- 所有题目均包含5种题型：单选题、多选题、判断题、填空题、简答题
+- 题目状态均为已发布（published），可直接用于活动组卷
 
 **权限**:
 - 管理练习活动（创建、编辑、发布、删除）

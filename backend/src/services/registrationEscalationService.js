@@ -57,7 +57,7 @@ async function escalateRequest(request) {
     });
 
     await client.query(
-      `SELECT log_registration_action($1, $2, $3, $4, $5, $6)`,
+      'SELECT log_registration_action($1, $2, $3, $4, $5, $6)',
       [
         request.id,
         'auto_escalated',

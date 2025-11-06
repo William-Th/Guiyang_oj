@@ -27,10 +27,9 @@ class Certificate {
   // 根据证书编号查找证书
   static async findByCertNumber(certNumber) {
     const queryStr = `
-            SELECT 
+            SELECT
                 c.*,
                 u.real_name as student_name,
-                u.id_card,
                 e.title as exam_name,
                 e.start_time as exam_date,
                 s.school_id,
