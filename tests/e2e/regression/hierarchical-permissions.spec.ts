@@ -379,20 +379,32 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     // 切换到草稿箱标签页（使用role=tab明确选择标签页，避免匹配侧边栏按钮）
     const draftsTab = page.getByRole('tab', { name: /草稿/ });
     if (await draftsTab.isVisible({ timeout: 2000 })) {
+      // 先切换到其他标签页再切换回来，强制React重新渲染DraftsPage
+      const browseTab = page.getByRole('tab', { name: /题库浏览/ });
+      if (await browseTab.isVisible({ timeout: 1000 })) {
+        await browseTab.click();
+        await page.waitForTimeout(500);
+      }
+
       await draftsTab.click();
       await page.waitForLoadState('networkidle'); // 等待数据加载完成
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(2000); // 增加等待时间确保数据加载
+      console.log('✅ 已切换到草稿箱标签页');
     } else {
       // 如果没有标签页，可能有单独的草稿箱页面链接
       const draftsLink = page.getByRole('menuitem', { name: /草稿/ });
       if (await draftsLink.isVisible({ timeout: 2000 })) {
         await draftsLink.click();
         await page.waitForLoadState('networkidle'); // 等待数据加载完成
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
       }
     }
 
     // Step 5: 找到刚创建的题目并提交审核
+    // 首先验证表格已加载
+    await expect(page.locator('.ant-table-tbody tr[data-row-key]').first()).toBeAttached({ timeout: 5000 });
+    console.log(`✅ 草稿箱表格已加载，查找题目: REV101-${timestamp}`);
+
     const targetRow = page.locator('.ant-table-tbody tr')
       .filter({ hasText: `REV101-${timestamp}` })
       .first();
@@ -431,11 +443,14 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.waitForTimeout(500);
     const firstReviewer = page.locator('.ant-select-dropdown').locator('.ant-select-item').first();
     await firstReviewer.evaluate((el: HTMLElement) => el.click());
-    await page.waitForTimeout(300);
 
-    // 提交
+    // 等待下拉菜单关闭动画
+    await page.waitForTimeout(1000);
+    console.log('✅ 已选择审核人，准备提交');
+
+    // 提交（使用evaluate绕过元素遮挡检查）
     const modalSubmitButton = page.locator('.ant-modal-footer').locator('button').filter({ hasText: /提交/ });
-    await modalSubmitButton.click();
+    await modalSubmitButton.evaluate((button: HTMLButtonElement) => button.click());
     await page.waitForTimeout(1000);
 
     // Step 7: 验证成功

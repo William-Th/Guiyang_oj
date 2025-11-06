@@ -8,7 +8,6 @@ import {
   Modal,
   message,
   Select,
-  Checkbox,
   Tooltip,
   Popconfirm,
   Empty,
@@ -55,12 +54,39 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [availableReviewers, setAvailableReviewers] = useState<Reviewer[]>([]);
   const [selectedReviewer, setSelectedReviewer] = useState<number | null>(null);
-  const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
+  const [selectedScope, setSelectedScope] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadDrafts();
   }, []);
+
+  // 监听scope变化，动态加载对应的审核人列表
+  useEffect(() => {
+    const loadReviewersForScope = async () => {
+      if (!selectedQuestion || !selectedScope) {
+        // 如果没有选择题目或scope，清空审核人列表
+        setAvailableReviewers([]);
+        setSelectedReviewer(null);
+        return;
+      }
+
+      try {
+        const response = await questionReviewApi.getAvailableReviewers(
+          selectedQuestion.subject,
+          selectedScope
+        );
+        setAvailableReviewers(response.data || []);
+        setSelectedReviewer(null); // 清空之前选择的审核人
+      } catch (error: any) {
+        console.error('Load reviewers error:', error);
+        message.error('加载审核人列表失败：' + (error.response?.data?.error || error.message));
+        setAvailableReviewers([]);
+      }
+    };
+
+    loadReviewersForScope();
+  }, [selectedScope, selectedQuestion]);
 
   const loadDrafts = async () => {
     try {
@@ -88,20 +114,13 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
   const handleSubmitClick = async (question: Question) => {
     setSelectedQuestion(question);
     setSelectedReviewer(null);
-    setSelectedScopes([]);
-
-    // Load available reviewers for this subject
-    try {
-      const response = await questionReviewApi.getAvailableReviewers(question.subject);
-      setAvailableReviewers(response.data || []);
-      setSubmitModalVisible(true);
-    } catch (error: any) {
-      message.error('加载审核人列表失败');
-    }
+    setSelectedScope('');
+    setAvailableReviewers([]); // 清空审核人列表，等用户选择scope后再加载
+    setSubmitModalVisible(true); // 直接打开模态框
   };
 
   const handleSubmit = async () => {
-    if (!selectedReviewer || selectedScopes.length === 0) {
+    if (!selectedReviewer || !selectedScope) {
       message.warning('请选择审核人和题库范围');
       return;
     }
@@ -111,7 +130,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
       await questionReviewApi.submitForReview(
         selectedQuestion!.id,
         selectedReviewer,
-        selectedScopes
+        selectedScope
       );
       message.success('提交审核成功');
       setSubmitModalVisible(false);
@@ -342,15 +361,53 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
             <div style={{ marginTop: 24 }}>
               <label style={{ display: 'block', marginBottom: 8 }}>
                 <span style={{ color: 'red' }}>* </span>
+                选择目标题库范围：
+              </label>
+              <Select
+                value={selectedScope || undefined}
+                onChange={setSelectedScope}
+                placeholder="请选择要提交的题库范围"
+                style={{ width: '100%' }}
+                virtual={false}
+              >
+                <Select.Option value="assessment">
+                  <Tag color="orange">测评题库</Tag>
+                  <span style={{ color: '#666', marginLeft: 8 }}>
+                    - 市级/系统管理员审核（最高标准）
+                  </span>
+                </Select.Option>
+                <Select.Option value="practice_municipal">
+                  <Tag color="blue">市级练习题库</Tag>
+                  <span style={{ color: '#666', marginLeft: 8 }}>
+                    - 市级审核人审核
+                  </span>
+                </Select.Option>
+                <Select.Option value="practice_district">
+                  <Tag color="cyan">区级练习题库</Tag>
+                  <span style={{ color: '#666', marginLeft: 8 }}>
+                    - 区级审核人审核
+                  </span>
+                </Select.Option>
+              </Select>
+              <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                提示：选择目标题库后，系统会根据题目科目筛选对应的审核人。校级题库无需审核，可在创建时直接发布。
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24 }}>
+              <label style={{ display: 'block', marginBottom: 8 }}>
+                <span style={{ color: 'red' }}>* </span>
                 选择审核人：
               </label>
               <Select
                 style={{ width: '100%' }}
-                placeholder="请选择审核人"
+                placeholder={selectedScope ? "请选择审核人" : "请先选择目标题库范围"}
                 value={selectedReviewer}
                 onChange={setSelectedReviewer}
                 showSearch
                 optionFilterProp="children"
+                disabled={!selectedScope}
+                virtual={false}
               >
                 {availableReviewers.map((reviewer) => (
                   <Select.Option key={reviewer.id} value={reviewer.id}>
@@ -361,38 +418,6 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit }) => {
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-
-            <div style={{ marginTop: 24 }}>
-              <label style={{ display: 'block', marginBottom: 8 }}>
-                <span style={{ color: 'red' }}>* </span>
-                选择题库范围（可多选）：
-              </label>
-              <Checkbox.Group
-                value={selectedScopes}
-                onChange={(values) => setSelectedScopes(values as string[])}
-              >
-                <Space direction="vertical">
-                  <Checkbox value="practice">
-                    练习题库
-                    <span style={{ color: '#999', marginLeft: 8 }}>
-                      （用于日常练习）
-                    </span>
-                  </Checkbox>
-                  <Checkbox value="assessment">
-                    测评题库
-                    <span style={{ color: '#999', marginLeft: 8 }}>
-                      （用于正式测评，需要更高权限审核）
-                    </span>
-                  </Checkbox>
-                  <Checkbox value="competition">
-                    竞赛题库
-                    <span style={{ color: '#999', marginLeft: 8 }}>
-                      （用于竞赛选拔，需要最高权限审核）
-                    </span>
-                  </Checkbox>
-                </Space>
-              </Checkbox.Group>
             </div>
 
             {availableReviewers.length === 0 && (

@@ -261,6 +261,7 @@ export const questionBankApi = {
     grade?: string;
     difficulty?: string;
     type?: string;
+    scopes?: string[];
     limit?: number;
     offset?: number;
   }) => {
@@ -269,6 +270,10 @@ export const questionBankApi = {
     if (filters?.grade) params.append('grade', filters.grade);
     if (filters?.difficulty) params.append('difficulty', filters.difficulty);
     if (filters?.type) params.append('type', filters.type);
+    if (filters?.scopes && filters.scopes.length > 0) {
+      // 支持多个 scope 参数
+      filters.scopes.forEach(scope => params.append('scope', scope));
+    }
     if (filters?.limit) params.append('limit', filters.limit.toString());
     if (filters?.offset) params.append('offset', filters.offset.toString());
 
@@ -366,6 +371,12 @@ export const questionBankApi = {
     const response = await api.get('/question-bank/config/knowledge-points');
     return response.data;
   },
+
+  // Get user's available scopes (用户可见的题库范围)
+  getMyScopes: async () => {
+    const response = await api.get('/question-bank/my-scopes');
+    return response.data;
+  },
 };
 
 // Question Review API
@@ -383,18 +394,26 @@ export const questionReviewApi = {
   },
 
   // Get available reviewers
-  getAvailableReviewers: async (subject: string, scope?: string) => {
+  getAvailableReviewers: async (subject: string, targetScope?: string) => {
     const params = new URLSearchParams({ subject });
-    if (scope) params.append('scope', scope);
+    if (targetScope) params.append('target_scope', targetScope);
     const response = await api.get(`/question-review/available-reviewers?${params.toString()}`);
     return response.data;
   },
 
-  // Submit question for review
-  submitForReview: async (questionId: number, reviewerId: number, scope: string[]) => {
+  // Submit question for review (使用 target_scope)
+  submitForReview: async (questionId: number, reviewerId: number, targetScope: string) => {
     const response = await api.post(`/question-review/${questionId}/submit`, {
       reviewer_id: reviewerId,
-      scope
+      target_scope: targetScope
+    });
+    return response.data;
+  },
+
+  // Publish question directly to school (校级题库直接发布，无需审核)
+  publishToSchool: async (questionId: number, schoolId?: number) => {
+    const response = await api.post(`/question-review/${questionId}/publish-school`, {
+      school_id: schoolId
     });
     return response.data;
   },
@@ -438,11 +457,14 @@ export const permissionApi = {
     return response.data;
   },
 
-  // Grant permission
+  // Grant permission (支持新的权限体系)
   grantPermission: async (data: {
     user_id: number;
     permission_type: string;
     subjects: string[];
+    scope_level?: string;
+    district_id?: number;
+    school_id?: number;
     expires_at?: string;
     notes?: string;
   }) => {
@@ -465,6 +487,35 @@ export const permissionApi = {
       user_id: userId,
       permission_type: permissionType,
       subject
+    });
+    return response.data;
+  },
+
+  // Get available teachers (根据管理员权限范围过滤)
+  getAvailableTeachers: async () => {
+    const response = await api.get('/permissions/available-teachers');
+    return response.data;
+  },
+
+  // Get available reviewers (根据 scope 和 subject 获取审核人)
+  getAvailableReviewers: async (targetScope: string, subject: string) => {
+    const params = new URLSearchParams();
+    params.append('target_scope', targetScope);
+    params.append('subject', subject);
+    const response = await api.get(`/permissions/available-reviewers?${params.toString()}`);
+    return response.data;
+  },
+
+  // Delete permission (只能删除已失效的权限)
+  deletePermission: async (permissionId: number) => {
+    const response = await api.delete(`/permissions/${permissionId}`);
+    return response.data;
+  },
+
+  // Batch delete permissions (批量删除已失效的权限)
+  batchDeletePermissions: async (permissionIds: number[]) => {
+    const response = await api.post('/permissions/batch-delete', {
+      permissionIds
     });
     return response.data;
   },
