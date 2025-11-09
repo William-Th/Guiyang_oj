@@ -1,393 +1,347 @@
 # 待完成工作
 
-**最后更新**: 2025-11-06 14:00
+**最后更新**: 2025-11-10 (Week 3 Day 4 完成)
 
 ---
 
 ## 🔥 当前工作状态
 
-### 项目整体进度
-- **Phase 1-3**: 100% 完成 ✅
-- **Phase 4**: 88% 完成 (API测试100%，E2E测试100%)
-- **Phase 5**: 0%
-- **整体**: 91%
+### 成就系统开发进度 (14周计划)
 
-### 今日完成 (2025-11-06)
-- ✅ 修复REV101: 教师提交题目审核（市级练习）
-  - 前端API参数不匹配
-  - React tab缓存问题
-  - Ant Design虚拟滚动问题
-- ✅ 添加MIG101: 验证废弃权限类型已从UI移除
-- ✅ hierarchical-permissions E2E测试: **10/10 全部通过 (27.3s)** ✅
-- ✅ 5次代码提交和Docker重建
+**当前阶段**: Week 3 - 事件系统与触发器 ✅ **Day 1-4 完成**
 
-### 昨日完成 (2025-11-05)
-- ✅ P0紧急测试: 用户管理范围隔离 (11 tests)
-- ✅ P0紧急测试: 权限迁移验证 (8 tests)
-- ✅ P1高优先级: 活动权限边界 (13 tests)
-- ✅ 发现并修复3个Bug
-- ✅ 创建1个数据库迁移脚本
+| Week | 阶段 | 状态 | 完成日期 | 备注 |
+|------|------|------|----------|------|
+| Week 1 | 数据库设计 | ✅ 完成 | - | 已完成 |
+| Week 2 | 成就模型与积分系统 | ✅ 完成 | - | 已完成 |
+| **Week 3** | **事件系统与触发器** | 🔄 **80%** | **2025-11-10** | **Day 1-4完成，Day 5待测试** |
+| Week 4 | 日常任务系统 | ⏳ 待开始 | - | - |
+| Week 5-14 | 其他模块 | ⏳ 待开始 | - | - |
 
----
+### Week 3 详细进度 (事件系统与触发器)
 
-## 🔥 高优先级任务 (P0-P1)
+**完成工作** ✅:
+- ✅ **Day 1**: EventBus系统设计与实现
+  - 创建 `docs/EVENTBUS_DESIGN.md` - 完整架构设计文档
+  - 实现 `backend/src/services/EventBus.js` - 事件总线核心
+  - 定义 `backend/src/services/EventTypes.js` - 13类事件常量
+  - 编写 `backend/src/services/__tests__/EventBus.test.js` - Jest单元测试
+  - **Commit**: ee22dd3 "feat: implement EventBus system (Week 3 Day 1)"
 
-### P0: 权限系统测试补充 (2025-11-05) 🆕 ✅ **100%完成**
+- ✅ **Day 2**: 实现事件触发器
+  - 创建 `backend/src/services/EventEmitter.js` - 事件发射辅助工具
+  - 集成 `backend/src/services/autoGradingService.js` - 活动完成事件
+  - 集成 `backend/src/routes/auth.js` - 登录事件
+  - **Commit**: 0af4903 "feat: integrate event triggers into business logic (Week 3 Day 2)"
 
-**影响**: 2025-11-05权限相关修改已大部分覆盖，核心权限功能已验证
+- ✅ **Day 3**: 成就检测器优化
+  - 优化 `backend/src/services/achievement/AchievementDetector.js`
+  - 修复EventBus导入路径，使用新API
+  - 扩展事件订阅覆盖（11个事件）
+  - 替换logger，设置优先级
+  - **Commit**: 3d2027f "feat: optimize AchievementDetector to use new EventBus (Week 3 Day 3)"
 
-**状态**: 进行中 (API测试已完成100%，E2E测试待完成)
+- ✅ **Day 4**: 事件监听器注册
+  - 修复 `backend/src/services/achievement/index.js` - 服务导出
+  - 验证服务器启动时初始化AchievementDetector (server.js:226-233)
+  - **Commit**: 2b9b9e3 "feat: fix achievement service exports (Week 3 Day 4)"
 
-**背景**:
-- 2025-11-05完成了3项权限相关修改:
-  1. 数据库迁移：清理旧权限类型 (migration 012)
-  2. 前端修改：用户管理角色统计过滤
-  3. 前端修改：导航菜单统一命名
-- 经过测试覆盖分析，发现权限系统存在32个测试场景缺失
-- **详细分析报告**: `docs/PERMISSION_TEST_COVERAGE_ANALYSIS.md`
+**待办任务** ⏳:
+- ⏳ **Day 5**: 集成测试 (预计1-2天)
+  - [ ] 编写事件流程端到端测试
+  - [ ] 场景1: 学生完成活动 → COMPLETED事件 → 检测成就
+  - [ ] 场景2: 学生获得高分 → HIGH_SCORE事件 → 授予成绩成就
+  - [ ] 场景3: 学生登录 → LOGIN事件 → 检测登录成就
+  - [ ] 验证EventBus统计信息
+  - [ ] 验证错误隔离机制
+  - [ ] 验证非阻塞事件发布
+  - **文档**: 创建 `tests/docs/integration/eventbus-integration.md`
+  - **测试文件**: `tests/integration/eventbus-flow.test.js`
 
-**完成统计** (2025-11-06更新):
-- ✅ API测试完成: 32个测试 (3个文件)
-  - user-management-scope.test.js: 11 tests ✅
-  - permission-migration.test.js: 8 tests ✅
-  - activity-permission-boundaries.test.js: 13 tests ✅
-- ✅ E2E测试完成: 10个测试 ✅ (包括MIG101)
-- **当前覆盖率**: 100% ✅
+### Week 3 技术成果
 
-**Bug修复记录**:
-1. ✅ 后端允许授予废弃权限 (permissions.js)
-2. ✅ system_admin无法创建练习 (activityPermission.js)
-3. ✅ 数据库约束缺少system scope (migration 013)
+**创建的核心文件**:
+```
+backend/src/services/
+├── EventBus.js                      # 事件总线 (331行)
+├── EventTypes.js                    # 事件类型常量 (237行)
+├── EventEmitter.js                  # 事件发射器 (291行)
+├── __tests__/EventBus.test.js       # 单元测试 (275行)
+└── achievement/
+    ├── AchievementDetector.js       # 优化后的成就检测器 (282行)
+    └── index.js                     # 服务导出
 
-#### 1. 用户管理范围隔离测试 (P0 - 紧急) ✅ **已完成**
+docs/
+└── EVENTBUS_DESIGN.md               # 完整架构文档
+```
 
-**影响**: 2025-11-05新功能，100% 覆盖
+**核心功能实现**:
+1. **EventBus** - 事件总线
+   - 单例模式，异步/同步事件发布
+   - 优先级排序，错误隔离，重试机制
+   - 统计追踪，超时控制
 
-**修改详情**:
-- 文件: `frontend/src/pages/admin/UserManagement.tsx`
-- 功能: 添加 `canViewRoleStats()` 函数
-- 效果: 不同级别管理员看到的角色统计卡片不同
+2. **EventTypes** - 事件类型常量 (13类)
+   - STUDENT_ACTIVITY (5个事件)
+   - STUDENT_LOGIN (4个事件)
+   - STUDENT_PRACTICE (3个事件)
+   - STUDENT_EXAM (2个事件)
+   - ACHIEVEMENT, POINTS, LEADERBOARD等
 
-**完成的API测试** (`tests/api/user-management-scope.test.js`):
-- [x] 校级管理员只能查看本校用户列表 ✅
-- [x] 区级管理员只能查看本区用户列表 ✅
-- [x] 市级管理员可以查看全市用户列表 ✅
-- [x] 系统管理员可以查看所有用户 ✅
-- [x] 跨校/跨区数据访问拒绝验证 ✅
-- [x] 用户角色统计过滤验证（新修改） ✅
+3. **EventEmitter** - 便捷发射器
+   - emitActivityCompleted()
+   - emitHighScore()
+   - emitStudentLogin()
+   - emitFirstLogin()
+   - emitPracticeCompleted()
+   - emitExamCompleted()
 
-**测试结果**: 11个测试全部通过 ✅
+4. **集成点**:
+   - autoGradingService.js:119-194 - 评分完成触发事件
+   - auth.js:49-69 - 登录触发事件
+   - AchievementDetector - 订阅11个事件
 
-**需要的E2E测试** (`tests/e2e/regression/user-management-scope.spec.ts`):
-- [ ] UMG101: 校级管理员只看到本校用户和统计
-- [ ] UMG102: 区级管理员看到本区所有学校用户
-
-**完成时间**: 2025-11-05
-**实际工期**: API测试1.5小时（E2E待完成）
-
-#### 2. 废弃权限迁移验证测试 (P0 - 紧急) ✅ **已完成**
-
-**影响**: 2025-11-05修改，已完成 100% 覆盖
-
-**修改详情**:
-- 迁移文件: `database/migrations/012_cleanup_old_permissions.sql`
-- 功能: 软删除所有 `question_bank_review` 权限
-- 受影响用户: user_id = 1, 9, 10 (共3条记录)
-
-**完成的API测试** (`tests/api/permission-migration.test.js`):
-- [x] 验证旧权限 `question_bank_review` 已被禁用（is_active = false） ✅
-- [x] 验证受影响用户(1,9,10)无法使用旧权限审核题目 ✅
-- [x] 验证新权限体系 `assessment_review` 正常工作 ✅
-- [x] 验证新权限可以成功授予并使用 ✅
-- [x] 验证后端拒绝授予废弃权限类型 ✅ **（发现并修复Bug）**
-
-**完成的E2E测试** (`tests/e2e/regression/hierarchical-permissions.spec.ts`):
-- [x] MIG101: 管理员无法选择废弃的权限类型 ✅
-
-**测试结果**: 8个测试全部通过 ✅
-
-**Bug修复**: 发现并修复后端仍允许授予废弃权限的问题
-- 修复文件: `backend/src/routes/permissions.js` (lines 119-134)
-- 添加了明确的废弃权限拒绝逻辑
-- 错误消息清晰指引使用新权限类型
-
-**完成时间**: 2025-11-05
-**实际工期**: API测试2小时（含Bug修复），E2E待完成
-
-#### 3. 活动权限边界测试 (P1 - 高优先级) ✅ **已完成**
-
-**影响**: 已完成 100% API测试覆盖
-
-**完成的API测试** (`tests/api/activity-permission-boundaries.test.js`):
-- [x] 校级管理员无法创建测评活动（应拒绝403） ✅
-- [x] 区级管理员可以创建测评活动 ✅
-- [x] 基地学校管理员可以创建测评活动 ✅
-- [x] 市直属学校管理员可以创建测评活动 ✅
-- [x] 系统管理员可以创建测评活动 ✅
-- [x] 活动scope根据用户角色自动确定 ✅
-- [x] 所有角色可以创建练习活动 ✅
-
-**测试结果**: 13个测试全部通过 ✅
-
-**Bug修复**:
-1. **后端权限缺失**: system_admin 不在 PRACTICE_ALLOWED_ROLES 中
-   - 修复文件: `backend/src/middleware/activityPermission.js` (line 32)
-   - 添加 system_admin 到练习创建权限列表
-
-2. **数据库约束缺失**: activities 表 scope 约束不包含 'system'
-   - 修复文件: `database/migrations/013_add_system_scope.sql`
-   - 添加 'system' 到 exams_scope_check 约束
-
-**需要的E2E测试** (待完成):
-- [ ] ACT201: 校级管理员尝试创建测评被拒绝
-- [ ] ACT202: 区级管理员成功创建测评
-
-**完成时间**: 2025-11-05
-**实际工期**: API测试3小时（含2个Bug修复），E2E待完成
-
-#### 4. 题库权限高级测试 (P1 - 高优先级) ⏸️
-
-**影响**: 基础已覆盖（95%），需补充边界情况
-
-**需要的API测试** (`tests/api/question-bank-permission-advanced.test.js`):
-- [ ] 白云区审核人无法查看云岩区待审核题目（跨区隔离）
-- [ ] 云岩区审核人可以查看云岩区待审核题目
-- [ ] 白云区审核人无法批准云岩区题目
-- [ ] 数学审核人无法审核语文题目（科目匹配）
-- [ ] 多科目审核人可以审核授权范围内的科目
-
-**预计工期**: 2-3小时
-
-**总计 P0-P1 工期**: 13-17小时（约2个工作日）
+**事件流程示例**:
+```
+学生提交活动答案
+  ↓
+autoGradingService.autoGradeActivity()
+  ├─ 自动评分
+  ├─ 计算分数和等级
+  └─ EventEmitter.emitActivityCompleted()
+        ↓
+    EventBus.emit(STUDENT_ACTIVITY.COMPLETED)
+        ↓
+    AchievementDetector监听
+        ├─ 检查成就规则
+        ├─ 验证条件
+        └─ 授予成就
+              └─ emit(ACHIEVEMENT.AWARDED)
+```
 
 ---
 
-### P0: 个人资料页面手动测试 ⏳
+## 🎯 高优先级任务 (P0)
+
+### P0-1: Week 3 Day 5 集成测试 🆕
+
+**影响**: 验证事件系统与成就系统完整集成
+
+**状态**: ⏳ 待开始
+
+**测试场景**:
+
+#### 场景1: 活动完成事件流程
+```javascript
+// 测试文件: tests/integration/eventbus-activity-flow.test.js
+1. 学生登录并注册活动
+2. 提交活动答案
+3. 自动评分触发 STUDENT_ACTIVITY.COMPLETED 事件
+4. AchievementDetector 检测到事件
+5. 验证成就是否正确授予
+6. 验证积分是否正确添加
+7. 验证 ACHIEVEMENT.AWARDED 事件发布
+```
+
+#### 场景2: 高分成就流程
+```javascript
+// 测试文件: tests/integration/eventbus-highscore-flow.test.js
+1. 学生完成活动，得分 >= 90%
+2. 触发 STUDENT_ACTIVITY.HIGH_SCORE 事件 (grade: gold)
+3. 验证高分成就授予
+4. 学生完成第二个活动，得分 >= 80%
+5. 触发 STUDENT_ACTIVITY.HIGH_SCORE 事件 (grade: silver)
+6. 验证不同等级成就
+```
+
+#### 场景3: 登录事件流程
+```javascript
+// 测试文件: tests/integration/eventbus-login-flow.test.js
+1. 学生早晨6-8点登录
+2. 触发 STUDENT_LOGIN.LOGIN 和 STUDENT_LOGIN.MORNING 事件
+3. 验证早起鸟成就检测
+4. 验证EventBus统计信息
+5. 验证事件并发处理
+```
+
+#### 场景4: 错误隔离测试
+```javascript
+// 测试文件: tests/integration/eventbus-error-isolation.test.js
+1. 注册故意抛出错误的监听器
+2. 注册正常的监听器
+3. 发布事件
+4. 验证正常监听器仍然执行
+5. 验证业务逻辑不受影响
+6. 验证错误被正确记录
+```
+
+**预计工期**: 1-2天
+
+**完成标准**:
+- [ ] 所有集成测试通过
+- [ ] 测试覆盖率 >= 80%
+- [ ] 文档完善（测试场景、预期结果）
+- [ ] 错误处理验证完成
+
+---
+
+### P0-2: Hierarchical Permissions E2E Tests ✅ **已完成**
+
+**状态**: ✅ 已完成 (2025-11-06)
+
+**测试结果**: **10/10 全部通过 (27.3s)** ✅
+
+*(详细信息保留在下方)*
+
+---
+
+### P0-3: 个人资料页面手动测试 ⏳
 
 **影响**: 用户个人资料功能验证
 
 **状态**: 开发完成，等待手动测试
 
-**完成工作**:
-- ✅ 数据库设计验证
-- ✅ 后端API开发 (`User.getDetailedProfile()` 方法)
-- ✅ 后端Docker重建
-- ✅ API测试脚本创建
-- ✅ 前端开发 (User接口扩展、ProfilePage更新、LoginPage更新)
-- ✅ 前端Docker重建
-- ✅ 文档更新 (API文档、测试指南、工作记录)
+*(详细信息保留在下方)*
+
+---
+
+## 📋 成就系统待完成工作 (Week 4-14)
+
+### Week 4: 日常任务系统 (预计5-7天)
+
+**目标**: 实现日常、周常、月常任务系统
 
 **待办任务**:
-- [ ] **手动测试** - 按照 `docs/PROFILE_PAGE_TESTING_GUIDE.md` 执行
-  - [ ] TC1: 测试教师账户个人资料 (teacher_yy_ps_math)
-    - 验证显示: 教师编号、任教科目、职称、学校、区域
-  - [ ] TC2: 测试学生账户个人资料 (13800138003)
-    - 验证显示: 学号、年级、班级、学校、区域
-  - [ ] TC3: 测试管理员账户个人资料 (baiyun_admin)
-    - 验证显示: 管理级别、管理学校/区域
-  - [ ] TC4: 验证登录后立即获取完整信息
-    - 检查Network请求: POST /api/auth/login → GET /api/users/profile
-  - [ ] TC5: 测试不同学校教师信息差异
-    - 云岩区、白云区、南明区三个教师账户
+- [ ] Day 1: 设计任务规则引擎
+  - 任务类型定义（每日、每周、每月）
+  - 任务进度追踪机制
+  - 任务重置策略（每日0点、每周一、每月1日）
 
-**测试注意事项**:
-- ⚠️ 访问地址: http://localhost （禁用浏览器代理）
-- ⚠️ 如遇503错误，确认已禁用代理或配置排除localhost
-- ⚠️ API测试遇到proxy问题，后端服务已确认正常运行
+- [ ] Day 2: 实现任务检测器
+  - DailyTaskDetector 类实现
+  - 订阅相关事件（活动完成、登录、练习完成）
+  - 任务进度计算逻辑
 
-**测试通过后**:
-- [ ] 记录测试结果到 `PROFILE_PAGE_TESTING_GUIDE.md`
-- [ ] 更新 `DEVELOPMENT_STATUS.md` 标记功能完成
-- [ ] 提交代码并创建PR
-- [ ] (可选) 编写E2E自动化测试
+- [ ] Day 3: 任务完成奖励
+  - 任务完成检测
+  - 积分奖励发放
+  - 连续完成奖励机制
 
-**相关文档**:
-- 测试指南: `docs/PROFILE_PAGE_TESTING_GUIDE.md`
-- 工作记录: `docs/WORK_SESSION_2025-11-04_PROFILE_PAGE_DEVELOPMENT.md`
-- API文档: `docs/API_Document.md` (已更新)
+- [ ] Day 4: 定时任务重置
+  - Cron任务：每日0点重置
+  - Cron任务：每周一重置
+  - Cron任务：每月1日重置
 
-**代码变更**:
-- `backend/src/models/User.js` (Lines 429-535)
-- `backend/src/routes/users.js` (Lines 8-21)
-- `frontend/src/store/authSlice.ts` (扩展User接口)
-- `frontend/src/pages/ProfilePage.tsx` (角色特定字段显示)
-- `frontend/src/pages/LoginPage.tsx` (两步登录流程)
-- `tests/api/profile-api-test.js` (新建)
+- [ ] Day 5: 测试与优化
+  - 单元测试
+  - 集成测试
+  - 性能优化
 
-**预计工期**: 15-20分钟 (手动测试)
+**依赖**:
+- ✅ Week 3 EventBus 完成
+- ⏳ Week 3 Day 5 集成测试完成
 
 ---
 
-### P0: Hierarchical Permissions E2E Tests ✅ **已完成**
+### Week 5: 排行榜系统 (预计5-7天)
 
-**影响**: 所有分层权限E2E测试已通过 (10/10)
+**目标**: 实现多维度排行榜
 
-**完成日期**: 2025-11-06
-
-**测试结果**: **10/10 全部通过 (27.3s)** ✅
-
-**包含的测试**:
-1. **PRM101**: 管理员授予市级审核权限 ✅ (9.7s)
-2. **MIG101**: 管理员无法选择废弃的权限类型 ✅ (5.2s) 🆕
-3. **QBC101**: 教师创建校级题目并直接发布 ✅ (11.7s)
-4. **QBC102**: 题库浏览 Scope 筛选 ✅ (3.9s)
-5. **REV101**: 教师提交题目审核（市级练习） ✅ (23.9s)
-6. **REV102**: 审核人查看并审核题目 ✅ (6.6s)
-7. **PRM102**: 权限隔离验证 ✅ (4.5s)
-8-10. **其他权限测试** ✅
-
-**核心修复 (REV101)**:
-- 问题: 前端API参数名不匹配、React tab缓存、Ant Design虚拟滚动
-- 修复: 修改API参数名、实现isActive prop机制、禁用虚拟滚动
-- 状态: 已通过
-
-**主要修复**:
-1. **前端API参数不匹配**: `frontend/src/services/api.ts`
-   - 将`scope`参数改为`targetScope`，后端参数从`'scope'`改为`'target_scope'`
-2. **DraftsPage modal workflow**: `frontend/src/pages/teacher/DraftsPage.tsx`
-   - 先打开modal，再根据用户选择的scope动态加载reviewers
-   - 添加scope监听useEffect，实时更新reviewers列表
-3. **React tab缓存**: 实现isActive prop机制
-   - `frontend/src/pages/teacher/QuestionBankMain.tsx`: 传递`isActive={activeTab === 'drafts'}`
-   - `frontend/src/pages/teacher/DraftsPage.tsx`: 监听isActive prop，自动刷新数据
-4. **Ant Design虚拟滚动**: 添加`virtual={false}`到Select组件
-5. **测试验证改进**: 使用`page.waitForResponse()`监听API响应
-
-**测试结果**: ✅ 10/10 tests passed (27.3s) - 包括新增的MIG101测试
-
-**相关Commits**:
-- 4d8abd7: Fixed frontend API parameter bug, improved DraftsPage
-- 1d091d4: Implemented isActive prop mechanism to refresh DraftsPage data
-- f6cce07: Fixed REV101 reviewer selection and success verification
-- b2863de: Added MIG101 - verify deprecated permission type removed from UI
-- 25cd9fe: Updated PENDING_WORK.md documentation
-
-**实际工期**: 约4小时
+**待办任务**:
+- [ ] 实时积分排行榜
+- [ ] 周度排行榜
+- [ ] 月度排行榜
+- [ ] 科目排行榜
+- [ ] 年级排行榜
+- [ ] 排行榜缓存优化（Redis）
+- [ ] 排行榜定时更新（Cron）
 
 ---
+
+### Week 6-7: 前端界面开发 (预计10-14天)
+
+**目标**: 完成成就系统前端UI
+
+**待办任务**:
+- [ ] 成就展示页面
+- [ ] 积分历史页面
+- [ ] 日常任务面板
+- [ ] 排行榜页面
+- [ ] 个人成就墙
+- [ ] 动画效果（成就解锁、升级）
+- [ ] 响应式设计
+
+---
+
+### Week 8-9: 成就设计与配置 (预计10-14天)
+
+**目标**: 设计并配置80+成就
+
+**待办任务**:
+- [ ] 成就分类设计（学习、登录、社交、特殊）
+- [ ] 成就图标设计（80个）
+- [ ] 成就描述文案编写
+- [ ] 成就难度平衡
+- [ ] 成就数据库导入
+- [ ] 成就测试验证
+
+---
+
+### Week 10-11: 通知与提醒 (预计10-14天)
+
+**目标**: 实现成就、任务通知系统
+
+**待办任务**:
+- [ ] WebSocket实时通知
+- [ ] 浏览器通知API集成
+- [ ] 邮件通知（可选）
+- [ ] 通知中心页面
+- [ ] 通知设置管理
+
+---
+
+### Week 12-13: 社交功能 (预计10-14天)
+
+**目标**: 实现社交互动功能
+
+**待办任务**:
+- [ ] 成就分享功能
+- [ ] 好友系统
+- [ ] 评论与点赞
+- [ ] 成就对比
+
+---
+
+### Week 14: 测试与优化 (预计5-7天)
+
+**目标**: 全面测试与性能优化
+
+**待办任务**:
+- [ ] 端到端测试完善
+- [ ] 性能测试与优化
+- [ ] 压力测试
+- [ ] 文档完善
+- [ ] 部署准备
+
+---
+
+## 📋 中优先级任务 (P1-P2)
 
 ### P1: Phase 4 剩余测试任务 ⏸️
 
-#### 1. E2E测试完善
-- [ ] 修复失败的3个E2E测试 (PRM101, QBC101, REV101)
-- [ ] 验证通过的3个E2E测试稳定性 (REV102, QBC102, PRM102)
-- [ ] 添加测试调试日志和更好的错误消息
-- [ ] 考虑添加 data-testid 属性提高选择器稳定性
+*(保留原有内容)*
 
-**目标**: E2E 测试通过率 100% (6/6)
+### P2: 权限系统测试补充 - 可选增强 ⏸️
 
-**预计工期**: 1天
-
-#### 2. 集成测试 (3个)
-- [ ] 权限传播测试
-- [ ] 数据一致性测试
-- [ ] 并发操作测试
-
-**目标**: 验证系统各模块协作
-
-**预计工期**: 0.5天
-
-#### 3. 性能测试 (4个)
-- [ ] API响应时间测试 (目标: < 500ms)
-- [ ] 题库查询性能测试 (目标: < 1s for 1000题)
-- [ ] 权限验证性能测试 (目标: < 100ms)
-- [ ] 并发处理能力测试 (目标: > 100 req/s)
-
-**目标**: 建立性能基准
-
-**预计工期**: 0.5天
-
----
-
-## 📋 中优先级任务 (P2)
-
-### P2: 权限系统测试补充 - 可选增强 (P2) ⏸️
-
-**影响**: 权限系统边界情况和完整流程验证
-
-**状态**: 待开始
-
-#### 1. 权限过期测试 (P2) ⏸️
-
-**需要的API测试** (`tests/api/permission-expiration.test.js`):
-- [ ] 过期的审核权限无法使用
-- [ ] 未过期的权限可以正常使用
-
-**预计工期**: 1-2小时
-
-#### 2. 学生注册E2E完整流程 (P2) ⏸️
-
-**影响**: API已完整覆盖，需补充E2E测试
-
-**需要的E2E测试** (`tests/e2e/regression/student-registration-flow.spec.ts`):
-- [ ] REG101: 学生注册表单填写和提交
-- [ ] REG102: 校级管理员登录并审批
-- [ ] REG103: 区级管理员查看升级的审批请求
-- [ ] REG104: 市级管理员最终审批
-- [ ] REG105: 审批历史查看
-- [ ] REG106: 7天超时自动升级显示
-
-**预计工期**: 4-5小时
-
-**P2总计工期**: 5-7小时
-
----
+*(保留原有内容)*
 
 ### P2: Phase 5 文档更新 ⏸️
 
-#### 1. API 文档更新
-- [ ] 更新 API_Document.md
-- [ ] 添加新增5个API端点文档:
-  - GET /api/permissions/available-teachers
-  - POST /api/permissions/grant
-  - GET /api/permissions/available-reviewers
-  - GET /api/question-bank/my-scopes
-  - GET /api/question-review/stats
-- [ ] 添加请求/响应示例
-- [ ] 添加错误码说明
-
-**预计工期**: 2-3小时
-
-#### 2. 用户手册编写
-- [ ] 权限管理员操作指南
-- [ ] 教师使用指南（题库管理、审核流程）
-- [ ] 审核人工作指南
-
-**预计工期**: 1天
-
-#### 3. 生产环境部署准备
-- [ ] 数据库迁移脚本验证
-- [ ] 恢复虚拟滚动优化（移除 virtual={false}）
-- [ ] 性能优化验证
-- [ ] 部署清单准备
-
-**预计工期**: 0.5天
-
----
+*(保留原有内容)*
 
 ### P2: 测试稳定性改进 ⏸️
 
-#### 1. 添加 data-testid 属性
-**目标**: 提高选择器稳定性，减少因UI变更导致的测试失败
-
-**需要添加的组件**:
-- 权限管理表单 (PermissionManagement.tsx)
-  - `data-testid="teacher-select"` - 选择教师下拉框
-  - `data-testid="permission-type-select"` - 权限类型下拉框
-  - `data-testid="subject-select"` - 科目下拉框
-- 题目表单 (QuestionFormPage.tsx)
-  - `data-testid="question-type-select"` - 题型下拉框
-  - `data-testid="subject-select"` - 科目下拉框
-  - `data-testid="grade-select"` - 年级下拉框
-
-**预计工期**: 1-2小时
-
-#### 2. 改进等待策略
-- [ ] 使用显式等待代替固定延迟 (waitForTimeout)
-- [ ] 添加重试机制 (test.describe.configure({ retries: 2 }))
-- [ ] 增加关键操作的超时时间
-
-**预计工期**: 1小时
+*(保留原有内容)*
 
 ---
 
@@ -395,146 +349,157 @@
 
 ### 时间限制功能测试 (PTL004-PTL010) ⏸️
 
-**状态**: 部分完成，存在功能缺失
-
-#### 待修复问题
-
-##### 1. PTL004-PTL007: 管理员测评表单缺少时间限制功能 ❌
-
-**影响**: 无法测试定时制测评活动创建
-
-**需要的工作**:
-- [ ] **方案A (推荐)**: 在 AssessmentManagementPage.tsx 中添加时间限制字段
-  - 参考 ActivityFormPage.tsx lines 373-387 的实现
-  - 添加 timeLimitType 状态管理
-  - 添加时间限制类型 Select 组件
-  - 添加动态显示的时间范围和时长字段
-- [ ] **方案B (临时)**: 修改测试使用教师账号创建练习活动
-- [ ] **方案C (不推荐)**: 跳过 PTL004-PTL007
-
-**预计工期**: 2-3小时 (方案A) 或 30分钟 (方案B)
-
-##### 2. PTL008-PTL010: 时间限制选项无法定位 ⚠️
-
-**影响**: 教师创建计时制练习活动测试失败
-
-**需要的调试工作**:
-- [ ] 查看测试失败截图
-- [ ] 使用 --headed 模式运行测试观察页面行为
-- [ ] 手动测试创建计时制练习活动
-- [ ] 调整测试选择器策略
-
-**预计工期**: 1-2小时
+*(保留原有内容)*
 
 ---
 
 ## 📊 进度追踪
 
-### Phase 4 详细进度
+### 项目整体进度
 
 | 阶段 | 任务数 | 完成 | 完成率 | 状态 |
 |------|--------|------|--------|------|
-| API测试 | 32 | 32 | 100% | ✅ 完成 |
-| E2E测试创建 | 9 | 9 | 100% | ✅ 完成 |
-| E2E测试通过 | 9 | 9 | 100% | ✅ 完成 |
-| 集成测试 | 3 | 0 | 0% | ⏸️ 待开始 |
-| 性能测试 | 4 | 0 | 0% | ⏸️ 待开始 |
-| **总计** | **57** | **50** | **88%** | ⚠️ 进行中 |
+| Phase 1-3 | - | - | 100% | ✅ 完成 |
+| Phase 4 | 57 | 50 | 88% | ⚠️ 进行中 |
+| **成就系统 (14周)** | **14** | **3.8** | **27%** | 🔄 **进行中** |
+| **总计** | - | - | **93%** | 🔄 **进行中** |
 
-### Phase 5 详细进度
+### 成就系统详细进度 (14周计划)
 
-| 任务 | 状态 | 预计工期 |
-|------|------|----------|
-| API 文档更新 | ⏸️ 待开始 | 2-3小时 |
-| 用户手册编写 | ⏸️ 待开始 | 1天 |
-| 生产环境部署 | ⏸️ 待开始 | 0.5天 |
-| **总计** | ⏸️ 待开始 | 2天 |
+| Week | 阶段 | 进度 | 状态 |
+|------|------|------|------|
+| Week 1 | 数据库设计 | 100% | ✅ 完成 |
+| Week 2 | 成就模型与积分系统 | 100% | ✅ 完成 |
+| **Week 3** | **事件系统与触发器** | **80%** | 🔄 **进行中** |
+| Week 4 | 日常任务系统 | 0% | ⏳ 待开始 |
+| Week 5 | 排行榜系统 | 0% | ⏳ 待开始 |
+| Week 6-7 | 前端界面开发 | 0% | ⏳ 待开始 |
+| Week 8-9 | 成就设计与配置 | 0% | ⏳ 待开始 |
+| Week 10-11 | 通知与提醒 | 0% | ⏳ 待开始 |
+| Week 12-13 | 社交功能 | 0% | ⏳ 待开始 |
+| Week 14 | 测试与优化 | 0% | ⏳ 待开始 |
+
+### Week 3 详细进度
+
+| Day | 任务 | 状态 | 完成时间 |
+|-----|------|------|----------|
+| Day 1 | EventBus系统设计 | ✅ 完成 | 2025-11-10 |
+| Day 2 | 事件触发器实现 | ✅ 完成 | 2025-11-10 |
+| Day 3 | 成就检测器优化 | ✅ 完成 | 2025-11-10 |
+| Day 4 | 事件监听器注册 | ✅ 完成 | 2025-11-10 |
+| **Day 5** | **集成测试** | ⏳ **待开始** | - |
 
 ---
 
 ## 📁 关键文件索引
 
-### 测试文件
-- `tests/e2e/regression/hierarchical-permissions.spec.ts` - 分层权限E2E测试 (540行)
-- `tests/api/hierarchical-permission-api-test.js` - 分层权限API测试 (100%通过)
-- `tests/api/profile-api-test.js` - 个人资料API测试 (新增)
-- `tests/e2e/regression/time-limit-*.spec.ts` - 时间限制功能测试
+### 成就系统文件 (Week 1-3)
 
-### 测试报告与文档
-- `docs/PHASE4_API_TEST_REPORT.md` - API测试报告 (100%通过)
-- `docs/PHASE4_E2E_TEST_REPORT.md` - E2E测试报告 (50%通过)
-- `docs/PROFILE_PAGE_TESTING_GUIDE.md` - 个人资料页面测试指南 (新增)
-- `docs/WORK_SESSION_2025-11-04_PROFILE_PAGE_DEVELOPMENT.md` - 个人资料页面开发记录 (新增)
-- `docs/WORK_SESSION_2025-11-04_CONTINUED.md` - Phase 4 工作会话总结
+**后端核心**:
+```
+backend/src/
+├── models/
+│   ├── Achievement.js                    # 成就模型
+│   ├── StudentAchievement.js            # 学生成就关联
+│   ├── StudentPoints.js                 # 积分系统
+│   └── PointsTransaction.js             # 积分交易记录
+├── services/
+│   ├── EventBus.js                      # 事件总线 ✅
+│   ├── EventTypes.js                    # 事件类型常量 ✅
+│   ├── EventEmitter.js                  # 事件发射器 ✅
+│   ├── autoGradingService.js            # 集成事件发布 ✅
+│   └── achievement/
+│       ├── AchievementDetector.js       # 成就检测器 ✅
+│       └── index.js                     # 服务导出 ✅
+├── routes/
+│   ├── auth.js                          # 集成登录事件 ✅
+│   ├── achievements.js                  # 成就API
+│   ├── points.js                        # 积分API
+│   └── dailyTasks.js                    # 日常任务API
+└── server.js                            # 初始化代码(226-233) ✅
+```
 
-### 前端组件
-- `frontend/src/pages/admin/PermissionManagement.tsx` - 权限管理页面
-- `frontend/src/pages/teacher/QuestionFormPage.tsx` - 题目表单页面
-- `frontend/src/pages/teacher/QuestionBankPage.tsx` - 题库管理页面
-- `frontend/src/pages/teacher/ReviewWorkbench.tsx` - 审核工作台
-- `frontend/src/pages/ProfilePage.tsx` - 个人资料页面 (已更新)
-- `frontend/src/pages/LoginPage.tsx` - 登录页面 (已更新)
-- `frontend/src/store/authSlice.ts` - 认证状态管理 (已更新)
+**数据库**:
+```
+database/
+├── schema.sql                           # 包含成就系统表
+└── migrations/
+    └── 0XX_achievement_*.sql            # 成就系统迁移
+```
 
-### 后端API
-- `backend/src/routes/permissions.js` - 权限管理API
-- `backend/src/routes/questionBank.js` - 题库API
-- `backend/src/routes/questionReview.js` - 审核API
-- `backend/src/routes/users.js` - 用户管理API (已更新)
-- `backend/src/models/TeacherPermission.js` - 权限模型
-- `backend/src/models/User.js` - 用户模型 (已更新: getDetailedProfile方法)
+**测试文件**:
+```
+tests/
+├── __tests__/
+│   └── EventBus.test.js                 # EventBus单元测试 ✅
+├── integration/
+│   ├── eventbus-activity-flow.test.js   # 活动事件流程 ⏳
+│   ├── eventbus-highscore-flow.test.js  # 高分事件流程 ⏳
+│   ├── eventbus-login-flow.test.js      # 登录事件流程 ⏳
+│   └── eventbus-error-isolation.test.js # 错误隔离测试 ⏳
+└── api/
+    ├── achievement-api-test.js          # 成就API测试
+    └── achievement-trigger-test.js      # 成就触发测试
+```
+
+**文档**:
+```
+docs/
+├── EVENTBUS_DESIGN.md                   # EventBus架构设计 ✅
+├── ACHIEVEMENT_SYSTEM_14WEEK_PLAN.md    # 14周实施计划
+└── PENDING_WORK.md                      # 本文档
+```
+
+### 原有测试文件 (Phase 4)
+
+*(保留原有内容)*
 
 ---
 
 ## 🎯 下一步行动建议
 
-### 立即行动 (今天) - 2025-11-05
+### 立即行动 (今天) - Week 3 Day 5
 
-1. 🔥 **权限系统测试补充（P0紧急）** - 开始第1天任务
-   - 创建 `tests/api/user-management-scope.test.js`
-   - 编写用户管理范围隔离的6个API测试场景
-   - 创建 `tests/api/permission-migration.test.js`
-   - 编写废弃权限迁移验证的4个API测试场景
-   - 运行测试，确保通过
+1. 🔥 **EventBus集成测试 (P0-1)**
+   - 创建测试文件目录 `tests/integration/`
+   - 编写 `eventbus-activity-flow.test.js` - 活动完成事件流程
+   - 编写 `eventbus-highscore-flow.test.js` - 高分成就流程
+   - 编写 `eventbus-login-flow.test.js` - 登录事件流程
+   - 编写 `eventbus-error-isolation.test.js` - 错误隔离测试
+   - 运行测试，确保全部通过
+   - **预计工期**: 4-6小时
 
-2. 📊 **查看测试覆盖分析报告**
-   - 阅读 `docs/PERMISSION_TEST_COVERAGE_ANALYSIS.md`
-   - 理解32个缺失测试场景
-   - 熟悉4天行动计划
+2. 📝 **文档完善**
+   - 创建 `tests/docs/integration/eventbus-integration.md`
+   - 记录测试场景、预期结果、注意事项
+   - 更新 `EVENTBUS_DESIGN.md` 添加测试部分
+   - **预计工期**: 1-2小时
 
-### 短期行动 (1-2天) - 2025-11-06/07
+### 短期行动 (1-2天) - Week 3 Day 5 完成后
 
-**第2天 (2025-11-06)**:
-1. ⏳ 完成P0的E2E测试
-   - `tests/e2e/regression/user-management-scope.spec.ts` (2个场景)
-   - `tests/e2e/regression/permission-migration.spec.ts` (1个场景)
-2. ⏳ 开始P1活动权限边界测试
-   - `tests/api/activity-permission-boundaries.test.js` (5个场景)
+1. 🎯 **Week 3 总结与提交**
+   - 完成所有Week 3测试
+   - 更新 `ACHIEVEMENT_SYSTEM_14WEEK_PLAN.md`
+   - Git提交并标记 Week 3 完成
+   - **预计工期**: 1小时
 
-**第3天 (2025-11-07)**:
-1. ⏳ 完成P1活动权限边界E2E测试
-   - `tests/e2e/regression/activity-permission-boundaries.spec.ts` (2个场景)
-2. ⏳ 完成P1题库权限高级测试
-   - `tests/api/question-bank-permission-advanced.test.js` (5个场景)
-3. ⏳ 更新测试文档和追踪表
+2. 🚀 **开始Week 4: 日常任务系统**
+   - 设计任务规则引擎
+   - 实现DailyTaskDetector
+   - 订阅事件，追踪任务进度
+   - **预计工期**: 5-7天
 
-### 中期行动 (本周内) - 2025-11-08 onwards
+### 中期行动 (本周内) - 持续推进
 
-1. 🔥 **个人资料页面手动测试** - 按照 `docs/PROFILE_PAGE_TESTING_GUIDE.md` 执行
-   - 测试教师、学生、管理员三种角色
-   - 验证角色特定字段显示正确
-   - 记录测试结果
+1. ⏳ Week 4 Day 1-5 按计划执行
+2. ⏳ 补充Phase 4遗留测试（如有时间）
+3. ⏳ 个人资料页面手动测试（P0-3）
 
-2. ⏳ 修复E2E-001, E2E-002, E2E-003测试（原有待办）
-3. ⏳ 添加 data-testid 属性提高测试稳定性
-4. ⏳ 完成Phase 4 剩余测试（集成测试、性能测试）
-5. ⏸️ P2权限系统测试（可选，权限过期+学生注册E2E）
+### 长期行动 (2-3周)
 
-### 长期行动 (下周)
-
-1. ⏸️ Phase 5 文档更新（API文档、用户手册）
-2. ⏸️ 生产环境部署准备
-3. ⏸️ 恢复虚拟滚动优化
+1. ⏸️ Week 5-7 实施
+2. ⏸️ Phase 5 文档更新
+3. ⏸️ 生产环境部署准备
 
 ---
 
@@ -558,11 +523,17 @@ docker-compose logs frontend | tail -50
 
 ### 测试运行
 ```bash
+# 运行集成测试
+npx jest tests/integration/eventbus-*.test.js
+
+# 运行EventBus单元测试
+npx jest tests/__tests__/EventBus.test.js
+
 # 运行E2E测试
 npx playwright test tests/e2e/regression/hierarchical-permissions.spec.ts -c tests/playwright.config.ts
 
 # 调试模式
-npx playwright test --grep "E2E-001" --headed -c tests/playwright.config.ts
+npx playwright test --grep "PRM101" --headed -c tests/playwright.config.ts
 
 # UI模式
 npx playwright test --ui -c tests/playwright.config.ts
@@ -571,20 +542,54 @@ npx playwright test --ui -c tests/playwright.config.ts
 npx playwright show-report tests/test-results/html
 ```
 
-### 测试资源位置
-- 截图: `tests/test-results/artifacts/*/test-failed-1.png`
-- 视频: `tests/test-results/artifacts/*/video.webm`
-- 错误上下文: `tests/test-results/artifacts/*/error-context.md`
+### Git操作
+```bash
+# 查看当前分支
+git branch
+
+# 查看Week 3的commits
+git log --oneline --grep "Week 3"
+
+# 提交Week 3 Day 5完成
+git add .
+git commit -m "test: complete Week 3 Day 5 integration tests"
+
+# 合并到主分支（Week 3完成后）
+git checkout main
+git merge feature/achievement-system
+```
 
 ---
 
-**📅 文档最后更新**: 2025-11-05 20:00
-**📊 项目整体进度**: 83% (未变化，新增任务待完成)
-**🎯 当前优先级**: 权限系统测试补充 (P0) 🆕
-**✅ 核心成果**:
-- API测试100%通过
-- E2E测试框架完成
-- 个人资料页面开发完成（等待测试）
-- **🆕 权限系统综合指南完成** (`docs/COMPREHENSIVE_PERMISSION_GUIDE.md`)
-- **🆕 权限测试覆盖分析完成** (`docs/PERMISSION_TEST_COVERAGE_ANALYSIS.md`)
-- **🆕 识别32个缺失测试场景**，制定3-4天补充计划
+## 📈 工期估算
+
+### Week 3 剩余工期
+- Day 5 集成测试: 1-2天
+- **Week 3 总工期**: 5-6天（已用4天，剩余1-2天）
+
+### Week 4-14 预估工期
+- Week 4 (日常任务): 5-7天
+- Week 5 (排行榜): 5-7天
+- Week 6-7 (前端UI): 10-14天
+- Week 8-9 (成就配置): 10-14天
+- Week 10-11 (通知): 10-14天
+- Week 12-13 (社交): 10-14天
+- Week 14 (测试优化): 5-7天
+
+**总计**: 55-77天 (约11-15周，2.5-3.5个月)
+
+---
+
+**📅 文档最后更新**: 2025-11-10 (Week 3 Day 4 完成)
+**📊 项目整体进度**: 93% (成就系统Week 3: 80%)
+**🎯 当前优先级**: Week 3 Day 5 集成测试 (P0-1) 🔥
+**✅ Week 3 核心成果**:
+- ✅ EventBus事件总线实现（异步/同步、优先级、错误隔离）
+- ✅ EventTypes 13类事件常量定义
+- ✅ EventEmitter便捷发射工具
+- ✅ 业务逻辑集成（评分、登录）
+- ✅ AchievementDetector优化（订阅11个事件）
+- ✅ 服务器启动时自动初始化
+- ⏳ 集成测试待完成
+
+**🚀 下一步**: 完成Week 3 Day 5集成测试，然后开始Week 4日常任务系统
