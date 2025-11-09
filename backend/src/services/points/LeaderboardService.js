@@ -63,14 +63,14 @@ class LeaderboardService {
 
       // 插入新的排行榜数据
       if (result.rows.length > 0) {
-        const values = result.rows.map((row, index) => {
+        const values = result.rows.map((row) => {
           return `(
             'total',
             ${scope ? `'${scope}'` : 'NULL'},
             ${row.student_id},
-            '${row.student_name.replace(/'/g, "''")}',
-            ${row.school_name ? `'${row.school_name.replace(/'/g, "''")}'` : 'NULL'},
-            ${row.class_name ? `'${row.class_name.replace(/'/g, "''")}'` : 'NULL'},
+            '${row.student_name.replace(/'/g, '\'\'')}',
+            ${row.school_name ? `'${row.school_name.replace(/'/g, '\'\'')}'` : 'NULL'},
+            ${row.class_name ? `'${row.class_name.replace(/'/g, '\'\'')}'` : 'NULL'},
             ${row.points},
             ${row.rank},
             NULL,
@@ -194,9 +194,9 @@ class LeaderboardService {
             'weekly',
             ${scope ? `'${scope}'` : 'NULL'},
             ${row.student_id},
-            '${row.student_name.replace(/'/g, "''")}',
-            ${row.school_name ? `'${row.school_name.replace(/'/g, "''")}'` : 'NULL'},
-            ${row.class_name ? `'${row.class_name.replace(/'/g, "''")}'` : 'NULL'},
+            '${row.student_name.replace(/'/g, '\'\'')}',
+            ${row.school_name ? `'${row.school_name.replace(/'/g, '\'\'')}'` : 'NULL'},
+            ${row.class_name ? `'${row.class_name.replace(/'/g, '\'\'')}'` : 'NULL'},
             ${row.points},
             ${row.rank},
             NULL,
@@ -314,9 +314,9 @@ class LeaderboardService {
             'monthly',
             ${scope ? `'${scope}'` : 'NULL'},
             ${row.student_id},
-            '${row.student_name.replace(/'/g, "''")}',
-            ${row.school_name ? `'${row.school_name.replace(/'/g, "''")}'` : 'NULL'},
-            ${row.class_name ? `'${row.class_name.replace(/'/g, "''")}'` : 'NULL'},
+            '${row.student_name.replace(/'/g, '\'\'')}',
+            ${row.school_name ? `'${row.school_name.replace(/'/g, '\'\'')}'` : 'NULL'},
+            ${row.class_name ? `'${row.class_name.replace(/'/g, '\'\'')}'` : 'NULL'},
             ${row.points},
             ${row.rank},
             NULL,

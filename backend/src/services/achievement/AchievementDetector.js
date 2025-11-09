@@ -134,25 +134,25 @@ class AchievementDetector {
 
     // 根据条件类型检查
     switch (condition_type) {
-      case 'count':
-        // 检查计数是否达到阈值
-        return eventData.count >= threshold;
+    case 'count':
+      // 检查计数是否达到阈值
+      return eventData.count >= threshold;
 
-      case 'threshold':
-        // 检查值是否超过阈值
-        return eventData.value >= threshold;
+    case 'threshold':
+      // 检查值是否超过阈值
+      return eventData.value >= threshold;
 
-      case 'state':
-        // 检查状态
-        return eventData.state === target_value;
+    case 'state':
+      // 检查状态
+      return eventData.state === target_value;
 
-      case 'combination':
-        // 组合条件
-        return await this.checkCombinationCondition(trigger_condition, eventData);
+    case 'combination':
+      // 组合条件
+      return await this.checkCombinationCondition(trigger_condition, eventData);
 
-      default:
-        console.warn(`Unknown condition type: ${condition_type}`);
-        return false;
+    default:
+      console.warn(`Unknown condition type: ${condition_type}`);
+      return false;
     }
   }
 
@@ -239,7 +239,7 @@ class AchievementDetector {
         pointsAwarded: points_reward
       });
     } catch (error) {
-      console.error(`Error awarding achievement:`, error);
+      console.error('Error awarding achievement:', error);
     }
   }
 }
