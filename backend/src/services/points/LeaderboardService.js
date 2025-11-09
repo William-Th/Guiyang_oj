@@ -61,32 +61,28 @@ class LeaderboardService {
         ['total', scope]
       );
 
-      // 插入新的排行榜数据
+      // 插入新的排行榜数据（使用批量参数化插入）
       if (result.rows.length > 0) {
-        const values = result.rows.map((row) => {
-          return `(
-            'total',
-            ${scope ? `'${scope}'` : 'NULL'},
-            ${row.student_id},
-            '${row.student_name.replace(/'/g, '\'\'')}',
-            ${row.school_name ? `'${row.school_name.replace(/'/g, '\'\'')}'` : 'NULL'},
-            ${row.class_name ? `'${row.class_name.replace(/'/g, '\'\'')}'` : 'NULL'},
-            ${row.points},
-            ${row.rank},
-            NULL,
-            NULL,
-            NULL,
-            CURRENT_TIMESTAMP
-          )`;
-        }).join(',');
+        const studentIds = result.rows.map(r => r.student_id);
+        const studentNames = result.rows.map(r => r.student_name);
+        const schoolNames = result.rows.map(r => r.school_name);
+        const classNames = result.rows.map(r => r.class_name);
+        const pointsArray = result.rows.map(r => r.points);
+        const ranks = result.rows.map(r => r.rank);
 
         await client.query(`
           INSERT INTO leaderboards (
             leaderboard_type, scope, student_id, student_name,
             school_name, class_name, points, rank, rank_change,
             period_start, period_end, last_updated
-          ) VALUES ${values}
-        `);
+          )
+          SELECT
+            'total', $1,
+            unnest($2::int[]), unnest($3::text[]),
+            unnest($4::text[]), unnest($5::text[]),
+            unnest($6::int[]), unnest($7::int[]),
+            NULL, NULL, NULL, CURRENT_TIMESTAMP
+        `, [scope, studentIds, studentNames, schoolNames, classNames, pointsArray, ranks]);
       }
 
       await client.query('COMMIT');
@@ -187,32 +183,28 @@ class LeaderboardService {
         ['weekly', scope, weekStart]
       );
 
-      // 插入新的排行榜数据
+      // 插入新的排行榜数据（使用批量参数化插入）
       if (result.rows.length > 0) {
-        const values = result.rows.map(row => {
-          return `(
-            'weekly',
-            ${scope ? `'${scope}'` : 'NULL'},
-            ${row.student_id},
-            '${row.student_name.replace(/'/g, '\'\'')}',
-            ${row.school_name ? `'${row.school_name.replace(/'/g, '\'\'')}'` : 'NULL'},
-            ${row.class_name ? `'${row.class_name.replace(/'/g, '\'\'')}'` : 'NULL'},
-            ${row.points},
-            ${row.rank},
-            NULL,
-            '${weekStart.toISOString()}',
-            '${weekEnd.toISOString()}',
-            CURRENT_TIMESTAMP
-          )`;
-        }).join(',');
+        const studentIds = result.rows.map(r => r.student_id);
+        const studentNames = result.rows.map(r => r.student_name);
+        const schoolNames = result.rows.map(r => r.school_name);
+        const classNames = result.rows.map(r => r.class_name);
+        const pointsArray = result.rows.map(r => r.points);
+        const ranks = result.rows.map(r => r.rank);
 
         await client.query(`
           INSERT INTO leaderboards (
             leaderboard_type, scope, student_id, student_name,
             school_name, class_name, points, rank, rank_change,
             period_start, period_end, last_updated
-          ) VALUES ${values}
-        `);
+          )
+          SELECT
+            'weekly', $1,
+            unnest($2::int[]), unnest($3::text[]),
+            unnest($4::text[]), unnest($5::text[]),
+            unnest($6::int[]), unnest($7::int[]),
+            NULL, $8, $9, CURRENT_TIMESTAMP
+        `, [scope, studentIds, studentNames, schoolNames, classNames, pointsArray, ranks, weekStart.toISOString(), weekEnd.toISOString()]);
       }
 
       await client.query('COMMIT');
@@ -307,32 +299,28 @@ class LeaderboardService {
         ['monthly', scope, monthStart]
       );
 
-      // 插入新的排行榜数据
+      // 插入新的排行榜数据（使用批量参数化插入）
       if (result.rows.length > 0) {
-        const values = result.rows.map(row => {
-          return `(
-            'monthly',
-            ${scope ? `'${scope}'` : 'NULL'},
-            ${row.student_id},
-            '${row.student_name.replace(/'/g, '\'\'')}',
-            ${row.school_name ? `'${row.school_name.replace(/'/g, '\'\'')}'` : 'NULL'},
-            ${row.class_name ? `'${row.class_name.replace(/'/g, '\'\'')}'` : 'NULL'},
-            ${row.points},
-            ${row.rank},
-            NULL,
-            '${monthStart.toISOString()}',
-            '${monthEnd.toISOString()}',
-            CURRENT_TIMESTAMP
-          )`;
-        }).join(',');
+        const studentIds = result.rows.map(r => r.student_id);
+        const studentNames = result.rows.map(r => r.student_name);
+        const schoolNames = result.rows.map(r => r.school_name);
+        const classNames = result.rows.map(r => r.class_name);
+        const pointsArray = result.rows.map(r => r.points);
+        const ranks = result.rows.map(r => r.rank);
 
         await client.query(`
           INSERT INTO leaderboards (
             leaderboard_type, scope, student_id, student_name,
             school_name, class_name, points, rank, rank_change,
             period_start, period_end, last_updated
-          ) VALUES ${values}
-        `);
+          )
+          SELECT
+            'monthly', $1,
+            unnest($2::int[]), unnest($3::text[]),
+            unnest($4::text[]), unnest($5::text[]),
+            unnest($6::int[]), unnest($7::int[]),
+            NULL, $8, $9, CURRENT_TIMESTAMP
+        `, [scope, studentIds, studentNames, schoolNames, classNames, pointsArray, ranks, monthStart.toISOString(), monthEnd.toISOString()]);
       }
 
       await client.query('COMMIT');
