@@ -12,6 +12,7 @@
 
 const { query } = require('../database/connection');
 const logger = require('../utils/logger');
+const EventEmitter = require('./EventEmitter');
 
 class AutoGradingService {
   /**
@@ -114,6 +115,83 @@ class AutoGradingService {
       `, [totalScore, gradingStatus, studentActivityId]);
 
       logger.info(`Auto-grading completed for student_activity ${studentActivityId}: ${gradedCount} questions graded, total score: ${totalScore}, status: ${gradingStatus}`);
+
+      // Emit completion event if grading is complete (no subjective questions)
+      if (gradingStatus === 'completed') {
+        try {
+          // Fetch additional context for the event
+          const contextResult = await query(`
+            SELECT
+              sa.student_id,
+              sa.activity_id,
+              sa.start_time,
+              sa.submit_time,
+              a.type as activity_type,
+              a.subject,
+              a.grade_level,
+              a.total_score as max_possible_score,
+              (SELECT COUNT(*) FROM answers WHERE student_exam_id = sa.id) as total_questions,
+              (SELECT COUNT(*) FROM answers WHERE student_exam_id = sa.id AND is_correct = true) as correct_answers
+            FROM student_activities sa
+            JOIN activities a ON sa.activity_id = a.id
+            WHERE sa.id = $1
+          `, [studentActivityId]);
+
+          if (contextResult.rows.length > 0) {
+            const ctx = contextResult.rows[0];
+
+            // Calculate duration in seconds
+            const duration = ctx.start_time && ctx.submit_time
+              ? Math.floor((new Date(ctx.submit_time) - new Date(ctx.start_time)) / 1000)
+              : null;
+
+            // Emit activity completed event
+            await EventEmitter.emitActivityCompleted(
+              ctx.student_id,
+              ctx.activity_id,
+              {
+                score: totalScore,
+                totalQuestions: ctx.total_questions,
+                correctAnswers: ctx.correct_answers,
+                completedAt: ctx.submit_time || new Date().toISOString(),
+                duration,
+                activityType: ctx.activity_type,
+                subject: ctx.subject,
+                gradeLevel: ctx.grade_level
+              }
+            );
+
+            // Determine grade level and emit high score event if applicable
+            const scorePercentage = ctx.max_possible_score > 0
+              ? (totalScore / ctx.max_possible_score) * 100
+              : 0;
+
+            let gradeLevel = null;
+            if (scorePercentage >= 90) {
+              gradeLevel = 'gold';
+            } else if (scorePercentage >= 80) {
+              gradeLevel = 'silver';
+            } else if (scorePercentage >= 70) {
+              gradeLevel = 'bronze';
+            }
+
+            // Emit high score event if student achieved bronze or higher
+            if (gradeLevel) {
+              await EventEmitter.emitHighScore(
+                ctx.student_id,
+                ctx.activity_id,
+                totalScore,
+                gradeLevel
+              );
+            }
+
+            logger.info(`Events emitted for student_activity ${studentActivityId}: completed, ${gradeLevel ? `high_score (${gradeLevel})` : 'no high score'}`);
+          }
+        } catch (eventError) {
+          // Don't fail the grading if event emission fails
+          logger.error('Failed to emit completion events:', eventError);
+        }
+      }
 
       return {
         success: true,

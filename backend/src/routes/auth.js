@@ -5,6 +5,7 @@ const User = require('../models/User');
 const { generateToken, generateRefreshToken } = require('../utils/jwt');
 const { authMiddleware } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const EventEmitter = require('../services/EventEmitter');
 
 // Login endpoint
 router.post('/login', [
@@ -45,20 +46,42 @@ router.post('/login', [
     // Update last login
     await User.updateLastLogin(user.id);
 
+    // Emit login event for students
+    if (user.role === 'student') {
+      try {
+        await EventEmitter.emitStudentLogin(user.id, {
+          method: loginType,
+          ip: req.ip,
+          userAgent: req.get('user-agent')
+        });
+
+        // TODO: First login detection
+        // Requires login_history table or login_count field in users table
+        // Will be implemented in Week 3 when we add daily task tracking
+
+        // TODO: Login streak detection
+        // Requires login_history table to track consecutive days
+        // Will be implemented in Week 3 when we add daily task tracking
+      } catch (eventError) {
+        // Don't fail login if event emission fails
+        logger.error('Failed to emit login events:', eventError);
+      }
+    }
+
     // Generate tokens
     const tokenPayload = {
       userId: user.id,
       username: user.username,
       role: user.role
     };
-    
+
     const token = generateToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
-    logger.info('User logged in successfully', { 
-      userId: user.id, 
-      username: user.username, 
-      role: user.role 
+    logger.info('User logged in successfully', {
+      userId: user.id,
+      username: user.username,
+      role: user.role
     });
 
     res.json({
