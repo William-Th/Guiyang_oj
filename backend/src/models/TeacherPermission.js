@@ -137,10 +137,14 @@ class TeacherPermission {
     let sql = `
       SELECT tp.*,
         u.username, u.real_name, u.role,
-        g.real_name as granted_by_name
+        g.real_name as granted_by_name,
+        d.name as district_name,
+        s.name as school_name
       FROM teacher_permissions tp
       JOIN users u ON tp.user_id = u.id
       LEFT JOIN users g ON tp.granted_by = g.id
+      LEFT JOIN districts d ON tp.district_id = d.id
+      LEFT JOIN schools s ON tp.school_id = s.id
     `;
 
     const params = [];
@@ -159,7 +163,7 @@ class TeacherPermission {
       params.push(filters.permission_type);
     }
 
-    // 区级管理员只能看到该区域内的教师权限
+    // 区级管理员只能看到该区域内的教师权限，且只能看到区级练习审核权限
     if (filters.managementScope && filters.managementScope.role === 'district_admin') {
       const districtId = filters.managementScope.districtId;
       if (districtId) {
@@ -170,6 +174,9 @@ class TeacherPermission {
           WHERE t.school_id IN (SELECT id FROM schools WHERE district_id = $${paramCount})
         )`);
         params.push(districtId);
+
+        // 区级管理员只能看到区级练习审核权限，不能看到测评和市级练习审核权限
+        whereClauses.push('tp.permission_type = \'practice_district_review\'');
       }
     }
 
@@ -198,7 +205,7 @@ class TeacherPermission {
   /**
    * 授予区级权限（自动关联 district_id）
    */
-  static async grantDistrictPermission(userId, subjects, grantedBy, districtId) {
+  static async grantDistrictPermission(userId, subjects, grantedBy, districtId, expiresAt = null, notes = null) {
     return await this.create({
       user_id: userId,
       permission_type: 'practice_district_review',
@@ -206,7 +213,8 @@ class TeacherPermission {
       scope_level: 'district',
       district_id: districtId,
       granted_by: grantedBy,
-      notes: '区级练习题库审核权限'
+      expires_at: expiresAt,
+      notes: notes || '区级练习题库审核权限'
     });
   }
 
