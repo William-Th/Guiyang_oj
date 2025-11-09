@@ -181,6 +181,97 @@ class QuestionBank {
     return result.rows;
   }
 
+  // Count total questions matching filters (without pagination)
+  static async countAll(filters = {}) {
+    let sql = `
+      SELECT COUNT(*) as total
+      FROM question_bank qb
+      WHERE qb.is_active = true
+    `;
+    const values = [];
+    let paramCount = 0;
+
+    // Default to published only, unless status or created_by is specified
+    if (!filters.status && !filters.created_by) {
+      sql += ' AND qb.status = \'published\'';
+    }
+
+    if (filters.status) {
+      paramCount++;
+      sql += ` AND qb.status = $${paramCount}`;
+      values.push(filters.status);
+    }
+
+    if (filters.created_by) {
+      paramCount++;
+      sql += ` AND qb.created_by = $${paramCount}`;
+      values.push(filters.created_by);
+    }
+
+    if (filters.level) {
+      paramCount++;
+      sql += ` AND qb.level = $${paramCount}`;
+      values.push(filters.level);
+    }
+
+    if (filters.scope && filters.scope.length > 0) {
+      paramCount++;
+      sql += ` AND qb.scope && $${paramCount}`;
+      values.push(filters.scope);
+    }
+
+    if (filters.subject) {
+      paramCount++;
+      sql += ` AND qb.subject = $${paramCount}`;
+      values.push(filters.subject);
+    }
+
+    if (filters.grade) {
+      paramCount++;
+      sql += ` AND qb.grade = $${paramCount}`;
+      values.push(filters.grade);
+    }
+
+    if (filters.difficulty) {
+      paramCount++;
+      sql += ` AND qb.difficulty = $${paramCount}`;
+      values.push(filters.difficulty);
+    }
+
+    if (filters.type) {
+      paramCount++;
+      sql += ` AND qb.type = $${paramCount}`;
+      values.push(filters.type);
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+      paramCount++;
+      sql += ` AND qb.tags && $${paramCount}`;
+      values.push(filters.tags);
+    }
+
+    if (filters.category_id) {
+      paramCount++;
+      sql += ` AND qb.category_id = $${paramCount}`;
+      values.push(filters.category_id);
+    }
+
+    if (filters.abilities && filters.abilities.length > 0) {
+      paramCount++;
+      sql += ` AND qb.abilities && $${paramCount}`;
+      values.push(filters.abilities);
+    }
+
+    if (filters.knowledge_points && filters.knowledge_points.length > 0) {
+      paramCount++;
+      sql += ` AND qb.knowledge_points && $${paramCount}`;
+      values.push(filters.knowledge_points);
+    }
+
+    const result = await query(sql, values);
+    return parseInt(result.rows[0].total);
+  }
+
   static async update(id, updateData) {
     const allowedFields = [
       'type', 'subject', 'grade', 'content', 'options',
@@ -325,7 +416,7 @@ class QuestionBank {
       LEFT JOIN users u1 ON qb.created_by = u1.id
       LEFT JOIN users u2 ON qb.reviewer_id = u2.id
       WHERE qb.is_active = true
-      AND (qb.content ILIKE $1 OR qb.explanation ILIKE $1)
+      AND (qb.content ILIKE $1 OR qb.explanation ILIKE $1 OR qb.question_code ILIKE $1)
     `;
 
     const values = [`%${searchTerm}%`];
@@ -590,6 +681,65 @@ class QuestionBank {
 
     const result = await query(sql, params);
     return result.rows;
+  }
+
+  // Count total questions by scope (without pagination)
+  static async countByScope(scopeFilter, userScope, filters = {}) {
+    let sql = `
+      SELECT COUNT(*) as total
+      FROM question_bank qb
+      WHERE qb.is_active = true
+        AND qb.status = 'published'
+    `;
+
+    const params = [];
+    let paramCount = 0;
+
+    // Visibility filter: users can only see scopes they have permission for
+    if (userScope && userScope.length > 0) {
+      paramCount++;
+      sql += ` AND qb.scope && $${paramCount}::text[]`;
+      params.push(userScope);
+    }
+
+    // Filter by specific scopes
+    if (scopeFilter) {
+      const scopeArray = Array.isArray(scopeFilter) ? scopeFilter : [scopeFilter];
+      paramCount++;
+      sql += ` AND qb.scope && $${paramCount}::text[]`;
+      params.push(scopeArray);
+    }
+
+    // Subject filter
+    if (filters.subject) {
+      paramCount++;
+      sql += ` AND qb.subject = $${paramCount}`;
+      params.push(filters.subject);
+    }
+
+    // Grade filter
+    if (filters.grade) {
+      paramCount++;
+      sql += ` AND qb.grade = $${paramCount}`;
+      params.push(filters.grade);
+    }
+
+    // Difficulty filter
+    if (filters.difficulty) {
+      paramCount++;
+      sql += ` AND qb.difficulty = $${paramCount}`;
+      params.push(filters.difficulty);
+    }
+
+    // Type filter
+    if (filters.type) {
+      paramCount++;
+      sql += ` AND qb.type = $${paramCount}`;
+      params.push(filters.type);
+    }
+
+    const result = await query(sql, params);
+    return parseInt(result.rows[0].total);
   }
 
   /**

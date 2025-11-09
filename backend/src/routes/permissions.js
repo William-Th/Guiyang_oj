@@ -171,7 +171,9 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
           user_id,
           subjects,
           req.user.id,
-          managementScope.district_id
+          managementScope.district_id,
+          expires_at || null,
+          notes || null
         );
 
         return res.json({ success: true, data: permission });

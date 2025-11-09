@@ -15,7 +15,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: '用户不存在' });
     }
 
-    res.json({ user: userProfile });
+    res.json(userProfile);
   } catch (error) {
     logger.error('Get profile error:', error);
     res.status(500).json({ message: '获取用户信息失败' });
@@ -49,9 +49,12 @@ router.put('/profile', [
       return res.status(404).json({ message: '用户不存在' });
     }
 
+    // Fetch detailed profile with correct field naming (camelCase)
+    const updatedProfile = await User.getDetailedProfile(req.user.id);
+
     res.json({
       message: '用户信息更新成功',
-      user: updatedUser
+      user: updatedProfile
     });
   } catch (error) {
     logger.error('Update profile error:', error);

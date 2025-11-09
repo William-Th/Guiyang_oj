@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const Achievement = require('../models/Achievement');
 
 /**
  * 获取所有成就定义
  * GET /api/achievements
  */
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { category, rarity } = req.query;
     const filters = {};
@@ -34,7 +34,7 @@ router.get('/', authenticateToken, async (req, res) => {
  * 获取单个成就详情
  * GET /api/achievements/:id
  */
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const achievement = await Achievement.getAchievementById(parseInt(id));
@@ -64,7 +64,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
  * 获取学生的成就记录
  * GET /api/achievements/student/:studentId
  */
-router.get('/student/:studentId', authenticateToken, async (req, res) => {
+router.get('/student/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
 
@@ -95,7 +95,7 @@ router.get('/student/:studentId', authenticateToken, async (req, res) => {
  * 获取学生成就进度
  * GET /api/achievements/student/:studentId/progress
  */
-router.get('/student/:studentId/progress', authenticateToken, async (req, res) => {
+router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
 
@@ -126,7 +126,7 @@ router.get('/student/:studentId/progress', authenticateToken, async (req, res) =
  * 授予成就（管理员/系统内部调用）
  * POST /api/achievements/award
  */
-router.post('/award', authenticateToken, async (req, res) => {
+router.post('/award', authMiddleware, async (req, res) => {
   try {
     // 只允许管理员调用
     if (req.user.role !== 'admin') {

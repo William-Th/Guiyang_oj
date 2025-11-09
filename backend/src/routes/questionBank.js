@@ -79,6 +79,7 @@ router.get('/bank', authMiddleware, async (req, res) => {
     };
 
     let questions;
+    let total;
 
     // 如果指定了 scope 过滤，使用新的 findByScope 方法
     if (req.query.scope) {
@@ -90,11 +91,24 @@ router.get('/bank', authMiddleware, async (req, res) => {
       // 获取用户可见的 scope 列表
       const userScope = await QuestionBank.getAvailableScopes(req.user.id);
 
+      // Get total count (without pagination)
+      const countFilters = { ...filters };
+      delete countFilters.limit;
+      delete countFilters.offset;
+      total = await QuestionBank.countByScope(scopeFilter, userScope, countFilters);
+
       // 使用 scope-aware 查询
       questions = await QuestionBank.findByScope(scopeFilter, userScope, filters);
     } else {
       // 兼容旧接口：使用 findAll 但只返回已发布的题目
       filters.status = filters.status || 'published';
+
+      // Get total count (without pagination)
+      const countFilters = { ...filters };
+      delete countFilters.limit;
+      delete countFilters.offset;
+      total = await QuestionBank.countAll(countFilters);
+
       questions = await QuestionBank.findAll(filters);
     }
 
@@ -103,6 +117,7 @@ router.get('/bank', authMiddleware, async (req, res) => {
       data: questions,
       meta: {
         count: questions.length,
+        total: total,
         scope: req.query.scope || 'all'
       }
     });

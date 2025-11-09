@@ -129,6 +129,8 @@ app.use('/api/certificates', require('./routes/certificates')); // 完整的证�
 app.use('/api/certificate', require('./routes/certificate_verify')); // 公共验证和测试端点
 app.use('/api/registration', require('./routes/registration')); // 学生注册申请和审核
 app.use('/api/subjects', require('./routes/subjects')); // 科目配置管理
+app.use('/api/achievements', require('./routes/achievements')); // 成就系统
+app.use('/api/points', require('./routes/points')); // 积分系统
 
 // Error handling middleware
 app.use((err, req, res, _next) => {
@@ -191,7 +193,7 @@ process.on('SIGINT', () => {
   });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info('Server started', {
     port: PORT,
     environment: process.env.NODE_ENV,
@@ -206,4 +208,14 @@ const server = app.listen(PORT, () => {
 
   registrationEscalationTask = startEscalationCron();
   console.log('⏰ Registration escalation cron job started (runs every hour)');
+
+  // Initialize achievement detector
+  try {
+    const { achievementDetector } = require('./services/achievement');
+    await achievementDetector.initialize();
+    console.log('🏆 Achievement detector initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize achievement detector:', error);
+    console.error('⚠️  Achievement detector initialization failed');
+  }
 });

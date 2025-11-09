@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const StudentPoints = require('../models/StudentPoints');
 
 /**
  * 获取学生积分账户
  * GET /api/points/account/:studentId
  */
-router.get('/account/:studentId', authenticateToken, async (req, res) => {
+router.get('/account/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
 
@@ -46,7 +46,7 @@ router.get('/account/:studentId', authenticateToken, async (req, res) => {
  * 获取学生积分交易历史
  * GET /api/points/transactions/:studentId
  */
-router.get('/transactions/:studentId', authenticateToken, async (req, res) => {
+router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
     const { transactionType, startDate, endDate, limit } = req.query;
@@ -88,7 +88,7 @@ router.get('/transactions/:studentId', authenticateToken, async (req, res) => {
  * 添加积分（管理员/系统内部调用）
  * POST /api/points/add
  */
-router.post('/add', authenticateToken, async (req, res) => {
+router.post('/add', authMiddleware, async (req, res) => {
   try {
     // 只允许管理员或教师调用
     if (!['admin', 'teacher'].includes(req.user.role)) {
@@ -146,7 +146,7 @@ router.post('/add', authenticateToken, async (req, res) => {
  * 获取排行榜
  * GET /api/points/leaderboard
  */
-router.get('/leaderboard', authenticateToken, async (req, res) => {
+router.get('/leaderboard', authMiddleware, async (req, res) => {
   try {
     const { type, scope, limit } = req.query;
 
