@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const logger = require('./utils/logger');
 const { startAutoSubmitCron, stopAutoSubmitCron } = require('./services/autoSubmitService');
 const { startEscalationCron, stopEscalationCron } = require('./services/registrationEscalationService');
+const { startLeaderboardCron, stopLeaderboardCron } = require('./services/points/leaderboardCron');
 
 // Load environment variables based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' 
@@ -161,6 +162,7 @@ app.use((req, res) => {
 // Store cron tasks for graceful shutdown
 let autoSubmitTask = null;
 let registrationEscalationTask = null;
+let leaderboardTask = null;
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
@@ -171,6 +173,9 @@ process.on('SIGTERM', () => {
   }
   if (registrationEscalationTask) {
     stopEscalationCron(registrationEscalationTask);
+  }
+  if (leaderboardTask) {
+    stopLeaderboardCron(leaderboardTask);
   }
   server.close(() => {
     logger.info('Process terminated');
@@ -186,6 +191,9 @@ process.on('SIGINT', () => {
   }
   if (registrationEscalationTask) {
     stopEscalationCron(registrationEscalationTask);
+  }
+  if (leaderboardTask) {
+    stopLeaderboardCron(leaderboardTask);
   }
   server.close(() => {
     logger.info('Process terminated');
@@ -208,6 +216,10 @@ const server = app.listen(PORT, async () => {
 
   registrationEscalationTask = startEscalationCron();
   console.log('⏰ Registration escalation cron job started (runs every hour)');
+
+  // Start leaderboard generation cron job
+  leaderboardTask = startLeaderboardCron();
+  console.log('⏰ Leaderboard generation cron job started (runs hourly at 5th minute)');
 
   // Initialize achievement detector
   try {
