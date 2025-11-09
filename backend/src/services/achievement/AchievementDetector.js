@@ -1,6 +1,8 @@
 const Achievement = require('../../models/Achievement');
 const StudentPoints = require('../../models/StudentPoints');
-const eventBus = require('./EventBus');
+const eventBus = require('../EventBus');
+const { STUDENT_ACTIVITY, STUDENT_LOGIN, STUDENT_PRACTICE, STUDENT_EXAM, ACHIEVEMENT } = require('../EventTypes');
+const logger = require('../../utils/logger');
 
 /**
  * AchievementDetector - 成就检测器
@@ -28,9 +30,9 @@ class AchievementDetector {
       this.subscribeToEvents();
 
       this.isInitialized = true;
-      console.log('✅ AchievementDetector initialized successfully');
+      logger.info('✅ AchievementDetector initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize AchievementDetector:', error);
+      logger.error('Failed to initialize AchievementDetector:', error);
       throw error;
     }
   }
@@ -61,9 +63,9 @@ class AchievementDetector {
         this.achievementRules.get(eventName).push(achievement);
       }
 
-      console.log(`Loaded ${achievements.length} achievement rules`);
+      logger.info(`Loaded ${achievements.length} achievement rules`);
     } catch (error) {
-      console.error('Error loading achievement rules:', error);
+      logger.error('Error loading achievement rules:', error);
       throw error;
     }
   }
@@ -72,27 +74,55 @@ class AchievementDetector {
    * 订阅事件
    */
   subscribeToEvents() {
-    // 学生完成活动事件
-    eventBus.subscribe('student.activity.completed', async (data) => {
-      await this.detectAchievements('student.activity.completed', data);
-    });
+    // 学生活动相关事件
+    eventBus.on(STUDENT_ACTIVITY.COMPLETED, async (data) => {
+      await this.detectAchievements(STUDENT_ACTIVITY.COMPLETED, data);
+    }, { priority: 5 });
 
-    // 学生获得高分事件
-    eventBus.subscribe('student.high.score', async (data) => {
-      await this.detectAchievements('student.high.score', data);
-    });
+    eventBus.on(STUDENT_ACTIVITY.HIGH_SCORE, async (data) => {
+      await this.detectAchievements(STUDENT_ACTIVITY.HIGH_SCORE, data);
+    }, { priority: 5 });
 
-    // 学生连续答题事件
-    eventBus.subscribe('student.consecutive.answers', async (data) => {
-      await this.detectAchievements('student.consecutive.answers', data);
-    });
+    eventBus.on(STUDENT_ACTIVITY.PERFECT_SCORE, async (data) => {
+      await this.detectAchievements(STUDENT_ACTIVITY.PERFECT_SCORE, data);
+    }, { priority: 5 });
 
-    // 学生登录事件
-    eventBus.subscribe('student.login', async (data) => {
-      await this.detectAchievements('student.login', data);
-    });
+    // 学生登录相关事件
+    eventBus.on(STUDENT_LOGIN.LOGIN, async (data) => {
+      await this.detectAchievements(STUDENT_LOGIN.LOGIN, data);
+    }, { priority: 5 });
 
-    console.log('Event subscriptions configured');
+    eventBus.on(STUDENT_LOGIN.MORNING, async (data) => {
+      await this.detectAchievements(STUDENT_LOGIN.MORNING, data);
+    }, { priority: 5 });
+
+    eventBus.on(STUDENT_LOGIN.FIRST, async (data) => {
+      await this.detectAchievements(STUDENT_LOGIN.FIRST, data);
+    }, { priority: 5 });
+
+    eventBus.on(STUDENT_LOGIN.STREAK, async (data) => {
+      await this.detectAchievements(STUDENT_LOGIN.STREAK, data);
+    }, { priority: 5 });
+
+    // 学生练习相关事件
+    eventBus.on(STUDENT_PRACTICE.COMPLETED, async (data) => {
+      await this.detectAchievements(STUDENT_PRACTICE.COMPLETED, data);
+    }, { priority: 5 });
+
+    eventBus.on(STUDENT_PRACTICE.FAST, async (data) => {
+      await this.detectAchievements(STUDENT_PRACTICE.FAST, data);
+    }, { priority: 5 });
+
+    eventBus.on(STUDENT_PRACTICE.ACCURACY, async (data) => {
+      await this.detectAchievements(STUDENT_PRACTICE.ACCURACY, data);
+    }, { priority: 5 });
+
+    // 学生测评相关事件
+    eventBus.on(STUDENT_EXAM.COMPLETED, async (data) => {
+      await this.detectAchievements(STUDENT_EXAM.COMPLETED, data);
+    }, { priority: 5 });
+
+    logger.info('AchievementDetector: Event subscriptions configured');
   }
 
   /**
@@ -118,7 +148,7 @@ class AchievementDetector {
         }
       }
     } catch (error) {
-      console.error(`Error detecting achievements for event ${eventName}:`, error);
+      logger.error(`Error detecting achievements for event ${eventName}:`, error);
     }
   }
 
@@ -151,7 +181,7 @@ class AchievementDetector {
       return await this.checkCombinationCondition(trigger_condition, eventData);
 
     default:
-      console.warn(`Unknown condition type: ${condition_type}`);
+      logger.warn(`Unknown condition type: ${condition_type}`);
       return false;
     }
   }
@@ -208,7 +238,7 @@ class AchievementDetector {
       );
 
       if (alreadyAwarded) {
-        console.log(`Student ${studentId} already has achievement ${achievement_id}`);
+        logger.debug(`Student ${studentId} already has achievement ${achievement_id}`);
         return;
       }
 
@@ -229,17 +259,19 @@ class AchievementDetector {
         );
       }
 
-      console.log(`✨ Awarded achievement ${achievement_name} to student ${studentId}`);
+      logger.info(`✨ Awarded achievement ${achievement_name} to student ${studentId}`);
 
       // 发布成就获得事件
-      eventBus.publish('achievement.awarded', {
+      await eventBus.emit(ACHIEVEMENT.AWARDED, {
+        source: 'AchievementDetector',
         studentId,
         achievementId: achievement_id,
         achievementName: achievement_name,
-        pointsAwarded: points_reward
+        pointsAwarded: points_reward,
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Error awarding achievement:', error);
+      logger.error('Error awarding achievement:', error);
     }
   }
 }
