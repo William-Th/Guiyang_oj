@@ -13,7 +13,8 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 3. [开发实践流程](#开发实践流程)
 4. [测试指南](#测试指南)
 5. [文档规范](#文档规范)
-6. [故障排除](#故障排除)
+6. [Bug修复追踪流程](#bug修复追踪流程)
+7. [故障排除快速参考](#故障排除快速参考)
 
 ---
 
@@ -236,6 +237,12 @@ All demo accounts use password: `password123`
   - 测试完整业务流程
   - 验证多个 API 的协作
   - 确保数据一致性
+- **⚠️ 验证点覆盖要求（重要！）**
+  - 测试不仅要覆盖功能，更要覆盖具体验证点
+  - 必须验证响应中的关键字段存在性和正确性
+  - 必须验证数据过滤逻辑（权限控制、业务规则）
+  - 必须验证数据持久化（写入后读取验证）
+  - 参考：**docs/BUG_FIX_TRACKING_GUIDE.md - 验证点覆盖要求**
 - 运行测试并确保通过：`npx jest tests/api`
 - **✅ 里程碑：API测试通过后才能进入前端开发**
 - **📝 文档更新：**
@@ -268,6 +275,13 @@ All demo accounts use password: `password123`
 - 编写Playwright端到端测试用例（`tests/e2e/`）
 - 测试关键用户流程
 - 验证UI交互正确性
+- **⚠️ 验证点覆盖要求（重要！）**
+  - 测试不仅要覆盖功能，更要覆盖具体验证点
+  - 必须验证UI元素的存在性或不存在性（正向/负向断言）
+  - 必须验证数据显示的正确性（字段值、格式、排序）
+  - 必须验证权限控制的有效性（菜单显示、按钮禁用）
+  - 必须验证用户操作的结果（导航、数据变更、错误提示）
+  - 参考：**docs/BUG_FIX_TRACKING_GUIDE.md - 验证点覆盖要求**
 - 运行测试并确保通过
 - **✅ 里程碑：E2E测试通过后功能开发完成**
 - **📝 文档更新：**
@@ -282,7 +296,6 @@ All demo accounts use password: `password123`
 - 更新 **DEVELOPMENT_STATUS.md** 标记功能完成状态
 - 更新项目进度文档（如需要）
 - 记录已知问题和注意事项
-- 整理技术决策和实现要点到 **report/** 文件夹（如有重要技术点）
 
 ### 开发状态追踪
 
@@ -371,11 +384,11 @@ node tests/api/smoke-test.js
 **执行时间**: 约 10-20 分钟
 
 **覆盖范围**:
-- 认证模块 (R001-R007) - 7个测试
-- 学生功能模块 (R101-R105) - 5个测试
-- 管理员功能模块 (R201-R205) - 5个测试
-- 题库创建模块 (R301-R310) - 10个测试
-- 题库工作流模块 (R401-R410) - 10个测试
+- 认证模块 (AUT001-AUT007) - 7个测试
+- 学生功能模块 (STU101-STU105) - 5个测试
+- 管理员功能模块 (ADM101-ADM105) - 5个测试
+- 题库创建模块 (QBC101-QBC110) - 10个测试
+- 题库工作流模块 (REV101-REV110) - 10个测试
 
 **执行命令**:
 ```bash
@@ -403,73 +416,21 @@ await expect(page.locator('.ant-table-tbody tr[data-row-key]').first()).toBeAtta
 await expect(page.getByRole('columnheader', { name: '题型' })).toBeAttached();
 ```
 
-#### ⚠️ Ant Design 5 Select 虚拟滚动问题（常见测试问题）
+#### ✅ Ant Design 5 Select 虚拟滚动问题
 
-**问题描述**:
-Ant Design 5 的 Select 组件默认启用虚拟滚动（virtual scrolling）以优化性能。虚拟滚动会将下拉选项标记为 "hidden"，导致 Playwright 无法与这些选项交互，测试会超时失败。
-
-**错误信息示例**:
-```
-Error: locator.click: Test timeout of 90000ms exceeded.
-- waiting for getByRole('option', { name: '数学' })
-- locator resolved to <div role="option">数学</div>
-- element is not visible
-- unexpected value "hidden"
-```
-
-**根本原因**:
-- Ant Design 5 虚拟滚动只渲染视口内的选项
-- 视口外的选项在 DOM 中标记为 "hidden"
-- Playwright 的 `click()`, `isVisible()` 等方法无法操作隐藏元素
-
-**解决方案 1: 禁用虚拟滚动（推荐用于测试环境）**:
-
+**解决方案 1: 禁用虚拟滚动（测试环境）**:
 ```typescript
-// 在 Select 组件中添加 virtual={false} 属性
-<Select
-  placeholder="请选择科目"
-  virtual={false}  // 禁用虚拟滚动以支持 E2E 测试
->
-  <Option value="语文">语文</Option>
+<Select virtual={false}>  // 禁用虚拟滚动以支持 E2E 测试
   <Option value="数学">数学</Option>
-  <Option value="英语">英语</Option>
 </Select>
 ```
 
-**注意事项**:
-- ⚠️ 临时禁用虚拟滚动会影响性能优化
-- 📝 必须在 **FRONTEND_PERFORMANCE_OPTIMIZATION.md** 中记录需要恢复虚拟滚动的组件
-- 🚀 正式上线前应移除 `virtual={false}` 并更新测试策略
-
 **解决方案 2: 使用 evaluate() 绕过可见性检查**:
-
 ```typescript
-// 打开下拉框
-await page.click('#subject');
-await page.waitForTimeout(500);
-
-// 使用 evaluate 直接操作 DOM
 await page.getByRole('option', { name: '数学' }).evaluate((el: HTMLElement) => el.click());
 ```
 
-**解决方案 3: 使用 force: true 选项（不推荐）**:
-
-```typescript
-// 强制点击（绕过可见性检查）
-await page.getByRole('option', { name: '数学' }).click({ force: true });
-```
-
-**最佳实践建议**:
-1. **开发测试阶段**: 使用 `virtual={false}` 确保测试稳定性
-2. **记录文档**: 在 FRONTEND_PERFORMANCE_OPTIMIZATION.md 中记录所有禁用虚拟滚动的组件
-3. **生产环境**: 移除 `virtual={false}`，恢复性能优化
-4. **测试适配**: 更新 E2E 测试使用 `evaluate()` 或其他策略
-
-**已知受影响的组件**:
-- `frontend/src/pages/teacher/ActivityListPage.tsx` - 4 个筛选 Select
-- `frontend/src/pages/teacher/ActivityFormPage.tsx` - 4 个表单 Select
-
-详见 **FRONTEND_PERFORMANCE_OPTIMIZATION.md** 获取完整列表和恢复指南。
+⚠️ **注意**: 禁用虚拟滚动需在 **FRONTEND_PERFORMANCE_OPTIMIZATION.md** 中记录，上线前恢复。
 
 #### ✅ 虚拟滚动表格操作
 
@@ -478,10 +439,6 @@ await page.getByRole('option', { name: '数学' }).click({ force: true });
 const tableRows = page.locator('.ant-table-tbody tr[data-row-key]');
 await expect(tableRows.first()).toBeAttached({ timeout: 5000 });
 
-// 定位目标按钮
-const editButtons = page.locator('button:has([aria-label="edit"])');
-await editButtons.first().waitFor({ state: 'attached', timeout: 5000 });
-
 // 使用 evaluate() 绕过可见性检查
 await editButtons.first().evaluate((button: HTMLElement) => button.click());
 ```
@@ -489,50 +446,41 @@ await editButtons.first().evaluate((button: HTMLElement) => button.click());
 #### ✅ Checkbox 测试
 
 ```typescript
-// ✅ 正确方案 - 使用 evaluate 检查原生状态后点击 label
 const checkbox = page.locator('label:has-text("练习题库") input[type="checkbox"]');
 const isChecked = await checkbox.evaluate((el: HTMLInputElement) => el.checked);
 
 if (!isChecked) {
   await page.locator('label:has-text("练习题库")').click();
-  await page.waitForTimeout(300); // 等待动画完成
+  await page.waitForTimeout(300);
 }
 ```
 
 #### ✅ 测试数据唯一性（关键！）
 
 ```typescript
-// ❌ 错误 - 使用固定内容，多次运行会匹配到历史数据
-const questionCode = await createDraftQuestion(page, {
-  content: '【R405】测试审核批准功能 - 2+2=4',  // ❌ 固定内容
-});
-
 // ✅ 正确 - 使用时间戳确保唯一性
 const timestamp = Date.now();
-const uniqueContent = `【R405-${timestamp}】测试审核批准功能 - 2+2=4`;
+const uniqueContent = `【R405-${timestamp}】测试审核批准功能`;
 
 const questionCode = await createDraftQuestion(page, {
-  content: uniqueContent,  // ✅ 每次运行都不同
+  content: uniqueContent,
 });
 
-// 后续查找也使用相同的时间戳
+// 后续查找使用相同的时间戳
 const targetRow = page.locator('.ant-table-tbody tr')
-  .filter({ hasText: `【R405-${timestamp}】` })  // ✅ 只匹配本次创建的记录
+  .filter({ hasText: `【R405-${timestamp}】` })
   .first();
 ```
 
 #### ✅ 页面导航策略
 
 ```typescript
-// ❌ 错误 - 直接URL跳转，无法发现导航问题
-await page.goto('/teacher/question-bank');
-
 // ✅ 正确 - 使用点击导航，模拟真实用户操作
 await loginAsTeacher(page, 'teacher01', 'password');
 const menuLink = page.locator('a:has-text("题库管理")');
-await expect(menuLink).toBeVisible();  // 验证菜单存在
-await menuLink.click();  // 模拟真实用户操作
-await page.waitForURL(/\/teacher\/question-bank/);  // 验证导航正确
+await expect(menuLink).toBeVisible();
+await menuLink.click();
+await page.waitForURL(/\/teacher\/question-bank/);
 ```
 
 ### 测试文档
@@ -573,35 +521,12 @@ await page.waitForURL(/\/teacher\/question-bank/);  // 验证导航正确
 | **AUT** | Authentication | 认证功能 | AUT001 (冒烟), AUT101 (回归) |
 | **STU** | Student | 学生功能 | STU001, STU101 |
 | **ADM** | Admin | 管理员功能 | ADM001, ADM101 |
+| **PRM** | Permission Management | 分层权限管理 | PRM101-PRM102 |
 | **QBC** | Question Bank Creation | 题库创建 | QBC101-QBC110 |
 | **DFT** | Draft | 题库草稿箱 | DFT101-DFT103 |
 | **REV** | Review | 题库审核流程 | REV101-REV108 |
 | **ACT** | Activity | 活动管理 | ACT001-ACT006, ACT101-ACT113 |
 | **CRT** | Certificate | 证书管理 | CRT101-CRT103 |
-
-#### 编号示例
-
-**冒烟测试 (001-099)**:
-```
-AUT001 - 学生登录测试
-AUT002 - 教师登录测试
-AUT003 - 管理员登录测试
-STU001 - 学生首页显示测试
-ADM001 - 管理员首页显示测试
-ACT001 - 教师访问活动管理页面
-ACT002 - 教师创建练习活动
-```
-
-**回归测试 (101-999)**:
-```
-AUT101 - 学生正确凭证登录
-AUT102 - 学生错误密码登录
-QBC101 - 创建单选题-完整流程
-QBC102 - 单选题必填字段验证
-DFT101 - 草稿箱列表显示
-REV101 - 提交草稿进行审核
-ACT101 - 创建带完整信息的练习活动
-```
 
 #### 运行特定模块测试
 
@@ -656,762 +581,255 @@ chore: 构建过程或辅助工具的变动
 
 ---
 
-## 故障排除
+## Bug修复追踪流程
 
-### 常见问题
+### 概述
 
-#### 1. Docker 容器无法启动
+为了更好地追踪和管理Bug修复过程，项目采用CSV格式的追踪文档来记录所有发现和修复的问题。
 
+**追踪文档位置**: `docs/BUG_FIX_TRACKING.csv`
+
+### 追踪字段说明
+
+| 字段名 | 说明 | 示例 |
+|--------|------|------|
+| 序号 | Bug编号，递增 | 1, 2, 3... |
+| 日期 | 问题发现日期 | 2025-11-07 |
+| 问题描述 | 用户提出的问题原始描述 | 用户管理中存在身份证字段 |
+| 功能分类 | 问题所属功能模块 | 用户管理、权限管理、个人信息等 |
+| 解决状态 | 当前状态 | 未开始、进行中、待复核、已解决 |
+| 出现位置 | 问题出现的代码层 | 前端、后端、前后端 |
+| 原因分析 | 问题产生的根本原因 | 需求理解问题、工作失误、描述不清等 |
+| 相关文件 | 涉及的源代码文件 | frontend/src/pages/admin/UserManagement.tsx |
+| 修复说明 | 简要说明修复方式 | 移除User接口中的id_card字段... |
+| API测试覆盖 | 是否有API测试覆盖该修复 | 是 - tests/api/xxx.test.js、否、待补充 |
+| E2E测试覆盖 | 是否有E2E测试覆盖该修复 | 是 - tests/e2e/regression/xxx.spec.ts、否、待补充 |
+| 复核状态 | 是否通过复核 | 空（未复核）、通过、未通过 |
+| 复核人 | 复核负责人 | 通常为项目负责人 |
+| 复核日期 | 复核完成日期 | 2025-11-07 |
+
+### Bug修复工作流
+
+```
+┌──────────────┐
+│ 1. 问题发现  │ - 用户报告或测试发现
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ 2. 问题记录  │ - Claude在CSV中记录问题
+│              │ - 填写：序号、日期、问题描述、功能分类
+│              │ - 状态标记为"未开始"
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ 3. 问题分析  │ - 分析出现位置（前端/后端）
+│              │ - 分析原因（理解问题/工作失误/描述问题）
+│              │ - 定位相关文件
+│              │ - 状态更新为"进行中"
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ 4. 实施修复  │ - 修改相关代码
+│              │ - 填写修复说明
+│              │ - 重新构建Docker服务
+│              │ - 状态更新为"待复核"
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ 5. 用户复核  │ - 用户手工测试验证
+│              │ - 确认问题是否真正解决
+│              │ ┌─────────────────┐
+│              │ │ 复核通过        │
+│              │ │ - 填写复核状态  │
+│              │ │ - 填写复核人    │
+│              │ │ - 填写复核日期  │
+│              │ │ - 状态→"已解决" │
+│              │ └─────────────────┘
+│              │ ┌─────────────────┐
+│              │ │ 复核未通过      │
+│              │ │ - 添加复核备注  │
+│              │ │ - 状态→"进行中" │
+│              │ │ - 返回步骤3重新分析 │
+│              │ └─────────────────┘
+└──────────────┘
+```
+
+### 操作规范
+
+#### Claude端操作
+
+1. **记录新问题**
+   - 在CSV文件末尾添加新行，填写基本信息
+   - 状态标记为"未开始"
+
+2. **更新修复进度**
+   - 开始修复：解决状态 → "进行中"
+   - 完成修复：解决状态 → "待复核"，填写修复说明
+   - **重要**: 只有用户复核通过后，才能标记为"已解决"
+
+3. **禁止操作**
+   - ❌ 不要自行将状态标记为"已解决"
+   - ❌ 不要修改已复核通过的记录（除非有新的修复）
+
+#### 用户端操作
+
+1. **复核验证**
+   - 根据"修复说明"进行手工测试
+   - 验证问题是否真正解决
+
+2. **更新复核结果**
+   - 复核通过：复核状态 → "通过"，解决状态 → "已解决"
+   - 复核未通过：复核状态 → "未通过"，解决状态 → "进行中"
+
+### 原因分类说明
+
+1. **需求理解问题** - Claude对需求的理解偏差、业务逻辑理解错误
+2. **工作失误** - 代码逻辑错误、遗漏关键代码、测试不充分
+3. **描述不清** - 用户需求描述模糊、缺少关键信息
+4. **其他** - 第三方库问题、环境配置问题
+
+### 测试覆盖策略
+
+Bug修复后必须根据以下策略补充测试：
+
+#### 策略1：数据点移除类Bug
+- **适用场景**: 从UI/API中移除某个字段或数据点
+- **测试要求**:
+  - ❌ 不需要E2E测试（节省时间）
+  - ✅ 可选API测试（验证响应中无该字段）
+  - ✅ 依赖手动复核
+
+#### 策略2：前端功能Bug
+- **适用场景**: UI交互逻辑、数据显示、权限控制问题
+- **测试要求**:
+  - ✅ **必须E2E测试**（手动复核通过后创建）
+  - ✅ **必须验证点覆盖**（验证具体修复点，而非仅功能）
+  - ✅ 测试数据使用时间戳确保唯一性
+
+#### 策略3：后端逻辑Bug
+- **适用场景**: API响应错误、业务逻辑错误、数据库操作问题
+- **测试要求**:
+  - ✅ **必须API测试**
+  - ✅ **必须验证点覆盖**（验证具体字段、数据结构、过滤逻辑）
+  - ✅ 可选E2E测试（如果影响前端显示）
+
+### 验证点覆盖要求
+
+**功能覆盖 vs 验证点覆盖**：
+- **功能覆盖**: 测试涉及到相关功能模块（例如：测试了"权限管理"）
+- **验证点覆盖**: 测试具体验证了Bug修复的关键点（例如：验证了"区级管理员只看到practice_district_review类型"）
+
+**编写测试时的自检问题**：
+1. ✅ 我的测试验证了什么具体点？（而不是"测试这个功能"）
+2. ✅ 如果Bug重现，我的测试会失败吗？
+3. ✅ 我的断言是否直接验证了修复点？（而不是间接验证）
+
+**详细指南**: 参见 **docs/BUG_FIX_TRACKING_GUIDE.md**
+
+---
+
+## 故障排除快速参考
+
+### 常见问题快速解决
+
+#### 1. Docker容器问题
 ```bash
-# 检查容器状态
+# 检查状态
 docker-compose ps
 
-# 查看日志
-docker-compose logs backend
-docker-compose logs frontend
-
-# 重启服务
-docker-compose restart
-
-# 完全重建
+# 重建服务
 docker-compose down
 docker-compose up -d --build
+
+# 查看日志
+docker-compose logs [service_name]
 ```
 
 #### 2. 端口占用
-
 ```bash
-# Windows
+# Windows: 查找占用进程
 netstat -ano | findstr :3001
-
-# Mac/Linux
-lsof -i :3001
 
 # 修改 docker-compose.yml 中的端口映射
 ```
 
-#### 3. 数据库连接失败
-
+#### 3. 数据库连接
 ```bash
-# 检查 PostgreSQL 容器
-docker-compose ps postgres
-
-# 测试数据库连接
+# 测试连接
 docker exec -it guiyang_oj_postgres psql -U postgres -d guiyang_oj -c "SELECT 1"
 
-# 查看数据库日志
+# 查看日志
 docker-compose logs postgres
 ```
 
-#### 4. 测试失败
-
+#### 4. Playwright测试失败
 ```bash
-# 使用 UI 模式调试
+# UI调试模式
 npx playwright test --ui -c tests/playwright.config.ts
 
-# 查看失败截图和视频
-ls tests/test-results/artifacts/
-
-# 生成测试报告
+# 查看测试报告
 npx playwright show-report tests/test-results/html
 ```
 
-#### 5. 前端无法连接后端
+### 关键经验总结
 
-```bash
-# 检查后端健康
-curl http://localhost:3001/health
+#### ⚠️ Docker代码变更不生效
+**解决**: 必须重建镜像 `docker-compose up --build -d [service]`
 
-# 检查 CORS 配置
-# 确认 backend/.env 中 CORS_ORIGIN 设置正确
+#### ⚠️ E2E测试无法连接服务
+**解决**: 确保所有容器都在运行 `docker-compose up -d`
 
-# 查看浏览器控制台错误
-# 检查网络请求是否正确
-```
+#### ⚠️ Playwright配置路径错误
+**解决**: 相对路径是相对于配置文件所在目录，不是执行目录
 
-#### 6. Playwright 测试结果路径错误（tests/tests/test-results）⚠️
+#### ⚠️ Ant Design按钮文本空格问题
+**解决**: 使用正则表达式 `.filter({ hasText: /发\s*布/ })`
 
-**问题现象**:
-测试运行后发现结果保存在 `tests/tests/test-results/` 而不是正确的 `tests/test-results/`
+#### ⚠️ 测试数据不唯一
+**解决**: 使用时间戳 `const unique = \`ACT-${Date.now()}\``
 
-**根本原因**:
-配置文件 `tests/playwright.config.ts` 中的路径配置相对于**配置文件所在目录**解析，而不是执行目录。
+#### ⚠️ 虚拟滚动元素不可见
+**解决**:
+- 表格：使用 `toBeAttached()` 代替 `toBeVisible()`
+- 按钮：使用 `evaluate((el) => el.click())`
+- Select：添加 `virtual={false}` 或使用 `evaluate()`
 
-```typescript
-// ❌ 错误配置（导致双重 tests/ 目录）
-// 配置文件在 tests/ 目录下，路径又写了 ./tests/
-export default defineConfig({
-  testDir: './e2e',
-  reporter: [
-    ['html', { outputFolder: './tests/test-results/html' }],  // ❌ 错误
-  ],
-  outputDir: './tests/test-results/artifacts',  // ❌ 错误
-});
+### 开发检查清单
 
-// ✅ 正确配置
-// 路径相对于配置文件所在的 tests/ 目录
-export default defineConfig({
-  testDir: './e2e',
-  reporter: [
-    ['html', { outputFolder: './test-results/html' }],  // ✅ 正确
-  ],
-  outputDir: './test-results/artifacts',  // ✅ 正确
-});
-```
+**代码修改后**:
+- [ ] 重新构建Docker镜像 (`docker-compose up --build -d`)
+- [ ] 等待服务完全启动（30秒）
+- [ ] 验证服务可访问 (`curl http://localhost:3001/health`)
 
-**解析逻辑**:
-- 配置文件位置: `tests/playwright.config.ts`
-- 错误配置: `outputDir: './tests/test-results/artifacts'`
-  - 相对于配置文件: `tests/` + `tests/test-results/artifacts`
-  - 结果: `tests/tests/test-results/artifacts` ❌
-- 正确配置: `outputDir: './test-results/artifacts'`
-  - 相对于配置文件: `tests/` + `test-results/artifacts`
-  - 结果: `tests/test-results/artifacts` ✅
+**测试编写时**:
+- [ ] 测试数据使用时间戳确保唯一性
+- [ ] 中文按钮使用正则表达式容错空格
+- [ ] 通过点击导航而非直接URL跳转
+- [ ] 虚拟滚动表格使用 `toBeAttached()`
+- [ ] **验证点覆盖**: 测试验证了具体修复点，而非仅功能
+- [ ] **自检**: 如果Bug重现，测试会失败吗？
+- [ ] **断言**: 断言直接验证了修复点，而非间接验证
 
-**修复步骤**:
-```bash
-# 1. 修正配置文件路径（移除重复的 tests/）
-# 编辑 tests/playwright.config.ts
-# 将所有 './tests/test-results/*' 改为 './test-results/*'
-
-# 2. 清理错误的目录
-rm -rf tests/tests
-
-# 3. 验证配置
-npx playwright test tests/e2e/smoke/ -c tests/playwright.config.ts
-
-# 4. 确认结果保存在正确位置
-ls tests/test-results/
-```
-
-**关键要点**:
-- ⚠️ **所有相对路径都是相对于配置文件所在目录，不是执行目录！**
-- ✅ 配置文件在 `tests/` 目录，路径应该从 `./e2e`, `./test-results` 开始
-- ❌ 不要在路径中重复写 `./tests/`
-
-#### 7. E2E测试无法连接到服务 - 未启动所有容器 ⚠️⚠️⚠️
-
-**问题现象**:
-- Playwright E2E测试无法连接到 `http://localhost:80`
-- 测试报错: `net::ERR_CONNECTION_REFUSED` 或超时
-- API直接测试（curl/Postman）正常工作
-
-**常见误判**:
-- ❌ 误以为是代理问题（因为curl显示通过proxy连接）
-- ❌ 误以为是Playwright配置问题（修改baseURL等）
-- ❌ 误以为是前端构建问题
-
-**根本原因**:
-Docker Compose定义了多个服务，但**并非所有服务都自动启动**！本项目定义了6个服务：
-1. ✅ postgres - 数据库（通常会自动启动）
-2. ✅ redis - 缓存（通常会自动启动）
-3. ✅ backend - API服务（通常会自动启动）
-4. ✅ frontend - React应用（通常会自动启动）
-5. ⚠️ **nginx** - 反向代理（80端口）- **可能未启动！**
-6. ⚠️ **pgadmin** - 数据库管理工具 - **可能未启动！**
-
-**排查步骤**:
-
-```bash
-# 1. 首先检查所有容器状态（不要假设都在运行！）
-docker-compose ps
-
-# 2. 查看定义了哪些服务
-docker-compose config --services
-
-# 3. 如果发现缺少容器，启动所有服务
-docker-compose up -d
-
-# 4. 验证nginx（端口80）是否可访问
-curl http://localhost:80
-
-# 5. 验证所有端口是否正常
-netstat -an | findstr "80.*LISTEN"    # Windows
-netstat -an | grep "80.*LISTEN"       # Linux/Mac
-```
-
-**正确的测试前准备流程**:
-
-```bash
-# Step 1: 确保所有服务都在运行（关键！）
-docker-compose up -d
-
-# Step 2: 验证服务状态
-docker-compose ps
-# 应该看到6个容器都是 "Up" 状态
-
-# Step 3: 验证端口访问
-curl http://localhost:80           # 前端（通过nginx）
-curl http://localhost:3000         # 前端（直接）
-curl http://localhost:3001/health  # 后端API
-
-# Step 4: 运行E2E测试
-npx playwright test -c tests/playwright.config.ts
-```
-
-**经验教训**:
-1. ⚠️ **永远不要假设所有定义的服务都在运行！**
-2. ✅ 测试前第一步：`docker-compose ps` 检查容器状态
-3. ✅ 如果缺少容器：`docker-compose up -d` 启动所有服务
-4. ✅ E2E测试使用 `http://localhost:80`（nginx），而不是 `http://localhost:3000`（frontend直连）
-5. ❌ 不要因为curl有代理就误判为代理问题 - 先检查容器！
-
-**为什么容器可能未启动**:
-- 之前运行了 `docker-compose up -d backend frontend` 只启动了部分服务
-- 运行了 `docker-compose down` 停止后，后续只启动了部分依赖服务
-- 手动 `docker stop` 停止了某些容器
-- 系统重启后只有部分服务自动启动
-
-**最佳实践**:
-- 开发开始时：`docker-compose up -d` 启动所有服务
-- 代码修改后：`docker-compose up --build -d [service]` 重建特定服务
-- 测试前验证：`docker-compose ps | wc -l` 确认服务数量正确
+**文档维护**:
+- [ ] 更新 API_Document.md
+- [ ] 更新 DEVELOPMENT_STATUS.md
+- [ ] 更新测试追踪文档
 
 ### 调试技巧
 
 ```bash
-# 1. UI模式（最推荐）
+# Playwright UI模式（最推荐）
 npx playwright test --ui -c tests/playwright.config.ts
 
-# 2. 有头模式（查看浏览器）
+# 有头模式（查看浏览器）
 npx playwright test --headed tests/e2e/smoke/ -c tests/playwright.config.ts
 
-# 3. 调试模式（单步执行）
+# 调试模式（单步执行）
 npx playwright test --debug tests/e2e/regression/auth.spec.ts
 
-# 4. 生成代码（录制操作）
+# 生成代码（录制操作）
 npx playwright codegen http://localhost:3000
-
-# 5. 查看失败截图和视频
-# 自动保存在 tests/test-results/artifacts/ 目录
 ```
-
----
-
-### 常见开发陷阱与解决方案
-
-本节总结实际开发中遇到的常见问题和最佳解决方案，帮助避免重复踩坑。
-
-#### 问题1: Ant Design 5 按钮文本空格渲染问题 ⚠️⚠️⚠️
-
-**问题现象**:
-- Playwright测试无法找到按钮，如 `button:has-text("发布")`
-- 实际DOM渲染为: `<button>发 布</button>` （文字中间有空格）
-- 影响按钮: 发布、删除、保存、创建、编辑等所有中文按钮
-
-**根本原因**:
-- Ant Design 5 在某些情况下会在按钮文字中间插入空格
-- 可能与Button组件的样式处理或国际化有关
-- 具体表现为2-4个汉字的按钮经常出现此问题
-
-**解决方案**:
-```typescript
-// ❌ 错误 - 不会匹配带空格的文本
-const publishButton = page.locator('button:has-text("发布")');
-
-// ✅ 正确 - 使用正则表达式匹配可能的空格
-const publishButton = page.locator('button').filter({ hasText: /发\s*布/ });
-const deleteButton = page.locator('button').filter({ hasText: /删\s*除/ });
-const saveButton = page.locator('button').filter({ hasText: /保\s*存/ });
-const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
-```
-
-**最佳实践**:
-- 所有涉及中文按钮文本的测试，都应该使用正则表达式 `\s*` 来容错空格
-- 考虑创建辅助函数统一处理按钮选择器
-
-**影响范围**:
-- frontend/src/pages/teacher/ActivityListPage.tsx:318 - "创建活动" 按钮
-- frontend/src/pages/admin/AssessmentManagementPage.tsx:258 - "创建测评" 按钮
-- 所有使用 Ant Design Button 组件的地方
-
-**文件位置**:
-- 问题发现: tests/e2e/regression/activity-management.spec.ts
-- 修复示例: tests/e2e/regression/activity-management.spec.ts:374-448
-
----
-
-#### 问题2: 导航菜单与页面标题不一致导致测试失败 ⚠️
-
-**问题现象**:
-- 测试期望菜单项为"练习管理"/"测评管理"
-- 实际前端显示为"活动管理"
-- 测试无法找到菜单项: `getByRole('menuitem', { name: /练习管理/ })`
-
-**根本原因**:
-- 前端设计变更但测试未同步更新
-- 权限分离需求：教师只管理练习，管理员只管理测评
-- MainLayout.tsx 中菜单标签使用了通用名称"活动管理"
-
-**解决方案**:
-```typescript
-// frontend/src/components/layout/MainLayout.tsx
-
-// ✅ 教师菜单 - 明确为"练习管理"
-const teacherMenuItems: MenuProps['items'] = [
-  {
-    key: '/teacher/activities',
-    icon: <ProjectOutlined />,
-    label: '练习管理',  // ← 改为练习管理
-  },
-];
-
-// ✅ 管理员菜单 - 明确为"测评管理"
-const adminMenuItems: MenuProps['items'] = [
-  {
-    key: '/admin/assessments',
-    icon: <ProjectOutlined />,
-    label: '测评管理',  // ← 改为测评管理
-  },
-];
-```
-
-**页面标题也需要同步修改**:
-```typescript
-// frontend/src/pages/teacher/ActivityListPage.tsx
-<Card title="练习管理" ...>  // ← 改为练习管理
-
-// frontend/src/pages/admin/AssessmentManagementPage.tsx
-<Card title="测评管理" ...>  // ← 改为测评管理
-```
-
-**最佳实践**:
-- 前端UI文案变更时，务必同步更新E2E测试
-- 导航菜单名称应该与页面标题保持一致
-- 权限分离设计中，不同角色的菜单应该有明确的功能指向
-
-**影响测试**:
-- ACT101, ACT102, ACT104, ACT120, ACT121, ACT123, ACT124, ACT126
-
-**修复记录**: 2025-10-25
-
----
-
-#### 问题3: 测试数据依赖导致的不可重复性 ⚠️
-
-**问题现象**:
-- 第一次运行测试通过，第二次运行失败
-- 测试找到多个匹配的记录，定位不准确
-- 测试相互影响，顺序敏感
-
-**根本原因**:
-- 测试依赖数据库中现有的记录
-- 多次运行测试产生重复数据
-- 测试用例之间共享数据，缺乏隔离
-
-**错误示例**:
-```typescript
-// ❌ 错误 - 使用固定内容，多次运行会找到多条记录
-test('查看活动详情', async ({ page }) => {
-  await page.goto('/teacher/activities');
-
-  // 假设数据库中已存在标题为"数学练习"的活动
-  const targetRow = page.locator('.ant-table-tbody tr')
-    .filter({ hasText: '数学练习' })  // ❌ 可能匹配多条
-    .first();
-});
-```
-
-**正确解决方案**:
-```typescript
-// ✅ 正确 - 测试自己创建唯一数据
-test('ACT108 - 查看活动详情', async ({ page }) => {
-  // 1. 使用时间戳确保唯一性
-  const timestamp = Date.now();
-  const uniqueTitle = `ACT108-查看详情-${timestamp}`;
-
-  // 2. 创建测试数据
-  await page.goto('/teacher/activities/create/practice');
-  await fillActivityForm(page, {
-    title: uniqueTitle,
-    description: 'ACT108测试活动',
-    subject: '语文',
-    grade: '二年级',
-    // ...
-  });
-  await submitButton.click();
-
-  // 3. 使用唯一标识定位
-  const targetRow = page.locator('.ant-table-tbody tr')
-    .filter({ hasText: uniqueTitle })  // ✅ 只会匹配本次创建的记录
-    .first();
-
-  // 4. 执行测试操作
-  await viewButton.click();
-  // ...
-});
-```
-
-**最佳实践**:
-- **每个测试都应该自己创建所需的数据**
-- 使用 `Date.now()` 或 `uuid` 生成唯一标识
-- 测试数据命名包含测试用例ID: `[ACT108-${timestamp}]`
-- 清理测试数据（可选，但自包含测试可以不清理）
-
-**参考文档**:
-- tests/docs/测试脚本最佳实践.md - 第9章：测试数据隔离与唯一性
-
-**修复示例**:
-- tests/e2e/regression/activity-management.spec.ts:213 (ACT108)
-- tests/e2e/regression/activity-management.spec.ts:283 (ACT109)
-- tests/e2e/regression/activity-management.spec.ts:374 (ACT110)
-
----
-
-#### 问题4: Docker容器未重建导致代码变更不生效 ⚠️⚠️⚠️
-
-**问题现象**:
-- 修改了前端代码，但测试仍然使用旧版本
-- 浏览器访问仍然显示旧的界面
-- 后端API修改后返回旧的响应
-
-**根本原因**:
-- **Docker容器在启动时构建镜像，代码修改不会自动生效**
-- 修改代码后未执行 `docker-compose up --build`
-- 开发者误以为热重载会自动更新容器
-
-**症状识别**:
-```bash
-# 检查容器创建时间
-docker-compose ps
-
-# 如果"CREATED"时间早于代码修改时间，说明需要重建
-NAME                  IMAGE          CREATED         STATUS
-guiyang_oj_frontend   git-frontend   2 hours ago     Up 2 hours  # ← 注意这个时间
-```
-
-**解决方案**:
-```bash
-# ✅ 方案1: 重建特定服务（推荐）
-docker-compose up --build -d frontend   # 仅重建前端
-docker-compose up --build -d backend    # 仅重建后端
-
-# ✅ 方案2: 重建所有服务
-docker-compose up --build -d
-
-# ❌ 错误做法 - 只重启不重建，代码变更不生效
-docker-compose restart frontend  # ❌ 不会重新构建镜像
-```
-
-**重建后的验证**:
-```bash
-# 1. 检查容器启动时间
-docker-compose ps
-
-# 2. 验证服务可访问
-curl http://localhost:80           # 前端
-curl http://localhost:3001/health  # 后端
-
-# 3. 查看构建日志确认无错误
-docker-compose logs frontend | tail -50
-docker-compose logs backend | tail -50
-```
-
-**开发流程最佳实践**:
-
-```
-修改代码 → 重新构建Docker → 等待启动完成 → 运行测试
-
-┌─────────────────┐
-│  1. 修改代码    │
-│  ├─ 前端文件    │
-│  ├─ 后端文件    │
-│  └─ 配置文件    │
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  2. 重建容器    │ ← ⚠️ 关键步骤！不能跳过！
-│  docker-compose │
-│  up --build -d  │
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  3. 等待启动    │
-│  约10-30秒      │
-│  检查容器状态   │
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  4. 验证服务    │
-│  curl测试端口   │
-│  检查日志       │
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  5. 运行测试    │
-│  npx playwright │
-│  test           │
-└─────────────────┘
-```
-
-**常见错误场景**:
-1. ❌ 修改前端 → 直接运行测试 → 失败（容器未重建）
-2. ❌ 修改后端 → `docker-compose restart backend` → 失败（restart不重建）
-3. ❌ 重建完成 → 立即运行测试 → 失败（服务未完全启动）
-4. ✅ 修改代码 → `docker-compose up --build -d` → 等待30秒 → 验证 → 测试
-
-**重建时间参考**:
-- Frontend: 约30-60秒（包含npm build）
-- Backend: 约10-20秒
-- 完全重建: 约1-2分钟
-
-**影响范围**: 所有Docker化的服务
-
-**参考章节**: 开发实践流程 - 2.5️⃣ 和 4.5️⃣
-
----
-
-#### 问题5: Ant Design Select虚拟滚动导致测试元素不可见
-
-**问题现象**:
-- `page.getByRole('option', { name: '数学' }).click()` 超时
-- 错误信息: `element is not visible - unexpected value "hidden"`
-- 下拉选项在DOM中存在但标记为hidden
-
-**根本原因**:
-- Ant Design 5 的 Select 组件默认启用虚拟滚动优化性能
-- 虚拟滚动只渲染视口内的选项，视口外标记为 "hidden"
-- Playwright 的 `click()` 无法操作hidden元素
-
-**临时解决方案（测试环境）**:
-```typescript
-// 在Select组件中禁用虚拟滚动
-<Select
-  placeholder="请选择科目"
-  virtual={false}  // ← 禁用虚拟滚动以支持E2E测试
->
-  <Option value="语文">语文</Option>
-  <Option value="数学">数学</Option>
-</Select>
-```
-
-**⚠️ 重要提醒**:
-- 禁用虚拟滚动会影响性能，仅用于测试环境
-- 必须在 `FRONTEND_PERFORMANCE_OPTIMIZATION.md` 中记录
-- 生产环境上线前应恢复虚拟滚动
-
-**测试代码解决方案（不修改前端）**:
-```typescript
-// 方案1: 使用 evaluate() 绕过可见性检查
-await page.click('#subject');
-await page.waitForTimeout(500);
-await page.getByRole('option', { name: '数学' }).evaluate((el: HTMLElement) => el.click());
-
-// 方案2: 使用 force 选项（不推荐）
-await page.getByRole('option', { name: '数学' }).click({ force: true });
-```
-
-**已知受影响组件**:
-- frontend/src/pages/teacher/ActivityListPage.tsx - 4个筛选Select
-- frontend/src/pages/teacher/ActivityFormPage.tsx - 4个表单Select
-- frontend/src/pages/admin/AssessmentManagementPage.tsx - 3个筛选Select
-
-**详细说明**: CLAUDE.md - 测试指南 - Ant Design 5 Select虚拟滚动问题
-
----
-
-#### 问题6: 测试命名规范不统一影响维护性
-
-**问题现象**:
-- 测试ID混乱: R401, R-A04, R-A06, ACT001
-- 难以快速定位测试用例
-- 测试文档与代码不一致
-
-**根本原因**:
-- 早期测试命名没有统一规范
-- 多人协作时命名风格不同
-- 未及时重构旧测试代码
-
-**解决方案 - 统一命名规范**:
-
-**格式**: `[三位字母][三位数字]`
-- 三位字母: 功能模块代码（如AUT, STU, QBC, ACT）
-- 三位数字: 测试序号
-  - 001-099: 冒烟测试
-  - 101-999: 回归测试
-
-**示例转换**:
-```typescript
-// ❌ 旧命名
-test('R401 - 创建练习活动', ...)
-test('R-A04 - 发布活动', ...)
-test('R-A06 - 按类型筛选', ...)
-
-// ✅ 新命名
-test('ACT107 - 创建带完整信息的练习活动', ...)
-test('ACT110 - 发布活动', ...)
-test('ACT112 - 按类型筛选活动', ...)
-```
-
-**重构步骤**:
-1. 确定功能模块代码（参考CLAUDE.md - 测试用例编号规范）
-2. 按测试类型分配序号段（冒烟/回归）
-3. 批量重命名测试用例
-4. 更新测试追踪文档（regression-test-tracking.md）
-5. 运行测试验证重命名正确
-
-**维护建议**:
-- 新测试必须使用标准命名格式
-- Code Review检查测试命名规范
-- 每季度审查并重构旧测试命名
-
-**参考**: CLAUDE.md - 测试用例编号规范
-
-**重构示例**: tests/e2e/regression/activity-management.spec.ts (2025-10-25)
-
----
-
-#### 问题7: 页面导航测试策略不当
-
-**问题现象**:
-- 测试直接使用 `page.goto('/teacher/activities')` 跳转
-- 无法发现导航菜单配置错误
-- 真实用户流程未被测试覆盖
-
-**根本原因**:
-- 为了测试便利性直接URL跳转
-- 忽略了导航菜单是用户主要入口
-- 测试未模拟真实用户操作
-
-**错误示例**:
-```typescript
-// ❌ 错误 - 直接URL跳转，无法发现菜单问题
-test('教师访问活动管理', async ({ page }) => {
-  await page.goto('/teacher/activities');  // ❌ 绕过了导航菜单
-
-  // 即使菜单配置错误，测试也能通过
-});
-```
-
-**正确示例**:
-```typescript
-// ✅ 正确 - 通过点击导航菜单进入页面
-test('ACT101 - 教师访问活动管理页面', async ({ page }) => {
-  await loginAsTeacher(page);
-
-  // 验证菜单存在
-  const practiceMenu = page.getByRole('menuitem', { name: /练习管理/ });
-  await expect(practiceMenu).toBeVisible();
-
-  // 模拟真实用户操作 - 点击菜单
-  await practiceMenu.click();
-
-  // 验证导航正确
-  await page.waitForURL(/\/teacher\/activities/);
-  await page.waitForLoadState('networkidle');
-
-  // 验证页面内容
-  await expect(page.locator('.ant-card-head-title:has-text("练习管理")')).toBeAttached();
-});
-```
-
-**测试策略对比**:
-
-| 策略 | 优点 | 缺点 | 适用场景 |
-|------|------|------|----------|
-| 直接URL跳转 | 快速，简单 | 无法测试导航，不符合真实用户流程 | 单元测试、快速验证 |
-| 点击导航菜单 | 测试完整流程，发现UI问题 | 稍慢，依赖菜单配置 | E2E测试、冒烟测试 |
-| 混合策略 | 平衡速度和覆盖率 | 需要明确场景划分 | 回归测试 |
-
-**最佳实践**:
-- **冒烟测试和E2E测试**: 必须通过点击导航
-- **回归测试**: 首次使用点击导航，后续页面可直接跳转
-- **单元/API测试**: 可以直接URL跳转
-
-**参考文档**: tests/docs/测试脚本最佳实践.md - 第10章：页面导航测试策略
-
----
-
-#### 问题8: 虚拟滚动表格中按钮操作失败
-
-**问题现象**:
-- `editButton.click()` 抛出错误: "element is not visible"
-- 表格行存在于DOM但按钮无法点击
-- 使用 `toBeVisible()` 断言失败
-
-**根本原因**:
-- Ant Design Table 使用虚拟滚动优化长列表性能
-- 只有视口内的行真正渲染，视口外的行标记为hidden
-- Playwright 默认不允许点击不可见元素
-
-**解决方案**:
-```typescript
-// ✅ 方案1: 使用 toBeAttached() 代替 toBeVisible()
-const tableRows = page.locator('.ant-table-tbody tr[data-row-key]');
-await expect(tableRows.first()).toBeAttached({ timeout: 5000 });  // ✅ 正确
-
-// ✅ 方案2: 使用 evaluate() 绕过可见性检查
-const editButton = targetRow.locator('button:has([aria-label="edit"])');
-await editButton.evaluate((button: HTMLElement) => button.click());  // ✅ 正确
-
-// ❌ 错误: 直接点击虚拟滚动外的元素
-await expect(tableRows.first()).toBeVisible();  // ❌ 可能失败
-await editButton.click();  // ❌ 可能超时
-```
-
-**完整示例**:
-```typescript
-test('编辑草稿题目', async ({ page }) => {
-  await page.goto('/teacher/question-bank');
-  await page.waitForLoadState('networkidle');
-
-  // 1. 等待表格加载（使用 toBeAttached）
-  const tableRows = page.locator('.ant-table-tbody tr[data-row-key]');
-  await expect(tableRows.first()).toBeAttached({ timeout: 5000 });
-
-  // 2. 定位目标行
-  const questionCode = 'PHYS2510200012';
-  const targetRow = page.locator('.ant-table-tbody tr')
-    .filter({ hasText: questionCode })
-    .first();
-
-  // 3. 等待按钮出现在DOM中（不要求可见）
-  const editButton = targetRow.locator('button:has([aria-label="edit"])');
-  await editButton.waitFor({ state: 'attached', timeout: 5000 });
-
-  // 4. 使用evaluate绕过可见性检查
-  await editButton.evaluate((button: HTMLElement) => button.click());
-
-  // 5. 验证导航
-  await page.waitForURL(/\/edit/);
-});
-```
-
-**最佳实践**:
-- 虚拟滚动表格: 使用 `toBeAttached()` 检查元素存在
-- 操作按钮: 使用 `evaluate()` 执行点击
-- 避免使用: `toBeVisible()`, `isVisible()`
-
-**参考**: CLAUDE.md - 测试最佳实践 - 虚拟滚动表格操作
-
----
-
-#### 小结：开发中的关键检查清单 ✅
-
-在提交代码或运行测试前，请检查以下事项：
-
-**前端开发**:
-- [ ] 中文按钮文本是否会产生空格？（Ant Design）
-- [ ] 导航菜单标签与页面标题是否一致？
-- [ ] Select组件是否需要禁用虚拟滚动？（测试环境）
-- [ ] 修改后是否重新构建Docker镜像？
-
-**测试开发**:
-- [ ] 测试是否自己创建数据？（使用时间戳）
-- [ ] 选择器是否使用正则表达式容错空格？
-- [ ] 测试命名是否符合ACT规范？
-- [ ] 是否通过点击导航而非直接URL跳转？
-- [ ] 虚拟滚动表格是否使用 `toBeAttached()`？
-
-**Docker部署**:
-- [ ] 代码修改后是否执行 `docker-compose up --build -d`？
-- [ ] 是否等待服务完全启动（30秒）？
-- [ ] 是否验证服务可访问（curl测试）？
-
-**文档维护**:
-- [ ] 是否更新测试追踪文档？
-- [ ] 是否记录重要技术决策？
-- [ ] 是否更新DEVELOPMENT_STATUS.md？
 
 ---
 
@@ -1436,6 +854,9 @@ test('编辑草稿题目', async ({ page }) => {
 ### 关键文档位置
 
 - **开发实践**: CLAUDE.md (本文件)
+- **Bug修复追踪指南**: docs/BUG_FIX_TRACKING_GUIDE.md（重要！）
+- **Bug修复追踪表**: docs/BUG_FIX_TRACKING.csv
+- **测试覆盖分析**: docs/BUG_FIX_TEST_COVERAGE_ANALYSIS.md
 - **测试指南**: tests/docs/测试指南.md
 - **测试最佳实践**: tests/docs/测试脚本最佳实践.md（必读！）
 - **API文档**: documents/API_Document.md
@@ -1447,6 +868,6 @@ test('编辑草稿题目', async ({ page }) => {
 
 ---
 
-**📅 文档最后更新**: 2025-10-25
+**📅 文档最后更新**: 2025-11-08
 **🔗 项目仓库**: 贵阳市小学生测评服务平台
 **📧 维护**: 开发团队

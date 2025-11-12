@@ -210,11 +210,7 @@ const ActivityFormPage: React.FC = () => {
   return (
     <div>
       <Card
-        title={
-          isEditMode
-            ? `编辑${isAssessment ? '测评' : '练习'}活动`
-            : `创建${isAssessment ? '测评' : '练习'}活动`
-        }
+        title={isEditMode ? '编辑活动' : '创建活动'}
         extra={
           <Space>
             <Button onClick={() => navigate(getReturnPath())}>取消</Button>

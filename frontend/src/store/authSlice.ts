@@ -12,6 +12,23 @@ interface User {
   phone?: string
   idCard?: string
   createdAt?: string
+  avatarUrl?: string
+  status?: string
+  updatedAt?: string
+  // Teacher-specific fields
+  teacherNo?: string
+  subjects?: string[]
+  title?: string
+  schoolId?: number
+  district?: string
+  // Student-specific fields
+  studentNo?: string
+  guardianName?: string
+  guardianPhone?: string
+  // Admin-specific fields
+  districtId?: number
+  permissionScope?: string
+  managementLevel?: string
 }
 
 interface AuthState {

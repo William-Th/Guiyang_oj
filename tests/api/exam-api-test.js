@@ -11,7 +11,7 @@ const http = require('http');
 
 // 配置
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-const TIMEOUT = 10000; // 10秒超时
+const TIMEOUT = 10000; // 10秒超�?
 
 // 测试数据
 let authTokens = {
@@ -94,7 +94,7 @@ function makeRequest(options, postData = null) {
 }
 
 /**
- * 测试用例执行器
+ * 测试用例执行�?
  */
 async function runTest(name, testFn, options = {}) {
   results.total++;
@@ -105,7 +105,7 @@ async function runTest(name, testFn, options = {}) {
     const duration = Date.now() - startTime;
     results.passed++;
     results.tests.push({ name, status: 'PASS', duration });
-    console.log(`${colors.green}✓${colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
+    console.log(`${colors.green}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
     return true;
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -113,13 +113,13 @@ async function runTest(name, testFn, options = {}) {
     if (options.skipOnError && error.message.includes(options.skipOnError)) {
       results.skipped++;
       results.tests.push({ name, status: 'SKIP', reason: error.message, duration });
-      console.log(`${colors.yellow}⊘${colors.reset} ${name} ${colors.yellow}(SKIPPED)${colors.reset}`);
+      console.log(`${colors.yellow}�?{colors.reset} ${name} ${colors.yellow}(SKIPPED)${colors.reset}`);
       return false;
     }
 
     results.failed++;
     results.tests.push({ name, status: 'FAIL', error: error.message, duration });
-    console.log(`${colors.red}✗${colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
+    console.log(`${colors.red}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
     console.log(`  ${colors.red}Error: ${error.message}${colors.reset}`);
     return false;
   }
@@ -175,7 +175,7 @@ async function runExamAPITests() {
   });
 
   await runTest('Login as teacher', async () => {
-    authTokens.teacher = await login('teacher01', 'password123');
+    authTokens.teacher = await login('teacher_yy_ps_math', 'password123');
   });
 
   await runTest('Login as admin', async () => {
@@ -218,7 +218,7 @@ async function runExamAPITests() {
 
   await runTest('Get exams with filters (grade)', async () => {
     const response = await makeRequest({
-      path: '/api/exams?grade=三年级',
+      path: '/api/exams?grade=三年�?,
       headers: {
         'Authorization': `Bearer ${authTokens.admin}`
       }
@@ -320,7 +320,7 @@ async function runExamAPITests() {
     const postData = JSON.stringify({
       title: 'Test Exam',
       subject: '数学',
-      grade: '三年级',
+      grade: '三年�?,
       duration: 60,
       totalScore: 100,
       passScore: 60
@@ -342,7 +342,7 @@ async function runExamAPITests() {
     const postData = JSON.stringify({
       title: 'Test Exam',
       subject: '数学',
-      grade: '三年级',
+      grade: '三年�?,
       duration: 60,
       totalScore: 100,
       passScore: 60
@@ -385,7 +385,7 @@ async function runExamAPITests() {
       title: 'API Test Exam ' + Date.now(),
       description: 'Created by automated test',
       subject: '数学',
-      grade: '三年级',
+      grade: '三年�?,
       duration: 60,
       totalScore: 100,
       passScore: 60,
@@ -495,7 +495,7 @@ async function runExamAPITests() {
 
     assert(response.statusCode === 400, `Expected 400, got ${response.statusCode}`);
     const data = response.json();
-    assert(data && data.message.includes('已报名'), 'Should indicate already registered');
+    assert(data && data.message.includes('已报�?), 'Should indicate already registered');
   }, { skipOnError: 'No exam ID available' });
 
   // ==================== 开始考试API测试 ====================
@@ -546,7 +546,7 @@ async function runExamAPITests() {
     // Could be 200 (success) or 400 (already started/not published)
     if (response.statusCode === 400) {
       const data = response.json();
-      if (data.message.includes('已在进行中') || data.message.includes('已完成')) {
+      if (data.message.includes('已在进行�?) || data.message.includes('已完�?)) {
         // Already in progress or completed, this is acceptable
         return;
       }
@@ -632,7 +632,7 @@ async function runExamAPITests() {
     // Could be 200 (success) or 400 (not in progress/already submitted)
     if (response.statusCode === 400) {
       const data = response.json();
-      if (data.message.includes('未在进行中') || data.message.includes('已提交')) {
+      if (data.message.includes('未在进行�?) || data.message.includes('已提�?)) {
         // Not in progress or already submitted, acceptable
         return;
       }
@@ -646,7 +646,7 @@ async function runExamAPITests() {
 }
 
 /**
- * 主函数
+ * 主函�?
  */
 async function main() {
   const startTime = Date.now();
@@ -668,7 +668,7 @@ async function main() {
   console.log(`${colors.yellow}Skipped: ${results.skipped}${colors.reset}`);
   console.log(`Duration: ${totalTime}ms\n`);
 
-  // 按类别统计
+  // 按类别统�?
   const categories = {
     'Auth': results.tests.filter(t => t.name.includes('Login')),
     'List': results.tests.filter(t => t.name.includes('Get exams')),
@@ -689,7 +689,7 @@ async function main() {
   });
   console.log();
 
-  // 如果有失败的测试，退出码为1
+  // 如果有失败的测试，退出码�?
   if (results.failed > 0) {
     console.log(`${colors.red}Exam API tests FAILED${colors.reset}\n`);
     process.exit(1);

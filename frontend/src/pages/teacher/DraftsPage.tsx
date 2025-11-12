@@ -410,7 +410,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
               </label>
               <Select
                 style={{ width: '100%' }}
-                placeholder={selectedScope ? "请选择审核人" : "请先选择目标题库范围"}
+                placeholder={selectedScope ? '请选择审核人' : '请先选择目标题库范围'}
                 value={selectedReviewer}
                 onChange={setSelectedReviewer}
                 showSearch

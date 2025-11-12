@@ -18,19 +18,25 @@ const LoginPage: React.FC = () => {
   const handleStudentLogin = async (values: any) => {
     dispatch(loginStart());
     try {
-      const response = await api.post('/auth/login', {
+      // Step 1: Login to get token
+      const loginResponse = await api.post('/auth/login', {
         username: values.phone,
         password: values.password,
         loginType: 'username'
       });
 
-      const data = response.data;
+      const { token } = loginResponse.data;
+
+      // Step 2: Fetch detailed profile with token
+      const profileResponse = await api.get('/users/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       dispatch(loginSuccess({
-        user: data.user,
-        token: data.token
+        user: profileResponse.data.user,
+        token: token
       }));
-      message.success(data.message || '登录成功');
+      message.success('登录成功');
       navigate('/');
     } catch (error: any) {
       message.error(error.response?.data?.message || error.message || '登录失败');
@@ -40,19 +46,25 @@ const LoginPage: React.FC = () => {
   const handleTeacherLogin = async (values: any) => {
     dispatch(loginStart());
     try {
-      const response = await api.post('/auth/login', {
+      // Step 1: Login to get token
+      const loginResponse = await api.post('/auth/login', {
         username: values.username,
         password: values.password,
         loginType: 'username'
       });
 
-      const data = response.data;
+      const { token } = loginResponse.data;
+
+      // Step 2: Fetch detailed profile with token
+      const profileResponse = await api.get('/users/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       dispatch(loginSuccess({
-        user: data.user,
-        token: data.token
+        user: profileResponse.data.user,
+        token: token
       }));
-      message.success(data.message || '登录成功');
+      message.success('登录成功');
       navigate('/');
     } catch (error: any) {
       message.error(error.response?.data?.message || error.message || '登录失败');
@@ -70,7 +82,10 @@ const LoginPage: React.FC = () => {
                 name="phone"
                 rules={[
                   { required: true, message: '请输入手机号' },
-                  { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式' }
+                  {
+                    pattern: /^1[3-9]\d{9}$/,
+                    message: '请输入正确的手机号格式'
+                  }
                 ]}
               >
                 <Input prefix={<PhoneOutlined />} placeholder="手机号" />

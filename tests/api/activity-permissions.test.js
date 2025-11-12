@@ -28,7 +28,7 @@ async function getAuthToken(username, password) {
 const testActivity = {
   title: `Test Activity ${Date.now()}`,
   subject: '数学',
-  grade: '三年级',
+  grade: '三年�?,
   abilityLevel: 'L3',
   duration: 60,
   totalScore: 100,
@@ -43,7 +43,7 @@ describe('Activity Permission API Tests', () => {
   beforeAll(async () => {
     // Get authentication tokens for different roles
     try {
-      teacherToken = await getAuthToken('teacher01', 'password123');
+      teacherToken = await getAuthToken('teacher_yy_ps_math', 'password123');
       adminToken = await getAuthToken('yunyan_admin', 'password123'); // Use yunyan district admin
       studentToken = await getAuthToken('520102200801011234', 'password123');
     } catch (error) {

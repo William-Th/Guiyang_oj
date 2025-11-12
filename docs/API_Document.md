@@ -117,29 +117,122 @@ Authorization: Bearer <token>
 
 **GET** `/api/users/profile`
 
-获取当前登录用户的详细信息。
+获取当前登录用户的详细信息。返回内容根据用户角色动态包含角色特定字段。
 
 **请求头**:
 ```
 Authorization: Bearer <token>
 ```
 
-**响应示例**:
+**响应示例 - 学生**:
 ```json
 {
-  "success": true,
-  "data": {
+  "user": {
     "id": 1,
-    "username": "student001",
-    "name": "张三",
+    "username": "13800138003",
     "role": "student",
-    "email": "zhangsan@example.com",
-    "school": "贵阳第一小学",
-    "grade": "六年级",
-    "created_at": "2024-01-01T00:00:00.000Z"
+    "realName": "张小明",
+    "idCard": "520102200001011234",
+    "phone": "13800138003",
+    "email": "zhangxiaoming@example.com",
+    "avatarUrl": null,
+    "status": "active",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "studentNo": "2024010001",
+    "grade": "三年级",
+    "class": "1班",
+    "school": "云岩区第一小学",
+    "district": "云岩区"
   }
 }
 ```
+
+**响应示例 - 教师**:
+```json
+{
+  "user": {
+    "id": 2,
+    "username": "teacher_yy_ps_math",
+    "role": "teacher",
+    "realName": "王雪梅",
+    "idCard": "520102198001011234",
+    "phone": "13900139001",
+    "email": "wangxuemei@example.com",
+    "avatarUrl": null,
+    "status": "active",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "teacherNo": "T202401001",
+    "subjects": ["数学"],
+    "title": "一级教师",
+    "schoolId": 1,
+    "school": "云岩区第一小学",
+    "district": "云岩区"
+  }
+}
+```
+
+**响应示例 - 管理员**:
+```json
+{
+  "user": {
+    "id": 3,
+    "username": "baiyun_admin",
+    "role": "district_admin",
+    "realName": "白云区管理员",
+    "phone": "13700137001",
+    "email": "baiyun_admin@example.com",
+    "status": "active",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "managementLevel": "区级管理",
+    "schoolId": null,
+    "school": null,
+    "districtId": 2,
+    "district": "白云区",
+    "permissionScope": "district_wide"
+  }
+}
+```
+
+**字段说明**:
+
+通用字段 (所有角色):
+- `id`: 用户ID
+- `username`: 用户名
+- `role`: 用户角色 (student/teacher/admin/school_admin/district_admin等)
+- `realName`: 真实姓名
+- `idCard`: 身份证号
+- `phone`: 手机号
+- `email`: 邮箱
+- `avatarUrl`: 头像URL
+- `status`: 账户状态 (active/inactive/suspended)
+- `createdAt`: 创建时间
+- `updatedAt`: 更新时间
+
+学生特定字段:
+- `studentNo`: 学号
+- `grade`: 年级
+- `class`: 班级
+- `school`: 所属学校
+- `district`: 所属区域
+
+教师特定字段:
+- `teacherNo`: 教师编号
+- `subjects`: 任教科目数组
+- `title`: 职称
+- `schoolId`: 学校ID
+- `school`: 所属学校
+- `district`: 所属区域
+
+管理员特定字段:
+- `managementLevel`: 管理级别 (校级/区级/市级等)
+- `schoolId`: 管理学校ID (校级管理员)
+- `school`: 管理学校名称 (校级管理员)
+- `districtId`: 管理区域ID (区级管理员)
+- `district`: 管理区域名称
+- `permissionScope`: 权限范围
 
 ---
 

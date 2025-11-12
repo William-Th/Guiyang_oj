@@ -34,7 +34,7 @@ async function fillBasicActivityInfo(page: Page, title: string, description: str
   const subjectSelector = page.locator('#subject').locator('..');
   await subjectSelector.click();
   await page.waitForTimeout(500);
-  await page.getByRole('option', { name: '语文' }).evaluate((el: HTMLElement) => el.click());
+  await page.getByRole('option', { name: '数学' }).evaluate((el: HTMLElement) => el.click());
   await page.waitForTimeout(300);
 
   // Select grade
@@ -50,14 +50,14 @@ async function fillBasicActivityInfo(page: Page, title: string, description: str
  */
 async function selectTimeLimitType(page: Page, type: 'unlimited' | 'scheduled' | 'timed') {
   const typeLabels = {
-    unlimited: /无限制/,
-    scheduled: /定时制/,
-    timed: /计时制/,
+    unlimited: '无限制（练习模式）',
+    scheduled: '定时制（固定时间段）',
+    timed: '计时制（开始后计时）',
   };
 
   await page.click('text=时间限制类型');
   await page.waitForTimeout(500);
-  await page.getByRole('option', { name: typeLabels[type] }).click();
+  await page.getByRole('option', { name: typeLabels[type] }).evaluate((el: HTMLElement) => el.click());
   await page.waitForTimeout(500);
 }
 

@@ -22,9 +22,9 @@ let createdActivityIds = [];
 const testData = {
   unlimited: {
     title: `API-Test-Unlimited-${Date.now()}`,
-    description: 'API测试 - 无限制类型',
+    description: 'API测试 - 无限制类�?,
     subject: '数学',
-    grade: '三年级',
+    grade: '三年�?,
     abilityLevel: 'L2',
     timeLimitType: 'unlimited',
     totalScore: 50,
@@ -32,9 +32,9 @@ const testData = {
   },
   scheduled: {
     title: `API-Test-Scheduled-${Date.now()}`,
-    description: 'API测试 - 定时制类型',
+    description: 'API测试 - 定时制类�?,
     subject: '英语',
-    grade: '四年级',
+    grade: '四年�?,
     abilityLevel: 'L3',
     timeLimitType: 'scheduled',
     startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
@@ -45,9 +45,9 @@ const testData = {
   },
   timed: {
     title: `API-Test-Timed-${Date.now()}`,
-    description: 'API测试 - 计时制类型',
+    description: 'API测试 - 计时制类�?,
     subject: '语文',
-    grade: '五年级',
+    grade: '五年�?,
     abilityLevel: 'L4',
     timeLimitType: 'timed',
     duration: 45,
@@ -62,19 +62,19 @@ const testData = {
 async function loginAsTeacher() {
   try {
     const response = await axios.post(`${API_BASE}/auth/login`, {
-      username: 'teacher01',
+      username: 'teacher_yy_ps_math',
       password: 'password123',
     });
 
     if (response.data && response.data.token) {
       authToken = response.data.token;
       teacherId = response.data.user.id;
-      console.log('✓ Logged in as teacher01');
+      console.log('�?Logged in as teacher_yy_ps_math');
       return true;
     }
     return false;
   } catch (error) {
-    console.error('✗ Login failed:', error.response?.data?.message || error.message);
+    console.error('�?Login failed:', error.response?.data?.message || error.message);
     return false;
   }
 }
@@ -166,7 +166,7 @@ async function runTests() {
   console.log('Setup: Logging in...');
   const loginSuccess = await loginAsTeacher();
   if (!loginSuccess) {
-    console.error('✗ Test suite aborted: Login failed');
+    console.error('�?Test suite aborted: Login failed');
     process.exit(1);
   }
 
@@ -192,12 +192,12 @@ async function runTests() {
       throw new Error(`Expected duration null/undefined, got '${activity.duration}'`);
     }
 
-    console.log('  ✓ Activity created with unlimited type');
-    console.log(`  ✓ Activity ID: ${activity.id}`);
-    console.log(`  ✓ Time limit type: ${activity.time_limit_type}`);
+    console.log('  �?Activity created with unlimited type');
+    console.log(`  �?Activity ID: ${activity.id}`);
+    console.log(`  �?Time limit type: ${activity.time_limit_type}`);
     passedTests++;
   } catch (error) {
-    console.error(`  ✗ Test failed: ${error.message}`);
+    console.error(`  �?Test failed: ${error.message}`);
     failedTests++;
   }
 
@@ -222,14 +222,14 @@ async function runTests() {
       throw new Error(`Expected duration null/undefined for scheduled type, got ${activity.duration}`);
     }
 
-    console.log('  ✓ Activity created with scheduled type');
-    console.log(`  ✓ Activity ID: ${activity.id}`);
-    console.log(`  ✓ Time limit type: ${activity.time_limit_type}`);
-    console.log(`  ✓ Start time: ${activity.start_time}`);
-    console.log(`  ✓ End time: ${activity.end_time}`);
+    console.log('  �?Activity created with scheduled type');
+    console.log(`  �?Activity ID: ${activity.id}`);
+    console.log(`  �?Time limit type: ${activity.time_limit_type}`);
+    console.log(`  �?Start time: ${activity.start_time}`);
+    console.log(`  �?End time: ${activity.end_time}`);
     passedTests++;
   } catch (error) {
-    console.error(`  ✗ Test failed: ${error.message}`);
+    console.error(`  �?Test failed: ${error.message}`);
     console.error(`  Details:`, error.response?.data || error);
     failedTests++;
   }
@@ -253,13 +253,13 @@ async function runTests() {
       throw new Error(`Expected duration 45, got ${activity.duration}`);
     }
 
-    console.log('  ✓ Activity created with timed type');
-    console.log(`  ✓ Activity ID: ${activity.id}`);
-    console.log(`  ✓ Time limit type: ${activity.time_limit_type}`);
-    console.log(`  ✓ Duration: ${activity.duration} minutes`);
+    console.log('  �?Activity created with timed type');
+    console.log(`  �?Activity ID: ${activity.id}`);
+    console.log(`  �?Time limit type: ${activity.time_limit_type}`);
+    console.log(`  �?Duration: ${activity.duration} minutes`);
     passedTests++;
   } catch (error) {
-    console.error(`  ✗ Test failed: ${error.message}`);
+    console.error(`  �?Test failed: ${error.message}`);
     failedTests++;
   }
 
@@ -308,15 +308,15 @@ async function runTests() {
       throw new Error('Timed activity should not have start/end time');
     }
 
-    console.log('  ✓ Retrieved activities successfully');
-    console.log(`  ✓ Unlimited type: no time restrictions`);
+    console.log('  �?Retrieved activities successfully');
+    console.log(`  �?Unlimited type: no time restrictions`);
     if (createdActivityIds.length > 2) {
-      console.log(`  ✓ Scheduled type: has start/end time, no duration`);
+      console.log(`  �?Scheduled type: has start/end time, no duration`);
     }
-    console.log(`  ✓ Timed type: has duration, no start/end time`);
+    console.log(`  �?Timed type: has duration, no start/end time`);
     passedTests++;
   } catch (error) {
-    console.error(`  ✗ Test failed: ${error.message}`);
+    console.error(`  �?Test failed: ${error.message}`);
     failedTests++;
   }
 
@@ -339,12 +339,12 @@ async function runTests() {
       throw new Error(`Expected duration 30, got ${updatedActivity.duration}`);
     }
 
-    console.log('  ✓ Updated time limit type from unlimited to timed');
-    console.log(`  ✓ New time limit type: ${updatedActivity.time_limit_type}`);
-    console.log(`  ✓ New duration: ${updatedActivity.duration} minutes`);
+    console.log('  �?Updated time limit type from unlimited to timed');
+    console.log(`  �?New time limit type: ${updatedActivity.time_limit_type}`);
+    console.log(`  �?New duration: ${updatedActivity.duration} minutes`);
     passedTests++;
   } catch (error) {
-    console.error(`  ✗ Test failed: ${error.message}`);
+    console.error(`  �?Test failed: ${error.message}`);
     failedTests++;
   }
 
@@ -362,10 +362,10 @@ async function runTests() {
         startTime: undefined,
         endTime: undefined,
       });
-      console.error('  ✗ Should reject scheduled activity without time range');
+      console.error('  �?Should reject scheduled activity without time range');
       validationPassed = false;
     } catch (error) {
-      console.log('  ✓ Correctly rejected scheduled activity without time range');
+      console.log('  �?Correctly rejected scheduled activity without time range');
     }
 
     // Test 2: Timed without duration should fail
@@ -375,10 +375,10 @@ async function runTests() {
         title: `Invalid-Timed-${Date.now()}`,
         duration: undefined,
       });
-      console.error('  ✗ Should reject timed activity without duration');
+      console.error('  �?Should reject timed activity without duration');
       validationPassed = false;
     } catch (error) {
-      console.log('  ✓ Correctly rejected timed activity without duration');
+      console.log('  �?Correctly rejected timed activity without duration');
     }
 
     // Test 3: Invalid time limit type should fail
@@ -388,10 +388,10 @@ async function runTests() {
         title: `Invalid-Type-${Date.now()}`,
         timeLimitType: 'invalid_type',
       });
-      console.error('  ✗ Should reject invalid time limit type');
+      console.error('  �?Should reject invalid time limit type');
       validationPassed = false;
     } catch (error) {
-      console.log('  ✓ Correctly rejected invalid time limit type');
+      console.log('  �?Correctly rejected invalid time limit type');
     }
 
     if (validationPassed) {
@@ -400,7 +400,7 @@ async function runTests() {
       failedTests++;
     }
   } catch (error) {
-    console.error(`  ✗ Test failed: ${error.message}`);
+    console.error(`  �?Test failed: ${error.message}`);
     failedTests++;
   }
 
@@ -419,13 +419,13 @@ async function runTests() {
   if (failedTests > 0) {
     process.exit(1);
   } else {
-    console.log('\n✓ All API tests passed!');
+    console.log('\n�?All API tests passed!');
     process.exit(0);
   }
 }
 
 // Run tests
 runTests().catch((error) => {
-  console.error('\n✗ Test suite error:', error);
+  console.error('\n�?Test suite error:', error);
   process.exit(1);
 });

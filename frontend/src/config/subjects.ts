@@ -34,9 +34,14 @@ const ALL_GRADES: Option[] = [
 ];
 
 /**
- * 从三年级到高三的年级选项
+ * 小学和初中年级选项（一年级到九年级，不含高中）
  */
-const GRADES_3_TO_12: Option[] = ALL_GRADES.slice(2); // 从索引2（三年级）开始
+const GRADES_PRIMARY_AND_MIDDLE: Option[] = ALL_GRADES.slice(0, 9); // 索引0-8：一年级到九年级
+
+/**
+ * 三年级到九年级（不含高中）
+ */
+const GRADES_3_TO_9: Option[] = ALL_GRADES.slice(2, 9); // 索引2-8：三年级到九年级
 
 /**
  * 数学能力等级（7个等级）
@@ -52,9 +57,9 @@ const MATH_ABILITY_LEVELS: Option[] = [
 ];
 
 /**
- * 计算机能力等级（7个等级）
+ * 信息科技能力等级（7个等级）
  */
-const CS_ABILITY_LEVELS: Option[] = [
+const IT_ABILITY_LEVELS: Option[] = [
   { value: 'L1', label: 'L1 - 基础认知' },
   { value: 'L2', label: 'L2 - 基本操作' },
   { value: 'L3', label: 'L3 - 编程入门' },
@@ -66,20 +71,20 @@ const CS_ABILITY_LEVELS: Option[] = [
 
 /**
  * 系统支持的科目配置
- * 当前配置：计算机（三年级-高三）、数学（一年级-高三）
+ * 当前配置：数学（一年级-九年级）、信息科技（三年级-九年级）
  */
 export const SUBJECT_CONFIGS: SubjectConfig[] = [
   {
-    value: '计算机',
-    label: '计算机',
-    grades: GRADES_3_TO_12,
-    abilityLevels: CS_ABILITY_LEVELS,
-  },
-  {
     value: '数学',
     label: '数学',
-    grades: ALL_GRADES,
+    grades: GRADES_PRIMARY_AND_MIDDLE,
     abilityLevels: MATH_ABILITY_LEVELS,
+  },
+  {
+    value: '信息科技',
+    label: '信息科技',
+    grades: GRADES_3_TO_9,
+    abilityLevels: IT_ABILITY_LEVELS,
   },
 ];
 

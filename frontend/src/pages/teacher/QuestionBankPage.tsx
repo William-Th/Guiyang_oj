@@ -26,7 +26,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { questionBankApi } from '../../services/api';
-import { SUBJECTS } from '../../config/subjects';
+import { SUBJECTS, getGradesBySubject, getAllGrades } from '../../config/subjects';
 
 interface Question {
   id: number;
@@ -42,9 +42,12 @@ interface Question {
   difficulty: string;
   explanation?: string;
   tags?: string[];
+  scope?: string[];       // 题库范围（如["assessment", "practice_municipal"]）
   usage_count: number;
   success_rate?: number;
   created_at: string;
+  creator_name?: string;  // 出题人姓名
+  reviewer_name?: string; // 审核人姓名
 }
 
 const QuestionBankPage: React.FC = () => {
@@ -60,13 +63,42 @@ const QuestionBankPage: React.FC = () => {
     grade?: string;
     difficulty?: string;
     type?: string;
+    scopes?: string[];
   }>({});
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  const [availableScopes, setAvailableScopes] = useState<string[]>([]);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadAvailableScopes();
+    // 从 localStorage 恢复上次选择的 scopes
+    const savedScopes = localStorage.getItem('selectedScopes');
+    if (savedScopes) {
+      try {
+        const scopes = JSON.parse(savedScopes);
+        setSelectedScopes(scopes);
+        setFilters(prev => ({ ...prev, scopes }));
+      } catch (error) {
+        console.error('Failed to parse saved scopes:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     loadQuestions();
   }, [currentPage, pageSize, filters]);
+
+  const loadAvailableScopes = async () => {
+    try {
+      const response = await questionBankApi.getMyScopes();
+      setAvailableScopes(response.data || []);
+    } catch (error: any) {
+      console.error('Load available scopes error:', error);
+      // 如果加载失败，使用默认的 scopes
+      setAvailableScopes(['assessment', 'practice_municipal', 'practice_district', 'practice_school']);
+    }
+  };
 
   const loadQuestions = async () => {
     try {
@@ -79,7 +111,7 @@ const QuestionBankPage: React.FC = () => {
       });
 
       setQuestions(response.data || []);
-      setTotal(response.data?.length || 0);
+      setTotal(response.meta?.total || response.data?.length || 0);
     } catch (error: any) {
       console.error('Load questions error:', error);
       message.error(error.response?.data?.error || '加载题目失败');
@@ -166,6 +198,30 @@ const QuestionBankPage: React.FC = () => {
     } catch (error) {
       message.error('下载模板失败');
     }
+  };
+
+  const handleScopeChange = (scopes: string[]) => {
+    setSelectedScopes(scopes);
+    setFilters({ ...filters, scopes });
+    // 保存到 localStorage
+    localStorage.setItem('selectedScopes', JSON.stringify(scopes));
+  };
+
+  const getScopeText = (scope: string): { text: string; color: string } => {
+    const scopes: Record<string, { text: string; color: string }> = {
+      assessment: { text: '测评题库', color: 'orange' },
+      practice_municipal: { text: '市级练习', color: 'blue' },
+      practice_district: { text: '区级练习', color: 'cyan' },
+      practice_school: { text: '校级题库', color: 'green' },
+    };
+    // Handle dynamic scopes like practice_district_nanming
+    if (scope.startsWith('practice_district_')) {
+      return { text: `区级练习 (${scope.replace('practice_district_', '')})`, color: 'cyan' };
+    }
+    if (scope.startsWith('practice_school_')) {
+      return { text: `校级题库 (${scope.replace('practice_school_', '')})`, color: 'green' };
+    }
+    return scopes[scope] || { text: scope, color: 'default' };
   };
 
   const getQuestionTypeText = (type: string) => {
@@ -287,6 +343,37 @@ const QuestionBankPage: React.FC = () => {
       width: 90,
     },
     {
+      title: '出题人',
+      dataIndex: 'creator_name',
+      key: 'creator_name',
+      width: 100,
+      render: (name: string) => name || '-',
+    },
+    {
+      title: '审核人',
+      dataIndex: 'reviewer_name',
+      key: 'reviewer_name',
+      width: 100,
+      render: (name: string) => name || '-',
+    },
+    {
+      title: '题库范围',
+      dataIndex: 'scope',
+      key: 'scope',
+      width: 200,
+      render: (scopes: string[]) => {
+        if (!scopes || scopes.length === 0) return '-';
+        return (
+          <Space size="small" wrap>
+            {scopes.map((scope) => {
+              const config = getScopeText(scope);
+              return <Tag key={scope} color={config.color}>{config.text}</Tag>;
+            })}
+          </Space>
+        );
+      },
+    },
+    {
       title: '操作',
       key: 'action',
       width: 180,
@@ -367,21 +454,49 @@ const QuestionBankPage: React.FC = () => {
         }
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          {/* Filters */}
-          <Space wrap>
-            <Input
-              placeholder="搜索题目内容"
-              prefix={<SearchOutlined />}
-              style={{ width: 250 }}
+          {/* Search Bar */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span style={{ fontWeight: 500, color: '#666' }}>搜索：</span>
+            <Input.Search
+              placeholder="输入题目内容或题目编码进行搜索"
+              allowClear
+              enterButton={<SearchOutlined />}
+              style={{ width: 400 }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onPressEnter={handleSearch}
+              onSearch={handleSearch}
             />
+          </div>
+
+          {/* Filters */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 500, color: '#666' }}>筛选：</span>
+            <Select
+              mode="multiple"
+              placeholder="选择题库范围"
+              style={{ width: 280 }}
+              value={selectedScopes}
+              onChange={handleScopeChange}
+              maxTagCount="responsive"
+              allowClear
+            >
+              {availableScopes.map((scope) => {
+                const config = getScopeText(scope);
+                return (
+                  <Select.Option key={scope} value={scope}>
+                    <Tag color={config.color}>{config.text}</Tag>
+                  </Select.Option>
+                );
+              })}
+            </Select>
             <Select
               placeholder="选择科目"
               style={{ width: 120 }}
               allowClear
-              onChange={(value) => setFilters({ ...filters, subject: value })}
+              onChange={(value) => {
+                setFilters({ ...filters, subject: value, grade: undefined });
+              }}
+              value={filters.subject}
             >
               {SUBJECTS.map(subject => (
                 <Select.Option key={subject.value} value={subject.value}>
@@ -390,29 +505,32 @@ const QuestionBankPage: React.FC = () => {
               ))}
             </Select>
             <Select
-              placeholder="选择年级"
+              placeholder={filters.subject ? '选择年级' : '请先选择科目'}
               style={{ width: 120 }}
               allowClear
               onChange={(value) => setFilters({ ...filters, grade: value })}
+              value={filters.grade}
+              disabled={!filters.subject}
             >
-              <Select.Option value="一年级">一年级</Select.Option>
-              <Select.Option value="二年级">二年级</Select.Option>
-              <Select.Option value="三年级">三年级</Select.Option>
-              <Select.Option value="四年级">四年级</Select.Option>
-              <Select.Option value="五年级">五年级</Select.Option>
-              <Select.Option value="六年级">六年级</Select.Option>
-              <Select.Option value="七年级">七年级</Select.Option>
-              <Select.Option value="八年级">八年级</Select.Option>
-              <Select.Option value="九年级">九年级</Select.Option>
-              <Select.Option value="高一">高一</Select.Option>
-              <Select.Option value="高二">高二</Select.Option>
-              <Select.Option value="高三">高三</Select.Option>
+              {filters.subject
+                ? getGradesBySubject(filters.subject).map(grade => (
+                    <Select.Option key={grade.value} value={grade.value}>
+                      {grade.label}
+                    </Select.Option>
+                  ))
+                : getAllGrades().map(grade => (
+                    <Select.Option key={grade.value} value={grade.value}>
+                      {grade.label}
+                    </Select.Option>
+                  ))
+              }
             </Select>
             <Select
               placeholder="选择难度"
               style={{ width: 120 }}
               allowClear
               onChange={(value) => setFilters({ ...filters, difficulty: value })}
+              value={filters.difficulty}
             >
               <Select.Option value="easy">简单</Select.Option>
               <Select.Option value="medium">中等</Select.Option>
@@ -423,6 +541,7 @@ const QuestionBankPage: React.FC = () => {
               style={{ width: 120 }}
               allowClear
               onChange={(value) => setFilters({ ...filters, type: value })}
+              value={filters.type}
             >
               <Select.Option value="single">单选题</Select.Option>
               <Select.Option value="multiple">多选题</Select.Option>
@@ -431,19 +550,35 @@ const QuestionBankPage: React.FC = () => {
               <Select.Option value="essay">问答题</Select.Option>
               <Select.Option value="code">编程题</Select.Option>
             </Select>
-            <Button type="primary" onClick={handleSearch} icon={<SearchOutlined />}>
-              搜索
-            </Button>
             <Button
               onClick={() => {
                 setSearchTerm('');
                 setFilters({});
+                setSelectedScopes([]);
                 setCurrentPage(1);
+                localStorage.removeItem('selectedScopes');
               }}
             >
-              重置
+              重置筛选
             </Button>
-          </Space>
+          </div>
+
+          {/* Selected Scopes Display */}
+          {selectedScopes.length > 0 && (
+            <div style={{ padding: '8px 12px', background: '#f0f2f5', borderRadius: 4 }}>
+              <Space size="small">
+                <span style={{ color: '#666', fontWeight: 500 }}>当前筛选范围：</span>
+                {selectedScopes.map((scope) => {
+                  const config = getScopeText(scope);
+                  return (
+                    <Tag key={scope} color={config.color}>
+                      {config.text}
+                    </Tag>
+                  );
+                })}
+              </Space>
+            </div>
+          )}
 
           {/* Table */}
           <Spin spinning={loading}>

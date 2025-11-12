@@ -290,7 +290,7 @@ const AssessmentManagementPage: React.FC = () => {
               icon={<PlusOutlined />}
               onClick={() => navigate('/admin/assessments/create')}
             >
-              创建测评
+              创建活动
             </Button>
           </Space>
         }

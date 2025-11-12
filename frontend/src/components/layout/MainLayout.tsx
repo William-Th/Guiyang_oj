@@ -11,6 +11,7 @@ import {
   SettingOutlined,
   ProjectOutlined,
   AuditOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
@@ -56,44 +57,62 @@ const MainLayout: React.FC = () => {
     }
   };
 
+  // 检查是否有成就管理权限（仅system_admin和municipal_admin）
+  const hasAchievementPermission = () => {
+    return user && (user.role === 'system_admin' || user.role === 'municipal_admin');
+  };
+
   // 管理员导航菜单项
-  const adminMenuItems: MenuProps['items'] = [
-    {
-      key: '/admin/home',
-      icon: <HomeOutlined />,
-      label: '首页',
-    },
-    {
-      key: '/admin/overview',
-      icon: <DashboardOutlined />,
-      label: '数据概览',
-    },
-    {
-      key: '/admin/assessments',
-      icon: <ProjectOutlined />,
-      label: '活动管理中心',
-    },
-    {
-      key: '/admin/question-bank',
-      icon: <BookOutlined />,
-      label: '题库管理',
-    },
-    {
-      key: '/admin/users',
-      icon: <TeamOutlined />,
-      label: '用户管理',
-    },
-    {
-      key: '/admin/permissions',
-      icon: <SettingOutlined />,
-      label: '权限管理',
-    },
-    {
-      key: '/admin/registration-approval',
-      icon: <AuditOutlined />,
-      label: '注册审核',
-    },
-  ];
+  const getAdminMenuItems = (): MenuProps['items'] => {
+    const items: MenuProps['items'] = [
+      {
+        key: '/admin/home',
+        icon: <HomeOutlined />,
+        label: '首页',
+      },
+      {
+        key: '/admin/overview',
+        icon: <DashboardOutlined />,
+        label: '数据概览',
+      },
+      {
+        key: '/admin/assessments',
+        icon: <ProjectOutlined />,
+        label: '活动管理',
+      },
+      {
+        key: '/admin/question-bank',
+        icon: <BookOutlined />,
+        label: '题库管理',
+      },
+      {
+        key: '/admin/users',
+        icon: <TeamOutlined />,
+        label: '用户管理',
+      },
+      {
+        key: '/admin/permissions',
+        icon: <SettingOutlined />,
+        label: '权限管理',
+      },
+      {
+        key: '/admin/registration-approval',
+        icon: <AuditOutlined />,
+        label: '注册审核',
+      },
+    ];
+
+    // 仅对system_admin和municipal_admin显示成就管理
+    if (hasAchievementPermission()) {
+      items.push({
+        key: '/admin/achievements',
+        icon: <TrophyOutlined />,
+        label: '成就管理',
+      });
+    }
+
+    return items;
+  };
 
   // 教师导航菜单项
   const teacherMenuItems: MenuProps['items'] = [
@@ -105,12 +124,17 @@ const MainLayout: React.FC = () => {
     {
       key: '/teacher/activities',
       icon: <ProjectOutlined />,
-      label: '活动管理中心',
+      label: '练习管理',
     },
     {
       key: '/teacher/question-bank',
       icon: <BookOutlined />,
       label: '题库管理',
+    },
+    {
+      key: '/teacher/review-workbench',
+      icon: <AuditOutlined />,
+      label: '审核工作台',
     },
     {
       key: '/teacher/grading',
@@ -147,6 +171,7 @@ const MainLayout: React.FC = () => {
     if (path.includes('/admin/question-bank')) return '/admin/question-bank';
     if (path.includes('/admin/users')) return '/admin/users';
     if (path.includes('/admin/permissions')) return '/admin/permissions';
+    if (path.includes('/admin/achievements')) return '/admin/achievements';
     return '/admin/home';
   };
 
@@ -155,6 +180,7 @@ const MainLayout: React.FC = () => {
     const path = location.pathname;
     if (path.includes('/teacher/activities')) return '/teacher/activities';
     if (path.includes('/teacher/question-bank')) return '/teacher/question-bank';
+    if (path.includes('/teacher/review-workbench')) return '/teacher/review-workbench';
     if (path.includes('/teacher/grading')) return '/teacher/grading';
     if (path === '/') return '/';
     return '/';
@@ -196,7 +222,7 @@ const MainLayout: React.FC = () => {
           <Menu
             mode="horizontal"
             selectedKeys={[getAdminSelectedKey()]}
-            items={adminMenuItems}
+            items={getAdminMenuItems()}
             onClick={handleAdminMenuClick}
             style={{
               flex: 1,

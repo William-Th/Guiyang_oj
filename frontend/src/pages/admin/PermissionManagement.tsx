@@ -24,6 +24,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { permissionApi, userManagementApi } from '../../services/api';
+import { SUBJECTS } from '../../config/subjects';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -35,6 +36,11 @@ interface Permission {
   real_name: string;
   permission_type: string;
   subjects: string[];
+  scope_level?: string;
+  district_id?: number;
+  district_name?: string;
+  school_id?: number;
+  school_name?: string;
   granted_by: number;
   granted_by_name?: string;
   granted_at: string;
@@ -48,6 +54,9 @@ interface Teacher {
   username: string;
   real_name: string;
   role: string;
+  subjects?: string[];
+  school_name?: string;
+  district_name?: string;
 }
 
 const PermissionManagement: React.FC = () => {
@@ -58,11 +67,27 @@ const PermissionManagement: React.FC = () => {
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
 
   useEffect(() => {
     loadPermissions();
     loadTeachers();
+    loadCurrentUser();
   }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      // 从 localStorage 或 Redux store 获取当前用户信息
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setCurrentUserRole(user.role || '');
+      }
+    } catch (error) {
+      console.error('Load current user error:', error);
+    }
+  };
 
   const loadPermissions = async () => {
     try {
@@ -79,10 +104,18 @@ const PermissionManagement: React.FC = () => {
 
   const loadTeachers = async () => {
     try {
-      const response = await userManagementApi.getTeachers();
+      // 使用新的 API：根据管理员权限范围过滤教师
+      const response = await permissionApi.getAvailableTeachers();
       setTeachers(response.data || []);
     } catch (error: any) {
       console.error('Load teachers error:', error);
+      // 如果新 API 失败，回退到旧 API
+      try {
+        const fallbackResponse = await userManagementApi.getTeachers();
+        setTeachers(fallbackResponse.data || []);
+      } catch (fallbackError) {
+        console.error('Fallback load teachers error:', fallbackError);
+      }
     }
   };
 
@@ -111,6 +144,9 @@ const PermissionManagement: React.FC = () => {
         user_id: values.user_id,
         permission_type: values.permission_type,
         subjects: values.subjects,
+        scope_level: values.scope_level,
+        district_id: values.district_id,
+        school_id: values.school_id,
         expires_at: values.expires_at ? values.expires_at.toISOString() : undefined,
         notes: values.notes,
       };
@@ -136,13 +172,97 @@ const PermissionManagement: React.FC = () => {
     }
   };
 
+  const handleDelete = async (permissionId: number) => {
+    try {
+      await permissionApi.deletePermission(permissionId);
+      message.success('删除权限成功');
+      loadPermissions();
+    } catch (error: any) {
+      message.error(error.response?.data?.error || '删除失败');
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要删除的权限');
+      return;
+    }
+
+    try {
+      const result = await permissionApi.batchDeletePermissions(selectedRowKeys as number[]);
+      message.success(result.message || '批量删除完成');
+      setSelectedRowKeys([]);
+      loadPermissions();
+    } catch (error: any) {
+      message.error(error.response?.data?.error || '批量删除失败');
+    }
+  };
+
+  const isPermissionInactive = (permission: Permission): boolean => {
+    const now = new Date();
+    const expired = permission.expires_at ? new Date(permission.expires_at) < now : false;
+    return !permission.is_active || expired;
+  };
+
+  const getAvailablePermissionTypes = () => {
+    // 区级管理员只能授予区级练习审核权限
+    if (currentUserRole === 'district_admin') {
+      return [
+        {
+          value: 'practice_district_review',
+          label: <><Tag color="cyan">区级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+        }
+      ];
+    }
+
+    // 市级/系统管理员可以授予所有权限
+    if (currentUserRole === 'municipal_admin' || currentUserRole === 'system_admin') {
+      return [
+        {
+          value: 'assessment_review',
+          label: <><Tag color="orange">测评题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
+        },
+        {
+          value: 'practice_municipal_review',
+          label: <><Tag color="blue">市级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
+        },
+        {
+          value: 'practice_district_review',
+          label: <><Tag color="cyan">区级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+        },
+        {
+          value: 'question_bank_review',
+          label: <><Tag color="default">练习题库审核（旧）</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 兼容旧系统</span></>
+        },
+        {
+          value: 'competition_review',
+          label: <><Tag color="red">竞赛题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 竞赛专用</span></>
+        }
+      ];
+    }
+
+    // 默认返回空数组
+    return [];
+  };
+
   const getPermissionTypeText = (type: string) => {
     const types: Record<string, { text: string; color: string }> = {
-      question_bank_review: { text: '练习题库审核', color: 'blue' },
+      question_bank_review: { text: '练习题库审核（旧）', color: 'default' },
       assessment_review: { text: '测评题库审核', color: 'orange' },
+      practice_municipal_review: { text: '市级练习审核', color: 'blue' },
+      practice_district_review: { text: '区级练习审核', color: 'cyan' },
       competition_review: { text: '竞赛题库审核', color: 'red' },
     };
     return types[type] || { text: type, color: 'default' };
+  };
+
+  const getScopeLevelText = (level?: string) => {
+    const levels: Record<string, { text: string; color: string }> = {
+      municipal: { text: '市级', color: 'blue' },
+      district: { text: '区级', color: 'cyan' },
+      school: { text: '校级', color: 'green' },
+    };
+    return levels[level || 'municipal'] || { text: level || '-', color: 'default' };
   };
 
   const columns = [
@@ -181,6 +301,40 @@ const PermissionManagement: React.FC = () => {
           ))}
         </div>
       ),
+    },
+    {
+      title: '权限层级',
+      dataIndex: 'scope_level',
+      key: 'scope_level',
+      width: 100,
+      render: (level?: string) => {
+        const config = getScopeLevelText(level);
+        return <Tag color={config.color}>{config.text}</Tag>;
+      },
+    },
+    {
+      title: '区域',
+      dataIndex: 'district_name',
+      key: 'district_name',
+      width: 100,
+      render: (text: string) => {
+        if (text) {
+          return <Tag color="geekblue">{text}</Tag>;
+        }
+        return <span style={{ color: '#999' }}>全市</span>;
+      },
+    },
+    {
+      title: '学校',
+      dataIndex: 'school_name',
+      key: 'school_name',
+      width: 120,
+      render: (text: string) => {
+        if (text) {
+          return <Tag color="green">{text}</Tag>;
+        }
+        return <span style={{ color: '#999' }}>-</span>;
+      },
     },
     {
       title: '状态',
@@ -249,33 +403,57 @@ const PermissionManagement: React.FC = () => {
       key: 'action',
       width: 150,
       fixed: 'right' as const,
-      render: (_: any, record: Permission) => (
-        <Space size="small">
-          <Tooltip title="编辑">
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleEditClick(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="确定要撤销此权限吗？"
-            onConfirm={() => handleRevoke(record.user_id, record.permission_type)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Tooltip title="撤销">
+      render: (_: any, record: Permission) => {
+        const inactive = isPermissionInactive(record);
+
+        return (
+          <Space size="small">
+            <Tooltip title={inactive ? '编辑以恢复权限' : '编辑'}>
               <Button
                 type="link"
                 size="small"
-                danger
-                icon={<DeleteOutlined />}
+                icon={<EditOutlined />}
+                onClick={() => handleEditClick(record)}
               />
             </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
+            {inactive ? (
+              <Popconfirm
+                title="确定要删除此权限吗？"
+                description="已失效的权限可以删除"
+                onConfirm={() => handleDelete(record.id)}
+                okText="确定"
+                cancelText="取消"
+              >
+                <Tooltip title="删除">
+                  <Button
+                    type="link"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            ) : (
+              <Popconfirm
+                title="确定要撤销此权限吗？"
+                description="撤销后权限将失效"
+                onConfirm={() => handleRevoke(record.user_id, record.permission_type)}
+                okText="确定"
+                cancelText="取消"
+              >
+                <Tooltip title="撤销">
+                  <Button
+                    type="link"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -284,13 +462,31 @@ const PermissionManagement: React.FC = () => {
       <Card
         title="权限管理"
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleGrantClick}
-          >
-            授予权限
-          </Button>
+          <Space>
+            {selectedRowKeys.length > 0 && (
+              <Popconfirm
+                title={`确定要批量删除选中的 ${selectedRowKeys.length} 个权限吗？`}
+                description="只有已失效的权限会被删除"
+                onConfirm={handleBatchDelete}
+                okText="确定"
+                cancelText="取消"
+              >
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                >
+                  批量删除 ({selectedRowKeys.length})
+                </Button>
+              </Popconfirm>
+            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleGrantClick}
+            >
+              授予权限
+            </Button>
+          </Space>
         }
       >
         <Spin spinning={loading}>
@@ -312,11 +508,19 @@ const PermissionManagement: React.FC = () => {
               columns={columns}
               dataSource={permissions}
               rowKey="id"
+              rowSelection={{
+                selectedRowKeys,
+                onChange: (keys) => setSelectedRowKeys(keys),
+                getCheckboxProps: (record: Permission) => ({
+                  // 只允许选择已失效的权限进行批量删除
+                  disabled: !isPermissionInactive(record),
+                }),
+              }}
               pagination={{
                 showSizeChanger: true,
                 showTotal: (total) => `共 ${total} 条权限记录`,
               }}
-              scroll={{ x: 1400 }}
+              scroll={{ x: 1520 }}
             />
           )}
         </Spin>
@@ -363,24 +567,11 @@ const PermissionManagement: React.FC = () => {
             rules={[{ required: true, message: '请选择权限类型' }]}
           >
             <Select placeholder="请选择权限类型" disabled={!!editingPermission}>
-              <Option value="question_bank_review">
-                <Tag color="blue">练习题库审核</Tag>
-                <span style={{ color: '#999', marginLeft: 8 }}>
-                  - 可审核练习题库的题目
-                </span>
-              </Option>
-              <Option value="assessment_review">
-                <Tag color="orange">测评题库审核</Tag>
-                <span style={{ color: '#999', marginLeft: 8 }}>
-                  - 可审核测评题库的题目（需要更高权限）
-                </span>
-              </Option>
-              <Option value="competition_review">
-                <Tag color="red">竞赛题库审核</Tag>
-                <span style={{ color: '#999', marginLeft: 8 }}>
-                  - 可审核竞赛题库的题目（需要最高权限）
-                </span>
-              </Option>
+              {getAvailablePermissionTypes().map(type => (
+                <Option key={type.value} value={type.value}>
+                  {type.label}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
@@ -392,13 +583,7 @@ const PermissionManagement: React.FC = () => {
             <Select
               mode="multiple"
               placeholder="请选择可审核的科目"
-              options={[
-                { label: '数学', value: '数学' },
-                { label: '物理', value: '物理' },
-                { label: '化学', value: '化学' },
-                { label: '生物', value: '生物' },
-                { label: '计算机', value: '计算机' },
-              ]}
+              options={SUBJECTS}
             />
           </Form.Item>
 
@@ -438,11 +623,12 @@ const PermissionManagement: React.FC = () => {
         }}>
           <strong>权限说明：</strong>
           <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
-            <li>练习题库审核：可审核发布到练习题库的题目</li>
-            <li>测评题库审核：可审核发布到测评题库的题目，要求更严格</li>
-            <li>竞赛题库审核：可审核发布到竞赛题库的题目，要求最严格</li>
-            <li>每个教师可以拥有多个权限类型</li>
+            <li><strong>测评题库审核</strong>：可审核测评题库的题目，市级/系统管理员可授予</li>
+            <li><strong>市级练习题库审核</strong>：可审核市级练习题库，市级/系统管理员可授予</li>
+            <li><strong>区级练习题库审核</strong>：可审核本区练习题库，区级管理员可授予本区教师</li>
+            <li><strong>校级题库</strong>：教师可直接发布到本校题库，无需审核</li>
             <li>权限与科目相关联，只能审核指定科目的题目</li>
+            <li>区级管理员授权时，系统会自动关联管理员所在区域</li>
           </ul>
         </div>
       </Modal>

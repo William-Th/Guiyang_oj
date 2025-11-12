@@ -2,7 +2,7 @@
 
 本目录包含所有端到端（E2E）测试用例文档，按功能模块进行拆分组织。
 
-**最后更新**: 2025-10-22
+**最后更新**: 2025-11-04
 
 ---
 
@@ -13,12 +13,15 @@
 | [authentication-testcases.md](authentication-testcases.md) | 认证功能 (AUT) | 10 | 学生/教师/管理员登录、权限验证 |
 | [student-testcases.md](student-testcases.md) | 学生功能 (STU) | 6 | 学生端页面访问、考试列表、成绩查询 |
 | [admin-testcases.md](admin-testcases.md) | 管理员功能 (ADM) | 6 | 管理后台、用户管理、考试管理 |
+| [hierarchical-permissions-testcases.md](hierarchical-permissions-testcases.md) | 分层权限系统 (PRM/QBC/REV) | 6 | 权限授予、题库创建、审核流程 |
 | [questionbank-creation-testcases.md](questionbank-creation-testcases.md) | 题库创建 (QBC) | 10 | 各类题型创建、表单验证 |
 | [questionbank-draft-testcases.md](questionbank-draft-testcases.md) | 题库草稿箱 (DFT) | 3 | 草稿管理、编辑、删除 |
 | [questionbank-review-testcases.md](questionbank-review-testcases.md) | 题库审核流程 (REV) | 8 | 提交审核、审核批准/拒绝 |
 | [activity-testcases.md](activity-testcases.md) | 活动管理 (ACT) | 19 | 练习/测评活动创建、管理、筛选 |
+| [time-limit-testcases.md](time-limit-testcases.md) | 时间限制功能 (PTL) | 10 | 时间限制类型测试 |
+| [paper-generation-testcases.md](paper-generation-testcases.md) | 组卷功能 (PPG) | 4 | 智能组卷、手动组卷 |
 
-**总计**: 62 个测试用例 (12 个冒烟测试 + 50 个回归测试)
+**总计**: 82 个测试用例 (12 个冒烟测试 + 70 个回归测试)
 
 ---
 
@@ -40,10 +43,13 @@
 | **AUT** | 认证功能 | Authentication |
 | **STU** | 学生功能 | Student |
 | **ADM** | 管理员功能 | Admin |
+| **PRM** | 权限管理 | Permission Management |
 | **QBC** | 题库创建 | Question Bank Creation |
 | **DFT** | 题库草稿箱 | Draft |
 | **REV** | 题库审核流程 | Review |
 | **ACT** | 活动管理 | Activity |
+| **PTL** | 时间限制功能 | Practice Time Limit |
+| **PPG** | 组卷功能 | Paper Generation |
 | **CRT** | 证书管理 | Certificate |
 
 ### 编号示例
@@ -75,11 +81,14 @@
 | AUT | 认证功能 | 3 | 7 | 10 |
 | STU | 学生功能 | 1 | 5 | 6 |
 | ADM | 管理员功能 | 1 | 5 | 6 |
-| QBC | 题库创建 | 0 | 10 | 10 |
+| PRM | 权限管理 | 0 | 2 | 2 |
+| QBC | 题库创建 | 0 | 12 | 12 |
 | DFT | 题库草稿箱 | 0 | 3 | 3 |
-| REV | 题库审核流程 | 0 | 8 | 8 |
+| REV | 题库审核流程 | 0 | 10 | 10 |
 | ACT | 活动管理 | 6 | 13 | 19 |
-| **总计** | | **12** | **51** | **63** |
+| PTL | 时间限制功能 | 0 | 10 | 10 |
+| PPG | 组卷功能 | 0 | 4 | 4 |
+| **总计** | | **12** | **71** | **83** |
 
 ### 测试状态
 
@@ -149,6 +158,30 @@ npx playwright test tests/e2e/regression/
 
 ## 🔄 更新历史
 
+### 2025-11-04 - 分层权限系统测试用例同步 ✨
+
+**新增文档**: [hierarchical-permissions-testcases.md](hierarchical-permissions-testcases.md)
+
+**更新内容**:
+1. **新增模块代码**:
+   - PRM (Permission Management) - 权限管理
+   - PTL (Practice Time Limit) - 时间限制功能
+   - PPG (Paper Generation) - 组卷功能
+
+2. **新增测试用例** (6个):
+   - PRM101 - 管理员授予市级审核权限
+   - PRM102 - 权限隔离验证
+   - QBC101 - 教师创建校级题目并直接发布
+   - QBC102 - 题库浏览 Scope 筛选
+   - REV101 - 教师提交题目审核（市级练习）
+   - REV102 - 审核人查看并审核题目
+
+3. **测试统计更新**: 总计从 62 个增加到 82 个测试用例
+
+4. **文档完善**: 详细记录了分层权限系统的测试步骤、预期结果和已知问题
+
+---
+
 ### 2025-10-22 - 测试用例文档重构 🎉
 
 **重大更新**: 测试用例编号系统全面升级！
@@ -205,5 +238,5 @@ tests/docs/E2E_testcases/
 
 ---
 
-*最后更新: 2025-10-22*
+*最后更新: 2025-11-04*
 *维护人员: 测试团队*

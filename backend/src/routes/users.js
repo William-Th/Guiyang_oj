@@ -15,7 +15,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: '用户不存在' });
     }
 
-    res.json(userProfile);
+    res.json({ user: userProfile });
   } catch (error) {
     logger.error('Get profile error:', error);
     res.status(500).json({ message: '获取用户信息失败' });

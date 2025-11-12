@@ -12,18 +12,18 @@
 -- ========================================
 
 -- 添加教师账号 (密码都是: password123)
-INSERT INTO users (username, password, role, real_name, id_card, phone, email) VALUES
-('teacher02', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'teacher', '李明', '520102197506152345', '13800138002', 'liming@school.com'),
-('teacher03', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'teacher', '王芳', '520102198203253456', '13800138003', 'wangfang@school.com')
+INSERT INTO users (username, password, role, real_name, phone, email) VALUES
+('teacher02', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'teacher', '李明', '13800138002', 'liming@school.com'),
+('teacher03', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'teacher', '王芳', '13800138003', 'wangfang@school.com')
 ON CONFLICT (username) DO NOTHING;
 
 -- 添加学生账号 (密码都是: password123)
-INSERT INTO users (username, password, role, real_name, id_card, phone, email) VALUES
-('student01', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '张小明', '520102201001015678', '13900139001', 'zhangxm@student.com'),
-('student02', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '李小红', '520102201002026789', '13900139002', 'lixh@student.com'),
-('student03', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '王小刚', '520102201003037890', '13900139003', 'wangxg@student.com'),
-('student04', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '刘小丽', '520102201004048901', '13900139004', 'liuxl@student.com'),
-('student05', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '陈小华', '520102201005059012', '13900139005', 'chenxh@student.com')
+INSERT INTO users (username, password, role, real_name, phone, email) VALUES
+('student01', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '张小明', '13900139001', 'zhangxm@student.com'),
+('student02', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '李小红', '13900139002', 'lixh@student.com'),
+('student03', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '王小刚', '13900139003', 'wangxg@student.com'),
+('student04', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '刘小丽', '13900139004', 'liuxl@student.com'),
+('student05', '$2a$10$CxJ3aNGVJp.UHGmUTkAs7O8ejfEPQPhoBJCzAKmAQQ3jdaJa.GX7.', 'student', '陈小华', '13900139005', 'chenxh@student.com')
 ON CONFLICT (username) DO NOTHING;
 
 -- 区级管理员账号已在 seed.sql 中定义，此处不再重复添加

@@ -33,7 +33,7 @@ export async function loginAsStudent(page: Page, idCard: string = '5201022008010
 /**
  * Login as teacher
  */
-export async function loginAsTeacher(page: Page, username: string = 'teacher01', password: string = 'password123') {
+export async function loginAsTeacher(page: Page, username: string = 'teacher_yy_ps_math', password: string = 'password123') {
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
 
@@ -65,22 +65,29 @@ export async function loginAsTeacher(page: Page, username: string = 'teacher01',
 
 /**
  * Login as admin
+ * Note: Admin users use the teacher login tab (教师入口)
  */
 export async function loginAsAdmin(page: Page, username: string = 'admin', password: string = 'password123') {
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
 
-  // Click admin tab
-  const adminTab = page.locator('text=管理员登录').or(page.locator('[role="tab"]:has-text("管理")'));
-  await adminTab.click();
-  await page.waitForTimeout(300);
+  // Click teacher tab (admin uses same tab as teachers)
+  const teacherTab = page.locator('[role="tab"]:has-text("教师入口")');
+  await teacherTab.click();
+  await page.waitForTimeout(500);
 
-  // Fill credentials
-  await page.fill('input[placeholder*="用户名"], input[type="text"]', username);
-  await page.fill('input[placeholder*="密码"], input[type="password"]', password);
+  // Wait for username input to be visible
+  const usernameInput = page.locator('input[placeholder="用户名"]').or(page.locator('input#username'));
+  await usernameInput.waitFor({ state: 'visible', timeout: 5000 });
+  await usernameInput.fill(username);
 
-  // Submit
-  const loginButton = page.locator('button[type="submit"]').or(page.locator('button:has-text("登录")'));
+  // Wait for password input to be visible (use .last() to get teacher tab's input)
+  const passwordInput = page.locator('input[type="password"]').last();
+  await passwordInput.waitFor({ state: 'visible', timeout: 5000 });
+  await passwordInput.fill(password);
+
+  // Submit (use .last() to get the teacher tab's button)
+  const loginButton = page.locator('button[type="submit"]').last();
   await loginButton.click();
 
   // Wait for navigation

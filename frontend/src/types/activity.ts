@@ -264,3 +264,27 @@ export interface ActivitySubmission {
   activityId: number;
   answers: ActivityAnswer[];
 }
+
+/**
+ * Time limit information for an activity
+ * Returned when starting an activity
+ */
+export interface TimeLimitInfo {
+  timeLimitType: TimeLimitType;
+  duration?: number;              // Duration in minutes (for scheduled/timed)
+  startTime?: string;             // Start time (for scheduled)
+  endTime?: string;               // End time (for scheduled)
+  timeLimitDeadline?: string;     // Calculated deadline (for timed)
+  serverTime?: string;            // Current server time for synchronization
+  remainingMinutes?: number;      // Calculated remaining time
+}
+
+/**
+ * Countdown timer component props
+ */
+export interface CountdownTimerProps {
+  deadline: string;               // ISO datetime string
+  onExpire: () => void;          // Callback when time expires
+  warningThreshold?: number;     // Minutes before expiry to show warning (default: 5)
+  className?: string;
+}

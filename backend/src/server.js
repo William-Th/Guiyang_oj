@@ -66,7 +66,8 @@ const limiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: { message: '请求过于频繁，请稍后重试' },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { trustProxy: false } // Disable trustProxy validation in rate limiter
 });
 app.use('/api', limiter);
 

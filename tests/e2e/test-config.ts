@@ -9,7 +9,7 @@ export const TEST_CONFIG = {
     password: 'password123'
   },
   TEACHER: {
-    username: 'teacher01',
+    username: 'teacher_yy_ps_math',
     password: 'password123'
   },
   TEACHER02: {
@@ -33,7 +33,7 @@ export const SELECTORS = {
     STUDENT_TAB: 'text=学生入口',
     TEACHER_TAB: 'text=教师入口',
     ID_CARD_INPUT: 'input[placeholder="身份证号"]',
-    USERNAME_INPUT: 'input[placeholder="用户名"]',
+    USERNAME_INPUT: 'input[placeholder="用户�?]',
     PASSWORD_INPUT: 'input[placeholder="密码"]',
     SUBMIT_BUTTON: 'button[type="submit"]'
   },

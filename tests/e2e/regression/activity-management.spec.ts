@@ -171,7 +171,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await fillActivityForm(page, {
         title: testTitle,
         description: 'ACT108测试活动-用于查看详情',
-        subject: '语文',
+        subject: '信息科技',
         grade: '二年级',
         abilityLevel: 'L2 - 初中级',
         duration: '30',
@@ -214,7 +214,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await fillActivityForm(page, {
         title: originalTitle,
         description: 'ACT109测试活动-草稿状态',
-        subject: '英语',
+        subject: '信息科技',
         grade: '五年级',
         abilityLevel: 'L5 - 高级',
         duration: '50',
@@ -273,7 +273,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await fillActivityForm(page, {
         title: testTitle,
         description: 'ACT110测试活动-待发布',
-        subject: '计算机',
+        subject: '数学',
         grade: '六年级',
         abilityLevel: 'L6 - 专家',
         duration: '60',
@@ -320,7 +320,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await fillActivityForm(page, {
         title: testTitle,
         description: 'ACT111测试活动-先发布再取消',
-        subject: '科学',
+        subject: '信息科技',
         grade: '四年级',
         abilityLevel: 'L4 - 中高级',
         duration: '40',

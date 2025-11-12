@@ -4,6 +4,19 @@ const { authMiddleware } = require('../middleware/auth');
 const Achievement = require('../models/Achievement');
 
 /**
+ * 生成唯一的成就编码
+ */
+function generateAchievementCode(category, name) {
+  const timestamp = Date.now().toString().slice(-6);
+  const categoryUpper = category.toUpperCase();
+  const nameSlug = name
+    .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '')
+    .slice(0, 3)
+    .toUpperCase();
+  return `ACH_${categoryUpper}_${nameSlug}_${timestamp}`;
+}
+
+/**
  * 获取所有成就定义
  * GET /api/achievements
  */
@@ -18,7 +31,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const achievements = await Achievement.getAllAchievements(filters);
     res.json({
       success: true,
-      data: achievements
+      achievements: achievements
     });
   } catch (error) {
     console.error('Error fetching achievements:', error);
@@ -160,6 +173,152 @@ router.post('/award', authMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to award achievement',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 创建新成就（仅系统管理员和市级管理员）
+ * POST /api/achievements
+ */
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证：只有system_admin和municipal_admin可以创建
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only system and municipal admins can create achievements.'
+      });
+    }
+
+    const { name, description, category, rarity, icon, points, requirementType, requirementValue, isActive } = req.body;
+
+    // 验证必填字段
+    if (!name || !description || !category || !rarity || !icon || !requirementType || requirementValue === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
+    // 自动生成成就编码
+    const code = generateAchievementCode(category, name);
+
+    // 创建成就
+    const achievement = await Achievement.createAchievement({
+      code,
+      name,
+      description,
+      category,
+      rarity,
+      icon,
+      points: points || 0,
+      requirementType,
+      requirementValue,
+      isActive: isActive !== undefined ? isActive : true
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Achievement created successfully',
+      achievement: achievement
+    });
+  } catch (error) {
+    console.error('Error creating achievement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create achievement',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 更新成就（仅系统管理员和市级管理员）
+ * PUT /api/achievements/:id
+ */
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only system and municipal admins can update achievements.'
+      });
+    }
+
+    const { id } = req.params;
+    const { name, description, category, rarity, icon, points, requirementType, requirementValue, isActive } = req.body;
+
+    // 更新成就（不允许修改code）
+    const achievement = await Achievement.updateAchievement(parseInt(id), {
+      name,
+      description,
+      category,
+      rarity,
+      icon,
+      points,
+      requirementType,
+      requirementValue,
+      isActive
+    });
+
+    if (!achievement) {
+      return res.status(404).json({
+        success: false,
+        message: 'Achievement not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Achievement updated successfully',
+      achievement: achievement
+    });
+  } catch (error) {
+    console.error('Error updating achievement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update achievement',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 删除成就（仅系统管理员和市级管理员）
+ * DELETE /api/achievements/:id
+ */
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only system and municipal admins can delete achievements.'
+      });
+    }
+
+    const { id } = req.params;
+    const result = await Achievement.deleteAchievement(parseInt(id));
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Achievement not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Achievement deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting achievement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete achievement',
       error: error.message
     });
   }

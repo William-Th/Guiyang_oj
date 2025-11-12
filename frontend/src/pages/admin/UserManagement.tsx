@@ -41,7 +41,6 @@ interface User {
   username: string;
   role: UserRole;
   real_name: string;
-  id_card?: string;
   phone?: string;
   email?: string;
   status: 'active' | 'inactive' | 'suspended';
@@ -53,12 +52,93 @@ interface User {
   district_id?: number;
 }
 
+// 角色层级定义（数字越大，权限越高）
+const ROLE_HIERARCHY: Record<UserRole, number> = {
+  'student': 1,
+  'teacher': 2,
+  'school_admin': 3,
+  'municipal_school_admin': 4,
+  'base_school_admin': 4,
+  'district_admin': 5,
+  'municipal_admin': 6,
+  'system_admin': 7,
+};
+
+// 角色选项配置
+const ROLE_OPTIONS = [
+  { value: 'student', label: '学生', level: 1 },
+  { value: 'teacher', label: '教师', level: 2 },
+  { value: 'school_admin', label: '校级管理员', level: 3 },
+  { value: 'municipal_school_admin', label: '市直属学校管理员', level: 4 },
+  { value: 'base_school_admin', label: '基地校管理员', level: 4 },
+  { value: 'district_admin', label: '区级管理员', level: 5 },
+  { value: 'municipal_admin', label: '市级总管理员', level: 6 },
+  { value: 'system_admin', label: '系统总管理员', level: 7 },
+];
+
+// 获取当前用户可以管理的角色列表
+const getManageableRoles = (currentUserRole: UserRole): typeof ROLE_OPTIONS => {
+  const currentLevel = ROLE_HIERARCHY[currentUserRole];
+  // 只能管理低于自己等级的角色
+  return ROLE_OPTIONS.filter(option => option.level < currentLevel);
+};
+
+// 获取当前用户可以查看/筛选的角色列表
+const getViewableRoles = (currentUserRole: UserRole): Array<{ text: string; value: string }> => {
+  switch (currentUserRole) {
+    case 'school_admin':
+    case 'base_school_admin':
+    case 'municipal_school_admin':
+      // 校级管理员：只能查看学生、老师
+      return [
+        { text: '学生', value: 'student' },
+        { text: '教师', value: 'teacher' },
+      ];
+
+    case 'district_admin':
+      // 区级管理员：可以查看学生、老师、校级管理员、基地校管理员
+      return [
+        { text: '学生', value: 'student' },
+        { text: '教师', value: 'teacher' },
+        { text: '校级管理员', value: 'school_admin' },
+        { text: '基地校管理员', value: 'base_school_admin' },
+      ];
+
+    case 'municipal_admin':
+      // 市级管理员：可以查看除系统管理员外的所有角色
+      return [
+        { text: '学生', value: 'student' },
+        { text: '教师', value: 'teacher' },
+        { text: '校级管理员', value: 'school_admin' },
+        { text: '区级管理员', value: 'district_admin' },
+        { text: '市直属学校管理员', value: 'municipal_school_admin' },
+        { text: '基地校管理员', value: 'base_school_admin' },
+        { text: '市级总管理员', value: 'municipal_admin' },
+      ];
+
+    case 'system_admin':
+      // 系统管理员：可以查看所有角色
+      return [
+        { text: '学生', value: 'student' },
+        { text: '教师', value: 'teacher' },
+        { text: '校级管理员', value: 'school_admin' },
+        { text: '区级管理员', value: 'district_admin' },
+        { text: '市直属学校管理员', value: 'municipal_school_admin' },
+        { text: '基地校管理员', value: 'base_school_admin' },
+        { text: '市级总管理员', value: 'municipal_admin' },
+        { text: '系统总管理员', value: 'system_admin' },
+      ];
+
+    default:
+      return [];
+  }
+};
+
 interface UserFormData {
   username: string;
   password?: string;
   role: UserRole;
   realName: string;
-  idCard?: string;
   phone?: string;
   email?: string;
   status?: 'active' | 'inactive' | 'suspended';
@@ -91,6 +171,7 @@ const UserManagement: React.FC = () => {
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [resetPasswordUserId, setResetPasswordUserId] = useState<number | null>(null);
   const [filters, setFilters] = useState<{ role?: string; status?: string }>({});
+  const [searchText, setSearchText] = useState<string>('');
 
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
@@ -115,22 +196,48 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   }, [filters]);
 
+  // 检查当前用户是否有权限查看某个角色的统计
+  const canViewRoleStats = (role: string): boolean => {
+    const viewableRoles = getViewableRoles(currentUser?.role as UserRole);
+    return viewableRoles.some(r => r.value === role);
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response = await userManagementApi.getAllUsers(filters);
       setUsers(response.users || []);
 
-      // Calculate statistics
+      // Get viewable roles for current user
+      const viewableRoles = getViewableRoles(currentUser?.role as UserRole);
+      const viewableRoleValues = viewableRoles.map(r => r.value);
+
+      // Calculate statistics - only for roles current user can view
       const total = response.users?.length || 0;
-      const students = response.users?.filter((u: User) => u.role === 'student').length || 0;
-      const teachers = response.users?.filter((u: User) => u.role === 'teacher').length || 0;
-      const schoolAdmins = response.users?.filter((u: User) => u.role === 'school_admin').length || 0;
-      const districtAdmins = response.users?.filter((u: User) => u.role === 'district_admin').length || 0;
-      const municipalSchoolAdmins = response.users?.filter((u: User) => u.role === 'municipal_school_admin').length || 0;
-      const baseSchoolAdmins = response.users?.filter((u: User) => u.role === 'base_school_admin').length || 0;
-      const municipalAdmins = response.users?.filter((u: User) => u.role === 'municipal_admin').length || 0;
-      const systemAdmins = response.users?.filter((u: User) => u.role === 'system_admin').length || 0;
+      const students = viewableRoleValues.includes('student')
+        ? response.users?.filter((u: User) => u.role === 'student').length || 0
+        : 0;
+      const teachers = viewableRoleValues.includes('teacher')
+        ? response.users?.filter((u: User) => u.role === 'teacher').length || 0
+        : 0;
+      const schoolAdmins = viewableRoleValues.includes('school_admin')
+        ? response.users?.filter((u: User) => u.role === 'school_admin').length || 0
+        : 0;
+      const districtAdmins = viewableRoleValues.includes('district_admin')
+        ? response.users?.filter((u: User) => u.role === 'district_admin').length || 0
+        : 0;
+      const municipalSchoolAdmins = viewableRoleValues.includes('municipal_school_admin')
+        ? response.users?.filter((u: User) => u.role === 'municipal_school_admin').length || 0
+        : 0;
+      const baseSchoolAdmins = viewableRoleValues.includes('base_school_admin')
+        ? response.users?.filter((u: User) => u.role === 'base_school_admin').length || 0
+        : 0;
+      const municipalAdmins = viewableRoleValues.includes('municipal_admin')
+        ? response.users?.filter((u: User) => u.role === 'municipal_admin').length || 0
+        : 0;
+      const systemAdmins = viewableRoleValues.includes('system_admin')
+        ? response.users?.filter((u: User) => u.role === 'system_admin').length || 0
+        : 0;
       const active = response.users?.filter((u: User) => u.status === 'active').length || 0;
 
       setStatistics({
@@ -160,6 +267,15 @@ const UserManagement: React.FC = () => {
   };
 
   const handleEditUser = (user: User) => {
+    // 检查权限：不能编辑高于或等于自己权限的用户
+    const currentUserLevel = ROLE_HIERARCHY[currentUser?.role as UserRole] || 0;
+    const targetUserLevel = ROLE_HIERARCHY[user.role];
+
+    if (targetUserLevel >= currentUserLevel) {
+      message.warning('您无权编辑该用户，该用户权限高于或等于您的权限');
+      return;
+    }
+
     setEditingUser(user);
     setModalVisible(true);
     form.setFieldsValue({
@@ -169,7 +285,6 @@ const UserManagement: React.FC = () => {
       status: user.status,
       phone: user.phone,
       email: user.email,
-      idCard: user.id_card,
     });
   };
 
@@ -219,7 +334,6 @@ const UserManagement: React.FC = () => {
           password: values.password!,
           role: mapRoleToApiRole(values.role),
           realName: values.realName,
-          idCard: values.idCard,
           phone: values.phone,
           email: values.email,
         });
@@ -282,7 +396,7 @@ const UserManagement: React.FC = () => {
       case 'teacher': return '教师';
       case 'school_admin': return '校级管理员';
       case 'district_admin': return '区级管理员';
-      case 'municipal_school_admin': return '市直属学校总管理员';
+      case 'municipal_school_admin': return '市直属学校管理员';
       case 'base_school_admin': return '基地校管理员';
       case 'municipal_admin': return '市级总管理员';
       case 'system_admin': return '系统总管理员';
@@ -299,6 +413,17 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // 过滤用户数据（基于搜索文本）
+  const filteredUsers = users.filter(user => {
+    if (!searchText) return true;
+    const search = searchText.toLowerCase();
+    return (
+      user.phone?.toLowerCase().includes(search) ||
+      user.real_name?.toLowerCase().includes(search) ||
+      user.school_name?.toLowerCase().includes(search)
+    );
+  });
+
   const columns = [
     {
       title: 'ID',
@@ -313,7 +438,7 @@ const UserManagement: React.FC = () => {
       width: 150,
     },
     {
-      title: '真实姓名',
+      title: '姓名',
       dataIndex: 'real_name',
       key: 'real_name',
       width: 120,
@@ -328,16 +453,7 @@ const UserManagement: React.FC = () => {
           {getRoleName(role)}
         </Tag>
       ),
-      filters: [
-        { text: '学生', value: 'student' },
-        { text: '教师', value: 'teacher' },
-        { text: '校级管理员', value: 'school_admin' },
-        { text: '区级管理员', value: 'district_admin' },
-        { text: '市直属学校总管理员', value: 'municipal_school_admin' },
-        { text: '基地校管理员', value: 'base_school_admin' },
-        { text: '市级总管理员', value: 'municipal_admin' },
-        { text: '系统总管理员', value: 'system_admin' },
-      ],
+      filters: getViewableRoles(currentUser?.role as UserRole),
       onFilter: (value: any, record: User) => record.role === value,
     },
     {
@@ -452,26 +568,30 @@ const UserManagement: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="学生"
-              value={statistics.students}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="教师"
-              value={statistics.teachers}
-              prefix={<TeamOutlined />}
-              valueStyle={{ color: '#1677ff' }}
-            />
-          </Card>
-        </Col>
+        {canViewRoleStats('student') && (
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="学生"
+                value={statistics.students}
+                prefix={<UserOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+        )}
+        {canViewRoleStats('teacher') && (
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="教师"
+                value={statistics.teachers}
+                prefix={<TeamOutlined />}
+                valueStyle={{ color: '#1677ff' }}
+              />
+            </Card>
+          </Col>
+        )}
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
@@ -485,58 +605,75 @@ const UserManagement: React.FC = () => {
       </Row>
 
       {/* Admin Statistics */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="校级管理员"
-              value={statistics.schoolAdmins}
-              prefix={<CrownOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="区级管理员"
-              value={statistics.districtAdmins}
-              prefix={<CrownOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="基地校管理员"
-              value={statistics.baseSchoolAdmins}
-              prefix={<CrownOutlined />}
-              valueStyle={{ color: '#eb2f96' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="市级管理员"
-              value={statistics.municipalAdmins + statistics.municipalSchoolAdmins}
-              prefix={<CrownOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="系统总管理员"
-              value={statistics.systemAdmins}
-              prefix={<CrownOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      {(canViewRoleStats('school_admin') ||
+        canViewRoleStats('district_admin') ||
+        canViewRoleStats('base_school_admin') ||
+        canViewRoleStats('municipal_school_admin') ||
+        canViewRoleStats('municipal_admin') ||
+        canViewRoleStats('system_admin')) && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          {canViewRoleStats('school_admin') && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="校级管理员"
+                  value={statistics.schoolAdmins}
+                  prefix={<CrownOutlined />}
+                  valueStyle={{ color: '#fa8c16' }}
+                />
+              </Card>
+            </Col>
+          )}
+          {canViewRoleStats('district_admin') && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="区级管理员"
+                  value={statistics.districtAdmins}
+                  prefix={<CrownOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+          )}
+          {canViewRoleStats('base_school_admin') && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="基地校管理员"
+                  value={statistics.baseSchoolAdmins}
+                  prefix={<CrownOutlined />}
+                  valueStyle={{ color: '#eb2f96' }}
+                />
+              </Card>
+            </Col>
+          )}
+          {(canViewRoleStats('municipal_admin') || canViewRoleStats('municipal_school_admin')) && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="市级管理员"
+                  value={statistics.municipalAdmins + statistics.municipalSchoolAdmins}
+                  prefix={<CrownOutlined />}
+                  valueStyle={{ color: '#ff4d4f' }}
+                />
+              </Card>
+            </Col>
+          )}
+          {canViewRoleStats('system_admin') && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="系统总管理员"
+                  value={statistics.systemAdmins}
+                  prefix={<CrownOutlined />}
+                  valueStyle={{ color: '#faad14' }}
+                />
+              </Card>
+            </Col>
+          )}
+        </Row>
+      )}
 
       <Card>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -554,6 +691,13 @@ const UserManagement: React.FC = () => {
             >
               刷新
             </Button>
+            <Input.Search
+              placeholder="搜索手机号/姓名/学校"
+              allowClear
+              style={{ width: 250 }}
+              onChange={(e) => setSearchText(e.target.value)}
+              onSearch={(value) => setSearchText(value)}
+            />
           </Space>
 
           <Space>
@@ -563,14 +707,9 @@ const UserManagement: React.FC = () => {
               style={{ width: 180 }}
               onChange={(value) => setFilters(prev => ({ ...prev, role: value }))}
             >
-              <Option value="student">学生</Option>
-              <Option value="teacher">教师</Option>
-              <Option value="school_admin">校级管理员</Option>
-              <Option value="district_admin">区级管理员</Option>
-              <Option value="municipal_school_admin">市直属学校总管理员</Option>
-              <Option value="base_school_admin">基地校管理员</Option>
-              <Option value="municipal_admin">市级总管理员</Option>
-              <Option value="system_admin">系统总管理员</Option>
+              {getViewableRoles(currentUser?.role as UserRole).map(role => (
+                <Option key={role.value} value={role.value}>{role.text}</Option>
+              ))}
             </Select>
             <Select
               placeholder="筛选状态"
@@ -587,11 +726,11 @@ const UserManagement: React.FC = () => {
 
         <Table
           columns={columns}
-          dataSource={users}
+          dataSource={filteredUsers}
           rowKey="id"
           loading={loading}
           pagination={{
-            total: users.length,
+            total: filteredUsers.length,
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
@@ -662,16 +801,17 @@ const UserManagement: React.FC = () => {
                 name="role"
                 label="角色"
                 rules={[{ required: true, message: '请选择角色' }]}
+                tooltip={editingUser?.role === 'student' ? '学生角色不可更改' : '只能设置低于自己权限的角色'}
               >
-                <Select placeholder="请选择角色">
-                  <Option value="student">学生</Option>
-                  <Option value="teacher">教师</Option>
-                  <Option value="school_admin">校级管理员</Option>
-                  <Option value="district_admin">区级管理员</Option>
-                  <Option value="municipal_school_admin">市直属学校总管理员</Option>
-                  <Option value="base_school_admin">基地校管理员</Option>
-                  <Option value="municipal_admin">市级总管理员</Option>
-                  <Option value="system_admin">系统总管理员</Option>
+                <Select
+                  placeholder="请选择角色"
+                  disabled={editingUser?.role === 'student'}
+                >
+                  {getManageableRoles(currentUser?.role as UserRole).map(roleOption => (
+                    <Option key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -722,19 +862,6 @@ const UserManagement: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-
-          <Form.Item
-            name="idCard"
-            label="身份证号"
-            rules={[
-              {
-                pattern: /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/,
-                message: '请输入正确的身份证号格式',
-              },
-            ]}
-          >
-            <Input placeholder="请输入身份证号（可选）" />
-          </Form.Item>
         </Form>
       </Modal>
 

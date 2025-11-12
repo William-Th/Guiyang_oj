@@ -8,8 +8,8 @@ setup('authenticate as student', async ({ page }) => {
   // Click student tab (default, but click to be explicit)
   await page.click('text=学生入口');
 
-  // Fill in student credentials (using demo account - phone number login)
-  // Note: Students now login with phone number instead of ID card
+  // Fill in student credentials (using phone number login)
+  // Note: Students now login with phone number only (ID card field removed)
   await page.fill('input[placeholder="手机号"]', '13800138003');
   await page.fill('input[placeholder="密码"]', 'password123');
 
@@ -30,16 +30,17 @@ setup('authenticate as teacher', async ({ page }) => {
   // Perform authentication steps for teacher
   await page.goto('/login');
 
-  // Click teacher tab and wait for it to be active
+  // Click teacher tab and wait for animation
   await page.click('text=教师入口');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
 
-  // Fill username and password - use .last() to target the second (teacher) tab's inputs
-  await page.locator('input[placeholder="用户名"]').last().fill('teacher01');
-  await page.locator('input[placeholder="密码"]').last().fill('password123');
+  // Fill username and password - use placeholder to target the right inputs in active tab
+  const activeTabPane = page.locator('.ant-tabs-tabpane-active');
+  await activeTabPane.locator('input[placeholder="用户名"]').fill('teacher_yy_ps_math');
+  await activeTabPane.locator('input[placeholder="密码"]').fill('password123');
 
-  // Click login button - use .last() to get teacher tab's button
-  await page.locator('button[type="submit"]').last().click();
+  // Click login button within active tab
+  await activeTabPane.locator('button[type="submit"]').click();
 
   // Wait for successful login and redirect
   await page.waitForURL('/', { timeout: 15000 });
@@ -55,16 +56,17 @@ setup('authenticate as admin', async ({ page }) => {
   // Perform authentication steps for admin
   await page.goto('/login');
 
-  // Click teacher tab (admin uses same login as teachers)
+  // Click teacher tab (admin uses same login as teachers) and wait for animation
   await page.click('text=教师入口');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
 
-  // Fill username and password - use .last() to target the second (teacher) tab's inputs
-  await page.locator('input[placeholder="用户名"]').last().fill('admin');
-  await page.locator('input[placeholder="密码"]').last().fill('password123');
+  // Fill username and password - use placeholder to target the right inputs in active tab
+  const activeTabPane = page.locator('.ant-tabs-tabpane-active');
+  await activeTabPane.locator('input[placeholder="用户名"]').fill('admin');
+  await activeTabPane.locator('input[placeholder="密码"]').fill('password123');
 
-  // Click login button - use .last() to get teacher tab's button
-  await page.locator('button[type="submit"]').last().click();
+  // Click login button within active tab
+  await activeTabPane.locator('button[type="submit"]').click();
 
   // Wait for successful login and redirect (admin redirects to /admin/home)
   await page.waitForURL(/\/(admin\/home)?/, { timeout: 15000 });

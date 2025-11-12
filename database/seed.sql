@@ -42,21 +42,66 @@ INSERT INTO users (username, password, role, real_name, phone, email) VALUES
 INSERT INTO users (username, password, role, real_name, phone, email) VALUES
 ('base_school_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'base_school_admin', '信息技术基地校管理员', '13800138040', 'base@guiyang.edu');
 
--- Insert sample teacher users
+-- Insert school-specific teacher users (3 districts × 3 schools × 2 subjects = 18 teachers)
+-- All passwords: password123
+-- Districts: BY (白云区), NM (南明区), YY (云岩区)
+-- Subjects: 数学 (Math), 信息科技 (Information Technology)
+
+-- 白云区 (Baiyun District) - 6 teachers
 INSERT INTO users (username, password, role, real_name, phone, email) VALUES
-('teacher01', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '李老师', '13800138001', 'teacher01@guiyang.edu'),
-('teacher02', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '王老师', '13800138002', 'teacher02@guiyang.edu');
+('teacher_by_ps_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '陈刚-白云一小', '13800138101', 'teacher_by_ps_math@guiyang.edu'),
+('teacher_by_ps_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '李敏-白云一小', '13800138102', 'teacher_by_ps_it@guiyang.edu'),
+('teacher_by_ms_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '张华-白云一中', '13800138103', 'teacher_by_ms_math@guiyang.edu'),
+('teacher_by_ms_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '王芳-白云一中', '13800138104', 'teacher_by_ms_it@guiyang.edu'),
+('teacher_by_hs_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '刘强-白云一高', '13800138105', 'teacher_by_hs_math@guiyang.edu'),
+('teacher_by_hs_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '杨丽-白云一高', '13800138106', 'teacher_by_hs_it@guiyang.edu'),
 
--- Insert sample student users with ID cards
-INSERT INTO users (username, password, role, real_name, id_card, phone, email) VALUES
-('520102200801011234', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '张小明', '520102200801011234', '13800138003', 'student01@example.com'),
-('520102200802012345', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '李小红', '520102200802012345', '13800138004', 'student02@example.com'),
-('520102200803013456', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '王小刚', '520102200803013456', '13800138005', 'student03@example.com');
+-- 南明区 (Nanming District) - 6 teachers
+('teacher_nm_ps_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '赵勇-南明一小', '13800138111', 'teacher_nm_ps_math@guiyang.edu'),
+('teacher_nm_ps_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '孙静-南明一小', '13800138112', 'teacher_nm_ps_it@guiyang.edu'),
+('teacher_nm_ms_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '周杰-南明一中', '13800138113', 'teacher_nm_ms_math@guiyang.edu'),
+('teacher_nm_ms_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '吴梅-南明一中', '13800138114', 'teacher_nm_ms_it@guiyang.edu'),
+('teacher_nm_hs_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '郑鹏-南明一高', '13800138115', 'teacher_nm_hs_math@guiyang.edu'),
+('teacher_nm_hs_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '冯娟-南明一高', '13800138116', 'teacher_nm_hs_it@guiyang.edu'),
 
--- Insert teacher records
+-- 云岩区 (Yunyan District) - 6 teachers
+('teacher_yy_ps_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '蒋磊-云岩一小', '13800138121', 'teacher_yy_ps_math@guiyang.edu'),
+('teacher_yy_ps_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '韩雪-云岩一小', '13800138122', 'teacher_yy_ps_it@guiyang.edu'),
+('teacher_yy_ms_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '曹斌-云岩一中', '13800138123', 'teacher_yy_ms_math@guiyang.edu'),
+('teacher_yy_ms_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '许红-云岩一中', '13800138124', 'teacher_yy_ms_it@guiyang.edu'),
+('teacher_yy_hs_math', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '邓涛-云岩一高', '13800138125', 'teacher_yy_hs_math@guiyang.edu'),
+('teacher_yy_hs_it', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'teacher', '夏婷-云岩一高', '13800138126', 'teacher_yy_hs_it@guiyang.edu');
+
+-- Insert sample student users (using phone number as username)
+INSERT INTO users (username, password, role, real_name, phone, email) VALUES
+('13800138003', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '张小明', '13800138003', 'student01@example.com'),
+('13800138004', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '李小红', '13800138004', 'student02@example.com'),
+('13800138005', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '王小刚', '13800138005', 'student03@example.com');
+
+-- Insert teacher records (18 teachers for 3 districts)
+-- School mapping: school_id 1 (云岩区), 2 (南明区), 4 (白云区)
 INSERT INTO teachers (user_id, teacher_no, school_id, subjects, title) VALUES
-((SELECT id FROM users WHERE username = 'teacher01'), 'T001', 1, ARRAY['语文', '数学'], '高级教师'),
-((SELECT id FROM users WHERE username = 'teacher02'), 'T002', 1, ARRAY['科学', '英语'], '中级教师');
+-- 白云区 teachers (school_id = 4)
+((SELECT id FROM users WHERE username = 'teacher_by_ps_math'), 'T_BY_PS_MATH', 4, ARRAY['数学'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_by_ps_it'), 'T_BY_PS_IT', 4, ARRAY['信息科技'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_by_ms_math'), 'T_BY_MS_MATH', 4, ARRAY['数学'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_by_ms_it'), 'T_BY_MS_IT', 4, ARRAY['信息科技'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_by_hs_math'), 'T_BY_HS_MATH', 4, ARRAY['数学'], '高级教师'),
+((SELECT id FROM users WHERE username = 'teacher_by_hs_it'), 'T_BY_HS_IT', 4, ARRAY['信息科技'], '高级教师'),
+-- 南明区 teachers (school_id = 2)
+((SELECT id FROM users WHERE username = 'teacher_nm_ps_math'), 'T_NM_PS_MATH', 2, ARRAY['数学'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_nm_ps_it'), 'T_NM_PS_IT', 2, ARRAY['信息科技'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_nm_ms_math'), 'T_NM_MS_MATH', 2, ARRAY['数学'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_nm_ms_it'), 'T_NM_MS_IT', 2, ARRAY['信息科技'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_nm_hs_math'), 'T_NM_HS_MATH', 2, ARRAY['数学'], '高级教师'),
+((SELECT id FROM users WHERE username = 'teacher_nm_hs_it'), 'T_NM_HS_IT', 2, ARRAY['信息科技'], '高级教师'),
+-- 云岩区 teachers (school_id = 1)
+((SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'T_YY_PS_MATH', 1, ARRAY['数学'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_yy_ps_it'), 'T_YY_PS_IT', 1, ARRAY['信息科技'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_yy_ms_math'), 'T_YY_MS_MATH', 1, ARRAY['数学'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_yy_ms_it'), 'T_YY_MS_IT', 1, ARRAY['信息科技'], '中级教师'),
+((SELECT id FROM users WHERE username = 'teacher_yy_hs_math'), 'T_YY_HS_MATH', 1, ARRAY['数学'], '高级教师'),
+((SELECT id FROM users WHERE username = 'teacher_yy_hs_it'), 'T_YY_HS_IT', 1, ARRAY['信息科技'], '高级教师');
 
 -- Insert student records
 INSERT INTO students (user_id, student_no, school_id, grade, class, guardian_name, guardian_phone) VALUES
@@ -80,57 +125,43 @@ INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
 INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
 ((SELECT id FROM users WHERE username = 'base_school_admin'), 5, '{"school": "贵阳市信息技术基地校", "permissions": ["manage_students", "manage_teachers", "manage_exams", "manage_level_5_6_exams", "view_reports"]}');
 
--- Insert sample exams
+-- Insert sample exams (using new school-specific teachers)
 INSERT INTO exams (title, description, subject, grade, start_time, end_time, duration, total_score, pass_score, status, created_by) VALUES
-('2024年春季语文期中考试', '三年级语文期中测试，包含阅读理解、写作等内容', '语文', '三年级', 
- '2024-03-15 09:00:00', '2024-03-15 11:00:00', 90, 100, 60, 'published', 
- (SELECT id FROM users WHERE username = 'teacher01')),
- 
 ('2024年春季数学期中考试', '三年级数学期中测试，包含计算、应用题等内容', '数学', '三年级',
  '2024-03-16 09:00:00', '2024-03-16 10:30:00', 60, 100, 60, 'published',
- (SELECT id FROM users WHERE username = 'teacher01')),
- 
-('2024年春季科学测验', '三年级科学测验，包含基础科学知识', '科学', '三年级',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_math')),
+
+('2024年春季信息科技测验', '三年级信息科技测验，包含基础计算机知识', '信息科技', '三年级',
  '2024-03-17 14:00:00', '2024-03-17 15:00:00', 45, 100, 60, 'ongoing',
- (SELECT id FROM users WHERE username = 'teacher02'));
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_it'));
 
--- Insert sample questions for language exam
+-- Insert sample questions for math exam (exam_id=1)
 INSERT INTO questions (exam_id, type, content, options, correct_answer, score, order_no, difficulty) VALUES
-(1, 'single', '下列哪个字的读音是正确的？', 
- '["A. 着(zháo)急", "B. 着(zhe)急", "C. 着(zhāo)急", "D. 着(zhuó)急"]', 
- 'A', 5, 1, 'easy'),
-
-(1, 'single', '"春眠不觉晓"的下一句是？', 
- '["A. 处处闻啼鸟", "B. 夜来风雨声", "C. 花落知多少", "D. 鸟语花香时"]', 
- 'A', 5, 2, 'medium'),
-
-(1, 'multiple', '下列哪些是描写春天的词语？（多选）', 
- '["A. 春暖花开", "B. 秋高气爽", "C. 万物复苏", "D. 雪花飞舞", "E. 鸟语花香"]', 
- 'A,C,E', 10, 3, 'medium');
-
--- Insert sample questions for math exam
-INSERT INTO questions (exam_id, type, content, options, correct_answer, score, order_no, difficulty) VALUES
-(2, 'single', '3 + 5 = ?', 
- '["A. 6", "B. 7", "C. 8", "D. 9"]', 
+(1, 'single', '3 + 5 = ?',
+ '["A. 6", "B. 7", "C. 8", "D. 9"]',
  'C', 5, 1, 'easy'),
 
-(2, 'single', '小明有12个苹果，吃了3个，还剩几个？', 
- '["A. 8个", "B. 9个", "C. 10个", "D. 15个"]', 
+(1, 'single', '小明有12个苹果，吃了3个，还剩几个？',
+ '["A. 8个", "B. 9个", "C. 10个", "D. 15个"]',
  'B', 5, 2, 'easy'),
 
-(2, 'single', '一个正方形的边长是4厘米，它的周长是多少？', 
- '["A. 12厘米", "B. 16厘米", "C. 20厘米", "D. 8厘米"]', 
+(1, 'single', '一个正方形的边长是4厘米，它的周长是多少？',
+ '["A. 12厘米", "B. 16厘米", "C. 20厘米", "D. 8厘米"]',
  'B', 10, 3, 'medium');
 
--- Insert sample questions for science exam
+-- Insert sample questions for IT exam (exam_id=2)
 INSERT INTO questions (exam_id, type, content, options, correct_answer, score, order_no, difficulty) VALUES
-(3, 'single', '植物生长需要哪些基本条件？', 
- '["A. 只要阳光", "B. 只要水分", "C. 阳光、水分、空气", "D. 只要土壤"]', 
- 'C', 10, 1, 'medium'),
+(2, 'single', '计算机的中央处理器的英文缩写是什么？',
+ '["A. GPU", "B. CPU", "C. RAM", "D. ROM"]',
+ 'B', 10, 1, 'easy'),
 
-(3, 'single', '下列哪种动物是哺乳动物？', 
- '["A. 鸟类", "B. 鱼类", "C. 狗", "D. 蛇"]', 
- 'C', 10, 2, 'easy');
+(2, 'single', '鼠标是计算机的什么设备？',
+ '["A. 输入设备", "B. 输出设备", "C. 存储设备", "D. 处理设备"]',
+ 'A', 10, 2, 'easy'),
+
+(2, 'single', '以下哪个软件可以用来制作演示文稿？',
+ '["A. Word", "B. Excel", "C. PowerPoint", "D. 画图"]',
+ 'C', 10, 3, 'medium');
 
 -- Insert some sample announcements
 INSERT INTO announcements (title, content, type, target_audience, is_pinned, created_by, published_at) VALUES
@@ -152,9 +183,28 @@ INSERT INTO announcements (title, content, type, target_audience, is_pinned, cre
 -- 市直属学校总管理员: username=municipal_school_admin, password=password123
 -- 基地校管理员: username=base_school_admin, password=password123
 --
--- 教师账号:
--- Teacher: username=teacher01, password=password123
--- Teacher: username=teacher02, password=password123
+-- 教师账号 (18 teachers - 3 districts × 3 schools × 2 subjects):
+-- 白云区 (6):
+--   username=teacher_by_ps_math (陈刚-白云一小, 数学), password=password123
+--   username=teacher_by_ps_it (李敏-白云一小, 信息科技), password=password123
+--   username=teacher_by_ms_math (张华-白云一中, 数学), password=password123
+--   username=teacher_by_ms_it (王芳-白云一中, 信息科技), password=password123
+--   username=teacher_by_hs_math (刘强-白云一高, 数学), password=password123
+--   username=teacher_by_hs_it (杨丽-白云一高, 信息科技), password=password123
+-- 南明区 (6):
+--   username=teacher_nm_ps_math (赵勇-南明一小, 数学), password=password123
+--   username=teacher_nm_ps_it (孙静-南明一小, 信息科技), password=password123
+--   username=teacher_nm_ms_math (周杰-南明一中, 数学), password=password123
+--   username=teacher_nm_ms_it (吴梅-南明一中, 信息科技), password=password123
+--   username=teacher_nm_hs_math (郑鹏-南明一高, 数学), password=password123
+--   username=teacher_nm_hs_it (冯娟-南明一高, 信息科技), password=password123
+-- 云岩区 (6):
+--   username=teacher_yy_ps_math (蒋磊-云岩一小, 数学), password=password123
+--   username=teacher_yy_ps_it (韩雪-云岩一小, 信息科技), password=password123
+--   username=teacher_yy_ms_math (曹斌-云岩一中, 数学), password=password123
+--   username=teacher_yy_ms_it (许红-云岩一中, 信息科技), password=password123
+--   username=teacher_yy_hs_math (邓涛-云岩一高, 数学), password=password123
+--   username=teacher_yy_hs_it (夏婷-云岩一高, 信息科技), password=password123
 --
 -- 学生账号:
 -- Student: ID card=520102200801011234, password=password123

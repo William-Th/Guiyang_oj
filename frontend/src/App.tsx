@@ -26,6 +26,8 @@ import AssessmentManagementPage from './pages/admin/AssessmentManagementPage';
 import RegistrationApprovalPage from './pages/admin/RegistrationApprovalPage';
 import GradingListPage from './pages/teacher/GradingListPage';
 import GradingDetailPage from './pages/teacher/GradingDetailPage';
+import ReviewWorkbench from './pages/teacher/ReviewWorkbench';
+import AchievementManagementPage from './pages/admin/AchievementManagementPage';
 
 const App: React.FC = () => {
   return (
@@ -56,6 +58,7 @@ const App: React.FC = () => {
               <Route path="users" element={<UserManagement />} />
               <Route path="permissions" element={<PermissionManagement />} />
               <Route path="registration-approval" element={<RegistrationApprovalPage />} />
+              <Route path="achievements" element={<AchievementManagementPage />} />
             </Route>
 
             {/* 学生路由 */}
@@ -82,6 +85,7 @@ const App: React.FC = () => {
                 <Route path=":id" element={<ActivityDetailPage />} />
                 <Route path=":id/paper" element={<PaperGenerationPage />} />
               </Route>
+              <Route path="review-workbench" element={<ReviewWorkbench />} />
               <Route path="grading">
                 <Route index element={<GradingListPage />} />
                 <Route path=":id" element={<GradingDetailPage />} />

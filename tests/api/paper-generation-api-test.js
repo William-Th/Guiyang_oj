@@ -5,11 +5,11 @@
  *
  * 测试范围:
  * - 获取可用题目列表
- * - 添加题目到活动
+ * - 添加题目到活�?
  * - 批量添加题目
  * - 移除题目
  * - 批量删除题目
- * - 更新题目属性
+ * - 更新题目属�?
  * - 重排题目顺序
  * - 获取活动试卷
  * - 获取试卷统计
@@ -24,7 +24,7 @@ const http = require('http');
 
 // 配置
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-const TIMEOUT = 10000; // 10秒超时
+const TIMEOUT = 10000; // 10秒超�?
 
 // 测试数据
 let authTokens = {
@@ -110,18 +110,18 @@ function makeRequest(options, postData = null) {
  */
 async function test(name, fn) {
   results.total++;
-  process.stdout.write(`  ${colors.cyan}→${colors.reset} ${name} ... `);
+  process.stdout.write(`  ${colors.cyan}�?{colors.reset} ${name} ... `);
 
   try {
     await fn();
     results.passed++;
     results.tests.push({ name, status: 'passed' });
-    console.log(`${colors.green}✓ PASSED${colors.reset}`);
+    console.log(`${colors.green}�?PASSED${colors.reset}`);
     return true;
   } catch (error) {
     results.failed++;
     results.tests.push({ name, status: 'failed', error: error.message });
-    console.log(`${colors.red}✗ FAILED${colors.reset}`);
+    console.log(`${colors.red}�?FAILED${colors.reset}`);
     console.log(`    ${colors.red}Error: ${error.message}${colors.reset}`);
     return false;
   }
@@ -162,7 +162,7 @@ async function createTestActivity(token) {
     title: `组卷测试活动-${timestamp}`,
     description: '用于测试组卷功能',
     subject: '数学',
-    grade: '二年级',
+    grade: '二年�?,
     abilityLevel: 'L1',
     totalScore: 100,
     passScore: 60,
@@ -190,7 +190,7 @@ async function createTestActivity(token) {
 /**
  * 获取可用题目（用于测试）
  */
-async function getPublishedQuestions(token, subject = '数学', grade = '二年级', limit = 10) {
+async function getPublishedQuestions(token, subject = '数学', grade = '二年�?, limit = 10) {
   const res = await makeRequest({
     path: '/api/question-bank',
     method: 'GET',
@@ -223,7 +223,7 @@ async function runTests() {
   console.log(`${colors.cyan}[1] Authentication Tests${colors.reset}`);
 
   await test('Login as teacher', async () => {
-    authTokens.teacher = await login('teacher01', 'password123');
+    authTokens.teacher = await login('teacher_yy_ps_math', 'password123');
   });
 
   await test('Login as admin', async () => {
@@ -239,7 +239,7 @@ async function runTests() {
   });
 
   await test('Get published questions for testing', async () => {
-    testData.questionIds = await getPublishedQuestions(authTokens.teacher, '数学', '二年级', 10);
+    testData.questionIds = await getPublishedQuestions(authTokens.teacher, '数学', '二年�?, 10);
     assert(testData.questionIds.length >= 5, `Need at least 5 questions for testing, got ${testData.questionIds.length}`);
   });
 
@@ -622,7 +622,7 @@ function printResults() {
   if (results.failed > 0) {
     console.log(`\n${colors.red}Failed Tests:${colors.reset}`);
     results.tests.filter(t => t.status === 'failed').forEach(t => {
-      console.log(`  ${colors.red}✗${colors.reset} ${t.name}`);
+      console.log(`  ${colors.red}�?{colors.reset} ${t.name}`);
       console.log(`    Error: ${t.error}`);
     });
   }
@@ -632,7 +632,7 @@ function printResults() {
 }
 
 /**
- * 主函数
+ * 主函�?
  */
 async function main() {
   try {

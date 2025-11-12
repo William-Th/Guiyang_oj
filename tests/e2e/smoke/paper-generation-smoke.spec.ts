@@ -16,7 +16,7 @@ async function loginAsTeacher(page: any) {
   await page.waitForTimeout(500); // Wait for tab switch animation
 
   // Use .last() to target the teacher tab's inputs (both tabs have inputs with same placeholder)
-  await page.locator('input[placeholder="用户名"]').last().fill('teacher01');
+  await page.locator('input[placeholder="用户名"]').last().fill('teacher_yy_ps_math');
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   // Use .last() to click the teacher tab's submit button
@@ -50,7 +50,7 @@ test.describe('组卷功能 - 冒烟测试', () => {
     await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000 });
     await page.waitForLoadState('networkidle');
 
-    // 等待并点击组卷按钮 (use regex to handle potential spaces between characters)
+    // 等待并点击组卷按钮(use regex to handle potential spaces between characters)
     const paperButton = page.locator('button').filter({ hasText: /组\s*卷/ });
     await expect(paperButton).toBeVisible({ timeout: 10000 });
     await paperButton.click();
