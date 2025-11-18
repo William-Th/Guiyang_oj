@@ -125,17 +125,19 @@ INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
 INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
 ((SELECT id FROM users WHERE username = 'base_school_admin'), 5, '{"school": "贵阳市信息技术基地校", "permissions": ["manage_students", "manage_teachers", "manage_exams", "manage_level_5_6_exams", "view_reports"]}');
 
--- Insert sample exams (using new school-specific teachers)
-INSERT INTO exams (title, description, subject, grade, start_time, end_time, duration, total_score, pass_score, status, created_by) VALUES
-('2024年春季数学期中考试', '三年级数学期中测试，包含计算、应用题等内容', '数学', '三年级',
- '2024-03-16 09:00:00', '2024-03-16 10:30:00', 60, 100, 60, 'published',
- (SELECT id FROM users WHERE username = 'teacher_yy_ps_math')),
+-- Insert sample activities (using new school-specific teachers)
+-- Note: 系统已从 exams 表迁移到 activities 表
+INSERT INTO activities (title, description, subject, grade, type, time_limit_type, start_time, end_time, total_score, pass_score, status, created_by, scope, ability_level) VALUES
+('2024年春季数学期中考试', '三年级数学期中测试，包含计算、应用题等内容', '数学', '三年级', 'assessment', 'scheduled',
+ '2024-03-16 09:00:00', '2024-03-16 10:30:00', 100, 60, 'published',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'school', 'L3'),
 
-('2024年春季信息科技测验', '三年级信息科技测验，包含基础计算机知识', '信息科技', '三年级',
- '2024-03-17 14:00:00', '2024-03-17 15:00:00', 45, 100, 60, 'ongoing',
- (SELECT id FROM users WHERE username = 'teacher_yy_ps_it'));
+('2024年春季信息科技测验', '三年级信息科技测验，包含基础计算机知识', '信息科技', '三年级', 'practice', 'scheduled',
+ '2024-03-17 14:00:00', '2024-03-17 15:00:00', 100, 60, 'ongoing',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_it'), 'school', 'L3');
 
--- Insert sample questions for math exam (exam_id=1)
+-- Insert sample questions for math activity (exam_id=1, 对应第一个activity)
+-- Note: questions表仍使用exam_id字段，但现在关联到activities表
 INSERT INTO questions (exam_id, type, content, options, correct_answer, score, order_no, difficulty) VALUES
 (1, 'single', '3 + 5 = ?',
  '["A. 6", "B. 7", "C. 8", "D. 9"]',
@@ -149,7 +151,7 @@ INSERT INTO questions (exam_id, type, content, options, correct_answer, score, o
  '["A. 12厘米", "B. 16厘米", "C. 20厘米", "D. 8厘米"]',
  'B', 10, 3, 'medium');
 
--- Insert sample questions for IT exam (exam_id=2)
+-- Insert sample questions for IT activity (exam_id=2, 对应第二个activity)
 INSERT INTO questions (exam_id, type, content, options, correct_answer, score, order_no, difficulty) VALUES
 (2, 'single', '计算机的中央处理器的英文缩写是什么？',
  '["A. GPU", "B. CPU", "C. RAM", "D. ROM"]',
