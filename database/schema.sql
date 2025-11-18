@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Q5uIXjOhSt0asDbBgm2zWWMFgqN1v4bIRllzPMYatvJC1hd5hx5sYI9fGztc3i8
+\restrict H6cOo3FlA6NeWdh1FaM8snTKbAWOZQ0WEqa2kRLDQ5xEp7OwJ1mgZSaAtidMcUW
 
 -- Dumped from database version 15.14
 -- Dumped by pg_dump version 15.14
@@ -478,49 +478,6 @@ CREATE SEQUENCE public.achievement_progress_id_seq
 --
 
 ALTER SEQUENCE public.achievement_progress_id_seq OWNED BY public.achievement_progress.id;
-
-
---
--- Name: achievement_rule_versions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.achievement_rule_versions (
-    version_id integer NOT NULL,
-    achievement_id integer NOT NULL,
-    version_number character varying(20) NOT NULL,
-    rule_config json NOT NULL,
-    change_description text,
-    created_by integer,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    is_active boolean DEFAULT false
-);
-
-
---
--- Name: TABLE achievement_rule_versions; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.achievement_rule_versions IS '成就规则版本管理表';
-
-
---
--- Name: achievement_rule_versions_version_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.achievement_rule_versions_version_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: achievement_rule_versions_version_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.achievement_rule_versions_version_id_seq OWNED BY public.achievement_rule_versions.version_id;
 
 
 --
@@ -1748,72 +1705,6 @@ COMMENT ON VIEW public.permission_statistics IS '权限统计视图：按层级�
 
 
 --
--- Name: points_shop_items; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.points_shop_items (
-    item_id integer NOT NULL,
-    item_name character varying(100) NOT NULL,
-    item_desc text,
-    item_image character varying(255),
-    category character varying(50) NOT NULL,
-    points_price integer NOT NULL,
-    stock_quantity integer,
-    monthly_limit integer,
-    is_active boolean DEFAULT true,
-    validity_days integer,
-    extra_data json,
-    display_order integer DEFAULT 0,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_category CHECK (((category)::text = ANY ((ARRAY['physical'::character varying, 'virtual'::character varying, 'privilege'::character varying])::text[]))),
-    CONSTRAINT check_points_price CHECK ((points_price > 0)),
-    CONSTRAINT check_stock CHECK (((stock_quantity IS NULL) OR (stock_quantity >= 0)))
-);
-
-
---
--- Name: TABLE points_shop_items; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.points_shop_items IS '积分商城商品表';
-
-
---
--- Name: COLUMN points_shop_items.category; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.points_shop_items.category IS '商品分类：physical(实物)/virtual(虚拟)/privilege(特权)';
-
-
---
--- Name: COLUMN points_shop_items.stock_quantity; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.points_shop_items.stock_quantity IS '库存数量，NULL表示无限供应';
-
-
---
--- Name: points_shop_items_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.points_shop_items_item_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: points_shop_items_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.points_shop_items_item_id_seq OWNED BY public.points_shop_items.item_id;
-
-
---
 -- Name: points_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2041,67 +1932,6 @@ CREATE SEQUENCE public.questions_id_seq
 --
 
 ALTER SEQUENCE public.questions_id_seq OWNED BY public.questions.id;
-
-
---
--- Name: redemption_orders; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.redemption_orders (
-    order_id bigint NOT NULL,
-    order_number character varying(50) NOT NULL,
-    student_id integer NOT NULL,
-    item_id integer NOT NULL,
-    item_name character varying(100) NOT NULL,
-    item_category character varying(50) NOT NULL,
-    points_spent integer NOT NULL,
-    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
-    shipping_address text,
-    contact_phone character varying(20),
-    tracking_number character varying(100),
-    notes text,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    processing_at timestamp without time zone,
-    shipped_at timestamp without time zone,
-    completed_at timestamp without time zone,
-    cancelled_at timestamp without time zone,
-    cancel_reason text,
-    CONSTRAINT check_order_status CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'shipped'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))),
-    CONSTRAINT check_points_spent CHECK ((points_spent > 0))
-);
-
-
---
--- Name: TABLE redemption_orders; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.redemption_orders IS '积分兑换订单表';
-
-
---
--- Name: COLUMN redemption_orders.status; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.redemption_orders.status IS '订单状态：pending(待处理)/processing(处理中)/shipped(已发货)/completed(已完成)/cancelled(已取消)';
-
-
---
--- Name: redemption_orders_order_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.redemption_orders_order_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: redemption_orders_order_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.redemption_orders_order_id_seq OWNED BY public.redemption_orders.order_id;
 
 
 --
@@ -2847,13 +2677,6 @@ ALTER TABLE ONLY public.achievement_progress ALTER COLUMN id SET DEFAULT nextval
 
 
 --
--- Name: achievement_rule_versions version_id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.achievement_rule_versions ALTER COLUMN version_id SET DEFAULT nextval('public.achievement_rule_versions_version_id_seq'::regclass);
-
-
---
 -- Name: achievements achievement_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2945,13 +2768,6 @@ ALTER TABLE ONLY public.leaderboards ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
--- Name: points_shop_items item_id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.points_shop_items ALTER COLUMN item_id SET DEFAULT nextval('public.points_shop_items_item_id_seq'::regclass);
-
-
---
 -- Name: points_transactions transaction_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2984,13 +2800,6 @@ ALTER TABLE ONLY public.question_reviews ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 ALTER TABLE ONLY public.questions ALTER COLUMN id SET DEFAULT nextval('public.questions_id_seq'::regclass);
-
-
---
--- Name: redemption_orders order_id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.redemption_orders ALTER COLUMN order_id SET DEFAULT nextval('public.redemption_orders_order_id_seq'::regclass);
 
 
 --
@@ -3098,22 +2907,6 @@ ALTER TABLE ONLY public.achievement_progress
 
 ALTER TABLE ONLY public.achievement_progress
     ADD CONSTRAINT achievement_progress_student_id_achievement_id_key UNIQUE (student_id, achievement_id);
-
-
---
--- Name: achievement_rule_versions achievement_rule_versions_achievement_id_version_number_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.achievement_rule_versions
-    ADD CONSTRAINT achievement_rule_versions_achievement_id_version_number_key UNIQUE (achievement_id, version_number);
-
-
---
--- Name: achievement_rule_versions achievement_rule_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.achievement_rule_versions
-    ADD CONSTRAINT achievement_rule_versions_pkey PRIMARY KEY (version_id);
 
 
 --
@@ -3293,14 +3086,6 @@ ALTER TABLE ONLY public.leaderboards
 
 
 --
--- Name: points_shop_items points_shop_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.points_shop_items
-    ADD CONSTRAINT points_shop_items_pkey PRIMARY KEY (item_id);
-
-
---
 -- Name: points_transactions points_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3346,22 +3131,6 @@ ALTER TABLE ONLY public.question_reviews
 
 ALTER TABLE ONLY public.questions
     ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
-
-
---
--- Name: redemption_orders redemption_orders_order_number_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.redemption_orders
-    ADD CONSTRAINT redemption_orders_order_number_key UNIQUE (order_number);
-
-
---
--- Name: redemption_orders redemption_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.redemption_orders
-    ADD CONSTRAINT redemption_orders_pkey PRIMARY KEY (order_id);
 
 
 --
@@ -3599,20 +3368,6 @@ CREATE INDEX idx_achievement_progress_percentage ON public.achievement_progress 
 --
 
 CREATE INDEX idx_achievement_progress_student ON public.achievement_progress USING btree (student_id);
-
-
---
--- Name: idx_achievement_versions_achievement; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_achievement_versions_achievement ON public.achievement_rule_versions USING btree (achievement_id);
-
-
---
--- Name: idx_achievement_versions_active; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_achievement_versions_active ON public.achievement_rule_versions USING btree (is_active);
 
 
 --
@@ -4085,34 +3840,6 @@ CREATE INDEX idx_questions_exam_id ON public.questions USING btree (exam_id);
 
 
 --
--- Name: idx_redemption_orders_number; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_redemption_orders_number ON public.redemption_orders USING btree (order_number);
-
-
---
--- Name: idx_redemption_orders_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_redemption_orders_status ON public.redemption_orders USING btree (status);
-
-
---
--- Name: idx_redemption_orders_student; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_redemption_orders_student ON public.redemption_orders USING btree (student_id);
-
-
---
--- Name: idx_redemption_orders_time; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_redemption_orders_time ON public.redemption_orders USING btree (created_at DESC);
-
-
---
 -- Name: idx_registration_district; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4166,34 +3893,6 @@ CREATE INDEX idx_schools_district_id ON public.schools USING btree (district_id)
 --
 
 CREATE INDEX idx_schools_type ON public.schools USING btree (type);
-
-
---
--- Name: idx_shop_items_active; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_shop_items_active ON public.points_shop_items USING btree (is_active);
-
-
---
--- Name: idx_shop_items_category; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_shop_items_category ON public.points_shop_items USING btree (category);
-
-
---
--- Name: idx_shop_items_order; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_shop_items_order ON public.points_shop_items USING btree (display_order);
-
-
---
--- Name: idx_shop_items_price; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_shop_items_price ON public.points_shop_items USING btree (points_price);
 
 
 --
@@ -4589,13 +4288,6 @@ CREATE TRIGGER update_progress_percentage BEFORE INSERT OR UPDATE ON public.achi
 
 
 --
--- Name: points_shop_items update_shop_items_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_shop_items_updated_at BEFORE UPDATE ON public.points_shop_items FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
 -- Name: subjects update_subjects_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -4630,22 +4322,6 @@ ALTER TABLE ONLY public.achievement_progress
 
 ALTER TABLE ONLY public.achievement_progress
     ADD CONSTRAINT achievement_progress_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
-
-
---
--- Name: achievement_rule_versions achievement_rule_versions_achievement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.achievement_rule_versions
-    ADD CONSTRAINT achievement_rule_versions_achievement_id_fkey FOREIGN KEY (achievement_id) REFERENCES public.achievements(achievement_id) ON DELETE CASCADE;
-
-
---
--- Name: achievement_rule_versions achievement_rule_versions_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.achievement_rule_versions
-    ADD CONSTRAINT achievement_rule_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
 
 
 --
@@ -4869,22 +4545,6 @@ ALTER TABLE ONLY public.question_reviews
 
 ALTER TABLE ONLY public.questions
     ADD CONSTRAINT questions_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES public.activities(id) ON DELETE CASCADE;
-
-
---
--- Name: redemption_orders redemption_orders_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.redemption_orders
-    ADD CONSTRAINT redemption_orders_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.points_shop_items(item_id);
-
-
---
--- Name: redemption_orders redemption_orders_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.redemption_orders
-    ADD CONSTRAINT redemption_orders_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
 
 
 --
@@ -5115,5 +4775,5 @@ ALTER TABLE ONLY public.teachers
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Q5uIXjOhSt0asDbBgm2zWWMFgqN1v4bIRllzPMYatvJC1hd5hx5sYI9fGztc3i8
+\unrestrict H6cOo3FlA6NeWdh1FaM8snTKbAWOZQ0WEqa2kRLDQ5xEp7OwJ1mgZSaAtidMcUW
 

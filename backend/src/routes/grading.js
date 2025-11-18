@@ -18,6 +18,7 @@ const { authMiddleware } = require('../middleware/auth');
 const { body, param, validationResult } = require('express-validator');
 const logger = require('../utils/logger');
 const AutoGradingService = require('../services/autoGradingService');
+const EventEmitter = require('../services/EventEmitter');
 
 // ============================================================================
 // 1. 获取待评卷列表
@@ -33,7 +34,7 @@ router.get('/pending', authMiddleware, async (req, res) => {
     }
 
     const teacherId = req.user.id;
-    const { activityId, subject, grade, grading_status } = req.query;
+    const { activityId, subject, grade, grading_status, startDate, endDate, searchText } = req.query;
 
     // Build query
     let queryStr = `
@@ -83,6 +84,23 @@ router.get('/pending', authMiddleware, async (req, res) => {
     if (grading_status) {
       queryStr += ` AND sa.grading_status = $${++paramCount}`;
       params.push(grading_status);
+    }
+
+    // Date range filter
+    if (startDate) {
+      queryStr += ` AND sa.submit_time >= $${++paramCount}`;
+      params.push(startDate);
+    }
+
+    if (endDate) {
+      queryStr += ` AND sa.submit_time <= $${++paramCount}`;
+      params.push(endDate);
+    }
+
+    // Student search (name or username)
+    if (searchText) {
+      queryStr += ` AND (u.real_name ILIKE $${++paramCount} OR u.username ILIKE $${paramCount})`;
+      params.push(`%${searchText}%`);
     }
 
     queryStr += ' ORDER BY sa.submit_time DESC';
@@ -184,6 +202,8 @@ router.get('/student-activity/:id',
           qb.content as question_content,
           qb.options,
           qb.correct_answer,
+          qb.difficulty,
+          qb.explanation,
           aq.score as max_score,
           aq.order_index,
           grader.real_name as graded_by_name
@@ -195,39 +215,69 @@ router.get('/student-activity/:id',
         ORDER BY aq.order_index ASC
       `, [studentActivityId, studentActivity.activity_id]);
 
-      // Categorize answers
-      const objectiveQuestions = answersResult.rows.filter(a =>
-        ['single', 'multiple', 'fill_blank'].includes(a.question_type)
-      );
+      // Get activity total score
+      const activityResult = await query(`
+        SELECT total_score FROM activities WHERE id = $1
+      `, [studentActivity.activity_id]);
+      const totalScore = activityResult.rows[0]?.total_score || 0;
 
-      const subjectiveQuestions = answersResult.rows.filter(a =>
-        ['short_answer', 'programming'].includes(a.question_type)
-      );
+      // Transform data to match frontend expectations
+      const answers = answersResult.rows.map(row => ({
+        id: row.answer_id,
+        question_id: row.question_id,
+        answer: row.student_answer,
+        score: row.score,
+        is_correct: row.is_correct,
+        grading_status: row.grading_status,
+        feedback: row.feedback,
+        auto_score: row.auto_score,
+        manual_score: row.manual_score,
+        graded_by: row.graded_by,
+        graded_at: row.graded_at,
+        graded_by_name: row.graded_by_name
+      }));
+
+      const questions = answersResult.rows.map(row => ({
+        id: row.question_id,
+        code: row.question_code,
+        type: row.question_type,
+        content: row.question_content,
+        options: row.options,
+        correct_answer: row.correct_answer,
+        difficulty: row.difficulty,
+        explanation: row.explanation,
+        score: row.max_score
+      }));
 
       res.json({
         success: true,
         student_activity: {
           id: studentActivity.id,
           student_id: studentActivity.student_id,
-          student_name: studentActivity.student_name,
-          student_username: studentActivity.student_username,
           activity_id: studentActivity.activity_id,
-          activity_title: studentActivity.activity_title,
-          activity_type: studentActivity.activity_type,
-          subject: studentActivity.subject,
-          grade: studentActivity.grade,
           status: studentActivity.status,
           grading_status: studentActivity.grading_status,
           score: studentActivity.score,
           submit_time: studentActivity.submit_time,
           attempt_number: studentActivity.attempt_number
         },
-        objective_questions: objectiveQuestions,
-        subjective_questions: subjectiveQuestions,
+        student: {
+          id: studentActivity.student_id,
+          real_name: studentActivity.student_name,
+          username: studentActivity.student_username
+        },
+        activity: {
+          id: studentActivity.activity_id,
+          title: studentActivity.activity_title,
+          type: studentActivity.activity_type,
+          subject: studentActivity.subject,
+          grade: studentActivity.grade,
+          total_score: totalScore
+        },
+        answers: answers,
+        questions: questions,
         statistics: {
           total_questions: answersResult.rows.length,
-          objective_count: objectiveQuestions.length,
-          subjective_count: subjectiveQuestions.length,
           pending_count: answersResult.rows.filter(a => a.grading_status === 'pending').length,
           graded_count: answersResult.rows.filter(a => a.grading_status !== 'pending').length
         }
@@ -578,6 +628,59 @@ router.post('/student-activity/:id/complete',
       `, [studentActivityId]);
 
       logger.info(`Teacher ${teacherId} completed grading for student_activity ${studentActivityId}, final score: ${totalScore}`);
+
+      // 获取完整的活动信息以触发事件
+      const activityDetailsResult = await query(`
+        SELECT
+          sa.student_id,
+          sa.activity_id,
+          sa.score,
+          sa.submit_time,
+          a.type as activity_type,
+          a.subject,
+          a.grade,
+          a.total_score as max_score,
+          (SELECT COUNT(*) FROM answers WHERE student_exam_id = sa.id) as total_questions,
+          (SELECT COUNT(*) FROM answers WHERE student_exam_id = sa.id AND is_correct = true) as correct_answers
+        FROM student_activities sa
+        JOIN activities a ON sa.activity_id = a.id
+        WHERE sa.id = $1
+      `, [studentActivityId]);
+
+      if (activityDetailsResult.rows.length > 0) {
+        const details = activityDetailsResult.rows[0];
+
+        try {
+          // 触发活动完成事件
+          await EventEmitter.emitActivityCompleted(details.student_id, details.activity_id, {
+            score: totalScore,
+            totalQuestions: details.total_questions,
+            correctAnswers: details.correct_answers,
+            completedAt: details.submit_time,
+            activityType: details.activity_type,
+            subject: details.subject,
+            gradeLevel: details.grade
+          });
+
+          // 如果是满分，触发满分事件
+          if (totalScore >= details.max_score) {
+            await EventEmitter.emitCustom('student.perfect.score', {
+              studentId: details.student_id,
+              activityId: details.activity_id,
+              score: totalScore
+            }, 'GradingController');
+          }
+
+          // 如果是高分（>=90分），触发高分事件
+          else if (totalScore >= 90) {
+            const gradeLevel = totalScore >= 95 ? 'gold' : 'silver';
+            await EventEmitter.emitHighScore(details.student_id, details.activity_id, totalScore, gradeLevel);
+          }
+        } catch (eventError) {
+          // 不因事件发布失败而影响评卷完成
+          logger.error('Failed to emit grading completion events:', eventError);
+        }
+      }
 
       res.json({
         success: true,

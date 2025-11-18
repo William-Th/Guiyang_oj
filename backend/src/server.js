@@ -72,8 +72,8 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static file serving for uploads
 app.use('/uploads', express.static('uploads'));
@@ -134,6 +134,7 @@ app.use('/api/subjects', require('./routes/subjects')); // 科目配置管理
 app.use('/api/achievements', require('./routes/achievements')); // 成就系统
 app.use('/api/points', require('./routes/points')); // 积分系统
 app.use('/api/daily-tasks', require('./routes/dailyTasks')); // 日常任务系统
+app.use('/api/upload', require('./routes/upload')); // 文件上传
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

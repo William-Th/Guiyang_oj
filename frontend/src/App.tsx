@@ -28,6 +28,8 @@ import GradingListPage from './pages/teacher/GradingListPage';
 import GradingDetailPage from './pages/teacher/GradingDetailPage';
 import ReviewWorkbench from './pages/teacher/ReviewWorkbench';
 import AchievementManagementPage from './pages/admin/AchievementManagementPage';
+import AchievementPage from './pages/student/AchievementPage';
+import PointsPage from './pages/student/PointsPage';
 
 const App: React.FC = () => {
   return (
@@ -69,6 +71,8 @@ const App: React.FC = () => {
               <Route path="assessment/:id" element={<TakeActivityPage />} />
               {/* 统一答题界面路由 - 支持练习和测评 */}
               <Route path="activity/:id" element={<TakeActivityPage />} />
+              <Route path="achievements" element={<AchievementPage />} />
+              <Route path="points" element={<PointsPage />} />
             </Route>
 
             {/* 教师路由 - 题库管理 */}

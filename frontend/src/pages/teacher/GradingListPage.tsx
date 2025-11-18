@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col } from 'antd';
-import { EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { gradingApi } from '../../services/api';
+import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col, DatePicker, Input } from 'antd';
+import { EyeOutlined, CheckCircleOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { gradingApi, activityApi } from '../../services/api';
 
 interface PendingSubmission {
   student_activity_id: number;
@@ -23,20 +23,69 @@ interface PendingSubmission {
   total_answers: number;
 }
 
+const { RangePicker } = DatePicker;
+const { Search } = Input;
+
+interface Activity {
+  id: number;
+  title: string;
+}
+
 const GradingListPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [submissions, setSubmissions] = useState<PendingSubmission[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [filters, setFilters] = useState<{
     activityId?: number;
     subject?: string;
     grade?: string;
     grading_status?: string;
+    startDate?: string;
+    endDate?: string;
+    searchText?: string;
   }>({});
 
+  // Initialize filters from URL params
   useEffect(() => {
+    const initialFilters: any = {};
+    if (searchParams.get('activityId')) initialFilters.activityId = parseInt(searchParams.get('activityId')!);
+    if (searchParams.get('subject')) initialFilters.subject = searchParams.get('subject');
+    if (searchParams.get('grade')) initialFilters.grade = searchParams.get('grade');
+    if (searchParams.get('grading_status')) initialFilters.grading_status = searchParams.get('grading_status');
+    if (searchParams.get('startDate')) initialFilters.startDate = searchParams.get('startDate');
+    if (searchParams.get('endDate')) initialFilters.endDate = searchParams.get('endDate');
+    if (searchParams.get('searchText')) initialFilters.searchText = searchParams.get('searchText');
+
+    if (Object.keys(initialFilters).length > 0) {
+      setFilters(initialFilters);
+    }
+
+    loadActivities();
+  }, []);
+
+  // Update URL params when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.set(key, String(value));
+      }
+    });
+    setSearchParams(params, { replace: true });
+
     loadPendingGrading();
   }, [filters]);
+
+  const loadActivities = async () => {
+    try {
+      const response = await activityApi.getMyActivities();
+      setActivities(response.activities || []);
+    } catch (error: any) {
+      console.error('Load activities error:', error);
+    }
+  };
 
   const loadPendingGrading = async () => {
     try {
@@ -219,47 +268,107 @@ const GradingListPage: React.FC = () => {
         title="待评卷列表"
         extra={
           <Space>
-            <Select
-              placeholder="科目"
-              allowClear
-              style={{ width: 120 }}
-              onChange={(value) => setFilters({ ...filters, subject: value })}
-              virtual={false}
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => setFilters({})}
             >
-              <Select.Option value="语文">语文</Select.Option>
-              <Select.Option value="数学">数学</Select.Option>
-              <Select.Option value="英语">英语</Select.Option>
-              <Select.Option value="科学">科学</Select.Option>
-              <Select.Option value="计算机">计算机</Select.Option>
-            </Select>
-            <Select
-              placeholder="年级"
-              allowClear
-              style={{ width: 120 }}
-              onChange={(value) => setFilters({ ...filters, grade: value })}
-              virtual={false}
-            >
-              <Select.Option value="一年级">一年级</Select.Option>
-              <Select.Option value="二年级">二年级</Select.Option>
-              <Select.Option value="三年级">三年级</Select.Option>
-              <Select.Option value="四年级">四年级</Select.Option>
-              <Select.Option value="五年级">五年级</Select.Option>
-              <Select.Option value="六年级">六年级</Select.Option>
-            </Select>
-            <Select
-              placeholder="评卷状态"
-              allowClear
-              style={{ width: 120 }}
-              onChange={(value) => setFilters({ ...filters, grading_status: value })}
-              virtual={false}
-            >
-              <Select.Option value="pending">待评卷</Select.Option>
-              <Select.Option value="auto_graded">自动评分</Select.Option>
-              <Select.Option value="partial_graded">部分评分</Select.Option>
-            </Select>
+              重置筛选
+            </Button>
           </Space>
         }
       >
+        {/* 筛选器 */}
+        <Space wrap style={{ marginBottom: 16 }}>
+          <Select
+            placeholder="选择活动"
+            allowClear
+            style={{ width: 200 }}
+            value={filters.activityId}
+            onChange={(value) => setFilters({ ...filters, activityId: value })}
+            virtual={false}
+            showSearch
+            filterOption={(input, option) => {
+              if (!option?.children) return false;
+              return String(option.children).toLowerCase().includes(input.toLowerCase());
+            }}
+          >
+            {activities.map(activity => (
+              <Select.Option key={activity.id} value={activity.id}>
+                {activity.title}
+              </Select.Option>
+            ))}
+          </Select>
+
+          <Select
+            placeholder="科目"
+            allowClear
+            style={{ width: 120 }}
+            value={filters.subject}
+            onChange={(value) => setFilters({ ...filters, subject: value })}
+            virtual={false}
+          >
+            <Select.Option value="语文">语文</Select.Option>
+            <Select.Option value="数学">数学</Select.Option>
+            <Select.Option value="英语">英语</Select.Option>
+            <Select.Option value="科学">科学</Select.Option>
+            <Select.Option value="计算机">计算机</Select.Option>
+          </Select>
+
+          <Select
+            placeholder="年级"
+            allowClear
+            style={{ width: 120 }}
+            value={filters.grade}
+            onChange={(value) => setFilters({ ...filters, grade: value })}
+            virtual={false}
+          >
+            <Select.Option value="一年级">一年级</Select.Option>
+            <Select.Option value="二年级">二年级</Select.Option>
+            <Select.Option value="三年级">三年级</Select.Option>
+            <Select.Option value="四年级">四年级</Select.Option>
+            <Select.Option value="五年级">五年级</Select.Option>
+            <Select.Option value="六年级">六年级</Select.Option>
+          </Select>
+
+          <Select
+            placeholder="评卷状态"
+            allowClear
+            style={{ width: 120 }}
+            value={filters.grading_status}
+            onChange={(value) => setFilters({ ...filters, grading_status: value })}
+            virtual={false}
+          >
+            <Select.Option value="pending">待评卷</Select.Option>
+            <Select.Option value="auto_graded">自动评分</Select.Option>
+            <Select.Option value="partial_graded">部分评分</Select.Option>
+          </Select>
+
+          <RangePicker
+            placeholder={['开始日期', '结束日期']}
+            onChange={(dates) => {
+              if (dates && dates[0] && dates[1]) {
+                setFilters({
+                  ...filters,
+                  startDate: dates[0].format('YYYY-MM-DD'),
+                  endDate: dates[1].format('YYYY-MM-DD'),
+                });
+              } else {
+                const { startDate: _startDate, endDate: _endDate, ...rest } = filters;
+                setFilters(rest);
+              }
+            }}
+          />
+
+          <Search
+            placeholder="搜索学生姓名/学号"
+            allowClear
+            style={{ width: 200 }}
+            value={filters.searchText}
+            onChange={(e) => setFilters({ ...filters, searchText: e.target.value })}
+            onSearch={(value) => setFilters({ ...filters, searchText: value })}
+            enterButton={<SearchOutlined />}
+          />
+        </Space>
         <Table
           columns={columns}
           dataSource={submissions}

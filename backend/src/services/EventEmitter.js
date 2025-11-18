@@ -116,7 +116,8 @@ class EventEmitter {
       await eventBus.emit(STUDENT_LOGIN.FIRST, {
         source: 'AuthController',
         studentId,
-        loginAt: new Date().toISOString()
+        loginAt: new Date().toISOString(),
+        isFirstTime: true
       });
 
       logger.info('First login event emitted', { studentId });
@@ -136,6 +137,7 @@ class EventEmitter {
         source: 'AuthController',
         studentId,
         streakDays,
+        consecutiveDays: streakDays,
         timestamp: new Date().toISOString()
       });
 

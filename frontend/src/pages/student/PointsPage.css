@@ -1,0 +1,41 @@
+.points-page {
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.points-page .ant-statistic-title {
+  font-size: 16px;
+  color: #8c8c8c;
+}
+
+.points-page .ant-statistic-content {
+  font-weight: 600;
+}
+
+.points-page .ant-card {
+  transition: all 0.3s ease;
+}
+
+.points-page .ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.current-student-row {
+  background-color: #e6f7ff !important;
+  font-weight: 600;
+}
+
+.current-student-row:hover {
+  background-color: #bae7ff !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .points-page {
+    padding: 16px !important;
+  }
+
+  .points-page .ant-statistic-content {
+    font-size: 24px !important;
+  }
+}

@@ -241,7 +241,7 @@
 
 | 账号 | 姓名 | 密码 | 学校 | 科目 | 教师编号 |
 |------|------|------|------|------|----------|
-| `teacher_yy_ps_math` | 蒋磊-云岩一小 | `password` （密码修改过） | 云岩区第一小学 | 数学 | T_YY_PS_MATH |
+| `teacher_yy_ps_math` | 蒋磊-云岩一小 | `password123` | 云岩区第一小学 | 数学 | T_YY_PS_MATH |
 | `teacher_yy_ps_it` | 韩雪-云岩一小 | `password123` | 云岩区第一小学 | 信息科技 | T_YY_PS_IT |
 | `teacher_yy_ms_math` | 曹斌-云岩一中 | `password123` | 云岩区第一中学 | 数学 | T_YY_MS_MATH |
 | `teacher_yy_ms_it` | 许红-云岩一中 | `password123` | 云岩区第一中学 | 信息科技 | T_YY_MS_IT |

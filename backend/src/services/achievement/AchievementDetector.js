@@ -156,47 +156,165 @@ class AchievementDetector {
    * 检查条件是否满足
    * @param {Object} achievement - 成就定义
    * @param {Object} eventData - 事件数据
-   * @returns {boolean}
+   * @returns {Promise<boolean>}
    */
   async checkCondition(achievement, eventData) {
     const { trigger_condition } = achievement;
-    const { condition_type, threshold, target_value } = trigger_condition;
+    const { condition_type } = trigger_condition;
 
-    // 根据条件类型检查
-    switch (condition_type) {
-    case 'count':
-      // 检查计数是否达到阈值
-      return eventData.count >= threshold;
+    try {
+      // 根据条件类型检查
+      switch (condition_type) {
+      case 'count':
+        return await this.checkCountCondition(trigger_condition, eventData);
 
-    case 'threshold':
-      // 检查值是否超过阈值
-      return eventData.value >= threshold;
+      case 'threshold':
+        return await this.checkThresholdCondition(trigger_condition, eventData);
 
-    case 'state':
-      // 检查状态
-      return eventData.state === target_value;
+      case 'state':
+        return await this.checkStateCondition(trigger_condition, eventData);
 
-    case 'combination':
-      // 组合条件
-      return await this.checkCombinationCondition(trigger_condition, eventData);
+      case 'time_window':
+        return await this.checkTimeWindowCondition(trigger_condition, eventData);
 
-    default:
-      logger.warn(`Unknown condition type: ${condition_type}`);
+      case 'consecutive':
+        return await this.checkConsecutiveCondition(trigger_condition, eventData);
+
+      case 'and':
+      case 'or':
+        return await this.checkLogicalCondition(trigger_condition, eventData);
+
+      default:
+        logger.warn(`Unknown condition type: ${condition_type}`, { achievement_id: achievement.achievement_id });
+        return false;
+      }
+    } catch (error) {
+      logger.error('Error checking condition:', error, { achievement_id: achievement.achievement_id });
       return false;
     }
   }
 
   /**
-   * 检查组合条件
-   * @param {Object} condition
-   * @param {Object} eventData
-   * @returns {boolean}
+   * 检查计数条件
+   * @param {Object} condition - 条件配置
+   * @param {Object} eventData - 事件数据
+   * @returns {Promise<boolean>}
    */
-  async checkCombinationCondition(condition, eventData) {
-    const { operator, conditions } = condition;
+  async checkCountCondition(condition, eventData) {
+    const { target_count } = condition;
 
-    if (operator === 'AND') {
-      for (const subCondition of conditions) {
+    // 简化实现：如果事件数据中已包含count，直接比较
+    if (eventData.count !== undefined) {
+      return eventData.count >= target_count;
+    }
+
+    // 否则需要查询数据库统计（这里暂时返回false，等待实现）
+    logger.debug('Count condition requires database query - not yet implemented');
+    return false;
+  }
+
+  /**
+   * 检查阈值条件
+   * @param {Object} condition - 条件配置
+   * @param {Object} eventData - 事件数据
+   * @returns {Promise<boolean>}
+   */
+  async checkThresholdCondition(condition, eventData) {
+    const { threshold_value, threshold_field } = condition;
+
+    // 从事件数据中提取字段值
+    const value = threshold_field ? eventData[threshold_field] : eventData.value;
+
+    if (value === undefined) {
+      logger.debug('Threshold field not found in event data', { threshold_field, eventData });
+      return false;
+    }
+
+    return value >= threshold_value;
+  }
+
+  /**
+   * 检查状态条件
+   * @param {Object} condition - 条件配置
+   * @param {Object} eventData - 事件数据
+   * @returns {Promise<boolean>}
+   */
+  async checkStateCondition(condition, eventData) {
+    const { first_time, filter } = condition;
+
+    // 检查是否首次触发
+    if (first_time) {
+      return eventData.isFirstTime === true;
+    }
+
+    // 检查过滤条件
+    if (filter) {
+      for (const [key, value] of Object.entries(filter)) {
+        if (eventData[key] !== value) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * 检查时间窗口条件
+   * @param {Object} condition - 条件配置
+   * @param {Object} eventData - 事件数据
+   * @returns {Promise<boolean>}
+   */
+  async checkTimeWindowCondition(condition, eventData) {
+    const { time_window } = condition;
+    const { start, end } = time_window;
+
+    // 简化实现：检查当前事件时间是否在窗口内
+    const now = eventData.timestamp ? new Date(eventData.timestamp) : new Date();
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    return now >= startDate && now <= endDate;
+  }
+
+  /**
+   * 检查连续条件
+   * @param {Object} condition - 条件配置
+   * @param {Object} eventData - 事件数据
+   * @returns {Promise<boolean>}
+   */
+  async checkConsecutiveCondition(condition, eventData) {
+    const { consecutive_days, consecutive_weeks } = condition;
+
+    // 简化实现：从事件数据中读取连续天数/周数
+    if (consecutive_days && eventData.consecutiveDays !== undefined) {
+      return eventData.consecutiveDays >= consecutive_days;
+    }
+
+    if (consecutive_weeks && eventData.consecutiveWeeks !== undefined) {
+      return eventData.consecutiveWeeks >= consecutive_weeks;
+    }
+
+    logger.debug('Consecutive condition requires pre-calculated value in event data');
+    return false;
+  }
+
+  /**
+   * 检查逻辑条件 (and/or)
+   * @param {Object} condition - 条件配置
+   * @param {Object} eventData - 事件数据
+   * @returns {Promise<boolean>}
+   */
+  async checkLogicalCondition(condition, eventData) {
+    const { condition_type, sub_conditions } = condition;
+
+    if (!sub_conditions || sub_conditions.length === 0) {
+      return false;
+    }
+
+    if (condition_type === 'and') {
+      // AND: 所有子条件必须满足
+      for (const subCondition of sub_conditions) {
         const satisfied = await this.checkCondition(
           { trigger_condition: subCondition },
           eventData
@@ -206,8 +324,9 @@ class AchievementDetector {
         }
       }
       return true;
-    } else if (operator === 'OR') {
-      for (const subCondition of conditions) {
+    } else if (condition_type === 'or') {
+      // OR: 至少一个子条件满足
+      for (const subCondition of sub_conditions) {
         const satisfied = await this.checkCondition(
           { trigger_condition: subCondition },
           eventData

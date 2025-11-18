@@ -959,13 +959,13 @@ export const gradingApi = {
     if (filters?.grade) params.append('grade', filters.grade);
     if (filters?.grading_status) params.append('grading_status', filters.grading_status);
 
-    const response = await api.get(`/grading/pending${params.toString() ? '?' + params.toString() : ''}`);
+    const response = await api.get(`/teacher/grading/pending${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
 
   // Get student activity detail for grading
   getStudentActivityForGrading: async (studentActivityId: number) => {
-    const response = await api.get(`/grading/student-activity/${studentActivityId}`);
+    const response = await api.get(`/teacher/grading/student-activity/${studentActivityId}`);
     return response.data;
   },
 
@@ -974,7 +974,7 @@ export const gradingApi = {
     score: number;
     feedback?: string;
   }) => {
-    const response = await api.put(`/grading/answers/${answerId}`, data);
+    const response = await api.put(`/teacher/grading/answers/${answerId}`, data);
     return response.data;
   },
 
@@ -984,19 +984,109 @@ export const gradingApi = {
     score: number;
     feedback?: string;
   }>) => {
-    const response = await api.put('/grading/batch', { answers });
+    const response = await api.put('/teacher/grading/batch', { answers });
     return response.data;
   },
 
   // Complete grading for student activity
   completeGrading: async (studentActivityId: number) => {
-    const response = await api.post(`/grading/student-activity/${studentActivityId}/complete`);
+    const response = await api.post(`/teacher/grading/student-activity/${studentActivityId}/complete`);
     return response.data;
   },
 
   // Get grading statistics
   getGradingStats: async (activityId: number) => {
-    const response = await api.get(`/grading/stats/${activityId}`);
+    const response = await api.get(`/teacher/grading/stats/${activityId}`);
+    return response.data;
+  },
+};
+
+// Achievement API
+export const achievementApi = {
+  // Get all achievements (admin only)
+  getAllAchievements: async (filters?: {
+    category?: string;
+    rarity?: string;
+    is_active?: boolean;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.rarity) params.append('rarity', filters.rarity);
+    if (filters?.is_active !== undefined) params.append('is_active', String(filters.is_active));
+
+    const response = await api.get(`/achievements${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Get student achievements
+  getStudentAchievements: async (studentId: number) => {
+    const response = await api.get(`/achievements/student/${studentId}`);
+    return response.data;
+  },
+
+  // Award achievement to student (admin/teacher only)
+  awardAchievement: async (studentId: number, achievementId: number) => {
+    const response = await api.post('/achievements/award', {
+      studentId,
+      achievementId
+    });
+    return response.data;
+  },
+
+  // Create new achievement (admin only)
+  createAchievement: async (data: any) => {
+    const response = await api.post('/achievements', data);
+    return response.data;
+  },
+
+  // Update achievement (admin only)
+  updateAchievement: async (achievementId: number, data: any) => {
+    const response = await api.put(`/achievements/${achievementId}`, data);
+    return response.data;
+  },
+
+  // Delete achievement (admin only)
+  deleteAchievement: async (achievementId: number) => {
+    const response = await api.delete(`/achievements/${achievementId}`);
+    return response.data;
+  },
+};
+
+// Points API
+export const pointsApi = {
+  // Get student points account
+  getPointsAccount: async (studentId: number) => {
+    const response = await api.get(`/points/account/${studentId}`);
+    return response.data;
+  },
+
+  // Get points transactions history
+  getPointsTransactions: async (studentId: number, filters?: {
+    type?: 'earn' | 'spend';
+    limit?: number;
+    offset?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.offset) params.append('offset', filters.offset.toString());
+
+    const response = await api.get(`/points/transactions/${studentId}${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Get points leaderboard
+  getLeaderboard: async (filters?: {
+    scope?: string;
+    scopeId?: number;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.scope) params.append('scope', filters.scope);
+    if (filters?.scopeId) params.append('scopeId', filters.scopeId.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+
+    const response = await api.get(`/points/leaderboard${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
 };

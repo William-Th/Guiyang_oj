@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Form,
@@ -15,8 +15,17 @@ import {
   Alert,
   Row,
   Col,
+  Progress,
+  Affix,
+  Tooltip,
 } from 'antd';
-import { SaveOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import {
+  SaveOutlined,
+  CheckCircleOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  UpOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gradingApi } from '../../services/api';
 
@@ -79,8 +88,59 @@ const GradingDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [detail, setDetail] = useState<StudentActivityDetail | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const questionRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   const studentActivityId = id ? parseInt(id) : undefined;
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in input/textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (!detail) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'n': // Next question
+          if (currentQuestionIndex < detail.questions.length - 1) {
+            scrollToQuestion(currentQuestionIndex + 1);
+          }
+          break;
+        case 'p': // Previous question
+          if (currentQuestionIndex > 0) {
+            scrollToQuestion(currentQuestionIndex - 1);
+          }
+          break;
+        case 's': // Save current
+          e.preventDefault();
+          handleBatchSave();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [detail, currentQuestionIndex]);
+
+  // Scroll to specific question
+  const scrollToQuestion = (index: number) => {
+    const questionId = detail?.questions[index]?.id;
+    if (questionId && questionRefs.current[questionId]) {
+      questionRefs.current[questionId]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      setCurrentQuestionIndex(index);
+    }
+  };
 
   useEffect(() => {
     if (studentActivityId) {
@@ -201,35 +261,52 @@ const GradingDetailPage: React.FC = () => {
 
   const pendingCount = detail.answers.filter(a => a.grading_status === 'pending').length;
   const gradedCount = detail.answers.length - pendingCount;
+  const progressPercent = detail.answers.length > 0
+    ? Math.round((gradedCount / detail.answers.length) * 100)
+    : 0;
 
   return (
-    <div>
-      <Card
-        title="评卷详情"
-        extra={
-          <Space>
-            <Button onClick={() => navigate(-1)}>返回</Button>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleBatchSave}
-              loading={saving}
-            >
-              保存所有评分
-            </Button>
-            <Button
-              type="primary"
-              danger
-              icon={<CheckCircleOutlined />}
-              onClick={handleCompleteGrading}
-              loading={saving}
-              disabled={pendingCount > 0}
-            >
-              完成评卷
-            </Button>
-          </Space>
-        }
-      >
+    <div style={{ display: 'flex', gap: 16 }}>
+      {/* Main Content */}
+      <div style={{ flex: 1 }}>
+        <Card
+          title={
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
+              <div>评卷详情</div>
+              <Progress
+                percent={progressPercent}
+                status={pendingCount === 0 ? 'success' : 'active'}
+                format={(percent) => `${gradedCount} / ${detail.answers.length} (${percent}%)`}
+              />
+            </Space>
+          }
+          extra={
+            <Space>
+              <Tooltip title="快捷键: N=下一题, P=上一题, S=保存">
+                <Button size="small" type="text">快捷键提示</Button>
+              </Tooltip>
+              <Button onClick={() => navigate(-1)}>返回</Button>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleBatchSave}
+                loading={saving}
+              >
+                保存所有评分 (S)
+              </Button>
+              <Button
+                type="primary"
+                danger
+                icon={<CheckCircleOutlined />}
+                onClick={handleCompleteGrading}
+                loading={saving}
+                disabled={pendingCount > 0}
+              >
+                完成评卷
+              </Button>
+            </Space>
+          }
+        >
         <Descriptions bordered column={2}>
           <Descriptions.Item label="学生姓名">{detail.student.real_name}</Descriptions.Item>
           <Descriptions.Item label="学号">{detail.student.username}</Descriptions.Item>
@@ -272,27 +349,55 @@ const GradingDetailPage: React.FC = () => {
           const needsManualGrading = answer.grading_status === 'pending' || isSubjective;
 
           return (
-            <Card key={question.id} style={{ marginBottom: 16 }}>
-              <Row gutter={16}>
-                <Col span={24}>
-                  <Space>
-                    <Tag color="blue">第 {index + 1} 题</Tag>
-                    <Tag>{getQuestionTypeLabel(question.type)}</Tag>
-                    <Tag color="green">{question.score} 分</Tag>
-                    {answer.grading_status === 'auto_graded' && (
-                      <Tag color="cyan">已自动评分</Tag>
-                    )}
-                    {answer.grading_status === 'manual_graded' && (
-                      <Tag color="purple">已人工评分</Tag>
-                    )}
-                    {answer.grading_status === 'pending' && (
-                      <Tag color="orange">待评分</Tag>
-                    )}
-                  </Space>
-                </Col>
-              </Row>
-
-              <Divider />
+            <Card
+              key={question.id}
+              id={`question-${question.id}`}
+              ref={(el) => (questionRefs.current[question.id] = el)}
+              style={{ marginBottom: 16 }}
+              title={
+                <Space size="large">
+                  <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1890ff' }}>
+                    第 {index + 1} 题
+                  </div>
+                  <Tag color="cyan" style={{ fontSize: 14 }}>
+                    {getQuestionTypeLabel(question.type)}
+                  </Tag>
+                  <Tag color="green" style={{ fontSize: 14 }}>
+                    满分: {question.score} 分
+                  </Tag>
+                  {answer.grading_status === 'auto_graded' && (
+                    <Tag color="blue">已自动评分</Tag>
+                  )}
+                  {answer.grading_status === 'manual_graded' && (
+                    <Tag color="purple">已人工评分</Tag>
+                  )}
+                  {answer.grading_status === 'pending' && (
+                    <Tag color="orange">待评分</Tag>
+                  )}
+                </Space>
+              }
+              extra={
+                <Space>
+                  <Button
+                    size="small"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => scrollToQuestion(index - 1)}
+                    disabled={index === 0}
+                  >
+                    上一题 (P)
+                  </Button>
+                  <Button
+                    size="small"
+                    icon={<ArrowRightOutlined />}
+                    onClick={() => scrollToQuestion(index + 1)}
+                    disabled={index === detail.questions.length - 1}
+                  >
+                    下一题 (N)
+                  </Button>
+                </Space>
+              }
+            >
+              <Divider style={{ marginTop: 0 }} />
 
               <div style={{ marginBottom: 16 }}>
                 <Title level={5}>题目</Title>
@@ -372,6 +477,54 @@ const GradingDetailPage: React.FC = () => {
           );
         })}
       </Form>
+      </div>
+
+      {/* Question Navigation Sidebar */}
+      <Affix offsetTop={20} style={{ width: 200 }}>
+        <Card
+          title="题目导航"
+          size="small"
+          style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}
+        >
+          <Space direction="vertical" style={{ width: '100%' }} size="small">
+            {detail.questions.map((question, index) => {
+              const answer = detail.answers.find(a => a.question_id === question.id);
+              const isGraded = answer?.grading_status !== 'pending';
+
+              return (
+                <Button
+                  key={question.id}
+                  size="small"
+                  type={currentQuestionIndex === index ? 'primary' : 'default'}
+                  block
+                  onClick={() => scrollToQuestion(index)}
+                  style={{
+                    textAlign: 'left',
+                    justifyContent: 'flex-start',
+                  }}
+                  icon={isGraded ? <CheckCircleOutlined /> : null}
+                >
+                  第 {index + 1} 题
+                  <span style={{ marginLeft: 'auto', fontSize: 12 }}>
+                    {question.score}分
+                  </span>
+                </Button>
+              );
+            })}
+          </Space>
+
+          <Divider style={{ margin: '12px 0' }} />
+
+          <Button
+            block
+            icon={<UpOutlined />}
+            size="small"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            回到顶部
+          </Button>
+        </Card>
+      </Affix>
     </div>
   );
 };

@@ -49,19 +49,71 @@ router.post('/login', [
     // Emit login event for students
     if (user.role === 'student') {
       try {
-        await EventEmitter.emitStudentLogin(user.id, {
-          method: loginType,
-          ip: req.ip,
-          userAgent: req.get('user-agent')
-        });
+        // 查询student_id
+        const { pool } = require('../database/connection');
+        const studentQuery = await pool.query(
+          'SELECT id FROM students WHERE user_id = $1',
+          [user.id]
+        );
 
-        // TODO: First login detection
-        // Requires login_history table or login_count field in users table
-        // Will be implemented in Week 3 when we add daily task tracking
+        if (studentQuery.rows.length > 0) {
+          const studentId = studentQuery.rows[0].id;
 
-        // TODO: Login streak detection
-        // Requires login_history table to track consecutive days
-        // Will be implemented in Week 3 when we add daily task tracking
+          // 记录登录历史（使用 INSERT ... ON CONFLICT 避免同一天多次记录）
+          await pool.query(`
+            INSERT INTO student_login_history (student_id, user_id, login_date, login_time, login_method, ip_address, user_agent)
+            VALUES ($1, $2, CURRENT_DATE, CURRENT_TIMESTAMP, $3, $4, $5)
+            ON CONFLICT (student_id, login_date) DO UPDATE
+            SET login_time = CURRENT_TIMESTAMP,
+                login_method = EXCLUDED.login_method,
+                ip_address = EXCLUDED.ip_address,
+                user_agent = EXCLUDED.user_agent
+          `, [studentId, user.id, loginType, req.ip, req.get('user-agent')]);
+
+          // 检测是否首次登录
+          const loginCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM student_login_history WHERE student_id = $1',
+            [studentId]
+          );
+          const isFirstLogin = parseInt(loginCountResult.rows[0].count) === 1;
+
+          // 检测连续登录天数
+          const streakResult = await pool.query(`
+            WITH RECURSIVE login_streak AS (
+              SELECT login_date, 1 as streak
+              FROM student_login_history
+              WHERE student_id = $1 AND login_date = CURRENT_DATE
+
+              UNION ALL
+
+              SELECT slh.login_date, ls.streak + 1
+              FROM student_login_history slh
+              JOIN login_streak ls ON slh.login_date = ls.login_date - INTERVAL '1 day'
+              WHERE slh.student_id = $1
+            )
+            SELECT MAX(streak) as streak_days FROM login_streak
+          `, [studentId]);
+          const streakDays = parseInt(streakResult.rows[0].streak_days) || 1;
+
+          // 发布登录事件
+          await EventEmitter.emitStudentLogin(user.id, {
+            method: loginType,
+            ip: req.ip,
+            userAgent: req.get('user-agent')
+          });
+
+          // 如果是首次登录，发布首次登录事件
+          if (isFirstLogin) {
+            await EventEmitter.emitFirstLogin(studentId);
+            logger.info('First login detected', { studentId, userId: user.id });
+          }
+
+          // 如果连续登录天数 >= 2，发布连续登录事件
+          if (streakDays >= 2) {
+            await EventEmitter.emitLoginStreak(studentId, streakDays);
+            logger.info('Login streak detected', { studentId, userId: user.id, streakDays });
+          }
+        }
       } catch (eventError) {
         // Don't fail login if event emission fails
         logger.error('Failed to emit login events:', eventError);

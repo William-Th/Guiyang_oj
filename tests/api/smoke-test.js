@@ -11,7 +11,7 @@ const http = require('http');
 
 // 配置
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-const TIMEOUT = 5000; // 5秒超�?
+const TIMEOUT = 5000; // 5秒超�?
 
 // 测试结果
 const results = {
@@ -79,7 +79,7 @@ function makeRequest(options, postData = null) {
 }
 
 /**
- * 测试用例执行�?
+ * 测试用例执行�?
  */
 async function runTest(name, testFn) {
   results.total++;
@@ -90,13 +90,13 @@ async function runTest(name, testFn) {
     const duration = Date.now() - startTime;
     results.passed++;
     results.tests.push({ name, status: 'PASS', duration });
-    console.log(`${colors.green}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
+    console.log(`${colors.green}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
     return true;
   } catch (error) {
     const duration = Date.now() - startTime;
     results.failed++;
     results.tests.push({ name, status: 'FAIL', error: error.message, duration });
-    console.log(`${colors.red}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
+    console.log(`${colors.red}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
     console.log(`  ${colors.red}Error: ${error.message}${colors.reset}`);
     return false;
   }
@@ -118,7 +118,7 @@ async function runSmokeTests() {
   console.log(`\n${colors.blue}=== API Smoke Tests ===${colors.reset}`);
   console.log(`API Base URL: ${API_BASE_URL}\n`);
 
-  // 测试1: 健康检�?
+  // 测试1: 健康检�?
   await runTest('Health check endpoint', async () => {
     const response = await makeRequest({ path: '/health' });
     assert(response.statusCode === 200, `Expected status 200, got ${response.statusCode}`);
@@ -126,19 +126,18 @@ async function runSmokeTests() {
     assert(data && data.status === 'OK', 'Health check should return status OK');
   });
 
-  // 测试2: 数据库连�?
+  // 测试2: 数据库连�?
   await runTest('Database connectivity', async () => {
     const response = await makeRequest({ path: '/health' });
     const data = response.json();
     assert(data && data.database === 'connected', 'Database should be connected');
   });
 
-  // 测试4: 学生登录API
+  // 测试4: 学生登录API (使用手机号作为username登录)
   await runTest('Student login endpoint', async () => {
     const postData = JSON.stringify({
-      username: '520102200801011234',
-      password: 'password123',
-      loginType: 'idCard'
+      username: '13800138003',
+      password: 'password123'
     });
 
     const response = await makeRequest({
@@ -221,9 +220,9 @@ async function runSmokeTests() {
     assert(response.statusCode === 401, `Expected status 401, got ${response.statusCode}`);
   });
 
-  // 测试8: 证书验证API（公开接口�?
+  // 测试8: 证书验证API（公开接口�?
   await runTest('Certificate verification endpoint', async () => {
-    // 使用一个不存在的证书编号，应该返回404（或证书不存在的响应�?
+    // 使用一个不存在的证书编号，应该返回404（或证书不存在的响应�?
     const response = await makeRequest({ path: '/api/certificate/verify/GY-2025-00000000' });
     // 接受404或其他表示证书不存在的状态码
     assert(response.statusCode >= 400 && response.statusCode < 500,
@@ -249,7 +248,7 @@ async function runSmokeTests() {
 }
 
 /**
- * 主函�?
+ * 主函�?
  */
 async function main() {
   const startTime = Date.now();
@@ -269,7 +268,7 @@ async function main() {
   console.log(`${colors.red}Failed: ${results.failed}${colors.reset}`);
   console.log(`Duration: ${totalTime}ms\n`);
 
-  // 如果有失败的测试，退出码�?
+  // 如果有失败的测试，退出码�?
   if (results.failed > 0) {
     console.log(`${colors.red}Smoke tests FAILED${colors.reset}\n`);
     process.exit(1);

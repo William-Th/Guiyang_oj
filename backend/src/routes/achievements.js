@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const Achievement = require('../models/Achievement');
+const achievementService = require('../services/achievement/AchievementService');
+const { quickConfigs } = require('../services/achievement/templates/achievementTemplates');
 
 /**
  * 生成唯一的成就编码
  */
-function generateAchievementCode(category, name) {
+function _generateAchievementCode(category, name) {
   const timestamp = Date.now().toString().slice(-6);
   const categoryUpper = category.toUpperCase();
   const nameSlug = name
@@ -45,9 +47,10 @@ router.get('/', authMiddleware, async (req, res) => {
 
 /**
  * 获取单个成就详情
- * GET /api/achievements/:id
+ * GET /api/achievements/:id(\\d+)
+ * 注意：使用正则表达式限制只匹配数字ID，避免拦截其他路由
  */
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id(\\d+)', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const achievement = await Achievement.getAchievementById(parseInt(id));
@@ -80,16 +83,35 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.get('/student/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
+    const inputId = parseInt(studentId);
+
+    // 查询student记录（支持user_id或student_id）
+    const { pool } = require('../database/connection');
+    const studentQuery = await pool.query(
+      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
+      [inputId]
+    );
+
+    if (studentQuery.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const student = studentQuery.rows[0];
+    const actualStudentId = student.id;
+    const actualUserId = student.user_id;
 
     // 权限验证：学生只能查看自己的成就
-    if (req.user.role === 'student' && req.user.userId !== parseInt(studentId)) {
+    if (req.user.role === 'student' && req.user.id !== actualUserId) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
       });
     }
 
-    const achievements = await Achievement.getStudentAchievements(parseInt(studentId));
+    const achievements = await Achievement.getStudentAchievements(actualStudentId);
     res.json({
       success: true,
       data: achievements
@@ -111,16 +133,35 @@ router.get('/student/:studentId', authMiddleware, async (req, res) => {
 router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
+    const inputId = parseInt(studentId);
 
-    // 权限验证
-    if (req.user.role === 'student' && req.user.userId !== parseInt(studentId)) {
+    // 查询student记录（支持user_id或student_id）
+    const { pool } = require('../database/connection');
+    const studentQuery = await pool.query(
+      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
+      [inputId]
+    );
+
+    if (studentQuery.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const student = studentQuery.rows[0];
+    const actualStudentId = student.id;
+    const actualUserId = student.user_id;
+
+    // 权限验证：学生只能查看自己的成就进度
+    if (req.user.role === 'student' && req.user.id !== actualUserId) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
       });
     }
 
-    const progress = await Achievement.getStudentProgress(parseInt(studentId));
+    const progress = await Achievement.getStudentProgress(actualStudentId);
     res.json({
       success: true,
       data: progress
@@ -142,14 +183,15 @@ router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
 router.post('/award', authMiddleware, async (req, res) => {
   try {
     // 只允许管理员调用
-    if (req.user.role !== 'admin') {
+    const allowedRoles = ['system_admin', 'municipal_admin', 'school_admin', 'teacher'];
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Admin only.'
       });
     }
 
-    const { studentId, achievementId, pointsAwarded } = req.body;
+    const { studentId, achievementId } = req.body;
 
     if (!studentId || !achievementId) {
       return res.status(400).json({
@@ -158,16 +200,29 @@ router.post('/award', authMiddleware, async (req, res) => {
       });
     }
 
-    const result = await Achievement.awardAchievement(
-      parseInt(studentId),
-      parseInt(achievementId),
-      pointsAwarded || 0
+    // 将user_id转换为student_id（如果需要）
+    const { pool } = require('../database/connection');
+    const studentCheck = await pool.query(
+      'SELECT id FROM students WHERE id = $1 OR user_id = $1',
+      [parseInt(studentId)]
     );
 
-    res.json({
-      success: true,
-      data: result
-    });
+    if (studentCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const actualStudentId = studentCheck.rows[0].id;
+
+    // 使用Service层授予成就（自动添加积分）
+    const result = await achievementService.awardAchievement(
+      actualStudentId,
+      parseInt(achievementId)
+    );
+
+    res.json(result);
   } catch (error) {
     console.error('Error awarding achievement:', error);
     res.status(500).json({
@@ -192,37 +247,12 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
 
-    const { name, description, category, rarity, icon, points, requirementType, requirementValue, isActive } = req.body;
-
-    // 验证必填字段
-    if (!name || !description || !category || !rarity || !icon || !requirementType || requirementValue === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields'
-      });
-    }
-
-    // 自动生成成就编码
-    const code = generateAchievementCode(category, name);
-
-    // 创建成就
-    const achievement = await Achievement.createAchievement({
-      code,
-      name,
-      description,
-      category,
-      rarity,
-      icon,
-      points: points || 0,
-      requirementType,
-      requirementValue,
-      isActive: isActive !== undefined ? isActive : true
-    });
+    const result = await achievementService.createAchievement(req.body, req.user.userId);
 
     res.status(201).json({
       success: true,
       message: 'Achievement created successfully',
-      achievement: achievement
+      data: result.data
     });
   } catch (error) {
     console.error('Error creating achievement:', error);
@@ -238,7 +268,7 @@ router.post('/', authMiddleware, async (req, res) => {
  * 更新成就（仅系统管理员和市级管理员）
  * PUT /api/achievements/:id
  */
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id(\\d+)', authMiddleware, async (req, res) => {
   try {
     // 权限验证
     if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
@@ -249,32 +279,12 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     const { id } = req.params;
-    const { name, description, category, rarity, icon, points, requirementType, requirementValue, isActive } = req.body;
-
-    // 更新成就（不允许修改code）
-    const achievement = await Achievement.updateAchievement(parseInt(id), {
-      name,
-      description,
-      category,
-      rarity,
-      icon,
-      points,
-      requirementType,
-      requirementValue,
-      isActive
-    });
-
-    if (!achievement) {
-      return res.status(404).json({
-        success: false,
-        message: 'Achievement not found'
-      });
-    }
+    const result = await achievementService.updateAchievement(parseInt(id), req.body);
 
     res.json({
       success: true,
       message: 'Achievement updated successfully',
-      achievement: achievement
+      data: result.data
     });
   } catch (error) {
     console.error('Error updating achievement:', error);
@@ -290,7 +300,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
  * 删除成就（仅系统管理员和市级管理员）
  * DELETE /api/achievements/:id
  */
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id(\\d+)', authMiddleware, async (req, res) => {
   try {
     // 权限验证
     if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
@@ -301,24 +311,288 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 
     const { id } = req.params;
-    const result = await Achievement.deleteAchievement(parseInt(id));
+    const { hard } = req.query; // 是否硬删除
 
-    if (!result) {
-      return res.status(404).json({
-        success: false,
-        message: 'Achievement not found'
-      });
-    }
+    const result = await achievementService.deleteAchievement(parseInt(id), hard === 'true');
 
-    res.json({
-      success: true,
-      message: 'Achievement deleted successfully'
-    });
+    res.json(result);
   } catch (error) {
     console.error('Error deleting achievement:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete achievement',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 从模板创建成就
+ * POST /api/achievements/template/:templateName
+ */
+router.post('/template/:templateName', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only system and municipal admins can create achievements.'
+      });
+    }
+
+    const { templateName } = req.params;
+    const params = req.body;
+
+    const result = await achievementService.createFromTemplate(
+      templateName,
+      params,
+      req.user.userId
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Achievement created from template successfully',
+      data: result.data
+    });
+  } catch (error) {
+    console.error('Error creating achievement from template:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create achievement from template',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 使用快速配置创建成就
+ * POST /api/achievements/quick/:configName
+ */
+router.post('/quick/:configName', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only system and municipal admins can create achievements.'
+      });
+    }
+
+    const { configName } = req.params;
+    const params = req.body;
+
+    // 获取快速配置
+    const configFunc = quickConfigs[configName];
+    if (!configFunc) {
+      return res.status(404).json({
+        success: false,
+        message: `Quick config '${configName}' not found`
+      });
+    }
+
+    // 生成成就数据
+    const achievementData = configFunc(...Object.values(params));
+
+    // 创建成就
+    const result = await achievementService.createAchievement(achievementData, req.user.userId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Achievement created using quick config successfully',
+      data: result.data
+    });
+  } catch (error) {
+    console.error('Error creating achievement from quick config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create achievement from quick config',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 批量导入成就
+ * POST /api/achievements/bulk
+ */
+router.post('/bulk', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only system and municipal admins can bulk import achievements.'
+      });
+    }
+
+    const { achievements } = req.body;
+
+    if (!Array.isArray(achievements) || achievements.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'achievements must be a non-empty array'
+      });
+    }
+
+    const results = await achievementService.bulkImport(achievements, req.user.userId);
+
+    res.json({
+      success: true,
+      message: `Bulk import completed: ${results.success.length} success, ${results.failed.length} failed`,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error bulk importing achievements:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to bulk import achievements',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 测试成就规则
+ * POST /api/achievements/:id/test
+ */
+router.post('/:id(\\d+)/test', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Only admins can test achievements.'
+      });
+    }
+
+    const { id } = req.params;
+    const { studentId } = req.body;
+
+    const result = await achievementService.testAchievement(parseInt(id), studentId);
+
+    res.json({
+      success: result.valid,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error testing achievement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to test achievement',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 获取成就统计信息
+ * GET /api/achievements/:id/stats
+ */
+router.get('/:id(\\d+)/stats', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const stats = await Achievement.getAchievementStats(parseInt(id));
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching achievement stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch achievement stats',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 获取分页成就列表（管理后台）
+ * GET /api/achievements/admin/list
+ */
+router.get('/admin/list', authMiddleware, async (req, res) => {
+  try {
+    // 权限验证
+    if (!['system_admin', 'municipal_admin', 'school_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+
+    const options = {
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 20,
+      category: req.query.category,
+      rarity: req.query.rarity,
+      isActive: req.query.isActive === 'true' ? true : (req.query.isActive === 'false' ? false : undefined),
+      searchTerm: req.query.search
+    };
+
+    const result = await Achievement.getAchievementsWithPagination(options);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    console.error('Error fetching achievements with pagination:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch achievements',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 获取可用的模板列表
+ * GET /api/achievements/templates
+ */
+router.get('/templates', authMiddleware, async (req, res) => {
+  try {
+    const templates = require('../services/achievement/templates/achievementTemplates');
+
+    const templateList = Object.keys(templates).filter(key => key.endsWith('Achievement')).map(key => ({
+      name: key,
+      description: `${key} template`
+    }));
+
+    res.json({
+      success: true,
+      data: templateList
+    });
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch templates',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 获取可用的快速配置列表
+ * GET /api/achievements/quick-configs
+ */
+router.get('/quick-configs', authMiddleware, async (req, res) => {
+  try {
+    const configList = Object.keys(quickConfigs).map(key => ({
+      name: key,
+      description: `Quick config for ${key}`
+    }));
+
+    res.json({
+      success: true,
+      data: configList
+    });
+  } catch (error) {
+    console.error('Error fetching quick configs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch quick configs',
       error: error.message
     });
   }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Avatar, Dropdown, Space, Menu } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -12,6 +12,7 @@ import {
   ProjectOutlined,
   AuditOutlined,
   TrophyOutlined,
+  StarOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
@@ -25,6 +26,14 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+
+  // 身份验证检查：如果未登录，重定向到登录页面
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   // 检查是否为管理员角色
   const isAdmin = () => {
@@ -160,6 +169,16 @@ const MainLayout: React.FC = () => {
       icon: <BookOutlined />,
       label: '测评中心',
     },
+    {
+      key: '/student/achievements',
+      icon: <TrophyOutlined />,
+      label: '我的成就',
+    },
+    {
+      key: '/student/points',
+      icon: <StarOutlined />,
+      label: '我的积分',
+    },
   ];
 
   // 获取当前选中的菜单项（管理员）
@@ -191,6 +210,8 @@ const MainLayout: React.FC = () => {
     const path = location.pathname;
     if (path.includes('/student/practice')) return '/student/practice';
     if (path.includes('/student/assessments')) return '/student/assessments';
+    if (path.includes('/student/achievements')) return '/student/achievements';
+    if (path.includes('/student/points')) return '/student/points';
     if (path === '/') return '/';
     return '/';
   };

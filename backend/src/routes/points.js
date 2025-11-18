@@ -10,16 +10,35 @@ const StudentPoints = require('../models/StudentPoints');
 router.get('/account/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
+    const inputId = parseInt(studentId);
+
+    // 查询student记录（支持user_id或student_id）
+    const { pool } = require('../database/connection');
+    const studentQuery = await pool.query(
+      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
+      [inputId]
+    );
+
+    if (studentQuery.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const student = studentQuery.rows[0];
+    const actualStudentId = student.id;
+    const actualUserId = student.user_id;
 
     // 权限验证：学生只能查看自己的积分
-    if (req.user.role === 'student' && req.user.userId !== parseInt(studentId)) {
+    if (req.user.role === 'student' && req.user.id !== actualUserId) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
       });
     }
 
-    const account = await StudentPoints.getPointsAccount(parseInt(studentId));
+    const account = await StudentPoints.getPointsAccount(actualStudentId);
 
     if (!account) {
       return res.status(404).json({
@@ -50,9 +69,28 @@ router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
     const { transactionType, startDate, endDate, limit } = req.query;
+    const inputId = parseInt(studentId);
 
-    // 权限验证
-    if (req.user.role === 'student' && req.user.userId !== parseInt(studentId)) {
+    // 查询student记录（支持user_id或student_id）
+    const { pool } = require('../database/connection');
+    const studentQuery = await pool.query(
+      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
+      [inputId]
+    );
+
+    if (studentQuery.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const student = studentQuery.rows[0];
+    const actualStudentId = student.id;
+    const actualUserId = student.user_id;
+
+    // 权限验证：学生只能查看自己的积分交易历史
+    if (req.user.role === 'student' && req.user.id !== actualUserId) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -66,7 +104,7 @@ router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
     if (limit) filters.limit = parseInt(limit);
 
     const transactions = await StudentPoints.getTransactionHistory(
-      parseInt(studentId),
+      actualStudentId,
       filters
     );
 

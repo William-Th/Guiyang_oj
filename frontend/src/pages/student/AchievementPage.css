@@ -1,0 +1,87 @@
+.achievement-page {
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.achievement-card {
+  position: relative;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.achievement-card.earned {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.achievement-card.locked {
+  background-color: #fafafa;
+  filter: grayscale(50%);
+}
+
+.achievement-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.achievement-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  min-height: 100px;
+  position: relative;
+}
+
+.achievement-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: float 3s ease-in-out infinite;
+}
+
+.achievement-card.earned .achievement-icon {
+  animation: float 3s ease-in-out infinite, pulse 2s ease-in-out infinite;
+}
+
+.achievement-body {
+  padding: 0 16px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .achievement-page {
+    padding: 16px !important;
+  }
+
+  .achievement-header {
+    padding: 12px 0;
+    min-height: 80px;
+  }
+
+  .achievement-icon {
+    font-size: 36px !important;
+  }
+}
