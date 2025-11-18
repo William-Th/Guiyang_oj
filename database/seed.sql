@@ -211,6 +211,18 @@ INSERT INTO announcements (title, content, type, target_audience, is_pinned, cre
 -- Student: ID card=520102200802012345, password=password123
 -- Student: ID card=520102200803013456, password=password123
 
+-- ==========================================
+-- 成就系统种子数据
+-- ==========================================
+-- 注意：成就数据源自迁移文件，确保与 database/migrations/ 中的数据保持一致
+-- 相关迁移文件:
+--   - add_initial_achievements.sql (48个基础成就)
+--   - add_additional_achievements.sql (12个补充成就)
+-- ==========================================
+
+\i database/migrations/add_initial_achievements.sql
+\i database/migrations/add_additional_achievements.sql
+
 COMMENT ON TABLE users IS '所有演示账号的密码都是 password123';
 COMMENT ON COLUMN users.password IS '使用 bcrypt 加密，盐值为 10';
 COMMENT ON TABLE districts IS '区域管理表，支持区级和市级管理';

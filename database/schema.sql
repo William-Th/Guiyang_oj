@@ -2112,6 +2112,99 @@ ALTER SEQUENCE public.student_activities_id_seq OWNED BY public.student_activiti
 
 
 --
+-- Name: student_login_history; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.student_login_history (
+    id integer NOT NULL,
+    student_id integer NOT NULL,
+    user_id integer NOT NULL,
+    login_date date DEFAULT CURRENT_DATE NOT NULL,
+    login_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    login_method character varying(50) DEFAULT 'username'::character varying,
+    ip_address character varying(45),
+    user_agent text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: TABLE student_login_history; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.student_login_history IS '学生登录历史记录表，用于成就系统和行为分析';
+
+
+--
+-- Name: COLUMN student_login_history.student_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.student_id IS '学生ID（students.id）';
+
+
+--
+-- Name: COLUMN student_login_history.user_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.user_id IS '用户ID（users.id）';
+
+
+--
+-- Name: COLUMN student_login_history.login_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.login_date IS '登录日期（用于检测连续天数）';
+
+
+--
+-- Name: COLUMN student_login_history.login_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.login_time IS '登录时间（精确到秒）';
+
+
+--
+-- Name: COLUMN student_login_history.login_method; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.login_method IS '登录方式：username/phone/idCard';
+
+
+--
+-- Name: COLUMN student_login_history.ip_address; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.ip_address IS 'IP地址';
+
+
+--
+-- Name: COLUMN student_login_history.user_agent; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.student_login_history.user_agent IS '用户代理字符串';
+
+
+--
+-- Name: student_login_history_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.student_login_history_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: student_login_history_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.student_login_history_id_seq OWNED BY public.student_login_history.id;
+
+
+--
 -- Name: student_daily_tasks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2831,6 +2924,13 @@ ALTER TABLE ONLY public.student_activities ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: student_login_history id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.student_login_history ALTER COLUMN id SET DEFAULT nextval('public.student_login_history_id_seq'::regclass);
+
+
+--
 -- Name: student_daily_tasks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3179,6 +3279,22 @@ ALTER TABLE ONLY public.student_achievements
 
 ALTER TABLE ONLY public.student_achievements
     ADD CONSTRAINT student_achievements_student_id_achievement_id_key UNIQUE (student_id, achievement_id);
+
+
+--
+-- Name: student_login_history student_login_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.student_login_history
+    ADD CONSTRAINT student_login_history_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: student_login_history student_login_unique_daily; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.student_login_history
+    ADD CONSTRAINT student_login_unique_daily UNIQUE (student_id, login_date);
 
 
 --
@@ -3924,6 +4040,34 @@ CREATE INDEX idx_student_achievements_time ON public.student_achievements USING 
 
 
 --
+-- Name: idx_student_login_history_login_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_student_login_history_login_date ON public.student_login_history USING btree (login_date);
+
+
+--
+-- Name: idx_student_login_history_student_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_student_login_history_student_date ON public.student_login_history USING btree (student_id, login_date DESC);
+
+
+--
+-- Name: idx_student_login_history_student_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_student_login_history_student_id ON public.student_login_history USING btree (student_id);
+
+
+--
+-- Name: idx_student_login_history_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_student_login_history_user_id ON public.student_login_history USING btree (user_id);
+
+
+--
 -- Name: idx_student_activities_auto_submit; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4585,6 +4729,22 @@ ALTER TABLE ONLY public.student_achievements
 
 ALTER TABLE ONLY public.student_achievements
     ADD CONSTRAINT student_achievements_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
+
+
+--
+-- Name: student_login_history fk_student_login_student; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.student_login_history
+    ADD CONSTRAINT fk_student_login_student FOREIGN KEY (student_id) REFERENCES public.students(id) ON DELETE CASCADE;
+
+
+--
+-- Name: student_login_history fk_student_login_user; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.student_login_history
+    ADD CONSTRAINT fk_student_login_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

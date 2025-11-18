@@ -202,10 +202,25 @@ All demo accounts use password: `password123`
 - 编写SQL schema文件（`database/schema.sql`）
 - 创建数据库迁移脚本（`database/migrations/`）
 - 验证数据表创建成功
+- **🔴 关键要求（必须遵守）：**
+  - **同步 schema.sql**：每次创建新的迁移文件后，必须同步更新 `database/schema.sql`
+    - 将迁移文件中的表结构变更手动添加到 schema.sql 中
+    - 确保 schema.sql 反映最新的完整数据库结构
+    - 这样可以确保在其他服务器上部署时，直接导入 schema.sql 即可获得完整数据库
+  - **同步 seed.sql**：开发测试过程中创建的所有测试数据，必须同步到 `database/seed.sql`
+    - 如果创建了新的演示数据、测试账号、示例记录，必须添加到 seed.sql
+    - 可以使用 `\i database/migrations/xxx.sql` 引用迁移文件中的数据插入语句
+    - 确保其他服务器上也能使用相同的测试数据进行测试
 - **📝 文档更新：**
   - 更新数据库表结构文档
   - 在迁移脚本中添加详细注释说明变更原因
   - 如有字段修改，同时更新 `schema.sql` 和保留迁移记录
+
+**⚠️ 为什么这很重要？**
+- `schema.sql` 是数据库的"单一真相来源"，反映当前完整的数据库结构
+- 其他团队成员在新服务器上部署时，只需导入 schema.sql 即可创建完整数据库
+- `seed.sql` 提供一致的测试数据环境，确保所有开发者使用相同的测试数据
+- 避免因数据库结构不一致导致的部署失败和测试问题
 
 #### 2️⃣ 后端API开发
 
@@ -837,19 +852,24 @@ npx playwright codegen http://localhost:3000
 
 ### 开发时必须注意
 
-1. **Docker 重建**: 代码修改后必须重新构建 Docker 镜像
+1. **🔴 数据库迁移文件必须同步 schema.sql 和 seed.sql**
+   - 创建新迁移文件后，必须手动更新 `database/schema.sql`
+   - 开发测试数据必须同步到 `database/seed.sql`
+   - 这是部署到其他服务器的关键步骤，**不可跳过**！
+
+2. **Docker 重建**: 代码修改后必须重新构建 Docker 镜像
    ```bash
    docker-compose up --build -d backend
    docker-compose up --build -d frontend
    ```
 
-2. **测试数据隔离**: E2E 测试必须使用时间戳或 UUID 确保数据唯一性
+3. **测试数据隔离**: E2E 测试必须使用时间戳或 UUID 确保数据唯一性
 
-3. **文档同步**: 代码变更后必须同步更新相关文档
+4. **文档同步**: 代码变更后必须同步更新相关文档
 
-4. **测试优先**: API 测试通过后再开发前端，E2E 测试通过后才算功能完成
+5. **测试优先**: API 测试通过后再开发前端，E2E 测试通过后才算功能完成
 
-5. **参考最佳实践**: 编写测试前必读 **tests/docs/测试脚本最佳实践.md**
+6. **参考最佳实践**: 编写测试前必读 **tests/docs/测试脚本最佳实践.md**
 
 ### 关键文档位置
 
