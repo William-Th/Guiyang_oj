@@ -18,6 +18,7 @@ import {
   Progress,
   Affix,
   Tooltip,
+  Modal,
 } from 'antd';
 import {
   SaveOutlined,
@@ -148,6 +149,13 @@ const GradingDetailPage: React.FC = () => {
     }
   }, [studentActivityId]);
 
+  // Check for backup data after detail is loaded
+  useEffect(() => {
+    if (detail) {
+      restoreFromBackup();
+    }
+  }, [detail]);
+
   const loadGradingDetail = async () => {
     try {
       setLoading(true);
@@ -170,26 +178,57 @@ const GradingDetailPage: React.FC = () => {
     }
   };
 
-  const handleSaveGrade = async (answerId: number) => {
+  const handleSaveGrade = async (answerId: number, retryCount = 0) => {
     try {
+      // Validate form before saving
+      await form.validateFields([`score_${answerId}`, `feedback_${answerId}`]);
+
       const values = form.getFieldsValue();
       const score = values[`score_${answerId}`];
       const feedback = values[`feedback_${answerId}`];
 
+      // Save to localStorage as backup
+      const backupKey = `grading_backup_${studentActivityId}_${answerId}`;
+      localStorage.setItem(backupKey, JSON.stringify({ score, feedback, timestamp: Date.now() }));
+
       await gradingApi.gradeAnswer(answerId, { score, feedback });
       message.success('评分保存成功');
+
+      // Clear backup after successful save
+      localStorage.removeItem(backupKey);
 
       // Reload to get updated status
       await loadGradingDetail();
     } catch (error: any) {
       console.error('Save grade error:', error);
-      message.error(error.response?.data?.message || '保存评分失败');
+
+      // Network error - retry mechanism
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        if (retryCount < 2) {
+          message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return handleSaveGrade(answerId, retryCount + 1);
+        } else {
+          message.error('网络错误，请检查网络连接后重试。评分已保存到本地缓存。');
+        }
+      } else if (error.name === 'ValidationError') {
+        // Form validation error - already shown by form
+        return;
+      } else {
+        // Other errors
+        const errorMsg = error.response?.data?.message || '保存评分失败';
+        message.error(errorMsg);
+      }
     }
   };
 
-  const handleBatchSave = async () => {
+  const handleBatchSave = async (retryCount = 0) => {
     try {
       setSaving(true);
+
+      // Validate all form fields first
+      await form.validateFields();
+
       const values = form.getFieldsValue();
       const answers = detail!.answers.map((answer) => ({
         answerId: answer.id,
@@ -197,30 +236,136 @@ const GradingDetailPage: React.FC = () => {
         feedback: values[`feedback_${answer.id}`],
       }));
 
+      // Save to localStorage as backup
+      const backupKey = `grading_batch_backup_${studentActivityId}`;
+      localStorage.setItem(backupKey, JSON.stringify({ answers, timestamp: Date.now() }));
+
       await gradingApi.batchGradeAnswers(answers);
       message.success('批量保存成功');
+
+      // Clear backup after successful save
+      localStorage.removeItem(backupKey);
 
       // Reload to get updated status
       await loadGradingDetail();
     } catch (error: any) {
       console.error('Batch save error:', error);
-      message.error(error.response?.data?.message || '批量保存失败');
+
+      // Network error - retry mechanism
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        if (retryCount < 2) {
+          message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return handleBatchSave(retryCount + 1);
+        } else {
+          message.error('网络错误，请检查网络连接后重试。评分已保存到本地缓存。');
+        }
+      } else if (error.errorFields) {
+        // Form validation error
+        message.error('请检查表单，确保所有分数在有效范围内');
+        // Scroll to first error field
+        const firstError = error.errorFields[0];
+        if (firstError) {
+          const fieldName = firstError.name[0];
+          const questionId = fieldName.replace('score_', '').replace('feedback_', '');
+          const element = document.getElementById(`question-${questionId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      } else {
+        // Other errors
+        const errorMsg = error.response?.data?.message || '批量保存失败';
+        message.error(errorMsg);
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCompleteGrading = async () => {
+  const handleCompleteGrading = async (retryCount = 0) => {
     try {
       setSaving(true);
-      await handleBatchSave(); // Save first
+
+      // Save all grades first
+      await handleBatchSave();
+
+      // Complete grading
       await gradingApi.completeGrading(studentActivityId!);
       message.success('评卷完成！');
+
+      // Clear all backup data
+      clearAllBackups();
+
       navigate('/teacher/grading');
     } catch (error: any) {
       console.error('Complete grading error:', error);
-      message.error(error.response?.data?.message || '完成评卷失败');
+
+      // Network error - retry mechanism
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        if (retryCount < 2) {
+          message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return handleCompleteGrading(retryCount + 1);
+        } else {
+          message.error('网络错误，请检查网络连接后重试');
+        }
+      } else {
+        const errorMsg = error.response?.data?.message || '完成评卷失败';
+        message.error(errorMsg);
+      }
+
       setSaving(false);
+    }
+  };
+
+  // Clear all backup data for current student activity
+  const clearAllBackups = () => {
+    if (!studentActivityId) return;
+
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith(`grading_backup_${studentActivityId}_`) ||
+          key.startsWith(`grading_batch_backup_${studentActivityId}`)) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
+  // Restore from local backup if available
+  const restoreFromBackup = () => {
+    if (!detail || !studentActivityId) return;
+
+    const batchBackupKey = `grading_batch_backup_${studentActivityId}`;
+    const batchBackup = localStorage.getItem(batchBackupKey);
+
+    if (batchBackup) {
+      try {
+        const { answers, timestamp } = JSON.parse(batchBackup);
+        const backupDate = new Date(timestamp);
+        const timeDiff = Date.now() - timestamp;
+
+        // Only restore if backup is less than 24 hours old
+        if (timeDiff < 24 * 60 * 60 * 1000) {
+          Modal.confirm({
+            title: '发现未保存的评分数据',
+            content: `发现于 ${backupDate.toLocaleString()} 的未保存评分数据，是否恢复？`,
+            okText: '恢复',
+            cancelText: '忽略',
+            onOk: () => {
+              const formValues: any = {};
+              answers.forEach((answer: any) => {
+                formValues[`score_${answer.answerId}`] = answer.score;
+                formValues[`feedback_${answer.answerId}`] = answer.feedback;
+              });
+              form.setFieldsValue(formValues);
+              message.success('已恢复本地缓存的评分数据');
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to restore backup:', err);
+      }
     }
   };
 
@@ -289,7 +434,7 @@ const GradingDetailPage: React.FC = () => {
               <Button
                 type="primary"
                 icon={<SaveOutlined />}
-                onClick={handleBatchSave}
+                onClick={() => handleBatchSave()}
                 loading={saving}
               >
                 保存所有评分 (S)
@@ -298,7 +443,7 @@ const GradingDetailPage: React.FC = () => {
                 type="primary"
                 danger
                 icon={<CheckCircleOutlined />}
-                onClick={handleCompleteGrading}
+                onClick={() => handleCompleteGrading()}
                 loading={saving}
                 disabled={pendingCount > 0}
               >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col, DatePicker, Input } from 'antd';
+import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col, DatePicker, Input, Modal } from 'antd';
 import { EyeOutlined, CheckCircleOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gradingApi, activityApi } from '../../services/api';
@@ -78,23 +78,54 @@ const GradingListPage: React.FC = () => {
     loadPendingGrading();
   }, [filters]);
 
-  const loadActivities = async () => {
+  const loadActivities = async (retryCount = 0) => {
     try {
       const response = await activityApi.getMyActivities();
       setActivities(response.activities || []);
     } catch (error: any) {
       console.error('Load activities error:', error);
+
+      // Network error - retry silently
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        if (retryCount < 2) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return loadActivities(retryCount + 1);
+        } else {
+          // Failed after retries - show warning but don't block
+          message.warning('加载活动列表失败，筛选功能可能受限');
+        }
+      }
     }
   };
 
-  const loadPendingGrading = async () => {
+  const loadPendingGrading = async (retryCount = 0) => {
     try {
       setLoading(true);
       const response = await gradingApi.getPendingGrading(filters);
       setSubmissions(response.submissions || []);
     } catch (error: any) {
       console.error('Load pending grading error:', error);
-      message.error(error.response?.data?.message || '加载待评卷列表失败');
+
+      // Network error - retry mechanism
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        if (retryCount < 2) {
+          message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return loadPendingGrading(retryCount + 1);
+        } else {
+          Modal.error({
+            title: '网络连接失败',
+            content: '请检查网络后点击重新加载',
+            okText: '重新加载',
+            onOk: () => {
+              loadPendingGrading(0);
+            },
+          });
+        }
+      } else {
+        const errorMsg = error.response?.data?.message || '加载待评卷列表失败';
+        message.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
