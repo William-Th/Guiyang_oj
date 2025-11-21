@@ -57,13 +57,20 @@ interface GradingDetailResponse {
     grade: string;
     total_score: number;
   };
-  answers: Array<GradingQuestion & { grading_status: string; question_id: number; is_correct: boolean | null }>;
+  answers: Array<GradingQuestion & {
+    grading_status: string;
+    question_id: number;
+    is_correct: boolean | null;
+    manual_score: number | null;
+    auto_score: number | null;
+    feedback: string | null;
+  }>;
   questions: Array<{
     id: number;
     type: string;
     content: string;
-    options?: unknown;
-    correct_answer?: unknown;
+    options?: Record<string, string>;
+    correct_answer?: string | string[];
     explanation?: string | null;
     score: number;
     difficulty?: string | null;
@@ -152,7 +159,7 @@ const GradingDetailPage: React.FC = () => {
 
       // Set initial form values
       const formValues: Record<string, number | string> = {};
-      response.answers.forEach((answer) => {
+      response.answers.forEach((answer: GradingDetailResponse['answers'][0]) => {
         formValues[`score_${answer.id}`] = answer.manual_score || answer.auto_score || 0;
         formValues[`feedback_${answer.id}`] = answer.feedback || '';
       });
@@ -365,7 +372,7 @@ const GradingDetailPage: React.FC = () => {
   const renderAnswer = (answer: GradingDetailResponse['answers'][0]) => {
     return (
       <div style={{ whiteSpace: 'pre-wrap' }}>
-        {Array.isArray(answer.answer) ? answer.answer.join(', ') : answer.answer}
+        {Array.isArray(answer.answer) ? answer.answer.join(', ') : String(answer.answer || '')}
       </div>
     );
   };
@@ -545,7 +552,7 @@ const GradingDetailPage: React.FC = () => {
                   <div>
                     {Object.entries(question.options).map(([key, value]) => (
                       <div key={key}>
-                        {key}. {String(value)}
+                        {key}. {value}
                       </div>
                     ))}
                   </div>

@@ -112,20 +112,91 @@
   - `backend/src/routes/questions.js` (题目API)
   - `backend/src/routes/questionBank.js` (题库API)
 
-**修复方案**:
-1. **前端修改**:
-   - 题目编辑器移除"题库范围"选择字段
-   - 发布对话框中添加"题库范围"选择
-   - 根据范围显示/隐藏审批人选择
-2. **后端修改**:
-   - 题目保存时不需要scope字段
-   - 发布接口接收scope参数
-   - 校级题库直接发布（status='published'）
-   - 其他范围提交审核（status='pending_review'）
+**修复方案** (详细实施计划 2025-11-21):
 
-**需要讨论的点**:
-- 草稿箱题目是否需要区分范围？（建议：不区分，发布时再选）
-- 发布后的题目是否可以修改范围？（建议：不允许，需要重新创建）
+### 设计原则
+- 所有题目创建时统一进入草稿箱（status='draft'）
+- 发布时选择目标题库范围（assessment/practice_municipal/practice_district_XX/practice_school_XX）
+- 校级题库无需审核，直接发布
+- 区级/市级/测评题库需要审核流程
+
+### 实施步骤
+
+#### 阶段1: 后端API调整
+
+1. **修改题目创建API** (`backend/src/routes/questionBank.js` POST /bank)
+   - 移除scope参数要求
+   - 创建时固定status='draft'
+   - 不再设置reviewer_id和target_scope
+
+2. **修改题目发布API** (`backend/src/routes/questionReview.js`)
+   - POST /:id/publish-school - 直接发布到校级题库（无需审核）
+     - 参数: school_id（可选，默认用户所在学校）
+     - 设置status='published', scope=['practice_school_XX']
+   - POST /:id/submit - 提交区级/市级题库审核
+     - 参数: reviewer_id, target_scope (practice_district_XX/practice_municipal/assessment)
+     - 设置status='pending_review'
+
+3. **新增/districts API** (`backend/src/routes/districts.js`)
+   - GET /districts - 获取所有区域列表
+   - 返回: {id, code, name}[]
+   - 用于前端区域下拉选择器
+
+#### 阶段2: 前端UI调整
+
+1. **修改题目创建页面** (`frontend/src/pages/teacher/QuestionBankPage.tsx`, 题目编辑器组件)
+   - 移除"题库范围"选择字段
+   - 保存按钮功能：保存为草稿
+
+2. **增强草稿箱页面** (`frontend/src/pages/teacher/DraftsPage.tsx`)
+   - 发布按钮打开"发布设置"对话框
+   - 对话框内容:
+     ```
+     [选择目标题库范围]
+     ○ 校级题库 (无需审核)
+     ○ 区级练习题库
+       └─ [选择区域下拉框] (云岩区/南明区/...)
+       └─ [选择审核人下拉框]
+     ○ 市级练习题库
+       └─ [选择审核人下拉框]
+     ○ 测评题库
+       └─ [选择审核人下拉框]
+     ```
+   - 选择校级题库时，直接发布
+   - 选择其他范围时，显示审核人选择器
+
+3. **修复BUG-005** (区域选择逻辑)
+   - 使用 `frontend/src/config/districts.ts` 配置
+   - 调用 `/api/districts` 获取区域列表（作为备选方案）
+   - 构造完整的target_scope: `practice_district_${districtCode}`
+
+#### 阶段3: 数据迁移
+
+**不需要数据迁移**，现有题目保持不变，新流程只影响新创建的题目。
+
+#### 阶段4: 测试
+
+1. **API测试** (`tests/api/question-publish-workflow.test.js`)
+   - 创建草稿题目测试
+   - 发布到校级题库测试（无需审核）
+   - 提交区级题库审核测试（含区域选择）
+   - 提交市级题库审核测试
+
+2. **E2E测试** (`tests/e2e/regression/question-publish-workflow.spec.ts`)
+   - QPW101: 创建题目保存为草稿
+   - QPW102: 发布到校级题库
+   - QPW103: 发布到区级题库（选择区域+审核人）
+   - QPW104: 发布到市级题库（选择审核人）
+
+### 需要确认的问题
+
+**已确认**:
+1. ✅ 草稿箱题目不区分范围，发布时再选
+2. ✅ 发布后的题目不可修改范围（需要重新创建）
+
+**待确认**:
+1. ⏸️ 现有已发布题目是否需要调整？（建议：保持不变）
+2. ⏸️ 拒绝的题目是否可以修改后重新发布到不同范围？（建议：允许）
 
 ---
 
