@@ -33,14 +33,6 @@ ON CONFLICT (username) DO NOTHING;
 -- 2. 添加考试数据
 -- ========================================
 
--- 语文考试
-INSERT INTO exams (title, description, subject, grade, start_time, end_time, duration, total_score, pass_score, status, created_by) VALUES
-('2024春季语文期中考试', '小学三年级语文期中测试', '语文', '三年级', '2024-04-15 09:00:00', '2024-04-15 11:00:00', 90, 100, 60, 'published',
-  (SELECT id FROM users WHERE username = 'teacher01' LIMIT 1)),
-('2024春季语文期末考试', '小学三年级语文期末测试', '语文', '三年级', '2024-06-20 09:00:00', '2024-06-20 11:00:00', 90, 100, 60, 'draft',
-  (SELECT id FROM users WHERE username = 'teacher01' LIMIT 1))
-ON CONFLICT DO NOTHING;
-
 -- 数学考试
 INSERT INTO exams (title, description, subject, grade, start_time, end_time, duration, total_score, pass_score, status, created_by) VALUES
 ('2024春季数学期中考试', '小学三年级数学期中测试', '数学', '三年级', '2024-04-16 09:00:00', '2024-04-16 11:00:00', 90, 100, 60, 'published',
@@ -49,53 +41,9 @@ INSERT INTO exams (title, description, subject, grade, start_time, end_time, dur
   (SELECT id FROM users WHERE username = 'teacher02' LIMIT 1))
 ON CONFLICT DO NOTHING;
 
--- 英语考试
-INSERT INTO exams (title, description, subject, grade, start_time, end_time, duration, total_score, pass_score, status, created_by) VALUES
-('2024春季英语口语测试', '小学三年级英语口语能力测试', '英语', '三年级', '2024-05-10 14:00:00', '2024-05-10 16:00:00', 60, 100, 60, 'published',
-  (SELECT id FROM users WHERE username = 'teacher03' LIMIT 1))
-ON CONFLICT DO NOTHING;
-
--- 科学考试
-INSERT INTO exams (title, description, subject, grade, start_time, end_time, duration, total_score, pass_score, status, created_by) VALUES
-('2024春季科学实验考试', '小学三年级科学实验操作测试', '科学', '三年级', '2024-05-15 14:00:00', '2024-05-15 15:30:00', 60, 100, 60, 'draft',
-  (SELECT id FROM users WHERE username = 'teacher01' LIMIT 1))
-ON CONFLICT DO NOTHING;
-
 -- ========================================
 -- 3. 添加考试题目
 -- ========================================
-
--- 语文期中考试题目
-DO $$
-DECLARE
-  exam_id_chinese INT;
-BEGIN
-  SELECT id INTO exam_id_chinese FROM exams WHERE title = '2024春季语文期中考试' LIMIT 1;
-
-  IF exam_id_chinese IS NOT NULL THEN
-    -- 单选题
-    INSERT INTO questions (exam_id, type, content, options, correct_answer, score, order_no, difficulty, explanation) VALUES
-    (exam_id_chinese, 'single', '下列词语中，加点字读音完全正确的一组是（）',
-     '["A. 奔跑(bēn) 友谊(yì)", "B. 花朵(duǒ) 音乐(yuè)", "C. 背包(bēi) 数学(shǔ)", "D. 长大(zhǎng) 着急(zháo)"]',
-     'B', 5, 1, 'easy', '花朵读duǒ，音乐读yuè，发音正确'),
-
-    (exam_id_chinese, 'single', '"春眠不觉晓"的下一句是（）',
-     '["A. 处处闻啼鸟", "B. 夜来风雨声", "C. 花落知多少", "D. 春风吹又生"]',
-     'A', 5, 2, 'easy', '这是孟浩然的《春晓》，下一句是"处处闻啼鸟"'),
-
-    -- 多选题
-    (exam_id_chinese, 'multiple', '下列句子中，使用了比喻修辞手法的有（）',
-     '["A. 天上的星星像眼睛一样眨啊眨", "B. 弯弯的月亮像小船", "C. 太阳从东方升起", "D. 雪花像鹅毛一样飘落"]',
-     '["A","B","D"]', 10, 3, 'medium', 'A、B、D都使用了比喻，将某物比作另一物'),
-
-    -- 填空题
-    (exam_id_chinese, 'blank', '请填写古诗：日出江花红胜火，___________。',
-     '["春来江水绿如蓝"]', '春来江水绿如蓝', 5, 4, 'medium', '这是白居易《忆江南》中的名句'),
-
-    -- 判断题
-    (exam_id_chinese, 'single', '"它"字是独体字。', '["正确","错误"]', '错误', 5, 5, 'easy', '"它"字是左右结构，不是独体字');
-  END IF;
-END $$;
 
 -- 数学期中考试题目
 DO $$
