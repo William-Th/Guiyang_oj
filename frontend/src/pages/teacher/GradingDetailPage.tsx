@@ -29,34 +29,13 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gradingApi } from '../../services/api';
+import { ApiError, GradingQuestion } from '../../types';
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
 
-interface Answer {
-  id: number;
-  question_id: number;
-  answer: any;
-  score: number | null;
-  auto_score: number | null;
-  manual_score: number | null;
-  is_correct: boolean | null;
-  grading_status: string;
-  feedback: string | null;
-}
-
-interface Question {
-  id: number;
-  type: string;
-  content: string;
-  options: any;
-  correct_answer: any;
-  explanation: string | null;
-  score: number;
-  difficulty: string | null;
-}
-
-interface StudentActivityDetail {
+// Extended type to match actual API response
+interface GradingDetailResponse {
   student_activity: {
     id: number;
     student_id: number;
@@ -78,8 +57,17 @@ interface StudentActivityDetail {
     grade: string;
     total_score: number;
   };
-  answers: Answer[];
-  questions: Question[];
+  answers: Array<GradingQuestion & { grading_status: string; question_id: number; is_correct: boolean | null }>;
+  questions: Array<{
+    id: number;
+    type: string;
+    content: string;
+    options?: unknown;
+    correct_answer?: unknown;
+    explanation?: string | null;
+    score: number;
+    difficulty?: string | null;
+  }>;
 }
 
 const GradingDetailPage: React.FC = () => {
@@ -88,7 +76,7 @@ const GradingDetailPage: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [detail, setDetail] = useState<StudentActivityDetail | null>(null);
+  const [detail, setDetail] = useState<GradingDetailResponse | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const questionRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
@@ -163,15 +151,16 @@ const GradingDetailPage: React.FC = () => {
       setDetail(response);
 
       // Set initial form values
-      const formValues: any = {};
-      response.answers.forEach((answer: Answer) => {
+      const formValues: Record<string, number | string> = {};
+      response.answers.forEach((answer) => {
         formValues[`score_${answer.id}`] = answer.manual_score || answer.auto_score || 0;
         formValues[`feedback_${answer.id}`] = answer.feedback || '';
       });
       form.setFieldsValue(formValues);
-    } catch (error: any) {
-      console.error('Load grading detail error:', error);
-      message.error(error.response?.data?.message || '加载评卷详情失败');
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Load grading detail error:', apiError);
+      message.error(apiError.response?.data?.message || '加载评卷详情失败');
       navigate(-1);
     } finally {
       setLoading(false);
@@ -199,11 +188,12 @@ const GradingDetailPage: React.FC = () => {
 
       // Reload to get updated status
       await loadGradingDetail();
-    } catch (error: any) {
-      console.error('Save grade error:', error);
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Save grade error:', apiError);
 
       // Network error - retry mechanism
-      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      if (apiError.code === 'ERR_NETWORK' || apiError.message?.includes('Network Error')) {
         if (retryCount < 2) {
           message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -211,12 +201,12 @@ const GradingDetailPage: React.FC = () => {
         } else {
           message.error('网络错误，请检查网络连接后重试。评分已保存到本地缓存。');
         }
-      } else if (error.name === 'ValidationError') {
+      } else if (apiError.name === 'ValidationError') {
         // Form validation error - already shown by form
         return;
       } else {
         // Other errors
-        const errorMsg = error.response?.data?.message || '保存评分失败';
+        const errorMsg = apiError.response?.data?.message || '保存评分失败';
         message.error(errorMsg);
       }
     }
@@ -248,11 +238,12 @@ const GradingDetailPage: React.FC = () => {
 
       // Reload to get updated status
       await loadGradingDetail();
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Batch save error:', error);
 
       // Network error - retry mechanism
-      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      if (apiError.code === 'ERR_NETWORK' || apiError.message?.includes('Network Error')) {
         if (retryCount < 2) {
           message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -260,13 +251,14 @@ const GradingDetailPage: React.FC = () => {
         } else {
           message.error('网络错误，请检查网络连接后重试。评分已保存到本地缓存。');
         }
-      } else if (error.errorFields) {
+      } else if ('errorFields' in apiError) {
         // Form validation error
         message.error('请检查表单，确保所有分数在有效范围内');
         // Scroll to first error field
-        const firstError = error.errorFields[0];
+        const validationError = apiError as unknown as { errorFields: Array<{ name: (string | number)[] }> };
+        const firstError = validationError.errorFields[0];
         if (firstError) {
-          const fieldName = firstError.name[0];
+          const fieldName = String(firstError.name[0]);
           const questionId = fieldName.replace('score_', '').replace('feedback_', '');
           const element = document.getElementById(`question-${questionId}`);
           if (element) {
@@ -275,7 +267,7 @@ const GradingDetailPage: React.FC = () => {
         }
       } else {
         // Other errors
-        const errorMsg = error.response?.data?.message || '批量保存失败';
+        const errorMsg = apiError.response?.data?.message || '批量保存失败';
         message.error(errorMsg);
       }
     } finally {
@@ -298,11 +290,12 @@ const GradingDetailPage: React.FC = () => {
       clearAllBackups();
 
       navigate('/teacher/grading');
-    } catch (error: any) {
-      console.error('Complete grading error:', error);
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Complete grading error:', apiError);
 
       // Network error - retry mechanism
-      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      if (apiError.code === 'ERR_NETWORK' || apiError.message?.includes('Network Error')) {
         if (retryCount < 2) {
           message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -311,7 +304,7 @@ const GradingDetailPage: React.FC = () => {
           message.error('网络错误，请检查网络连接后重试');
         }
       } else {
-        const errorMsg = error.response?.data?.message || '完成评卷失败';
+        const errorMsg = apiError.response?.data?.message || '完成评卷失败';
         message.error(errorMsg);
       }
 
@@ -369,7 +362,7 @@ const GradingDetailPage: React.FC = () => {
     }
   };
 
-  const renderAnswer = (answer: Answer) => {
+  const renderAnswer = (answer: GradingDetailResponse['answers'][0]) => {
     return (
       <div style={{ whiteSpace: 'pre-wrap' }}>
         {Array.isArray(answer.answer) ? answer.answer.join(', ') : answer.answer}

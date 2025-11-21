@@ -3,6 +3,7 @@ import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row,
 import { EyeOutlined, CheckCircleOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gradingApi, activityApi } from '../../services/api';
+import { ApiError, FilterParams } from '../../types';
 
 interface PendingSubmission {
   student_activity_id: number;
@@ -49,7 +50,7 @@ const GradingListPage: React.FC = () => {
 
   // Initialize filters from URL params
   useEffect(() => {
-    const initialFilters: any = {};
+    const initialFilters: FilterParams = {};
     if (searchParams.get('activityId')) initialFilters.activityId = parseInt(searchParams.get('activityId')!);
     if (searchParams.get('subject')) initialFilters.subject = searchParams.get('subject');
     if (searchParams.get('grade')) initialFilters.grade = searchParams.get('grade');
@@ -82,11 +83,12 @@ const GradingListPage: React.FC = () => {
     try {
       const response = await activityApi.getMyActivities();
       setActivities(response.activities || []);
-    } catch (error: any) {
-      console.error('Load activities error:', error);
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Load activities error:', apiError);
 
       // Network error - retry silently
-      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      if (apiError.code === 'ERR_NETWORK' || apiError.message?.includes('Network Error')) {
         if (retryCount < 2) {
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
           return loadActivities(retryCount + 1);
@@ -103,11 +105,12 @@ const GradingListPage: React.FC = () => {
       setLoading(true);
       const response = await gradingApi.getPendingGrading(filters);
       setSubmissions(response.submissions || []);
-    } catch (error: any) {
-      console.error('Load pending grading error:', error);
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Load pending grading error:', apiError);
 
       // Network error - retry mechanism
-      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      if (apiError.code === 'ERR_NETWORK' || apiError.message?.includes('Network Error')) {
         if (retryCount < 2) {
           message.warning(`网络错误，正在重试... (${retryCount + 1}/2)`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
@@ -123,7 +126,7 @@ const GradingListPage: React.FC = () => {
           });
         }
       } else {
-        const errorMsg = error.response?.data?.message || '加载待评卷列表失败';
+        const errorMsg = apiError.response?.data?.message || '加载待评卷列表失败';
         message.error(errorMsg);
       }
     } finally {
