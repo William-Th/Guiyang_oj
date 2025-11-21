@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { questionReviewApi, questionBankApi } from '../../services/api';
+import { getAllDistricts, buildDistrictScope } from '../../config/districts';
 
 interface Question {
   id: number;
@@ -56,6 +57,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
   const [availableReviewers, setAvailableReviewers] = useState<Reviewer[]>([]);
   const [selectedReviewer, setSelectedReviewer] = useState<number | null>(null);
   const [selectedScope, setSelectedScope] = useState<string>('');
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -80,10 +82,23 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
         return;
       }
 
+      // 如果选择了区级题库但未选择具体区域，不加载审核人
+      if (selectedScope === 'practice_district' && !selectedDistrictCode) {
+        setAvailableReviewers([]);
+        setSelectedReviewer(null);
+        return;
+      }
+
+      // 构造完整的scope字符串
+      let finalScope = selectedScope;
+      if (selectedScope === 'practice_district' && selectedDistrictCode) {
+        finalScope = buildDistrictScope(selectedDistrictCode);
+      }
+
       try {
         const response = await questionReviewApi.getAvailableReviewers(
           selectedQuestion.subject,
-          selectedScope
+          finalScope
         );
         setAvailableReviewers(response.data || []);
         setSelectedReviewer(null); // 清空之前选择的审核人
@@ -95,7 +110,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
     };
 
     loadReviewersForScope();
-  }, [selectedScope, selectedQuestion]);
+  }, [selectedScope, selectedDistrictCode, selectedQuestion]);
 
   const loadDrafts = async () => {
     try {
@@ -124,6 +139,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
     setSelectedQuestion(question);
     setSelectedReviewer(null);
     setSelectedScope('');
+    setSelectedDistrictCode(''); // 清空区域选择
     setAvailableReviewers([]); // 清空审核人列表，等用户选择scope后再加载
     setSubmitModalVisible(true); // 直接打开模态框
   };
@@ -134,12 +150,24 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
       return;
     }
 
+    // 如果选择区级题库但未选择区域，提示用户
+    if (selectedScope === 'practice_district' && !selectedDistrictCode) {
+      message.warning('请选择目标区域');
+      return;
+    }
+
+    // 构造完整的scope字符串
+    let finalScope = selectedScope;
+    if (selectedScope === 'practice_district' && selectedDistrictCode) {
+      finalScope = buildDistrictScope(selectedDistrictCode);
+    }
+
     try {
       setSubmitting(true);
       await questionReviewApi.submitForReview(
         selectedQuestion!.id,
         selectedReviewer,
-        selectedScope
+        finalScope
       );
       message.success('提交审核成功');
       setSubmitModalVisible(false);
@@ -374,7 +402,12 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
               </label>
               <Select
                 value={selectedScope || undefined}
-                onChange={setSelectedScope}
+                onChange={(value) => {
+                  setSelectedScope(value);
+                  // 切换题库范围时，清空区域选择和审核人
+                  setSelectedDistrictCode('');
+                  setSelectedReviewer(null);
+                }}
                 placeholder="请选择要提交的题库范围"
                 style={{ width: '100%' }}
                 virtual={false}
@@ -403,6 +436,38 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
               </div>
             </div>
 
+            {/* 区域选择（仅当选择区级题库时显示） */}
+            {selectedScope === 'practice_district' && (
+              <div style={{ marginTop: 16 }}>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  <span style={{ color: 'red' }}>* </span>
+                  选择目标区域：
+                </label>
+                <Select
+                  value={selectedDistrictCode || undefined}
+                  onChange={(value) => {
+                    setSelectedDistrictCode(value);
+                    setSelectedReviewer(null); // 切换区域时清空审核人选择
+                  }}
+                  placeholder="请选择要发布的区域"
+                  style={{ width: '100%' }}
+                  virtual={false}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {getAllDistricts().map((district) => (
+                    <Select.Option key={district.code} value={district.code}>
+                      <Tag color="cyan">{district.code}</Tag>
+                      <span style={{ marginLeft: 8 }}>{district.name}</span>
+                    </Select.Option>
+                  ))}
+                </Select>
+                <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                  提示：选择区域后，系统将自动加载该区域具有审核权限的教师。
+                </div>
+              </div>
+            )}
+
             <div style={{ marginTop: 24 }}>
               <label style={{ display: 'block', marginBottom: 8 }}>
                 <span style={{ color: 'red' }}>* </span>
@@ -410,12 +475,18 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
               </label>
               <Select
                 style={{ width: '100%' }}
-                placeholder={selectedScope ? '请选择审核人' : '请先选择目标题库范围'}
+                placeholder={
+                  !selectedScope
+                    ? '请先选择目标题库范围'
+                    : (selectedScope === 'practice_district' && !selectedDistrictCode)
+                      ? '请先选择目标区域'
+                      : '请选择审核人'
+                }
                 value={selectedReviewer}
                 onChange={setSelectedReviewer}
                 showSearch
                 optionFilterProp="children"
-                disabled={!selectedScope}
+                disabled={!selectedScope || (selectedScope === 'practice_district' && !selectedDistrictCode)}
                 virtual={false}
               >
                 {availableReviewers.map((reviewer) => (

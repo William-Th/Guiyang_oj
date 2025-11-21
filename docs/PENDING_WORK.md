@@ -217,7 +217,7 @@
 
 ---
 
-#### BUG-005: 区级题目发布时无可选审核人
+#### BUG-005: 区级题目发布时无可选审核人 ✅ 已修复 (2025-11-21)
 
 **问题详情**:
 - **现象**:
@@ -227,24 +227,26 @@
   - 但发布时审核人下拉列表为空
 - **期望**: 审核人列表显示符合条件的用户
 - **影响**: 无法提交审核，功能阻塞
-- **文件**:
-  - `frontend/src/components/questions/QuestionPublishModal.tsx` (推测)
-  - `backend/src/routes/questionReview.js` (审核API)
-
-**排查步骤**:
-1. ✅ 确认用户权限正确分配（已确认）
-2. ⏸️ 检查审核人API过滤条件
-   - API路由: `/api/question-review/reviewers` (推测)
-   - 过滤条件:
-     - scope匹配（district）
-     - scope_value匹配（云岩区）
-     - subject匹配（数学）
-     - permission包含 `practice_district_review`
-3. ⏸️ 检查前端API调用参数
-4. ⏸️ 检查数据库查询逻辑
 
 **根本原因** (已排查 2025-11-21):
 前端在提交审核时，选择"区级练习题库"时发送的 `target_scope="practice_district"`，但后端期望格式为 `target_scope="practice_district_YY"`（包含区代码）。
+
+**修复方案** (已实施 2025-11-21):
+1. ✅ 在DraftsPage中添加区域选择UI组件
+2. ✅ 导入统一的district配置 (`frontend/src/config/districts.ts`)
+3. ✅ 当用户选择"区级练习题库"时，显示区域下拉选择器
+4. ✅ 使用 `buildDistrictScope(districtCode)` 构造完整scope字符串
+5. ✅ 更新useEffect逻辑，仅在选择区域后加载审核人
+6. ✅ 提交时使用完整的scope格式 (`practice_district_YY`)
+
+**修改文件**:
+- `frontend/src/pages/teacher/DraftsPage.tsx` (添加区域选择逻辑)
+- 依赖: `frontend/src/config/districts.ts` (统一区域代码配置)
+
+**测试验证**:
+- 状态: 待用户复核
+- BUG_FIX_TRACKING.csv: Bug #17 标记为"待复核"
+- E2E测试: 待补充
 
 **详细分析**:
 1. ✅ **数据库验证**: 区域数据正确（云岩区 code=YY, id=1）
