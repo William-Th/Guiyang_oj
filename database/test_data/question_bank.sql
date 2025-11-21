@@ -1,9 +1,40 @@
 -- ===================================================================
+-- 题库测试数据脚本
+-- 整合自: supplement_questions.sql, add_question_bank_data.sql, insert_baiyun_questions.sql
+-- 创建日期: 2025-11-21
+-- ===================================================================
+-- 说明:
+-- 1. 本文件包含所有题库测试数据（数学 + 信息科技）
+-- 2. 数据来源:
+--    - 市级练习题库: 数学和信息科技各年级（1-9年级）
+--    - 区级题库: 白云区特色题目
+--    - 草稿题库: 教师练习用草稿题
+-- 3. 题目状态:
+--    - published: 市级练习题库，对全市开放
+--    - approved: 区级练习题库，经过审核
+--    - draft: 草稿题，供教师练习使用
+-- 4. 创建者:
+--    - ID=1: 系统管理员（市级题库）
+--    - ID=9: 陈刚-白云一小（白云区数学）
+--    - ID=12: 王芳-白云一中（白云区信息科技）
+--    - ID=17: 周杰-南明一中（七年级数学草稿）
+--    - ID=22: 韩雪-云岩一小（七年级信息科技草稿）
+-- ===================================================================
+
+-- 清理可能存在的旧测试数据（可选，首次导入时注释掉）
+-- DELETE FROM question_bank WHERE created_by IN (1, 9, 12, 17, 22);
+
+-- ===================================================================
+-- 第一部分: 市级练习题库
+-- 来源: add_question_bank_data.sql
+-- ===================================================================
+
+-- ===================================================================
 -- 题库数据批量添加脚本
 -- 任务说明：
 -- 1. 为数学和信息科技每个年级增加10道题目（市级练习题库）
--- 2. 为teacher_nm_ms_math(ID:159)创建20道初一数学草稿题
--- 3. 为teacher_yy_ps_it(ID:164)创建20道初一信息科技草稿题
+-- 2. 为teacher_nm_ms_math(ID:17)创建20道初一数学草稿题
+-- 3. 为teacher_yy_ps_it(ID:22)创建20道初一信息科技草稿题
 -- 4. 删除非数学和信息科技科目的题目
 --
 -- 注意：正确的列名和数据格式
@@ -448,99 +479,543 @@ VALUES
  '["O(n)", "O(n log n)", "O(n²)", "O(log n)"]'::jsonb, '"C"'::jsonb, '冒泡排序需要嵌套循环，时间复杂度为O(n²)', 1, 'published', '{practice_municipal}', NOW());
 
 -- ===================================================================
--- 任务2: 为teacher_nm_ms_math(ID:159)创建20道初一数学草稿题
+-- 任务2: 为teacher_nm_ms_math(ID:17)创建20道初一数学草稿题
 -- ===================================================================
 INSERT INTO question_bank (question_code, subject, grade, type, content, difficulty,
                           abilities, options, correct_answer, explanation, created_by,
                           status, scope, created_at)
 VALUES
 ('DRAFT_MATH7_001', '数学', '七年级', 'single', '计算：(-5) + 3 = ?', 'easy', '{有理数运算}',
- '["-8", "-2", "2", "8"]'::jsonb, '"B"'::jsonb, '负5加正3等于负2', 159, 'draft', '{}', NOW()),
+ '["-8", "-2", "2", "8"]'::jsonb, '"B"'::jsonb, '负5加正3等于负2', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_002', '数学', '七年级', 'single', '计算：(-3) × (-4) = ?', 'easy', '{有理数运算}',
- '["-12", "-7", "7", "12"]'::jsonb, '"D"'::jsonb, '负负得正', 159, 'draft', '{}', NOW()),
+ '["-12", "-7", "7", "12"]'::jsonb, '"D"'::jsonb, '负负得正', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_003', '数学', '七年级', 'single', '绝对值：|-7| = ?', 'easy', '{绝对值}',
- '["-7", "0", "7", "14"]'::jsonb, '"C"'::jsonb, '负数的绝对值是其相反数', 159, 'draft', '{}', NOW()),
+ '["-7", "0", "7", "14"]'::jsonb, '"C"'::jsonb, '负数的绝对值是其相反数', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_004', '数学', '七年级', 'single', '解方程：x + 5 = 12', 'easy', '{一元一次方程}',
- '["5", "6", "7", "8"]'::jsonb, '"C"'::jsonb, 'x = 12 - 5 = 7', 159, 'draft', '{}', NOW()),
+ '["5", "6", "7", "8"]'::jsonb, '"C"'::jsonb, 'x = 12 - 5 = 7', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_005', '数学', '七年级', 'single', '合并同类项：5a + 3a = ?', 'easy', '{代数运算}',
- '["8", "8a", "8a²", "15a"]'::jsonb, '"B"'::jsonb, '系数相加', 159, 'draft', '{}', NOW()),
+ '["8", "8a", "8a²", "15a"]'::jsonb, '"B"'::jsonb, '系数相加', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_006', '数学', '七年级', 'single', '计算：2³ = ?', 'easy', '{乘方运算}',
- '["6", "8", "9", "12"]'::jsonb, '"B"'::jsonb, '2的3次方等于8', 159, 'draft', '{}', NOW()),
+ '["6", "8", "9", "12"]'::jsonb, '"B"'::jsonb, '2的3次方等于8', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_007', '数学', '七年级', 'single', '(-2)³ = ?', 'medium', '{乘方运算}',
- '["-8", "-6", "6", "8"]'::jsonb, '"A"'::jsonb, '(-2)×(-2)×(-2) = -8', 159, 'draft', '{}', NOW()),
+ '["-8", "-6", "6", "8"]'::jsonb, '"A"'::jsonb, '(-2)×(-2)×(-2) = -8', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_008', '数学', '七年级', 'single', '解方程：3x - 6 = 9', 'medium', '{一元一次方程}',
- '["3", "4", "5", "6"]'::jsonb, '"C"'::jsonb, '3x = 15, x = 5', 159, 'draft', '{}', NOW()),
+ '["3", "4", "5", "6"]'::jsonb, '"C"'::jsonb, '3x = 15, x = 5', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_009', '数学', '七年级', 'single', '一个角的补角是120°，这个角是多少度？', 'medium', '{几何基础}',
- '["30°", "60°", "90°", "120°"]'::jsonb, '"B"'::jsonb, '补角之和为180°', 159, 'draft', '{}', NOW()),
+ '["30°", "60°", "90°", "120°"]'::jsonb, '"B"'::jsonb, '补角之和为180°', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_010', '数学', '七年级', 'single', '去括号：-(2x - 3) = ?', 'medium', '{代数运算}',
- '["-2x - 3", "-2x + 3", "2x - 3", "2x + 3"]'::jsonb, '"B"'::jsonb, '括号前是负号，去括号要变号', 159, 'draft', '{}', NOW()),
+ '["-2x - 3", "-2x + 3", "2x - 3", "2x + 3"]'::jsonb, '"B"'::jsonb, '括号前是负号，去括号要变号', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_011', '数学', '七年级', 'multiple', '以下哪些是有理数？', 'medium', '{数的分类}',
- '["-3", "0", "π", "1/2"]'::jsonb, '["A", "B", "D"]'::jsonb, 'π是无理数', 159, 'draft', '{}', NOW()),
+ '["-3", "0", "π", "1/2"]'::jsonb, '["A", "B", "D"]'::jsonb, 'π是无理数', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_012', '数学', '七年级', 'true_false', '两条直线被第三条直线所截，内错角相等', 'medium', '{几何定理}',
- '["正确", "错误"]'::jsonb, '"B"'::jsonb, '需要两直线平行时才成立', 159, 'draft', '{}', NOW()),
+ '["正确", "错误"]'::jsonb, '"B"'::jsonb, '需要两直线平行时才成立', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_013', '数学', '七年级', 'blank', '化简：3(x + 2) = __', 'easy', '{代数运算}',
- '[]'::jsonb, '"3x + 6"'::jsonb, '分配律展开', 159, 'draft', '{}', NOW()),
+ '[]'::jsonb, '"3x + 6"'::jsonb, '分配律展开', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_014', '数学', '七年级', 'single', '比较大小：-5 __ -3', 'easy', '{有理数比较}',
- '["大于", "小于", "等于", "无法比较"]'::jsonb, '"B"'::jsonb, '负数越大，值越小', 159, 'draft', '{}', NOW()),
+ '["大于", "小于", "等于", "无法比较"]'::jsonb, '"B"'::jsonb, '负数越大，值越小', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_015', '数学', '七年级', 'single', '数轴上，点A表示-2，点B表示3，AB的距离是？', 'medium', '{数轴}',
- '["1", "5", "-5", "无法确定"]'::jsonb, '"B"'::jsonb, '距离 = |3 - (-2)| = 5', 159, 'draft', '{}', NOW()),
+ '["1", "5", "-5", "无法确定"]'::jsonb, '"B"'::jsonb, '距离 = |3 - (-2)| = 5', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_016', '数学', '七年级', 'single', '解方程：2(x - 1) = 8', 'medium', '{一元一次方程}',
- '["3", "4", "5", "6"]'::jsonb, '"C"'::jsonb, '2x - 2 = 8, 2x = 10, x = 5', 159, 'draft', '{}', NOW()),
+ '["3", "4", "5", "6"]'::jsonb, '"C"'::jsonb, '2x - 2 = 8, 2x = 10, x = 5', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_017', '数学', '七年级', 'single', '单项式 -3x²y 的系数是？', 'easy', '{代数概念}',
- '["-3", "3", "-3x²", "x²y"]'::jsonb, '"A"'::jsonb, '系数是数字部分-3', 159, 'draft', '{}', NOW()),
+ '["-3", "3", "-3x²", "x²y"]'::jsonb, '"A"'::jsonb, '系数是数字部分-3', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_018', '数学', '七年级', 'single', '单项式 5a²b 的次数是？', 'medium', '{代数概念}',
- '["1", "2", "3", "5"]'::jsonb, '"C"'::jsonb, '次数是所有字母指数之和 2+1=3', 159, 'draft', '{}', NOW()),
+ '["1", "2", "3", "5"]'::jsonb, '"C"'::jsonb, '次数是所有字母指数之和 2+1=3', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_019', '数学', '七年级', 'single', '多项式 3x² - 2x + 1 的常数项是？', 'easy', '{代数概念}',
- '["3", "-2", "1", "0"]'::jsonb, '"C"'::jsonb, '常数项是不含字母的项', 159, 'draft', '{}', NOW()),
+ '["3", "-2", "1", "0"]'::jsonb, '"C"'::jsonb, '常数项是不含字母的项', 17, 'draft', '{}', NOW()),
 ('DRAFT_MATH7_020', '数学', '七年级', 'single', '如果 a > 0, b < 0，则 a + b 的符号？', 'medium', '{有理数运算}',
- '["一定为正", "一定为负", "可能为正可能为负", "等于零"]'::jsonb, '"C"'::jsonb, '取决于|a|和|b|的大小关系', 159, 'draft', '{}', NOW());
+ '["一定为正", "一定为负", "可能为正可能为负", "等于零"]'::jsonb, '"C"'::jsonb, '取决于|a|和|b|的大小关系', 17, 'draft', '{}', NOW());
 
 -- ===================================================================
--- 任务3: 为teacher_yy_ps_it(ID:164)创建20道初一信息科技草稿题
+-- 任务3: 为teacher_yy_ps_it(ID:22)创建20道初一信息科技草稿题
 -- ===================================================================
 INSERT INTO question_bank (question_code, subject, grade, type, content, difficulty,
                           abilities, options, correct_answer, explanation, created_by,
                           status, scope, created_at)
 VALUES
 ('DRAFT_IT7_001', '信息科技', '七年级', 'single', 'Python中，注释使用什么符号？', 'easy', '{编程语法}',
- '["//", "#", "/*", "--"]'::jsonb, '"B"'::jsonb, 'Python使用#进行注释', 164, 'draft', '{}', NOW()),
+ '["//", "#", "/*", "--"]'::jsonb, '"B"'::jsonb, 'Python使用#进行注释', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_002', '信息科技', '七年级', 'single', 'Python中，哪个符号用于赋值？', 'easy', '{编程语法}',
- '["==", "=", "!=", "+="]'::jsonb, '"B"'::jsonb, '=是赋值运算符', 164, 'draft', '{}', NOW()),
+ '["==", "=", "!=", "+="]'::jsonb, '"B"'::jsonb, '=是赋值运算符', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_003', '信息科技', '七年级', 'single', 'Python中，如何输入一个字符串？', 'easy', '{编程语法}',
- '["print()", "input()", "str()", "read()"]'::jsonb, '"B"'::jsonb, 'input()函数用于输入', 164, 'draft', '{}', NOW()),
+ '["print()", "input()", "str()", "read()"]'::jsonb, '"B"'::jsonb, 'input()函数用于输入', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_004', '信息科技', '七年级', 'single', 'Python中，10 % 3 的结果是？', 'medium', '{运算符}',
- '["0", "1", "3", "10"]'::jsonb, '"B"'::jsonb, '%是取余运算，10除以3余1', 164, 'draft', '{}', NOW()),
+ '["0", "1", "3", "10"]'::jsonb, '"B"'::jsonb, '%是取余运算，10除以3余1', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_005', '信息科技', '七年级', 'single', 'Python中，int()函数的作用是？', 'easy', '{类型转换}',
- '["输入整数", "转换为整数", "输出整数", "判断整数"]'::jsonb, '"B"'::jsonb, 'int()将其他类型转换为整数', 164, 'draft', '{}', NOW()),
+ '["输入整数", "转换为整数", "输出整数", "判断整数"]'::jsonb, '"B"'::jsonb, 'int()将其他类型转换为整数', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_006', '信息科技', '七年级', 'single', 'Python中，len()函数可以获取什么？', 'easy', '{内置函数}',
- '["长度", "类型", "最大值", "最小值"]'::jsonb, '"A"'::jsonb, 'len()返回序列的长度', 164, 'draft', '{}', NOW()),
+ '["长度", "类型", "最大值", "最小值"]'::jsonb, '"A"'::jsonb, 'len()返回序列的长度', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_007', '信息科技', '七年级', 'single', 'Python中，下列哪个是正确的变量名？', 'medium', '{命名规则}',
- '["2name", "name-2", "name_2", "name 2"]'::jsonb, '"C"'::jsonb, '变量名不能以数字开头，不能有空格和-', 164, 'draft', '{}', NOW()),
+ '["2name", "name-2", "name_2", "name 2"]'::jsonb, '"C"'::jsonb, '变量名不能以数字开头，不能有空格和-', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_008', '信息科技', '七年级', 'single', 'Python中，如何判断两个值相等？', 'easy', '{运算符}',
- '["=", "==", "!=", "==="]'::jsonb, '"B"'::jsonb, '==用于判断相等', 164, 'draft', '{}', NOW()),
+ '["=", "==", "!=", "==="]'::jsonb, '"B"'::jsonb, '==用于判断相等', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_009', '信息科技', '七年级', 'single', 'Python中，布尔类型有几个值？', 'easy', '{数据类型}',
- '["1个", "2个", "3个", "4个"]'::jsonb, '"B"'::jsonb, '布尔类型只有True和False两个值', 164, 'draft', '{}', NOW()),
+ '["1个", "2个", "3个", "4个"]'::jsonb, '"B"'::jsonb, '布尔类型只有True和False两个值', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_010', '信息科技', '七年级', 'single', 'Python中，字符串拼接使用什么运算符？', 'easy', '{字符串操作}',
- '["+", "-", "*", "/"]'::jsonb, '"A"'::jsonb, '+用于连接字符串', 164, 'draft', '{}', NOW()),
+ '["+", "-", "*", "/"]'::jsonb, '"A"'::jsonb, '+用于连接字符串', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_011', '信息科技', '七年级', 'multiple', 'Python中，以下哪些是数据类型？', 'medium', '{数据类型}',
- '["int", "str", "bool", "all"]'::jsonb, '["A", "B", "C"]'::jsonb, 'int、str、bool都是Python数据类型', 164, 'draft', '{}', NOW()),
+ '["int", "str", "bool", "all"]'::jsonb, '["A", "B", "C"]'::jsonb, 'int、str、bool都是Python数据类型', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_012', '信息科技', '七年级', 'true_false', 'Python是区分大小写的语言', 'easy', '{语言特性}',
- '["正确", "错误"]'::jsonb, '"A"'::jsonb, 'Python严格区分大小写', 164, 'draft', '{}', NOW()),
+ '["正确", "错误"]'::jsonb, '"A"'::jsonb, 'Python严格区分大小写', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_013', '信息科技', '七年级', 'blank', 'Python中，使用__关键字可以导入模块', 'medium', '{模块导入}',
- '[]'::jsonb, '"import"'::jsonb, 'import用于导入模块', 164, 'draft', '{}', NOW()),
+ '[]'::jsonb, '"import"'::jsonb, 'import用于导入模块', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_014', '信息科技', '七年级', 'single', 'Python中，if语句用于？', 'easy', '{控制结构}',
- '["循环", "条件判断", "函数定义", "输入输出"]'::jsonb, '"B"'::jsonb, 'if用于条件判断', 164, 'draft', '{}', NOW()),
+ '["循环", "条件判断", "函数定义", "输入输出"]'::jsonb, '"B"'::jsonb, 'if用于条件判断', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_015', '信息科技', '七年级', 'single', 'Python中，while循环的作用是？', 'easy', '{控制结构}',
- '["条件判断", "重复执行", "函数定义", "导入模块"]'::jsonb, '"B"'::jsonb, 'while用于循环执行代码', 164, 'draft', '{}', NOW()),
+ '["条件判断", "重复执行", "函数定义", "导入模块"]'::jsonb, '"B"'::jsonb, 'while用于循环执行代码', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_016', '信息科技', '七年级', 'single', 'Python中，列表用什么符号表示？', 'easy', '{数据结构}',
- '["()", "[]", "{}", "<>"]'::jsonb, '"B"'::jsonb, '列表使用方括号[]', 164, 'draft', '{}', NOW()),
+ '["()", "[]", "{}", "<>"]'::jsonb, '"B"'::jsonb, '列表使用方括号[]', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_017', '信息科技', '七年级', 'single', 'Python中，缩进的作用是？', 'medium', '{语法规则}',
- '["美观", "表示代码块", "没有作用", "注释"]'::jsonb, '"B"'::jsonb, 'Python通过缩进表示代码块', 164, 'draft', '{}', NOW()),
+ '["美观", "表示代码块", "没有作用", "注释"]'::jsonb, '"B"'::jsonb, 'Python通过缩进表示代码块', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_018', '信息科技', '七年级', 'single', 'Python中，type()函数的作用是？', 'easy', '{内置函数}',
- '["输入", "输出", "查看类型", "转换类型"]'::jsonb, '"C"'::jsonb, 'type()返回数据类型', 164, 'draft', '{}', NOW()),
+ '["输入", "输出", "查看类型", "转换类型"]'::jsonb, '"C"'::jsonb, 'type()返回数据类型', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_019', '信息科技', '七年级', 'single', 'Python中，float类型表示？', 'easy', '{数据类型}',
- '["整数", "小数", "字符串", "布尔"]'::jsonb, '"B"'::jsonb, 'float表示浮点数（小数）', 164, 'draft', '{}', NOW()),
+ '["整数", "小数", "字符串", "布尔"]'::jsonb, '"B"'::jsonb, 'float表示浮点数（小数）', 22, 'draft', '{}', NOW()),
 ('DRAFT_IT7_020', '信息科技', '七年级', 'single', 'Python中，如何定义一个函数？', 'medium', '{函数定义}',
- '["function", "def", "fun", "define"]'::jsonb, '"B"'::jsonb, 'def关键字用于定义函数', 164, 'draft', '{}', NOW());
+ '["function", "def", "fun", "define"]'::jsonb, '"B"'::jsonb, 'def关键字用于定义函数', 22, 'draft', '{}', NOW());
 
 COMMIT;
+
+-- ===================================================================
+-- 第二部分: 区级练习题库补充数据
+-- 来源: supplement_questions.sql
+-- ===================================================================
+
+-- Supplement questions to ensure at least 10 questions per grade per subject
+-- All question types covered: single, multiple, blank, true_false, essay, code, matching
+-- Date: 2025-10-30
+
+-- 数学 - 一年级 (10道新题)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('single', '数学', '一年级', '3 + 2 = ?', '["3", "4", "5", "6"]', '"5"', 5, 'easy', 'approved', 9, 'L1', 5, '{加法运算,基础计算}', '{20以内加法,基础运算}', '{练习,测评}'),
+('single', '数学', '一年级', '8 - 3 = ?', '["3", "4", "5", "6"]', '"5"', 5, 'easy', 'approved', 9, 'L1', 5, '{减法运算,基础计算}', '{20以内减法,基础运算}', '{练习,测评}'),
+('single', '数学', '一年级', '哪个数字最大？', '["2", "5", "3", "1"]', '"5"', 5, 'easy', 'approved', 9, 'L1', 5, '{数字比较,大小概念}', '{数的大小,数序}', '{练习,测评}'),
+('multiple', '数学', '一年级', '下列哪些数字大于3？（多选）', '["2", "4", "5", "1"]', '["4", "5"]', 10, 'easy', 'approved', 9, 'L1', 10, '{数字比较,大小判断}', '{数的大小,不等关系}', '{练习,测评}'),
+('blank', '数学', '一年级', '填空：5 + ( ) = 10', 'null', '"5"', 5, 'easy', 'approved', 9, 'L1', 5, '{加法运算,逆向思维}', '{加法,填空题}', '{练习,测评}'),
+('blank', '数学', '一年级', '填空：10 - ( ) = 6', 'null', '"4"', 5, 'easy', 'approved', 9, 'L1', 5, '{减法运算,逆向思维}', '{减法,填空题}', '{练习,测评}'),
+('true_false', '数学', '一年级', '5 + 3 = 8', 'null', 'true', 5, 'easy', 'approved', 9, 'L1', 5, '{加法验证,判断能力}', '{加法,正误判断}', '{练习,测评}'),
+('true_false', '数学', '一年级', '6 比 8 大', 'null', 'false', 5, 'easy', 'approved', 9, 'L1', 5, '{大小比较,判断能力}', '{数的大小,正误判断}', '{练习,测评}'),
+('essay', '数学', '一年级', '用画图的方式表示：3个苹果加2个苹果一共有几个苹果？', 'null', '"5个苹果"', 10, 'easy', 'approved', 9, 'L1', 10, '{图形表达,应用题}', '{加法应用,图文结合}', '{练习,测评}'),
+('matching', '数学', '一年级', '连线匹配：数字与数量（1→一个，2→两个，3→三个）', 'null', '"1-一个,2-两个,3-三个"', 10, 'easy', 'approved', 9, 'L1', 10, '{数字认知,配对能力}', '{数的认识,一一对应}', '{练习,测评}');
+
+-- 数学 - 二年级 (10道新题)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('single', '数学', '二年级', '25 + 18 = ?', '["41", "42", "43", "44"]', '"43"', 5, 'easy', 'approved', 9, 'L1', 5, '{两位数加法,进位运算}', '{100以内加法,进位加}', '{练习,测评}'),
+('single', '数学', '二年级', '35 - 17 = ?', '["16", "17", "18", "19"]', '"18"', 5, 'easy', 'approved', 9, 'L1', 5, '{两位数减法,退位运算}', '{100以内减法,退位减}', '{练习,测评}'),
+('single', '数学', '二年级', '5 × 3 = ?', '["12", "13", "14", "15"]', '"15"', 5, 'medium', 'approved', 9, 'L1', 5, '{乘法运算,乘法口诀}', '{表内乘法,乘法}', '{练习,测评}'),
+('multiple', '数学', '二年级', '下列哪些算式的结果是10？（多选）', '["5+5", "6+3", "7+3", "8+2"]', '["5+5", "7+3", "8+2"]', 10, 'medium', 'approved', 9, 'L1', 10, '{加法运算,逆向思维}', '{凑十法,加法}', '{练习,测评}'),
+('blank', '数学', '二年级', '填空：6 × ( ) = 18', 'null', '"3"', 5, 'medium', 'approved', 9, 'L1', 5, '{乘法运算,除法思想}', '{乘法口诀,乘除关系}', '{练习,测评}'),
+('blank', '数学', '二年级', '1米 = ( )厘米', 'null', '"100"', 5, 'easy', 'approved', 9, 'L1', 5, '{长度单位,单位换算}', '{长度测量,单位转换}', '{练习,测评}'),
+('true_false', '数学', '二年级', '长方形有4条边，4个角都是直角。', 'null', 'true', 5, 'easy', 'approved', 9, 'L1', 5, '{图形认知,几何知识}', '{平面图形,长方形}', '{练习,测评}'),
+('true_false', '数学', '二年级', '24 ÷ 6 = 5', 'null', 'false', 5, 'medium', 'approved', 9, 'L1', 5, '{除法运算,计算验证}', '{表内除法,正误判断}', '{练习,测评}'),
+('essay', '数学', '二年级', '小明有20元钱，买了一本书花了12元，还剩多少钱？请写出算式。', 'null', '"20-12=8，还剩8元"', 10, 'medium', 'approved', 9, 'L1', 10, '{应用题,减法应用}', '{购物问题,减法应用}', '{练习,测评}'),
+('matching', '数学', '二年级', '连线匹配：图形与名称（正方形、长方形、三角形、圆形）', 'null', '"正方形-4条相等的边,长方形-对边相等,三角形-3条边,圆形-圆的"', 10, 'easy', 'approved', 9, 'L1', 10, '{图形识别,几何认知}', '{平面图形,图形特征}', '{练习,测评}');
+
+-- 数学 - 三年级 (补充2道)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('matching', '数学', '三年级', '连线匹配：分数与图形（1/2对应一半，1/4对应四分之一）', 'null', '"1/2-一半,1/4-四分之一,3/4-四分之三"', 10, 'medium', 'approved', 9, 'L2', 10, '{分数认知,图形分割}', '{分数初步,分数表示}', '{练习,测评}'),
+('code', '数学', '三年级', '编写计算正方形周长的简单算法（给定边长a，周长=4×a）', 'null', '"输入边长a，周长=4*a"', 15, 'hard', 'approved', 9, 'L2', 15, '{算法思维,公式应用}', '{周长公式,算法表达}', '{练习,测评}');
+
+-- 数学 - 四年级 (10道新题)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('single', '数学', '四年级', '125 × 8 = ?', '["900", "950", "1000", "1100"]', '"1000"', 5, 'medium', 'approved', 9, 'L2', 5, '{三位数乘法,心算技巧}', '{乘法运算,简便计算}', '{练习,测评}'),
+('single', '数学', '四年级', '一个角是90度的三角形叫什么三角形？', '["锐角三角形", "直角三角形", "钝角三角形", "等边三角形"]', '"直角三角形"', 5, 'medium', 'approved', 9, 'L2', 5, '{三角形分类,几何知识}', '{三角形,图形分类}', '{练习,测评}'),
+('single', '数学', '四年级', '3/4 + 1/4 = ?', '["1/2", "3/8", "1", "4/8"]', '"1"', 5, 'medium', 'approved', 9, 'L2', 5, '{同分母分数加法,分数运算}', '{分数加法,分数计算}', '{练习,测评}'),
+('multiple', '数学', '四年级', '下列哪些是质数？（多选）', '["2", "4", "7", "9"]', '["2", "7"]', 10, 'hard', 'approved', 9, 'L2', 10, '{质数判断,数论知识}', '{质数,数的分类}', '{练习,测评}'),
+('blank', '数学', '四年级', '长方形的面积公式是：面积 = 长 × ( )', 'null', '"宽"', 5, 'easy', 'approved', 9, 'L2', 5, '{面积公式,几何知识}', '{长方形面积,公式记忆}', '{练习,测评}'),
+('blank', '数学', '四年级', '1千克 = ( )克', 'null', '"1000"', 5, 'easy', 'approved', 9, 'L2', 5, '{质量单位,单位换算}', '{质量测量,单位转换}', '{练习,测评}'),
+('true_false', '数学', '四年级', '平行四边形的对边平行且相等。', 'null', 'true', 5, 'medium', 'approved', 9, 'L2', 5, '{图形性质,几何知识}', '{平行四边形,图形特征}', '{练习,测评}'),
+('true_false', '数学', '四年级', '小数0.5等于分数1/2。', 'null', 'true', 5, 'medium', 'approved', 9, 'L2', 5, '{小数与分数,数的转换}', '{小数,分数,等量关系}', '{练习,测评}'),
+('essay', '数学', '四年级', '一辆汽车每小时行驶60千米，行驶了3小时，一共行驶了多少千米？', 'null', '"60×3=180千米"', 10, 'medium', 'approved', 9, 'L2', 10, '{应用题,乘法应用}', '{路程问题,速度时间路程}', '{练习,测评}'),
+('matching', '数学', '四年级', '连线匹配：单位换算（1米=100厘米，1千克=1000克，1小时=60分钟）', 'null', '"1米-100厘米,1千克-1000克,1小时-60分钟"', 10, 'medium', 'approved', 9, 'L2', 10, '{单位换算,量的测量}', '{单位转换,常用单位}', '{练习,测评}');
+
+-- 数学 - 五年级 (补充4道)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('single', '数学', '五年级', '一个长方体有几个面？', '["4个", "5个", "6个", "8个"]', '"6个"', 5, 'medium', 'approved', 9, 'L3', 5, '{立体图形,几何知识}', '{长方体,立体图形特征}', '{练习,测评}'),
+('true_false', '数学', '五年级', '圆的周长等于直径乘以π。', 'null', 'true', 5, 'medium', 'approved', 9, 'L3', 5, '{圆的周长,几何公式}', '{圆,周长公式}', '{练习,测评}'),
+('matching', '数学', '五年级', '连线匹配：分数、小数、百分数（1/2=0.5=50%，1/4=0.25=25%）', 'null', '"1/2-0.5-50%,1/4-0.25-25%,3/4-0.75-75%"', 10, 'hard', 'approved', 9, 'L3', 10, '{数的转换,等量关系}', '{分数小数百分数,数的互化}', '{练习,测评}'),
+('code', '数学', '五年级', '编写程序：输入圆的半径r，计算圆的面积（面积=πr²，π取3.14）', 'null', '"输入半径r，面积=3.14*r*r"', 15, 'hard', 'approved', 9, 'L3', 15, '{算法编写,公式应用}', '{圆的面积,程序设计}', '{练习,测评}');
+
+-- 数学 - 六年级 (10道新题)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('single', '数学', '六年级', '如果x + 5 = 12，那么x等于多少？', '["5", "6", "7", "8"]', '"7"', 5, 'medium', 'approved', 9, 'L3', 5, '{代数方程,解方程}', '{一元一次方程,方程求解}', '{练习,测评}'),
+('single', '数学', '六年级', '一个圆柱体的底面半径是3cm，高是10cm，它的体积是多少？（π取3.14）', '["94.2cm³", "188.4cm³", "282.6cm³", "376.8cm³"]', '"282.6cm³"', 5, 'hard', 'approved', 9, 'L3', 5, '{立体图形体积,圆柱体积}', '{圆柱,体积计算}', '{练习,测评}'),
+('single', '数学', '六年级', '比例式 3:4 = x:8 中，x的值是多少？', '["4", "5", "6", "7"]', '"6"', 5, 'medium', 'approved', 9, 'L3', 5, '{比例,解比例}', '{比和比例,比例求解}', '{练习,测评}'),
+('multiple', '数学', '六年级', '下列哪些是轴对称图形？（多选）', '["正方形", "长方形", "平行四边形", "等腰三角形"]', '["正方形", "长方形", "等腰三角形"]', 10, 'hard', 'approved', 9, 'L3', 10, '{图形对称,几何性质}', '{轴对称,图形特征}', '{练习,测评}'),
+('blank', '数学', '六年级', '圆锥的体积公式是：V = (1/3) × ( ) × h', 'null', '"底面积"', 5, 'medium', 'approved', 9, 'L3', 5, '{立体图形体积,圆锥}', '{圆锥体积,公式记忆}', '{练习,测评}'),
+('blank', '数学', '六年级', '一个数的20%是8，这个数是( )', 'null', '"40"', 5, 'hard', 'approved', 9, 'L3', 5, '{百分数应用,逆运算}', '{百分数,百分数问题}', '{练习,测评}'),
+('true_false', '数学', '六年级', '负数都小于0。', 'null', 'true', 5, 'easy', 'approved', 9, 'L3', 5, '{负数概念,数的认识}', '{正负数,数的大小}', '{练习,测评}'),
+('true_false', '数学', '六年级', '两个奇数相加的结果一定是偶数。', 'null', 'true', 5, 'medium', 'approved', 9, 'L3', 5, '{奇偶性,数的性质}', '{奇数偶数,数的规律}', '{练习,测评}'),
+('essay', '数学', '六年级', '一件商品原价200元，打8折后是多少元？请写出计算过程。', 'null', '"200×0.8=160元，或200×(1-20%)=160元"', 10, 'medium', 'approved', 9, 'L3', 10, '{百分数应用,折扣问题}', '{打折,百分数应用}', '{练习,测评}'),
+('matching', '数学', '六年级', '连线匹配：公式与图形（V=πr²h→圆柱，V=(1/3)πr²h→圆锥，V=abc→长方体）', 'null', '"圆柱-πr²h,圆锥-(1/3)πr²h,长方体-abc"', 10, 'hard', 'approved', 9, 'L3', 10, '{体积公式,立体图形}', '{立体图形体积,公式配对}', '{练习,测评}');
+
+-- 数学 - 八年级 (补充2道)
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, status, created_by, level, suggested_score, abilities, knowledge_points, scope) VALUES
+('matching', '数学', '八年级', '连线匹配：函数与图像（一次函数→直线，二次函数→抛物线，反比例函数→双曲线）', 'null', '"一次函数-直线,二次函数-抛物线,反比例函数-双曲线"', 10, 'hard', 'approved', 9, 'L4', 10, '{函数图像,函数识别}', '{函数,图像特征}', '{练习,测评}'),
+('code', '数学', '八年级', '编写程序：输入三角形三边a、b、c，判断是否能构成三角形（任意两边之和大于第三边）', 'null', '"if (a+b>c and b+c>a and a+c>b) then 能构成 else 不能构成"', 15, 'hard', 'approved', 9, 'L4', 15, '{算法设计,三角形判定}', '{三角形,程序逻辑}', '{练习,测评}');
+
+
+-- ===================================================================
+-- 第三部分: 白云区特色题库
+-- 来源: insert_baiyun_questions.sql
+-- ===================================================================
+
+-- 为白云区的数学和信息科技科目添加各种题型的题目
+-- 出题人：陈刚(user_id=9, 小学数学), 蒋敏(user_id=12, 初中信息科技)
+
+-- 一年级数学题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+-- 单选题
+('single', '数学', '一年级', '1 + 1 = ?',
+ '{"A": "1", "B": "2", "C": "3", "D": "4"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', '1加1等于2', 9, 'published', 'L1'),
+
+-- 多选题
+('multiple', '数学', '一年级', '以下哪些数字小于5？（多选）',
+ '{"A": "2", "B": "3", "C": "6", "D": "7"}'::jsonb,
+ '["A", "B"]'::jsonb, 5, 'easy', '小于5的数字是2和3', 9, 'published', 'L1'),
+
+-- 判断题
+('true_false', '数学', '一年级', '3比5大。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', '3小于5，所以错误', 9, 'published', 'L1'),
+
+-- 填空题
+('blank', '数学', '一年级', '2 + 3 = ___',
+ NULL, '"5"'::jsonb, 5, 'easy', '2加3等于5', 9, 'published', 'L1'),
+
+-- 简答题
+('essay', '数学', '一年级', '请用自己的话说明什么是加法？',
+ NULL, '"加法是把两个或多个数合在一起的运算"'::jsonb, 10, 'medium', '加法是基本运算之一', 9, 'published', 'L2');
+
+-- 二年级数学题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '二年级', '5 × 2 = ?',
+ '{"A": "7", "B": "10", "C": "12", "D": "15"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', '5乘以2等于10', 9, 'published', 'L1'),
+
+('multiple', '数学', '二年级', '以下哪些数是偶数？（多选）',
+ '{"A": "2", "B": "4", "C": "5", "D": "6"}'::jsonb,
+ '["A", "B", "D"]'::jsonb, 5, 'medium', '偶数能被2整除', 9, 'published', 'L2'),
+
+('true_false', '数学', '二年级', '15是奇数。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '15不能被2整除，是奇数', 9, 'published', 'L1'),
+
+('blank', '数学', '二年级', '20 ÷ 4 = ___',
+ NULL, '"5"'::jsonb, 5, 'easy', '20除以4等于5', 9, 'published', 'L1'),
+
+('essay', '数学', '二年级', '请解释乘法和加法的关系。',
+ NULL, '"乘法是相同加数的连加，如3×4等于3+3+3+3"'::jsonb, 10, 'medium', '理解乘法的本质', 9, 'published', 'L2');
+
+-- 三年级数学题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '三年级', '48 ÷ 6 = ?',
+ '{"A": "6", "B": "7", "C": "8", "D": "9"}'::jsonb,
+ '"C"'::jsonb, 5, 'easy', '48除以6等于8', 9, 'published', 'L2'),
+
+('multiple', '数学', '三年级', '以下哪些是质数？（多选）',
+ '{"A": "2", "B": "3", "C": "4", "D": "5"}'::jsonb,
+ '["A", "B", "D"]'::jsonb, 5, 'medium', '质数只能被1和自身整除', 9, 'published', 'L3'),
+
+('true_false', '数学', '三年级', '所有偶数都能被2整除。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '偶数的定义就是能被2整除的数', 9, 'published', 'L2'),
+
+('blank', '数学', '三年级', '7 × 9 = ___',
+ NULL, '"63"'::jsonb, 5, 'easy', '7乘以9等于63', 9, 'published', 'L1'),
+
+('essay', '数学', '三年级', '请说明如何判断一个数是质数还是合数。',
+ NULL, '"质数只有1和它本身两个因数，合数除了1和它本身外还有其他因数"'::jsonb, 10, 'medium', '理解质数和合数的概念', 9, 'published', 'L3');
+
+-- 四年级数学题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '四年级', '0.5 + 0.3 = ?',
+ '{"A": "0.7", "B": "0.8", "C": "0.9", "D": "1.0"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', '小数加法：0.5加0.3等于0.8', 9, 'published', 'L2'),
+
+('multiple', '数学', '四年级', '以下哪些分数大于1/2？（多选）',
+ '{"A": "2/3", "B": "3/4", "C": "1/3", "D": "1/4"}'::jsonb,
+ '["A", "B"]'::jsonb, 5, 'medium', '2/3和3/4都大于1/2', 9, 'published', 'L3'),
+
+('true_false', '数学', '四年级', '1/4 = 0.25',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '1除以4等于0.25', 9, 'published', 'L2'),
+
+('blank', '数学', '四年级', '1.2 × 5 = ___',
+ NULL, '"6"'::jsonb, 5, 'easy', '1.2乘以5等于6', 9, 'published', 'L2'),
+
+('essay', '数学', '四年级', '请解释小数和分数的关系。',
+ NULL, '"小数和分数都是表示部分数量的方法，可以相互转换"'::jsonb, 10, 'medium', '理解小数和分数的联系', 9, 'published', 'L3');
+
+-- 五年级数学题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '五年级', '一个长方形的长是8cm，宽是5cm，它的面积是？',
+ '{"A": "13平方厘米", "B": "26平方厘米", "C": "40平方厘米", "D": "80平方厘米"}'::jsonb,
+ '"C"'::jsonb, 5, 'medium', '长方形面积 = 长 × 宽 = 8 × 5 = 40', 9, 'published', 'L3'),
+
+('multiple', '数学', '五年级', '以下哪些是正方体的特征？（多选）',
+ '{"A": "6个面", "B": "12条棱", "C": "8个顶点", "D": "所有棱长都相等"}'::jsonb,
+ '["A", "B", "C", "D"]'::jsonb, 5, 'medium', '正方体的所有特征', 9, 'published', 'L4'),
+
+('true_false', '数学', '五年级', '圆的周长等于直径乘以π。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '圆的周长公式：C = πd', 9, 'published', 'L3'),
+
+('blank', '数学', '五年级', '一个圆的半径是3cm，它的面积是___ 平方厘米（π取3.14）',
+ NULL, '"28.26"'::jsonb, 5, 'medium', '圆的面积 = πr² = 3.14 × 3² = 28.26', 9, 'published', 'L3'),
+
+('essay', '数学', '五年级', '请说明如何计算组合图形的面积。',
+ NULL, '"将组合图形分解成基本图形，分别计算面积后相加或相减"'::jsonb, 10, 'hard', '理解组合图形面积的计算方法', 9, 'published', 'L4');
+
+-- 六年级数学题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '六年级', '如果x + 5 = 12，那么x = ?',
+ '{"A": "5", "B": "6", "C": "7", "D": "8"}'::jsonb,
+ '"C"'::jsonb, 5, 'medium', 'x = 12 - 5 = 7', 9, 'published', 'L4'),
+
+('multiple', '数学', '六年级', '以下哪些是百分数的应用场景？（多选）',
+ '{"A": "利率", "B": "折扣", "C": "增长率", "D": "税率"}'::jsonb,
+ '["A", "B", "C", "D"]'::jsonb, 5, 'easy', '百分数在生活中广泛应用', 9, 'published', 'L3'),
+
+('true_false', '数学', '六年级', '圆柱的体积等于底面积乘以高。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '圆柱体积公式：V = Sh', 9, 'published', 'L4'),
+
+('blank', '数学', '六年级', '50的30%是___',
+ NULL, '"15"'::jsonb, 5, 'easy', '50 × 30% = 50 × 0.3 = 15', 9, 'published', 'L3'),
+
+('essay', '数学', '六年级', '请解释比例的基本性质。',
+ NULL, '"在一个比例中，两个外项的积等于两个内项的积"'::jsonb, 10, 'medium', '理解比例的基本性质', 9, 'published', 'L4');
+
+-- 七年级数学题目（出题人：蒋敏，虽然他是信息科技老师，但为了完整性，我们也让他出初中数学题）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '七年级', '|-5| = ?',
+ '{"A": "-5", "B": "0", "C": "5", "D": "10"}'::jsonb,
+ '"C"'::jsonb, 5, 'easy', '绝对值是数在数轴上到原点的距离', 12, 'published', 'L3'),
+
+('multiple', '数学', '七年级', '以下哪些是有理数？（多选）',
+ '{"A": "整数", "B": "分数", "C": "小数", "D": "无理数"}'::jsonb,
+ '["A", "B", "C"]'::jsonb, 5, 'medium', '有理数包括整数、分数和有限小数', 12, 'published', 'L4'),
+
+('true_false', '数学', '七年级', '负数乘以负数等于正数。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '负负得正', 12, 'published', 'L3'),
+
+('blank', '数学', '七年级', '(-3) × 4 = ___',
+ NULL, '"-12"'::jsonb, 5, 'easy', '负数乘以正数等于负数', 12, 'published', 'L3'),
+
+('essay', '数学', '七年级', '请解释有理数的运算顺序。',
+ NULL, '"先算乘方，再算乘除，最后算加减；同级运算从左到右；有括号先算括号内"'::jsonb, 10, 'medium', '理解运算顺序', 12, 'published', 'L4');
+
+-- 八年级数学题目（出题人：蒋敏）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '八年级', '(x + 2)(x - 2) = ?',
+ '{"A": "x² - 4", "B": "x² + 4", "C": "x² - 2", "D": "x² + 2"}'::jsonb,
+ '"A"'::jsonb, 5, 'medium', '平方差公式：(a+b)(a-b) = a² - b²', 12, 'published', 'L5'),
+
+('multiple', '数学', '八年级', '以下哪些是二次函数的图像特征？（多选）',
+ '{"A": "抛物线", "B": "对称轴", "C": "顶点", "D": "直线"}'::jsonb,
+ '["A", "B", "C"]'::jsonb, 5, 'medium', '二次函数图像是抛物线，有对称轴和顶点', 12, 'published', 'L5'),
+
+('true_false', '数学', '八年级', '勾股定理只适用于直角三角形。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '勾股定理是直角三角形的特有性质', 12, 'published', 'L4'),
+
+('blank', '数学', '八年级', '一个直角三角形两条直角边长度分别为3和4，斜边长度是___',
+ NULL, '"5"'::jsonb, 5, 'medium', '根据勾股定理：3² + 4² = 5²', 12, 'published', 'L4'),
+
+('essay', '数学', '八年级', '请说明如何因式分解一个二次三项式。',
+ NULL, '"找出两个数，它们的和等于一次项系数，积等于常数项，然后用十字相乘法分解"'::jsonb, 10, 'hard', '理解因式分解的方法', 12, 'published', 'L5');
+
+-- 九年级数学题目（出题人：蒋敏）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '数学', '九年级', '一元二次方程x² - 5x + 6 = 0的解是？',
+ '{"A": "x=2或x=3", "B": "x=1或x=6", "C": "x=-2或x=-3", "D": "x=-1或x=-6"}'::jsonb,
+ '"A"'::jsonb, 5, 'medium', '分解因式：(x-2)(x-3)=0，得x=2或x=3', 12, 'published', 'L5'),
+
+('multiple', '数学', '九年级', '以下哪些是相似三角形的判定方法？（多选）',
+ '{"A": "三边成比例", "B": "两角对应相等", "C": "两边成比例且夹角相等", "D": "全等"}'::jsonb,
+ '["A", "B", "C"]'::jsonb, 5, 'medium', '相似三角形的判定定理', 12, 'published', 'L6'),
+
+('true_false', '数学', '九年级', '圆的切线垂直于过切点的半径。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '这是圆的切线性质', 12, 'published', 'L5'),
+
+('blank', '数学', '九年级', '若sin30° = 0.5，则cos60° = ___',
+ NULL, '"0.5"'::jsonb, 5, 'medium', 'sin30° = cos60° = 0.5', 12, 'published', 'L5'),
+
+('essay', '数学', '九年级', '请说明二次函数的顶点式与一般式的转换方法。',
+ NULL, '"通过配方法可以将一般式y=ax²+bx+c转换为顶点式y=a(x-h)²+k"'::jsonb, 10, 'hard', '理解二次函数的不同表示形式', 12, 'published', 'L6');
+
+-- ================================
+-- 信息科技题目（三年级到九年级）
+-- ================================
+
+-- 三年级信息科技题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '三年级', '计算机的"大脑"是？',
+ '{"A": "显示器", "B": "键盘", "C": "CPU", "D": "鼠标"}'::jsonb,
+ '"C"'::jsonb, 5, 'easy', 'CPU是中央处理器，负责计算和控制', 9, 'published', 'L1'),
+
+('multiple', '信息科技', '三年级', '以下哪些是计算机的输入设备？（多选）',
+ '{"A": "键盘", "B": "鼠标", "C": "显示器", "D": "扫描仪"}'::jsonb,
+ '["A", "B", "D"]'::jsonb, 5, 'easy', '输入设备用于向计算机输入信息', 9, 'published', 'L1'),
+
+('true_false', '信息科技', '三年级', '显示器是输出设备。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '显示器用于显示计算机输出的信息', 9, 'published', 'L1'),
+
+('blank', '信息科技', '三年级', '计算机的三大组成部分是：输入设备、___和输出设备',
+ NULL, '"主机"'::jsonb, 5, 'easy', '计算机由输入设备、主机和输出设备组成', 9, 'published', 'L1'),
+
+('essay', '信息科技', '三年级', '请说明计算机在我们生活中的应用。',
+ NULL, '"计算机用于学习、娱乐、通信、工作等多个方面"'::jsonb, 10, 'easy', '了解计算机的应用', 9, 'published', 'L1');
+
+-- 四年级信息科技题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '四年级', '以下哪个软件是文字处理软件？',
+ '{"A": "Photoshop", "B": "Word", "C": "Excel", "D": "PowerPoint"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', 'Word是微软的文字处理软件', 9, 'published', 'L2'),
+
+('multiple', '信息科技', '四年级', '以下哪些是常见的文件格式？（多选）',
+ '{"A": ".txt", "B": ".doc", "C": ".jpg", "D": ".mp3"}'::jsonb,
+ '["A", "B", "C", "D"]'::jsonb, 5, 'easy', '这些都是常见的文件格式', 9, 'published', 'L2'),
+
+('true_false', '信息科技', '四年级', '文件夹可以包含其他文件夹。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '文件夹可以嵌套，形成层级结构', 9, 'published', 'L2'),
+
+('blank', '信息科技', '四年级', '在Windows系统中，复制文件的快捷键是___',
+ NULL, '"Ctrl+C"'::jsonb, 5, 'easy', 'Ctrl+C用于复制', 9, 'published', 'L2'),
+
+('essay', '信息科技', '四年级', '请说明如何创建和管理文件夹。',
+ NULL, '"右键点击空白处，选择新建文件夹，输入名称；可以通过拖拽来移动文件"'::jsonb, 10, 'medium', '了解文件管理', 9, 'published', 'L2');
+
+-- 五年级信息科技题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '五年级', 'Scratch中，以下哪个积木块用于移动角色？',
+ '{"A": "说", "B": "移动10步", "C": "等待", "D": "停止"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', 'Scratch中移动积木块用于移动角色', 9, 'published', 'L3'),
+
+('multiple', '信息科技', '五年级', '在Scratch中，以下哪些是事件积木？（多选）',
+ '{"A": "当绿旗被点击", "B": "当按下空格键", "C": "重复执行", "D": "广播"}'::jsonb,
+ '["A", "B"]'::jsonb, 5, 'medium', '事件积木用于触发程序执行', 9, 'published', 'L3'),
+
+('true_false', '信息科技', '五年级', 'Scratch是一种图形化编程语言。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', 'Scratch使用图形化积木进行编程', 9, 'published', 'L3'),
+
+('blank', '信息科技', '五年级', '在Scratch中，让角色重复执行某个动作使用___积木',
+ NULL, '"重复执行"'::jsonb, 5, 'easy', '重复执行积木用于循环', 9, 'published', 'L3'),
+
+('essay', '信息科技', '五年级', '请说明什么是循环，并举例说明。',
+ NULL, '"循环是重复执行某段代码，如让角色重复移动10步"'::jsonb, 10, 'medium', '理解循环概念', 9, 'published', 'L3');
+
+-- 六年级信息科技题目（出题人：陈刚）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '六年级', '在编程中，以下哪个是条件判断语句？',
+ '{"A": "循环", "B": "如果...那么", "C": "变量", "D": "函数"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', '条件判断使用if语句', 9, 'published', 'L4'),
+
+('multiple', '信息科技', '六年级', '以下哪些是编程的基本结构？（多选）',
+ '{"A": "顺序", "B": "选择", "C": "循环", "D": "递归"}'::jsonb,
+ '["A", "B", "C"]'::jsonb, 5, 'medium', '顺序、选择和循环是三大基本结构', 9, 'published', 'L4'),
+
+('true_false', '信息科技', '六年级', '变量可以用来存储和改变数据。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '变量是存储数据的容器', 9, 'published', 'L4'),
+
+('blank', '信息科技', '六年级', '在编程中，___语句用于根据条件执行不同的代码',
+ NULL, '"if"'::jsonb, 5, 'easy', 'if语句用于条件判断', 9, 'published', 'L4'),
+
+('essay', '信息科技', '六年级', '请解释什么是算法，并举一个简单的例子。',
+ NULL, '"算法是解决问题的步骤，如计算1到100的和：初始化和为0，从1到100依次相加"'::jsonb, 10, 'medium', '理解算法概念', 9, 'published', 'L4');
+
+-- 七年级信息科技题目（出题人：蒋敏）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '七年级', 'Python中，以下哪个是正确的输出语句？',
+ '{"A": "echo()", "B": "print()", "C": "printf()", "D": "cout"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', 'Python使用print()函数输出', 12, 'published', 'L4'),
+
+('multiple', '信息科技', '七年级', 'Python中，以下哪些是数据类型？（多选）',
+ '{"A": "整数int", "B": "浮点数float", "C": "字符串str", "D": "布尔bool"}'::jsonb,
+ '["A", "B", "C", "D"]'::jsonb, 5, 'medium', 'Python的基本数据类型', 12, 'published', 'L5'),
+
+('true_false', '信息科技', '七年级', 'Python是一种解释型语言。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', 'Python代码逐行解释执行', 12, 'published', 'L4'),
+
+('blank', '信息科技', '七年级', '在Python中，定义变量x等于10的语句是：x = ___',
+ NULL, '"10"'::jsonb, 5, 'easy', 'Python使用=赋值', 12, 'published', 'L4'),
+
+('essay', '信息科技', '七年级', '请说明Python中列表和字符串的区别。',
+ NULL, '"列表可以包含多种类型的元素且可修改，字符串只包含字符且不可修改"'::jsonb, 10, 'medium', '理解数据类型', 12, 'published', 'L5');
+
+-- 八年级信息科技题目（出题人：蒋敏）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '八年级', '以下哪个不是面向对象编程的特征？',
+ '{"A": "封装", "B": "继承", "C": "多态", "D": "编译"}'::jsonb,
+ '"D"'::jsonb, 5, 'medium', '面向对象的三大特征是封装、继承和多态', 12, 'published', 'L6'),
+
+('multiple', '信息科技', '八年级', '以下哪些是常见的排序算法？（多选）',
+ '{"A": "冒泡排序", "B": "快速排序", "C": "选择排序", "D": "插入排序"}'::jsonb,
+ '["A", "B", "C", "D"]'::jsonb, 5, 'medium', '这些都是常见的排序算法', 12, 'published', 'L6'),
+
+('true_false', '信息科技', '八年级', '数组的索引从0开始。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"A"'::jsonb, 5, 'easy', '大多数编程语言中数组索引从0开始', 12, 'published', 'L5'),
+
+('blank', '信息科技', '八年级', '时间复杂度为O(n²)的排序算法有冒泡排序和___排序',
+ NULL, '"选择"'::jsonb, 5, 'medium', '冒泡排序和选择排序都是O(n²)', 12, 'published', 'L6'),
+
+('essay', '信息科技', '八年级', '请说明什么是递归，并举例说明。',
+ NULL, '"递归是函数调用自己，如计算阶乘：n! = n × (n-1)!"'::jsonb, 10, 'hard', '理解递归概念', 12, 'published', 'L6');
+
+-- 九年级信息科技题目（出题人：蒋敏）
+INSERT INTO question_bank (type, subject, grade, content, options, correct_answer, score, difficulty, explanation, created_by, status, level)
+VALUES
+('single', '信息科技', '九年级', '以下哪个不是数据库管理系统？',
+ '{"A": "MySQL", "B": "Oracle", "C": "Photoshop", "D": "MongoDB"}'::jsonb,
+ '"C"'::jsonb, 5, 'easy', 'Photoshop是图像处理软件', 12, 'published', 'L6'),
+
+('multiple', '信息科技', '九年级', 'SQL语言中，以下哪些是数据操作语句？（多选）',
+ '{"A": "SELECT", "B": "INSERT", "C": "UPDATE", "D": "DELETE"}'::jsonb,
+ '["A", "B", "C", "D"]'::jsonb, 5, 'medium', 'SQL的基本操作语句', 12, 'published', 'L7'),
+
+('true_false', '信息科技', '九年级', 'HTML是一种编程语言。',
+ '{"A": "正确", "B": "错误"}'::jsonb,
+ '"B"'::jsonb, 5, 'easy', 'HTML是标记语言，不是编程语言', 12, 'published', 'L6'),
+
+('blank', '信息科技', '九年级', '在网页开发中，CSS用于控制网页的___',
+ NULL, '"样式"'::jsonb, 5, 'easy', 'CSS用于控制网页样式', 12, 'published', 'L6'),
+
+('essay', '信息科技', '九年级', '请说明前端开发和后端开发的区别。',
+ NULL, '"前端负责用户界面和交互，后端负责数据处理和业务逻辑"'::jsonb, 10, 'medium', '理解前后端概念', 12, 'published', 'L7');
+
+-- ===================================================================
+-- 验证数据导入结果
+-- ===================================================================
+SELECT '题库数据导入完成！' as message;
+
+SELECT subject, grade, status, COUNT(*) as count
+FROM question_bank
+GROUP BY subject, grade, status
+ORDER BY subject, grade, status;
+
+SELECT '总题目数:' as label, COUNT(*) as total FROM question_bank;

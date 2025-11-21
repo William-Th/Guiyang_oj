@@ -1,6 +1,0 @@
--- Insert test questions for missing subjects
--- Created for paper generation testing
--- Date: 2025-10-30
---
--- NOTE: This file has been cleared as only Math and Information Technology subjects are retained.
--- All other subjects (Science, English, etc.) have been removed from the system.

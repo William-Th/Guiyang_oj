@@ -1,9 +1,0 @@
--- 新学科样例数据脚本
--- 原包含：数学、物理、生物、化学、计算机
--- 年级：七年级、八年级、九年级
---
--- NOTE: This file has been cleared as only Math and Information Technology subjects are retained.
--- The original file contained secondary school (grades 7-9) subjects including Physics, Chemistry, Biology, and Computer Science.
--- These subjects have been removed from the system.
---
--- If secondary school Math data is needed, please use add_question_bank_data.sql or supplement_questions.sql instead.

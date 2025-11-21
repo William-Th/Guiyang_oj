@@ -32,30 +32,30 @@ class Answer {
 
   static async gradeAnswers(studentExamId) {
     const result = await query(`
-      UPDATE answers a 
+      UPDATE answers a
       SET is_correct = (
-        CASE 
-          WHEN q.type IN ('single', 'multiple') THEN 
+        CASE
+          WHEN q.type IN ('single', 'multiple') THEN
             a.answer = q.correct_answer
-          ELSE 
+          ELSE
             NULL -- Manual grading needed for essay/code questions
         END
       ),
       score = (
-        CASE 
-          WHEN q.type IN ('single', 'multiple') AND a.answer = q.correct_answer THEN 
+        CASE
+          WHEN q.type IN ('single', 'multiple') AND a.answer = q.correct_answer THEN
             q.score
-          WHEN q.type IN ('single', 'multiple') AND a.answer != q.correct_answer THEN 
+          WHEN q.type IN ('single', 'multiple') AND a.answer != q.correct_answer THEN
             0
-          ELSE 
+          ELSE
             NULL -- Manual grading needed
         END
       )
-      FROM questions q
+      FROM question_bank q
       WHERE a.question_id = q.id AND a.student_exam_id = $1
       RETURNING a.id, a.question_id, a.is_correct, a.score
     `, [studentExamId]);
-    
+
     return result.rows;
   }
 
@@ -75,11 +75,13 @@ class Answer {
              q.content as question_content, q.type as question_type,
              q.correct_answer, q.explanation
       FROM answers a
-      JOIN questions q ON a.question_id = q.id
+      JOIN question_bank q ON a.question_id = q.id
+      JOIN student_activities sa ON a.student_exam_id = sa.id
+      JOIN activity_questions aq ON sa.activity_id = aq.activity_id AND a.question_id = aq.question_id
       WHERE a.student_exam_id = $1
-      ORDER BY q.order_no ASC
+      ORDER BY aq.order_index ASC
     `, [studentExamId]);
-    
+
     return result.rows;
   }
 }

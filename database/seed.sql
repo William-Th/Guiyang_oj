@@ -27,7 +27,10 @@ INSERT INTO users (username, password, role, real_name, phone, email) VALUES
 INSERT INTO users (username, password, role, real_name, phone, email) VALUES
 ('yunyan_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '云岩区管理员', '13800138010', 'yunyan@guiyang.edu'),
 ('nanming_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '南明区管理员', '13800138011', 'nanming@guiyang.edu'),
-('guanshanhu_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '观山湖区管理员', '13800138012', 'gsh@guiyang.edu');
+('guanshanhu_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '观山湖区管理员', '13800138012', 'gsh@guiyang.edu'),
+('baiyun_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '白云区管理员', '13800138013', 'baiyun@guiyang.edu'),
+('huaxi_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '花溪区管理员', '13800138014', 'huaxi@guiyang.edu'),
+('wudang_admin', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'district_admin', '乌当区管理员', '13800138015', 'wudang@guiyang.edu');
 
 -- Insert school administrators (校级管理员)
 INSERT INTO users (username, password, role, real_name, phone, email) VALUES
@@ -114,7 +117,10 @@ INSERT INTO students (user_id, student_no, school_id, grade, class, guardian_nam
 INSERT INTO admin_permissions (user_id, district_id, permission_scope) VALUES
 ((SELECT id FROM users WHERE username = 'yunyan_admin'), 1, '{"district": "云岩区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports"]}'),
 ((SELECT id FROM users WHERE username = 'nanming_admin'), 2, '{"district": "南明区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports"]}'),
-((SELECT id FROM users WHERE username = 'guanshanhu_admin'), 3, '{"district": "观山湖区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports"]}');
+((SELECT id FROM users WHERE username = 'guanshanhu_admin'), 3, '{"district": "观山湖区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports"]}'),
+((SELECT id FROM users WHERE username = 'baiyun_admin'), 4, '{"district": "白云区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports", "review_questions"]}'),
+((SELECT id FROM users WHERE username = 'huaxi_admin'), 5, '{"district": "花溪区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports"]}'),
+((SELECT id FROM users WHERE username = 'wudang_admin'), 6, '{"district": "乌当区", "schools": "all", "permissions": ["manage_schools", "manage_teachers", "view_reports"]}');
 
 -- School administrators
 INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
@@ -177,13 +183,18 @@ INSERT INTO announcements (title, content, type, target_audience, is_pinned, cre
 --
 -- 管理员账号:
 -- 市级总管理员: username=admin, password=password123
--- 云岩区管理员: username=yunyan_admin, password=password123
--- 南明区管理员: username=nanming_admin, password=password123
--- 观山湖区管理员: username=guanshanhu_admin, password=password123
--- 第一小学管理员: username=school_admin_01, password=password123
--- 第二小学管理员: username=school_admin_02, password=password123
--- 市直属学校总管理员: username=municipal_school_admin, password=password123
--- 基地校管理员: username=base_school_admin, password=password123
+-- 区级管理员:
+--   云岩区: username=yunyan_admin, password=password123
+--   南明区: username=nanming_admin, password=password123
+--   观山湖区: username=guanshanhu_admin, password=password123
+--   白云区: username=baiyun_admin, password=password123
+--   花溪区: username=huaxi_admin, password=password123
+--   乌当区: username=wudang_admin, password=password123
+-- 校级管理员:
+--   第一小学: username=school_admin_01, password=password123
+--   第二小学: username=school_admin_02, password=password123
+--   市直属学校: username=municipal_school_admin, password=password123
+--   基地校: username=base_school_admin, password=password123
 --
 -- 教师账号 (18 teachers - 3 districts × 3 schools × 2 subjects):
 -- 白云区 (6):
