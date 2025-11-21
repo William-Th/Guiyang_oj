@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// 使用相对路径，通过Nginx代理到后端
-const API_BASE_URL = window.location.origin;
-// const API_BASE_URL = 'http://localhost:3001'; // 仅用于本地开发
+// API Base URL Configuration
+// - Development (localhost:3000): Use empty string to trigger Vite proxy
+// - Production (localhost:80 via Nginx): Use window.location.origin
+const isDevelopment = window.location.port === '3000';
+const API_BASE_URL = isDevelopment ? '' : window.location.origin;
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
