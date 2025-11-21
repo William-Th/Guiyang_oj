@@ -22,7 +22,6 @@ import {
   UploadOutlined,
   DownloadOutlined,
   EyeOutlined,
-  InboxOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { questionBankApi } from '../../services/api';
@@ -424,12 +423,7 @@ const QuestionBankPage: React.FC = () => {
         title="题库管理"
         extra={
           <Space>
-            <Button
-              icon={<InboxOutlined />}
-              onClick={() => navigate('/teacher/question-bank/drafts')}
-            >
-              草稿箱
-            </Button>
+            {/* 草稿箱功能暂未实现，已移除 */}
             <Button
               icon={<DownloadOutlined />}
               onClick={handleDownloadTemplate}

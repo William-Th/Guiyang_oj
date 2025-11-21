@@ -71,6 +71,12 @@ const MainLayout: React.FC = () => {
     return user && (user.role === 'system_admin' || user.role === 'municipal_admin');
   };
 
+  // 检查是否有权限管理权限（区级及以上管理员）
+  const hasPermissionManagementAccess = () => {
+    const allowedRoles = ['district_admin', 'municipal_admin', 'system_admin'];
+    return user && allowedRoles.includes(user.role);
+  };
+
   // 管理员导航菜单项
   const getAdminMenuItems = (): MenuProps['items'] => {
     const items: MenuProps['items'] = [
@@ -100,16 +106,20 @@ const MainLayout: React.FC = () => {
         label: '用户管理',
       },
       {
-        key: '/admin/permissions',
-        icon: <SettingOutlined />,
-        label: '权限管理',
-      },
-      {
         key: '/admin/registration-approval',
         icon: <AuditOutlined />,
         label: '注册审核',
       },
     ];
+
+    // 仅对区级及以上管理员显示权限管理
+    if (hasPermissionManagementAccess()) {
+      items.push({
+        key: '/admin/permissions',
+        icon: <SettingOutlined />,
+        label: '权限管理',
+      });
+    }
 
     // 仅对system_admin和municipal_admin显示成就管理
     if (hasAchievementPermission()) {

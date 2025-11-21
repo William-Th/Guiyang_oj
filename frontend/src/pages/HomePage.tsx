@@ -21,8 +21,15 @@ const HomePage: React.FC = () => {
     return user && user.role === 'teacher';
   };
 
-  // 如果是管理员，重定向到管理员首页
+  // 重定向逻辑
   useEffect(() => {
+    // 如果未登录，重定向到登录页
+    if (!user) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    // 如果是管理员，重定向到管理员首页
     if (isAdmin()) {
       navigate('/admin/home', { replace: true });
     }
