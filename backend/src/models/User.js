@@ -489,10 +489,12 @@ class User {
       const adminResult = await query(`
         SELECT ap.school_id, ap.district_id, ap.permission_scope,
                s.name as school_name, s.district_id as school_district_id,
-               d.name as district_name
+               d.name as district_name,
+               d2.name as school_district_name
         FROM admin_permissions ap
         LEFT JOIN schools s ON ap.school_id = s.id
         LEFT JOIN districts d ON ap.district_id = d.id
+        LEFT JOIN districts d2 ON s.district_id = d2.id
         WHERE ap.user_id = $1
       `, [userId]);
 
@@ -500,8 +502,9 @@ class User {
         const admin = adminResult.rows[0];
         profile.schoolId = admin.school_id;
         profile.school = admin.school_name;
-        profile.districtId = admin.district_id;
-        profile.district = admin.district_name;
+        // 对于school_admin，如果admin_permissions中district_id为空，则从学校的district_id获取
+        profile.districtId = admin.district_id || admin.school_district_id;
+        profile.district = admin.district_name || admin.school_district_name;
         profile.permissionScope = admin.permission_scope;
 
         // 添加管理级别信息
