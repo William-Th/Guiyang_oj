@@ -172,13 +172,30 @@
 3. ⏸️ 检查前端API调用参数
 4. ⏸️ 检查数据库查询逻辑
 
-**可能原因**:
-1. API过滤条件过于严格
-2. scope_value格式不匹配（"云岩区" vs "yunyan"）
-3. 权限code不匹配
-4. 前端传参错误
+**根本原因** (已排查 2025-11-21):
+前端在提交审核时，选择"区级练习题库"时发送的 `target_scope="practice_district"`，但后端期望格式为 `target_scope="practice_district_YY"`（包含区代码）。
 
-**修复方案** (待确认原因后制定)
+**详细分析**:
+1. ✅ **数据库验证**: 区域数据正确（云岩区 code=YY, id=1）
+2. ✅ **权限验证**: 蒋磊-云岩一小有正确的权限记录
+   ```sql
+   user_id=163, permission_type='practice_district_review',
+   subjects={数学}, district_id=1 (云岩区, code=YY)
+   ```
+3. ❌ **前端问题**: `DraftsPage.tsx:394` 的scope选择器只提供 `"practice_district"` 选项，缺少区代码
+4. ✅ **后端逻辑**: `TeacherPermission.getReviewersForScope()` 正确解析 `practice_district_YY` 并匹配 `district.code='YY'`
+
+**修复方案**:
+需要在前端添加区域选择逻辑：
+1. 当用户选择"区级练习题库"时，需要再选择具体区域
+2. 从 `/api/districts` 获取区域列表，展示为下拉选项
+3. 最终构造 `target_scope = "practice_district_" + district.code`（如 "practice_district_YY"）
+4. 更新文件：`frontend/src/pages/teacher/DraftsPage.tsx`
+
+**相关文件**:
+- 前端: `frontend/src/pages/teacher/DraftsPage.tsx:394` (scope选择器)
+- 后端: `backend/src/models/TeacherPermission.js:227-277` (getReviewersForScope方法)
+- 后端: `backend/src/routes/questionReview.js:31-61` (available-reviewers API)
 
 ---
 
