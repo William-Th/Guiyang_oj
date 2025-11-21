@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Button, Space, message, Spin, Select, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import { SUBJECTS, getAllGrades, getAllAbilityLevels } from '../../config/subjects';
@@ -190,7 +190,7 @@ const ActivityListPage: React.FC = () => {
       dataIndex: 'duration',
       key: 'duration',
       width: 80,
-      render: (duration: number) => `${duration}分钟`,
+      render: (duration: number) => duration ? `${duration}分钟` : '-',
     },
     {
       title: '总分',
@@ -224,6 +224,13 @@ const ActivityListPage: React.FC = () => {
             onClick={() => navigate(`/teacher/activities/${record.id}`)}
           >
             查看
+          </Button>
+          <Button
+            size="small"
+            icon={<FileTextOutlined />}
+            onClick={() => navigate(`/teacher/activities/${record.id}/paper`)}
+          >
+            组卷
           </Button>
           {record.status === 'draft' && (
             <Button

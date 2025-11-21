@@ -143,7 +143,7 @@ const MainLayout: React.FC = () => {
     {
       key: '/teacher/activities',
       icon: <ProjectOutlined />,
-      label: '练习管理',
+      label: '活动管理',
     },
     {
       key: '/teacher/question-bank',

@@ -130,7 +130,43 @@ router.get('/bank', authMiddleware, async (req, res) => {
 // Get user's available scopes (新增)
 router.get('/my-scopes', authMiddleware, async (req, res) => {
   try {
-    const scopes = await QuestionBank.getAvailableScopes(req.user.id);
+    // 获取用户详细信息以获取 district_id 和 school_id
+    const User = require('../models/User');
+    const Teacher = require('../models/Teacher');
+
+    let userInfo = {};
+
+    // 根据用户类型获取相关信息
+    if (req.user.role === 'teacher') {
+      const teacher = await Teacher.getByUserId(req.user.id);
+      if (teacher) {
+        userInfo = {
+          districtId: teacher.district_id,
+          schoolId: teacher.school_id,
+          districtCode: teacher.district_code
+        };
+      }
+    } else if (req.user.district_id) {
+      // 管理员直接从user表获取district_id
+      const user = await User.findById(req.user.id);
+      if (user && user.district_id) {
+        // 获取district_code
+        const districtResult = await require('../config/db').query(
+          'SELECT code FROM districts WHERE id = $1',
+          [user.district_id]
+        );
+        userInfo = {
+          districtId: user.district_id,
+          districtCode: districtResult.rows[0]?.code
+        };
+      }
+    }
+
+    const scopes = await QuestionBank.getAvailableScopes(
+      req.user.id,
+      req.user.role,
+      userInfo
+    );
 
     res.json({
       success: true,

@@ -19,8 +19,10 @@ import {
   SendOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store';
 import { questionReviewApi, questionBankApi } from '../../services/api';
-import { getAllDistricts, buildDistrictScope } from '../../config/districts';
+import { buildDistrictScope, getDistrictById } from '../../config/districts';
 
 interface Question {
   id: number;
@@ -50,6 +52,7 @@ interface DraftsPageProps {
 
 const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user);
   const [loading, setLoading] = useState(false);
   const [drafts, setDrafts] = useState<Question[]>([]);
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
@@ -59,6 +62,13 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
   const [selectedScope, setSelectedScope] = useState<string>('');
   const [selectedDistrictCode, setSelectedDistrictCode] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+
+  // 自动获取用户所属区域代码
+  const getUserDistrictCode = (): string | null => {
+    if (!user?.districtId) return null;
+    const district = getDistrictById(user.districtId);
+    return district?.code || null;
+  };
 
   useEffect(() => {
     loadDrafts();
@@ -150,9 +160,9 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
       return;
     }
 
-    // 如果选择区级题库但未选择区域，提示用户
+    // 如果选择区级题库但无法获取区域代码，提示用户
     if (selectedScope === 'practice_district' && !selectedDistrictCode) {
-      message.warning('请选择目标区域');
+      message.error('无法获取您的区域信息，请联系管理员');
       return;
     }
 
@@ -404,8 +414,18 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
                 value={selectedScope || undefined}
                 onChange={(value) => {
                   setSelectedScope(value);
-                  // 切换题库范围时，清空区域选择和审核人
-                  setSelectedDistrictCode('');
+                  // 如果选择区级题库，自动设置用户所属区域
+                  if (value === 'practice_district') {
+                    const userDistrictCode = getUserDistrictCode();
+                    if (userDistrictCode) {
+                      setSelectedDistrictCode(userDistrictCode);
+                    } else {
+                      message.warning('无法获取您的区域信息，请联系管理员');
+                      setSelectedDistrictCode('');
+                    }
+                  } else {
+                    setSelectedDistrictCode('');
+                  }
                   setSelectedReviewer(null);
                 }}
                 placeholder="请选择要提交的题库范围"
@@ -436,34 +456,28 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
               </div>
             </div>
 
-            {/* 区域选择（仅当选择区级题库时显示） */}
-            {selectedScope === 'practice_district' && (
+            {/* 区域信息显示（仅当选择区级题库时显示） */}
+            {selectedScope === 'practice_district' && selectedDistrictCode && (
               <div style={{ marginTop: 16 }}>
                 <label style={{ display: 'block', marginBottom: 8 }}>
-                  <span style={{ color: 'red' }}>* </span>
-                  选择目标区域：
+                  目标区域：
                 </label>
-                <Select
-                  value={selectedDistrictCode || undefined}
-                  onChange={(value) => {
-                    setSelectedDistrictCode(value);
-                    setSelectedReviewer(null); // 切换区域时清空审核人选择
-                  }}
-                  placeholder="请选择要发布的区域"
-                  style={{ width: '100%' }}
-                  virtual={false}
-                  showSearch
-                  optionFilterProp="children"
-                >
-                  {getAllDistricts().map((district) => (
-                    <Select.Option key={district.code} value={district.code}>
-                      <Tag color="cyan">{district.code}</Tag>
-                      <span style={{ marginLeft: 8 }}>{district.name}</span>
-                    </Select.Option>
-                  ))}
-                </Select>
+                <div style={{
+                  padding: '8px 12px',
+                  background: '#f0f2f5',
+                  borderRadius: 4,
+                  border: '1px solid #d9d9d9'
+                }}>
+                  <Tag color="cyan">{selectedDistrictCode}</Tag>
+                  <span style={{ marginLeft: 8 }}>
+                    {user?.districtId ? getDistrictById(user.districtId)?.name : null || '未知区域'}
+                  </span>
+                  <span style={{ marginLeft: 8, color: '#999', fontSize: 12 }}>
+                    (根据您的账号自动匹配)
+                  </span>
+                </div>
                 <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
-                  提示：选择区域后，系统将自动加载该区域具有审核权限的教师。
+                  提示：系统已自动根据您的账号信息匹配所属区域，并加载该区域的审核人列表。
                 </div>
               </div>
             )}
