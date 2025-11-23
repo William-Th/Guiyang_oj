@@ -24,8 +24,11 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import { questionBankApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject, getAllGrades } from '../../config/subjects';
+import { getAllDistricts, District } from '../../config/districts';
 
 interface Question {
   id: number;
@@ -51,6 +54,8 @@ interface Question {
 
 const QuestionBankPage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user);
+
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [total, setTotal] = useState(0);
@@ -63,23 +68,37 @@ const QuestionBankPage: React.FC = () => {
     difficulty?: string;
     type?: string;
     scopes?: string[];
+    district_code?: string;  // 🆕 区县筛选
   }>({});
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
-  const [availableScopes, setAvailableScopes] = useState<string[]>([]);
+  // 🔧 固定的题库范围选项 - 所有教师端用户看到的选项相同
+  const availableScopes = ['assessment', 'practice_municipal', 'practice_district', 'practice_school'];
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<string | undefined>();  // 🆕 选中的区县
+  const [districts] = useState<District[]>(getAllDistricts());  // 🆕 区县列表
+
+  // 🆕 权限判断：是否可以使用区县筛选
+  const canSelectDistrict = user?.role === 'system_admin' || user?.role === 'municipal_admin';
 
   useEffect(() => {
-    loadAvailableScopes();
+    // loadAvailableScopes(); // 🔧 不再从后端加载，使用固定选项
     // 从 localStorage 恢复上次选择的 scopes
     const savedScopes = localStorage.getItem('selectedScopes');
     if (savedScopes) {
       try {
         const scopes = JSON.parse(savedScopes);
-        setSelectedScopes(scopes);
-        setFilters(prev => ({ ...prev, scopes }));
+        // 🔧 确保加载的数据是数组
+        if (Array.isArray(scopes)) {
+          setSelectedScopes(scopes);
+          setFilters(prev => ({ ...prev, scopes }));
+        } else {
+          console.warn('Invalid saved scopes format, clearing localStorage');
+          localStorage.removeItem('selectedScopes');
+        }
       } catch (error) {
         console.error('Failed to parse saved scopes:', error);
+        localStorage.removeItem('selectedScopes');
       }
     }
   }, []);
@@ -88,26 +107,26 @@ const QuestionBankPage: React.FC = () => {
     loadQuestions();
   }, [currentPage, pageSize, filters]);
 
-  const loadAvailableScopes = async () => {
-    try {
-      const response = await questionBankApi.getMyScopes();
-      setAvailableScopes(response.data || []);
-    } catch (error: any) {
-      console.error('Load available scopes error:', error);
-      // 如果加载失败，使用默认的 scopes
-      setAvailableScopes(['assessment', 'practice_municipal', 'practice_district', 'practice_school']);
-    }
-  };
+  // 🔧 loadAvailableScopes 函数已删除 - 现在使用固定的 availableScopes 常量
 
   const loadQuestions = async () => {
     try {
       setLoading(true);
       const offset = (currentPage - 1) * pageSize;
-      const response = await questionBankApi.getAllQuestions({
+
+      // 🆕 准备API参数，包含district_code（如果有权限且已选择）
+      const apiParams: any = {
         ...filters,
         limit: pageSize,
         offset,
-      });
+      };
+
+      // 🆕 只有系统/市级管理员才能传递district_code参数
+      if (canSelectDistrict && filters.district_code) {
+        apiParams.district_code = filters.district_code;
+      }
+
+      const response = await questionBankApi.getAllQuestions(apiParams);
 
       setQuestions(response.data || []);
       setTotal(response.meta?.total || response.data?.length || 0);
@@ -360,11 +379,15 @@ const QuestionBankPage: React.FC = () => {
       dataIndex: 'scope',
       key: 'scope',
       width: 200,
-      render: (scopes: string[]) => {
-        if (!scopes || scopes.length === 0) return '-';
+      render: (scopes: string | string[]) => {
+        // 🔧 处理 scopes 可能是字符串或数组的情况
+        const scopeArray = Array.isArray(scopes)
+          ? scopes
+          : (typeof scopes === 'string' ? [scopes] : []);
+        if (scopeArray.length === 0) return '-';
         return (
           <Space size="small" wrap>
-            {scopes.map((scope) => {
+            {scopeArray.map((scope) => {
               const config = getScopeText(scope);
               return <Tag key={scope} color={config.color}>{config.text}</Tag>;
             })}
@@ -372,6 +395,42 @@ const QuestionBankPage: React.FC = () => {
         );
       },
     },
+    // 🆕 区县信息列 - 仅在筛选区级题库时显示
+    ...((selectedScopes || []).includes('practice_district') ? [{
+      title: '所属区县',
+      dataIndex: 'district_name',
+      key: 'district_name',
+      width: 120,
+      render: (districtName: string, record: Question) => {
+        // 如果有district_name字段，直接显示
+        if (districtName) {
+          return <Tag color="cyan">{districtName}</Tag>;
+        }
+        // 否则从scope中提取区县信息
+        // 🔧 处理 scope 可能是字符串或数组的情况
+        const scopeValue = record.scope;
+        const scopeArray = Array.isArray(scopeValue)
+          ? scopeValue
+          : (typeof scopeValue === 'string' ? [scopeValue] : []);
+        const districtScopes = scopeArray.filter(s => s.startsWith('practice_district_'));
+        if (districtScopes.length > 0) {
+          return (
+            <Space size="small" wrap>
+              {districtScopes.map(scope => {
+                const code = scope.replace('practice_district_', '');
+                const district = districts.find(d => d.code === code);
+                return district ? (
+                  <Tag key={scope} color="cyan">{district.name}</Tag>
+                ) : (
+                  <Tag key={scope} color="default">{code}</Tag>
+                );
+              })}
+            </Space>
+          );
+        }
+        return '-';
+      },
+    }] : []),
     {
       title: '操作',
       key: 'action',
@@ -474,7 +533,7 @@ const QuestionBankPage: React.FC = () => {
               maxTagCount="responsive"
               allowClear
             >
-              {availableScopes.map((scope) => {
+              {(availableScopes || []).map((scope) => {
                 const config = getScopeText(scope);
                 return (
                   <Select.Option key={scope} value={scope}>
@@ -483,6 +542,26 @@ const QuestionBankPage: React.FC = () => {
                 );
               })}
             </Select>
+
+            {/* 🆕 区县筛选 - 仅对系统管理员和市级管理员显示 */}
+            {canSelectDistrict && (selectedScopes || []).includes('practice_district') && (
+              <Select
+                placeholder="选择区县"
+                style={{ width: 150 }}
+                allowClear
+                value={selectedDistrictCode}
+                onChange={(value) => {
+                  setSelectedDistrictCode(value);
+                  setFilters({ ...filters, district_code: value });
+                }}
+              >
+                {(districts || []).map((district) => (
+                  <Select.Option key={district.code} value={district.code}>
+                    {district.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            )}
             <Select
               placeholder="选择科目"
               style={{ width: 120 }}
@@ -558,11 +637,11 @@ const QuestionBankPage: React.FC = () => {
           </div>
 
           {/* Selected Scopes Display */}
-          {selectedScopes.length > 0 && (
+          {(selectedScopes || []).length > 0 && (
             <div style={{ padding: '8px 12px', background: '#f0f2f5', borderRadius: 4 }}>
               <Space size="small">
                 <span style={{ color: '#666', fontWeight: 500 }}>当前筛选范围：</span>
-                {selectedScopes.map((scope) => {
+                {(selectedScopes || []).map((scope) => {
                   const config = getScopeText(scope);
                   return (
                     <Tag key={scope} color={config.color}>

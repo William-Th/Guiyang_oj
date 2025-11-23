@@ -61,56 +61,40 @@ router.get('/config/knowledge-points', authMiddleware, async (req, res) => {
   }
 });
 
-// Get all questions from the bank (支持 scope 过滤和可见性控制)
+// Get all questions from the bank (支持 scope 过滤、区县筛选和权限控制)
 router.get('/bank', authMiddleware, async (req, res) => {
   try {
+    // 构建筛选条件
     const filters = {
+      scope: req.query.scope, // 范围：assessment, practice_municipal, practice_district, practice_school
+      district_code: req.query.district_code, // 区县代码（仅系统/市级管理员可用）
       subject: req.query.subject,
       grade: req.query.grade,
       difficulty: req.query.difficulty,
       type: req.query.type,
-      category_id: req.query.category_id,
+      level: req.query.level,
       status: req.query.status,
-      tags: req.query.tags ? req.query.tags.split(',') : null,
-      abilities: req.query.abilities ? req.query.abilities.split(',') : null,
-      knowledge_points: req.query.knowledge_points ? req.query.knowledge_points.split(',') : null,
-      limit: parseInt(req.query.limit) || 50,
+      search: req.query.search, // 搜索题目内容或编码
+      limit: parseInt(req.query.limit) || 20,
       offset: parseInt(req.query.offset) || 0
     };
 
-    let questions;
-    let total;
+    // 构建用户信息（用于权限控制）
+    const User = require('../models/User');
+    const userDetail = await User.getDetailedProfile(req.user.id);
 
-    // 如果指定了 scope 过滤，使用新的 findByScope 方法
-    if (req.query.scope) {
-      // 处理 scope 参数：可能是字符串或数组
-      const scopeFilter = Array.isArray(req.query.scope)
-        ? req.query.scope  // 已经是数组 (如 ?scope=xxx&scope=yyy)
-        : req.query.scope.split(',');  // 字符串，需要分割 (如 ?scope=xxx,yyy)
+    const userInfo = {
+      userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
+      districtId: userDetail.district_id || userDetail.teacher?.district_id,
+      districtCode: userDetail.district_code || userDetail.teacher?.district_code,
+      schoolId: userDetail.school_id || userDetail.teacher?.school_id
+    };
 
-      // 获取用户可见的 scope 列表
-      const userScope = await QuestionBank.getAvailableScopes(req.user.id);
-
-      // Get total count (without pagination)
-      const countFilters = { ...filters };
-      delete countFilters.limit;
-      delete countFilters.offset;
-      total = await QuestionBank.countByScope(scopeFilter, userScope, countFilters);
-
-      // 使用 scope-aware 查询
-      questions = await QuestionBank.findByScope(scopeFilter, userScope, filters);
-    } else {
-      // 兼容旧接口：使用 findAll 但只返回已发布的题目
-      filters.status = filters.status || 'published';
-
-      // Get total count (without pagination)
-      const countFilters = { ...filters };
-      delete countFilters.limit;
-      delete countFilters.offset;
-      total = await QuestionBank.countAll(countFilters);
-
-      questions = await QuestionBank.findAll(filters);
-    }
+    // 查询题目列表（带权限控制）
+    const [questions, total] = await Promise.all([
+      QuestionBank.findAll(filters, userInfo),
+      QuestionBank.countAll(filters, userInfo)
+    ]);
 
     res.json({
       success: true,
@@ -118,7 +102,11 @@ router.get('/bank', authMiddleware, async (req, res) => {
       meta: {
         count: questions.length,
         total: total,
-        scope: req.query.scope || 'all'
+        page: Math.floor(filters.offset / filters.limit) + 1,
+        limit: filters.limit,
+        totalPages: Math.ceil(total / filters.limit),
+        scope: filters.scope || 'all',
+        district_code: filters.district_code || null
       }
     });
   } catch (error) {
@@ -127,53 +115,31 @@ router.get('/bank', authMiddleware, async (req, res) => {
   }
 });
 
-// Get user's available scopes (新增)
+// Get user's available scopes
 router.get('/my-scopes', authMiddleware, async (req, res) => {
   try {
-    // 获取用户详细信息以获取 district_id 和 school_id
+    // 🔧 使用 User.getDetailedProfile 获取用户详细信息
     const User = require('../models/User');
-    const Teacher = require('../models/Teacher');
+    const userDetail = await User.getDetailedProfile(req.user.id);
 
-    let userInfo = {};
+    const userInfo = {
+      userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
+      districtId: userDetail.district_id || userDetail.teacher?.district_id || userDetail.admin?.district_id,
+      districtCode: userDetail.district_code || userDetail.teacher?.district_code || userDetail.admin?.district_code,
+      schoolId: userDetail.school_id || userDetail.teacher?.school_id || userDetail.admin?.school_id
+    };
 
-    // 根据用户类型获取相关信息
-    if (req.user.role === 'teacher') {
-      const teacher = await Teacher.getByUserId(req.user.id);
-      if (teacher) {
-        userInfo = {
-          districtId: teacher.district_id,
-          schoolId: teacher.school_id,
-          districtCode: teacher.district_code
-        };
-      }
-    } else if (req.user.district_id) {
-      // 管理员直接从user表获取district_id
-      const user = await User.findById(req.user.id);
-      if (user && user.district_id) {
-        // 获取district_code
-        const districtResult = await require('../config/db').query(
-          'SELECT code FROM districts WHERE id = $1',
-          [user.district_id]
-        );
-        userInfo = {
-          districtId: user.district_id,
-          districtCode: districtResult.rows[0]?.code
-        };
-      }
-    }
+    // 🔧 调试日志：查看学校管理员的信息
+    console.log('[DEBUG] /my-scopes userInfo:', JSON.stringify(userInfo, null, 2));
 
-    const scopes = await QuestionBank.getAvailableScopes(
-      req.user.id,
-      req.user.role,
-      userInfo
-    );
+    const scopes = await QuestionBank.getAvailableScopes(userInfo);
 
     res.json({
       success: true,
       data: scopes,
       meta: {
         count: scopes.length,
-        user_role: req.user.role
+        user_role: userInfo.userRole
       }
     });
   } catch (error) {

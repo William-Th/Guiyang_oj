@@ -392,7 +392,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
             level: 'L1',
             suggested_score: 5,
             score: 5,
-            options: ['', ''],
+            options: ['', '', '', ''], // 默认4个选项
             correct_answer: [''],
             status: 'draft'
           }}
@@ -594,7 +594,8 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
             <Select mode="tags" placeholder="输入标签后按回车" />
           </Form.Item>
 
-          <Form.Item
+          {/* 🔧 发布范围选择已禁用 - 所有题目创建后保存为草稿，在草稿箱中选择发布范围 */}
+          {/* <Form.Item
             label="发布范围"
             name="target_scope"
             help="选择题目的发布范围。校级题库可直接发布，其他范围需要审核。"
@@ -651,7 +652,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
               }
               return null;
             }}
-          </Form.Item>
+          </Form.Item> */}
 
           <Form.Item>
             <Space>

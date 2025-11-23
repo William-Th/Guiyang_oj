@@ -202,7 +202,8 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
     return types[type] || type;
   };
 
-  const getLevelColor = (level: string) => {
+  const getLevelColor = (level: string | null | undefined) => {
+    if (!level) return 'default';
     const levelNum = parseInt(level.replace('L', ''));
     if (levelNum <= 3) return 'green';
     if (levelNum <= 6) return 'blue';
@@ -470,7 +471,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
                 }}>
                   <Tag color="cyan">{selectedDistrictCode}</Tag>
                   <span style={{ marginLeft: 8 }}>
-                    {user?.districtId ? getDistrictById(user.districtId)?.name : null || '未知区域'}
+                    {user?.districtId ? getDistrictById(user.districtId)?.name || '未知区域' : '未知区域'}
                   </span>
                   <span style={{ marginLeft: 8, color: '#999', fontSize: 12 }}>
                     (根据您的账号自动匹配)

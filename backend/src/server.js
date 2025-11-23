@@ -124,6 +124,7 @@ app.use('/api/student/activities', require('./routes/studentActivities')); // �
 app.use('/api/teacher/grading', require('./routes/grading')); // 教师评卷系统
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/question-bank', require('./routes/questionBank'));
+app.use('/api/question-drafts', require('./routes/questionDrafts')); // 题目草稿管理 (新)
 app.use('/api/question-review', require('./routes/questionReview')); // 题目审核流程
 app.use('/api/permissions', require('./routes/permissions')); // 权限管理
 app.use('/api/results', require('./routes/results'));
