@@ -108,9 +108,9 @@ const MainLayout: React.FC = () => {
         label: '用户管理',
       },
       {
-        key: '/admin/registration-approval',
+        key: '/admin/approval-center',
         icon: <AuditOutlined />,
-        label: '注册审核',
+        label: '审批中心',
       },
     ];
 
@@ -131,13 +131,6 @@ const MainLayout: React.FC = () => {
         label: '成就管理',
       });
     }
-
-    // 教学班审批（所有管理员可见）
-    items.push({
-      key: '/admin/teaching-class-approvals',
-      icon: <SolutionOutlined />,
-      label: '教学班审批',
-    });
 
     return items;
   };
@@ -223,6 +216,7 @@ const MainLayout: React.FC = () => {
     if (path.includes('/admin/assessments')) return '/admin/assessments';
     if (path.includes('/admin/question-bank')) return '/admin/question-bank';
     if (path.includes('/admin/users')) return '/admin/users';
+    if (path.includes('/admin/approval-center')) return '/admin/approval-center';
     if (path.includes('/admin/permissions')) return '/admin/permissions';
     if (path.includes('/admin/achievements')) return '/admin/achievements';
     return '/admin/home';

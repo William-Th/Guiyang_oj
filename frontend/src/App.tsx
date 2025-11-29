@@ -23,7 +23,7 @@ import PracticeCenterPage from './pages/student/PracticeCenterPage';
 import AssessmentCenterPage from './pages/student/AssessmentCenterPage';
 import TakeActivityPage from './pages/student/TakeActivityPage';
 import AssessmentManagementPage from './pages/admin/AssessmentManagementPage';
-import RegistrationApprovalPage from './pages/admin/RegistrationApprovalPage';
+import ApprovalCenter from './pages/admin/ApprovalCenter';
 import GradingListPage from './pages/teacher/GradingListPage';
 import GradingDetailPage from './pages/teacher/GradingDetailPage';
 import ReviewWorkbench from './pages/teacher/ReviewWorkbench';
@@ -36,7 +36,6 @@ import TeachingClassList from './pages/teacher/TeachingClassList';
 import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
 import TeachingClassForm from './pages/teacher/TeachingClassForm';
 import TeachingClassStudents from './pages/teacher/TeachingClassStudents';
-import TeachingClassApprovals from './pages/admin/TeachingClassApprovals';
 
 const App: React.FC = () => {
   return (
@@ -66,9 +65,8 @@ const App: React.FC = () => {
               </Route>
               <Route path="users" element={<UserManagement />} />
               <Route path="permissions" element={<PermissionManagement />} />
-              <Route path="registration-approval" element={<RegistrationApprovalPage />} />
+              <Route path="approval-center" element={<ApprovalCenter />} />
               <Route path="achievements" element={<AchievementManagementPage />} />
-              <Route path="teaching-class-approvals" element={<TeachingClassApprovals />} />
             </Route>
 
             {/* 学生路由 */}
