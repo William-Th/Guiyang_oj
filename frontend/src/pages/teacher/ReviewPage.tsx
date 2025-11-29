@@ -78,8 +78,9 @@ const ReviewPage: React.FC = () => {
   };
 
   const handleSubmitReview = async () => {
-    if (!reviewComment.trim()) {
-      message.warning('请填写审核意见');
+    // 拒绝时必须填写审核意见，批准时可选
+    if (reviewStatus === 'rejected' && !reviewComment.trim()) {
+      message.warning('拒绝时必须填写审核意见');
       return;
     }
 
@@ -417,14 +418,14 @@ const ReviewPage: React.FC = () => {
 
               <div>
                 <label style={{ display: 'block', marginBottom: 8 }}>
-                  <span style={{ color: 'red' }}>* </span>
-                  审核意见：
+                  {reviewStatus === 'rejected' && <span style={{ color: 'red' }}>* </span>}
+                  审核意见{reviewStatus === 'rejected' ? '（必填）' : '（可选）'}：
                 </label>
                 <TextArea
                   rows={4}
                   placeholder={
                     reviewStatus === 'approved'
-                      ? '请填写审核意见，如：题目质量良好，同意发布'
+                      ? '可填写审核意见，如：题目质量良好，同意发布'
                       : '请说明拒绝原因，如：题目内容不准确，需要修改'
                   }
                   value={reviewComment}

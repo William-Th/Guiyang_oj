@@ -136,6 +136,8 @@ app.use('/api/achievements', require('./routes/achievements')); // 成就系统
 app.use('/api/points', require('./routes/points')); // 积分系统
 app.use('/api/daily-tasks', require('./routes/dailyTasks')); // 日常任务系统
 app.use('/api/upload', require('./routes/upload')); // 文件上传
+app.use('/api/statistics', require('./routes/statistics')); // 数据统计与可视化
+app.use('/api/teaching-classes', require('./routes/teachingClasses')); // 教学班管理
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

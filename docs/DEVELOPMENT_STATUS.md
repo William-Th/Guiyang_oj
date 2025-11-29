@@ -252,6 +252,61 @@
 
 ---
 
+### 12. 教学班管理系统 (NEW - 2025-11-26)
+
+**背景**: 教学班是虚拟班级概念，支持教师跨越物理班级界限组织学生进行学习和测评活动。教学班可以在学校、区县、市级三个行政级别创建，需要对应级别管理员审批。
+
+**设计文档**: `docs/TEACHING_CLASS_REQUIREMENTS.md`
+
+**目标**:
+- 支持三级教学班创建：校级、区级、市级
+- 实现分级审批流程和超时自动流转机制
+- 支持学生管理和活动关联
+- 提供班级数据统计分析
+
+| 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
+|------|--------|---------|---------|------|---------|------|
+| **数据库设计** |  |  |  |  |  |  |
+| teaching_classes表 | ❌ | N/A | N/A | N/A | N/A | 教学班基本信息 |
+| teaching_class_members表 | ❌ | N/A | N/A | N/A | N/A | 班级学生关联 |
+| teaching_class_teachers表 | ❌ | N/A | N/A | N/A | N/A | 班级教师关联 |
+| teaching_class_approvals表 | ❌ | N/A | N/A | N/A | N/A | 审批记录 |
+| teaching_class_activities表 | ❌ | N/A | N/A | N/A | N/A | 活动关联 |
+| 数据库迁移脚本 | ❌ | N/A | N/A | N/A | N/A | 026_teaching_class.sql |
+| **教学班基础管理** |  |  |  |  |  |  |
+| 创建教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes |
+| 获取教学班列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes |
+| 获取教学班详情 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id |
+| 更新教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | PUT /api/teaching-classes/:id |
+| 删除教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/teaching-classes/:id |
+| 提交审批 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/submit |
+| **审批流程** |  |  |  |  |  |  |
+| 获取待审批列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/pending |
+| 批准教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/approve |
+| 拒绝教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/reject |
+| 超时自动流转服务 | ❌ | ❌ | ❌ | N/A | ❌ | cron每小时检查 |
+| **学生管理** |  |  |  |  |  |  |
+| 获取班级学生列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id/students |
+| 添加学生 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/students |
+| 批量添加学生 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/students/batch |
+| 移除学生 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/teaching-classes/:id/students/:studentId |
+| 范围限制校验 | ❌ | ❌ | ❌ | N/A | ❌ | 校级/区级/市级学生范围 |
+| **活动管理** |  |  |  |  |  |  |
+| 获取关联活动 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id/activities |
+| 关联活动 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/activities |
+| 取消关联活动 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/teaching-classes/:id/activities/:activityId |
+| 班级统计数据 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id/statistics |
+| **前端页面** |  |  |  |  |  |  |
+| 教学班列表页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes |
+| 创建/编辑教学班页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes/create |
+| 教学班详情页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes/:id |
+| 学生管理页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes/:id/students |
+| 管理员审批页 | N/A | N/A | N/A | ❌ | ❌ | /admin/teaching-class-approvals |
+
+**开发状态**: ❌ **未开始** | 预计工期12天 | 参考: `docs/TEACHING_CLASS_REQUIREMENTS.md`
+
+---
+
 ### 8.1 活动组卷管理系统 (2025-10-28)
 
 **背景**: 为练习和测评活动提供完整的组卷功能，支持题目筛选、批量操作、智能推荐等。
@@ -426,6 +481,39 @@
    - 状态：待优化
 
 ## 近期更新
+
+### 2025-11-26
+- ✅ **教学班管理系统前后端开发完成**
+  - 创建详细需求文档: `docs/TEACHING_CLASS_REQUIREMENTS.md`
+  - **数据库**: `database/migrations/026_teaching_class.sql`
+    - 5张数据表: teaching_classes, teaching_class_members, teaching_class_teachers, teaching_class_approvals, teaching_class_activities
+    - 2个统计视图: v_teaching_class_summary, v_pending_teaching_classes
+  - **后端**:
+    - 模型: `backend/src/models/TeachingClass.js` (25+方法)
+    - 路由: `backend/src/routes/teachingClasses.js` (15+端点)
+  - **前端**:
+    - 列表页: `frontend/src/pages/teacher/TeachingClassList.tsx`
+    - 详情页: `frontend/src/pages/teacher/TeachingClassDetail.tsx`
+    - 表单页: `frontend/src/pages/teacher/TeachingClassForm.tsx`
+    - 学生管理: `frontend/src/pages/teacher/TeachingClassStudents.tsx`
+    - 管理员审批: `frontend/src/pages/admin/TeachingClassApprovals.tsx`
+    - API服务: `frontend/src/services/api.ts` (teachingClassApi)
+    - 路由配置: `frontend/src/App.tsx`
+    - 菜单入口: `frontend/src/components/layout/MainLayout.tsx`
+  - **功能特性**:
+    - 支持三级教学班：校级、区级、市级
+    - 分级审批流程（校级→区级→市级管理员）
+    - 7天超时自动流转机制
+    - 学生批量管理、活动关联
+    - 范围验证（学生只能被添加到对应范围的教学班）
+  - API测试通过: 17/21 (81%)
+  - schema.sql 已同步更新
+  - 待完成: E2E测试
+- ✅ 修复数据可视化模块前后端字段映射问题
+  - 修复学生统计页面接口字段名不匹配
+  - 修复教师数据分析页面接口字段名不匹配
+  - 修复后端统计API的student_id查询逻辑
+  - 统计API测试全部通过（5/5）
 
 ### 2025-11-05
 - ✅ **权限系统API测试100%完成** - 3个测试文件，共32个测试全部通过

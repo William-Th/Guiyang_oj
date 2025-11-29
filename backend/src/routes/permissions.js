@@ -110,10 +110,17 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
 
     // 验证权限类型
     const validPermissionTypes = [
+      // 审核权限
       'assessment_review',           // 测评题库审核
       'practice_municipal_review',   // 市级练习题库审核
       'practice_district_review',    // 区级练习题库审核
-      'competition_review'           // 竞赛审核
+      'competition_review',          // 竞赛审核
+      // 练习发布权限
+      'practice_publish_municipal',       // 市级练习发布
+      'practice_publish_district',        // 区级练习发布
+      'practice_publish_school',          // 校级练习发布
+      'practice_publish_base_school',     // 基地学校练习发布
+      'practice_publish_municipal_school' // 市直学校练习发布
     ];
 
     // 明确拒绝废弃的权限类型 (2025-11-05 migration 012)
@@ -366,6 +373,68 @@ router.delete('/:permissionId', authMiddleware, adminOnly, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting permission:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 获取当前用户可发布练习的范围列表
+router.get('/my-practice-scopes', authMiddleware, async (req, res) => {
+  try {
+    const scopes = await TeacherPermission.getAvailablePracticeScopes(req.user.id);
+
+    const scopeDetails = scopes.map(scope => {
+      const scopeNames = {
+        'class': '班级',
+        'school': '学校',
+        'district': '区县',
+        'base_school': '基地学校',
+        'municipal_school': '市直属学校',
+        'municipal': '市级'
+      };
+      return {
+        value: scope,
+        label: scopeNames[scope] || scope
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        scopes,
+        scopeDetails
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching available practice scopes:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 检查用户是否有特定范围的练习发布权限
+router.post('/check-practice-publish', authMiddleware, async (req, res) => {
+  try {
+    const { scope, district_id, school_id } = req.body;
+
+    if (!scope) {
+      return res.status(400).json({
+        success: false,
+        error: 'scope is required'
+      });
+    }
+
+    const hasPermission = await TeacherPermission.hasPracticePublishPermission(
+      req.user.id,
+      scope,
+      district_id || null,
+      school_id || null
+    );
+
+    res.json({
+      success: true,
+      data: { hasPermission, scope }
+    });
+  } catch (error) {
+    console.error('Error checking practice publish permission:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

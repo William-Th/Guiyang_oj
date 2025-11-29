@@ -30,6 +30,13 @@ import ReviewWorkbench from './pages/teacher/ReviewWorkbench';
 import AchievementManagementPage from './pages/admin/AchievementManagementPage';
 import AchievementPage from './pages/student/AchievementPage';
 import PointsPage from './pages/student/PointsPage';
+import MyStatistics from './pages/student/MyStatistics';
+import DataAnalytics from './pages/teacher/DataAnalytics';
+import TeachingClassList from './pages/teacher/TeachingClassList';
+import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
+import TeachingClassForm from './pages/teacher/TeachingClassForm';
+import TeachingClassStudents from './pages/teacher/TeachingClassStudents';
+import TeachingClassApprovals from './pages/admin/TeachingClassApprovals';
 
 const App: React.FC = () => {
   return (
@@ -61,6 +68,7 @@ const App: React.FC = () => {
               <Route path="permissions" element={<PermissionManagement />} />
               <Route path="registration-approval" element={<RegistrationApprovalPage />} />
               <Route path="achievements" element={<AchievementManagementPage />} />
+              <Route path="teaching-class-approvals" element={<TeachingClassApprovals />} />
             </Route>
 
             {/* 学生路由 */}
@@ -73,6 +81,7 @@ const App: React.FC = () => {
               <Route path="activity/:id" element={<TakeActivityPage />} />
               <Route path="achievements" element={<AchievementPage />} />
               <Route path="points" element={<PointsPage />} />
+              <Route path="statistics" element={<MyStatistics />} />
             </Route>
 
             {/* 教师路由 - 题库管理 */}
@@ -93,6 +102,15 @@ const App: React.FC = () => {
               <Route path="grading">
                 <Route index element={<GradingListPage />} />
                 <Route path=":id" element={<GradingDetailPage />} />
+              </Route>
+              <Route path="data-analytics" element={<DataAnalytics />} />
+              {/* 教学班管理路由 */}
+              <Route path="teaching-classes">
+                <Route index element={<TeachingClassList />} />
+                <Route path="create" element={<TeachingClassForm />} />
+                <Route path=":id" element={<TeachingClassDetail />} />
+                <Route path=":id/edit" element={<TeachingClassForm />} />
+                <Route path=":id/students" element={<TeachingClassStudents />} />
               </Route>
             </Route>
 

@@ -205,12 +205,30 @@ const PermissionManagement: React.FC = () => {
   };
 
   const getAvailablePermissionTypes = () => {
-    // 区级管理员只能授予区级练习审核权限
+    // 区级管理员可授予的权限
     if (currentUserRole === 'district_admin') {
       return [
         {
           value: 'practice_district_review',
           label: <><Tag color="cyan">区级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+        },
+        {
+          value: 'practice_publish_district',
+          label: <><Tag color="green">区级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布区级练习活动</span></>
+        },
+        {
+          value: 'practice_publish_school',
+          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
+        }
+      ];
+    }
+
+    // 校级管理员可授予的权限
+    if (currentUserRole === 'school_admin' || currentUserRole === 'base_school_admin' || currentUserRole === 'municipal_school_admin') {
+      return [
+        {
+          value: 'practice_publish_school',
+          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
         }
       ];
     }
@@ -218,6 +236,7 @@ const PermissionManagement: React.FC = () => {
     // 市级/系统管理员可以授予所有权限
     if (currentUserRole === 'municipal_admin' || currentUserRole === 'system_admin') {
       return [
+        // 审核权限
         {
           value: 'assessment_review',
           label: <><Tag color="orange">测评题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
@@ -231,12 +250,29 @@ const PermissionManagement: React.FC = () => {
           label: <><Tag color="cyan">区级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
         },
         {
-          value: 'question_bank_review',
-          label: <><Tag color="default">练习题库审核（旧）</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 兼容旧系统</span></>
-        },
-        {
           value: 'competition_review',
           label: <><Tag color="red">竞赛题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 竞赛专用</span></>
+        },
+        // 练习发布权限
+        {
+          value: 'practice_publish_municipal',
+          label: <><Tag color="purple">市级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布市级练习活动</span></>
+        },
+        {
+          value: 'practice_publish_district',
+          label: <><Tag color="green">区级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布区级练习活动</span></>
+        },
+        {
+          value: 'practice_publish_school',
+          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
+        },
+        {
+          value: 'practice_publish_base_school',
+          label: <><Tag color="green">基地学校练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布基地学校练习活动</span></>
+        },
+        {
+          value: 'practice_publish_municipal_school',
+          label: <><Tag color="green">市直学校练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布市直学校练习活动</span></>
         }
       ];
     }
@@ -247,11 +283,18 @@ const PermissionManagement: React.FC = () => {
 
   const getPermissionTypeText = (type: string) => {
     const types: Record<string, { text: string; color: string }> = {
+      // 审核权限
       question_bank_review: { text: '练习题库审核（旧）', color: 'default' },
       assessment_review: { text: '测评题库审核', color: 'orange' },
       practice_municipal_review: { text: '市级练习审核', color: 'blue' },
       practice_district_review: { text: '区级练习审核', color: 'cyan' },
       competition_review: { text: '竞赛题库审核', color: 'red' },
+      // 练习发布权限
+      practice_publish_municipal: { text: '市级练习发布', color: 'purple' },
+      practice_publish_district: { text: '区级练习发布', color: 'green' },
+      practice_publish_school: { text: '校级练习发布', color: 'green' },
+      practice_publish_base_school: { text: '基地学校练习发布', color: 'green' },
+      practice_publish_municipal_school: { text: '市直学校练习发布', color: 'green' },
     };
     return types[type] || { text: type, color: 'default' };
   };
@@ -623,11 +666,19 @@ const PermissionManagement: React.FC = () => {
         }}>
           <strong>权限说明：</strong>
           <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
-            <li><strong>测评题库审核</strong>：可审核测评题库的题目，市级/系统管理员可授予</li>
-            <li><strong>市级练习题库审核</strong>：可审核市级练习题库，市级/系统管理员可授予</li>
-            <li><strong>区级练习题库审核</strong>：可审核本区练习题库，区级管理员可授予本区教师</li>
-            <li><strong>校级题库</strong>：教师可直接发布到本校题库，无需审核</li>
-            <li>权限与科目相关联，只能审核指定科目的题目</li>
+            <li><strong>题库审核权限</strong>：</li>
+            <ul style={{ paddingLeft: 20, marginTop: 4 }}>
+              <li>测评题库审核：可审核测评题库的题目，市级/系统管理员可授予</li>
+              <li>市级练习题库审核：可审核市级练习题库，市级/系统管理员可授予</li>
+              <li>区级练习题库审核：可审核本区练习题库，区级管理员可授予本区教师</li>
+            </ul>
+            <li><strong>练习发布权限</strong>：</li>
+            <ul style={{ paddingLeft: 20, marginTop: 4 }}>
+              <li>班级练习：所有教师都可以创建，无需授权</li>
+              <li>校级/区级/市级练习发布：需要相应权限才能发布</li>
+              <li>管理员默认有对应级别的发布权限，可以授予给管辖内的教师</li>
+            </ul>
+            <li>权限与科目相关联，只能操作指定科目的题目/活动</li>
             <li>区级管理员授权时，系统会自动关联管理员所在区域</li>
           </ul>
         </div>

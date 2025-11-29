@@ -129,6 +129,52 @@ function getScopeForUser(user) {
 }
 
 /**
+ * Define allowed scopes for practice activities based on role
+ * Key: user role, Value: array of allowed scopes
+ */
+const PRACTICE_SCOPE_PERMISSIONS = {
+  'teacher': ['class'],
+  'school_admin': ['class', 'school'],
+  'district_admin': ['class', 'school', 'district'],
+  'base_school_admin': ['class', 'school', 'base_school'],
+  'municipal_school_admin': ['class', 'school', 'municipal_school'],
+  'municipal_admin': ['class', 'school', 'district', 'base_school', 'municipal_school', 'municipal'],
+  'system_admin': ['class', 'school', 'district', 'base_school', 'municipal_school', 'municipal']
+};
+
+/**
+ * Check if user can create practice activity with specific scope
+ * @param {Object} user - User object with role property
+ * @param {string} scope - The scope for the practice activity
+ * @returns {boolean} Whether the user can create practice with this scope
+ */
+function canCreatePracticeWithScope(user, scope) {
+  if (!user || !user.role) {
+    return false;
+  }
+
+  // Class level doesn't require permission
+  if (scope === 'class') {
+    return PRACTICE_ALLOWED_ROLES.includes(user.role);
+  }
+
+  const allowedScopes = PRACTICE_SCOPE_PERMISSIONS[user.role] || ['class'];
+  return allowedScopes.includes(scope);
+}
+
+/**
+ * Get allowed practice scopes for a user
+ * @param {Object} user - User object with role property
+ * @returns {string[]} Array of allowed scopes
+ */
+function getAllowedPracticeScopes(user) {
+  if (!user || !user.role) {
+    return [];
+  }
+  return PRACTICE_SCOPE_PERMISSIONS[user.role] || ['class'];
+}
+
+/**
  * Middleware to check if user can create a specific type of activity
  * @param {string} activityType - 'assessment' or 'practice'
  * @returns {Function} Express middleware function
@@ -294,16 +340,89 @@ function requireDeletePermission(req, res, next) {
   next();
 }
 
+/**
+ * Middleware to validate practice activity scope permission
+ * Checks if the user has permission to create practice with the specified scope
+ * Uses database permission check instead of hardcoded role check
+ */
+async function validatePracticeScopePermission(req, res, next) {
+  const { scope } = req.body;
+  const user = req.user;
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: '未授权访问'
+    });
+  }
+
+  // If no scope provided, default to class (no permission needed)
+  if (!scope) {
+    req.body.scope = 'class';
+    return next();
+  }
+
+  // Import TeacherPermission model for database permission check
+  const TeacherPermission = require('../models/TeacherPermission');
+
+  try {
+    // Check permission using database
+    const hasPermission = await TeacherPermission.hasPracticePublishPermission(
+      user.id,
+      scope,
+      user.districtId || null,
+      user.schoolId || null
+    );
+
+    if (!hasPermission) {
+      const scopeNames = {
+        'class': '班级',
+        'school': '学校',
+        'district': '区县',
+        'base_school': '基地学校',
+        'municipal_school': '市直属学校',
+        'municipal': '市级'
+      };
+
+      // Get allowed scopes for better error message
+      const allowedScopes = await TeacherPermission.getAvailablePracticeScopes(user.id);
+      const allowedScopeNames = allowedScopes.map(s => scopeNames[s] || s).join('、');
+
+      return res.status(403).json({
+        success: false,
+        message: `您没有权限创建${scopeNames[scope] || scope}级别的练习活动`,
+        detail: `您当前可以创建以下级别的练习活动: ${allowedScopeNames}`,
+        allowed_scopes: allowedScopes,
+        requested_scope: scope,
+        your_role: user.role
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Permission check error:', error);
+    return res.status(500).json({
+      success: false,
+      message: '权限检查失败',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   canCreateActivity,
   canEditActivity,
   canDeleteActivity,
   getScopeForUser,
+  canCreatePracticeWithScope,
+  getAllowedPracticeScopes,
   requireActivityPermission,
   validateActivityType,
   validateAbilityLevel,
   requireEditPermission,
   requireDeletePermission,
+  validatePracticeScopePermission,
   PRACTICE_ALLOWED_ROLES,
-  ASSESSMENT_ALLOWED_ROLES
+  ASSESSMENT_ALLOWED_ROLES,
+  PRACTICE_SCOPE_PERMISSIONS
 };

@@ -521,6 +521,22 @@ export const permissionApi = {
     });
     return response.data;
   },
+
+  // Get available practice scopes for current user (获取当前用户可发布练习的范围)
+  getMyPracticeScopes: async () => {
+    const response = await api.get('/permissions/my-practice-scopes');
+    return response.data;
+  },
+
+  // Check practice publish permission (检查是否有特定范围的练习发布权限)
+  checkPracticePublishPermission: async (scope: string, districtId?: number, schoolId?: number) => {
+    const response = await api.post('/permissions/check-practice-publish', {
+      scope,
+      district_id: districtId,
+      school_id: schoolId
+    });
+    return response.data;
+  },
 };
 
 // Activity API (Practice and Assessment)
@@ -1089,6 +1105,204 @@ export const pointsApi = {
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
     const response = await api.get(`/points/leaderboard${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+};
+
+// ============================================================================
+// Statistics and Data Visualization APIs
+// ============================================================================
+export const statisticsApi = {
+  // Student: Get ability statistics
+  getStudentAbilities: async (filters?: {
+    subject?: string;
+    ability?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.ability) params.append('ability', filters.ability);
+
+    const response = await api.get(`/statistics/student/abilities${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Student: Get knowledge point statistics
+  getStudentKnowledgePoints: async (filters?: {
+    subject?: string;
+    knowledge_point?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.knowledge_point) params.append('knowledge_point', filters.knowledge_point);
+
+    const response = await api.get(`/statistics/student/knowledge-points${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Student: Get learning overview
+  getStudentOverview: async () => {
+    const response = await api.get('/statistics/student/overview');
+    return response.data;
+  },
+
+  // Teacher: Get school ability statistics
+  getSchoolAbilities: async (filters?: {
+    subject?: string;
+    ability?: string;
+    grade?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.ability) params.append('ability', filters.ability);
+    if (filters?.grade) params.append('grade', filters.grade);
+
+    const response = await api.get(`/statistics/teacher/school-abilities${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Teacher: Get district ability statistics (for district/city admins)
+  getDistrictAbilities: async (filters?: {
+    subject?: string;
+    ability?: string;
+    grade?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.ability) params.append('ability', filters.ability);
+    if (filters?.grade) params.append('grade', filters.grade);
+
+    const response = await api.get(`/statistics/teacher/district-abilities${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+};
+
+// Teaching Class API - 教学班管理
+export const teachingClassApi = {
+  // Create teaching class
+  create: async (data: {
+    name: string;
+    description?: string;
+    scope: 'school' | 'district' | 'municipal';
+    academic_year: string;
+    subject?: string;
+    grade?: string;
+  }) => {
+    const response = await api.post('/teaching-classes', data);
+    return response.data;
+  },
+
+  // Get teaching class list
+  getList: async (filters?: {
+    scope?: string;
+    status?: string;
+    academic_year?: string;
+    subject?: string;
+    grade?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.scope) params.append('scope', filters.scope);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.academic_year) params.append('academic_year', filters.academic_year);
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.grade) params.append('grade', filters.grade);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+
+    const response = await api.get(`/teaching-classes${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Get teaching class detail
+  getDetail: async (id: number) => {
+    const response = await api.get(`/teaching-classes/${id}`);
+    return response.data;
+  },
+
+  // Update teaching class
+  update: async (id: number, data: {
+    name?: string;
+    description?: string;
+    subject?: string;
+    grade?: string;
+  }) => {
+    const response = await api.put(`/teaching-classes/${id}`, data);
+    return response.data;
+  },
+
+  // Delete teaching class (draft only)
+  delete: async (id: number) => {
+    const response = await api.delete(`/teaching-classes/${id}`);
+    return response.data;
+  },
+
+  // Submit for approval
+  submitForApproval: async (id: number) => {
+    const response = await api.post(`/teaching-classes/${id}/submit`);
+    return response.data;
+  },
+
+  // Get pending approvals (admin)
+  getPendingApprovals: async () => {
+    const response = await api.get('/teaching-classes/admin/pending');
+    return response.data;
+  },
+
+  // Approve teaching class
+  approve: async (id: number, comment?: string) => {
+    const response = await api.post(`/teaching-classes/${id}/approve`, { comment });
+    return response.data;
+  },
+
+  // Reject teaching class
+  reject: async (id: number, reason: string) => {
+    const response = await api.post(`/teaching-classes/${id}/reject`, { reason });
+    return response.data;
+  },
+
+  // Get students in teaching class
+  getStudents: async (id: number) => {
+    const response = await api.get(`/teaching-classes/${id}/students`);
+    return response.data;
+  },
+
+  // Add student to teaching class
+  addStudent: async (id: number, studentId: number) => {
+    const response = await api.post(`/teaching-classes/${id}/students`, { student_id: studentId });
+    return response.data;
+  },
+
+  // Batch add students
+  addStudentsBatch: async (id: number, studentIds: number[]) => {
+    const response = await api.post(`/teaching-classes/${id}/students/batch`, { student_ids: studentIds });
+    return response.data;
+  },
+
+  // Remove student from teaching class
+  removeStudent: async (id: number, studentId: number) => {
+    const response = await api.delete(`/teaching-classes/${id}/students/${studentId}`);
+    return response.data;
+  },
+
+  // Add activity to teaching class
+  addActivity: async (id: number, activityId: number, options?: { deadline?: string; is_required?: boolean }) => {
+    const response = await api.post(`/teaching-classes/${id}/activities`, {
+      activity_id: activityId,
+      ...options
+    });
+    return response.data;
+  },
+
+  // Remove activity from teaching class
+  removeActivity: async (id: number, activityId: number) => {
+    const response = await api.delete(`/teaching-classes/${id}/activities/${activityId}`);
+    return response.data;
+  },
+
+  // Archive teaching class
+  archive: async (id: number) => {
+    const response = await api.post(`/teaching-classes/${id}/archive`);
     return response.data;
   },
 };

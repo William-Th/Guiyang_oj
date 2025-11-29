@@ -13,6 +13,8 @@ import {
   AuditOutlined,
   TrophyOutlined,
   StarOutlined,
+  BarChartOutlined,
+  SolutionOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
@@ -130,6 +132,13 @@ const MainLayout: React.FC = () => {
       });
     }
 
+    // 教学班审批（所有管理员可见）
+    items.push({
+      key: '/admin/teaching-class-approvals',
+      icon: <SolutionOutlined />,
+      label: '教学班审批',
+    });
+
     return items;
   };
 
@@ -146,6 +155,11 @@ const MainLayout: React.FC = () => {
       label: '活动管理',
     },
     {
+      key: '/teacher/teaching-classes',
+      icon: <SolutionOutlined />,
+      label: '教学班管理',
+    },
+    {
       key: '/teacher/question-bank',
       icon: <BookOutlined />,
       label: '题库管理',
@@ -159,6 +173,11 @@ const MainLayout: React.FC = () => {
       key: '/teacher/grading',
       icon: <AuditOutlined />,
       label: '评卷管理',
+    },
+    {
+      key: '/teacher/data-analytics',
+      icon: <BarChartOutlined />,
+      label: '数据分析',
     },
   ];
 
@@ -178,6 +197,11 @@ const MainLayout: React.FC = () => {
       key: '/student/assessments',
       icon: <BookOutlined />,
       label: '测评中心',
+    },
+    {
+      key: '/student/statistics',
+      icon: <BarChartOutlined />,
+      label: '学习统计',
     },
     {
       key: '/student/achievements',
@@ -211,6 +235,7 @@ const MainLayout: React.FC = () => {
     if (path.includes('/teacher/question-bank')) return '/teacher/question-bank';
     if (path.includes('/teacher/review-workbench')) return '/teacher/review-workbench';
     if (path.includes('/teacher/grading')) return '/teacher/grading';
+    if (path.includes('/teacher/data-analytics')) return '/teacher/data-analytics';
     if (path === '/') return '/';
     return '/';
   };
@@ -220,6 +245,7 @@ const MainLayout: React.FC = () => {
     const path = location.pathname;
     if (path.includes('/student/practice')) return '/student/practice';
     if (path.includes('/student/assessments')) return '/student/assessments';
+    if (path.includes('/student/statistics')) return '/student/statistics';
     if (path.includes('/student/achievements')) return '/student/achievements';
     if (path.includes('/student/points')) return '/student/points';
     if (path === '/') return '/';

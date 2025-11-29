@@ -5,7 +5,8 @@ const { authMiddleware, requireRole, optionalAuth } = require('../middleware/aut
 const {
   requireActivityPermission,
   validateAbilityLevel,
-  getScopeForUser
+  getScopeForUser,
+  validatePracticeScopePermission
 } = require('../middleware/activityPermission');
 const Activity = require('../models/Activity');
 const StudentExam = require('../models/StudentExam'); // Will be renamed to StudentActivity later
@@ -418,6 +419,7 @@ router.get('/:id/questions', [
 router.post('/practice', [
   authMiddleware,
   requireActivityPermission('practice'),
+  validatePracticeScopePermission,
   validateAbilityLevel,
   body('title').notEmpty().withMessage('活动标题不能为空'),
   body('subject').notEmpty().withMessage('活动科目不能为空'),
@@ -429,7 +431,8 @@ router.post('/practice', [
   body('maxAttempts').optional().isInt({ min: 1 }).withMessage('最大尝试次数必须大于0'),
   body('timeLimitType').optional().isIn(['unlimited', 'scheduled', 'timed']).withMessage('时间限制类型必须是 unlimited, scheduled 或 timed'),
   body('startTime').optional().isISO8601().withMessage('开始时间格式不正确'),
-  body('endTime').optional().isISO8601().withMessage('结束时间格式不正确')
+  body('endTime').optional().isISO8601().withMessage('结束时间格式不正确'),
+  body('scope').optional().isIn(['class', 'school', 'district', 'base_school', 'municipal_school', 'municipal']).withMessage('范围值无效')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -440,11 +443,12 @@ router.post('/practice', [
   }
 
   try {
+    // Use the scope from request body if provided, otherwise default based on user role
     const activityData = {
       ...req.body,
       createdBy: req.user.id,
       type: 'practice',
-      scope: getScopeForUser(req.user),
+      scope: req.body.scope || getScopeForUser(req.user),
       isOfficial: false
     };
 

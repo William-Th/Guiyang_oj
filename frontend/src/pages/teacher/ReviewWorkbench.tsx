@@ -17,11 +17,12 @@ import {
   Empty,
   Spin,
   Tooltip,
+  Descriptions,
 } from 'antd';
 import {
   EyeOutlined,
-  CheckOutlined,
-  CloseOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
 import { questionReviewApi } from '../../services/api';
@@ -32,19 +33,28 @@ const { Option } = Select;
 
 interface Question {
   id: number;
-  question_code: string;
+  question_code?: string;
   type: string;
   subject: string;
   grade: string;
+  level: string;
   content: string;
   options?: string[];
   correct_answer: any;
+  suggested_score: number;
   difficulty: string;
+  explanation?: string;
+  abilities?: string[];
+  knowledge_points?: string[];
   status: string;
+  scope?: string[];
   target_scope?: string;
+  created_by: number;
+  creator_name?: string;
   submitted_at: string;
-  submitted_by_name: string;
-  notes?: string;
+  submitted_by_name?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ReviewStats {
@@ -62,7 +72,6 @@ const ReviewWorkbench: React.FC = () => {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [reviewStatus, setReviewStatus] = useState<'approved' | 'rejected'>('approved');
   const [reviewComment, setReviewComment] = useState('');
-  const [publishImmediately, setPublishImmediately] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   // 筛选条件
@@ -131,13 +140,13 @@ const ReviewWorkbench: React.FC = () => {
     setSelectedQuestion(question);
     setReviewStatus('approved');
     setReviewComment('');
-    setPublishImmediately(true);
     setReviewModalVisible(true);
   };
 
   const handleSubmitReview = async () => {
-    if (!reviewComment.trim()) {
-      message.warning('请填写审核意见');
+    // 拒绝时必须填写审核意见，批准时可选
+    if (reviewStatus === 'rejected' && !reviewComment.trim()) {
+      message.warning('拒绝时必须填写审核意见');
       return;
     }
 
@@ -148,11 +157,11 @@ const ReviewWorkbench: React.FC = () => {
         reviewStatus,
         reviewComment
       );
-      message.success(reviewStatus === 'approved' ? '审核通过' : '审核拒绝');
+      message.success(`${reviewStatus === 'approved' ? '批准' : '拒绝'}成功`);
       setReviewModalVisible(false);
       loadPendingReviews();
     } catch (error: any) {
-      message.error(error.response?.data?.error || '审核失败');
+      message.error(error.response?.data?.error || '审核提交失败');
     } finally {
       setSubmitting(false);
     }
@@ -164,10 +173,40 @@ const ReviewWorkbench: React.FC = () => {
       multiple: '多选题',
       true_false: '判断题',
       blank: '填空题',
-      short_answer: '简答题',
-      essay: '论述题',
+      essay: '问答题',
+      code: '编程题',
+      matching: '匹配题',
     };
     return types[type] || type;
+  };
+
+  const getLevelColor = (level: string) => {
+    const levelNum = parseInt(level.replace('L', ''));
+    if (levelNum <= 3) return 'green';
+    if (levelNum <= 6) return 'blue';
+    return 'red';
+  };
+
+  const renderAnswer = (question: Question) => {
+    switch (question.type) {
+      case 'single':
+      case 'multiple':
+        if (Array.isArray(question.correct_answer)) {
+          return question.correct_answer.join(', ');
+        }
+        return question.correct_answer;
+      case 'true_false':
+        return question.correct_answer ? '正确' : '错误';
+      case 'blank':
+        if (Array.isArray(question.correct_answer)) {
+          return question.correct_answer.map((ans: string, idx: number) =>
+            `空${idx + 1}: ${ans}`
+          ).join('; ');
+        }
+        return question.correct_answer;
+      default:
+        return question.correct_answer || '-';
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -506,89 +545,174 @@ const ReviewWorkbench: React.FC = () => {
               </div>
             </div>
 
-            {selectedQuestion.notes && (
-              <div>
-                <strong>备注：</strong>
-                <div style={{ marginTop: 8, color: '#999' }}>
-                  {selectedQuestion.notes}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </Modal>
 
-      {/* 审核模态框 */}
+      {/* 审核模态框 - 完整版本 */}
       <Modal
         title="审核题目"
         open={reviewModalVisible}
         onOk={handleSubmitReview}
         onCancel={() => setReviewModalVisible(false)}
         confirmLoading={submitting}
+        width={800}
         okText="提交审核"
         cancelText="取消"
-        width={600}
       >
         {selectedQuestion && (
           <div>
-            <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-              <p><strong>题目编号：</strong>{selectedQuestion.question_code}</p>
-              <p><strong>题目内容：</strong>{selectedQuestion.content}</p>
-              <p><strong>提交人：</strong>{selectedQuestion.submitted_by_name}</p>
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="题目ID">
+                {selectedQuestion.id}
+              </Descriptions.Item>
+              <Descriptions.Item label="题型">
+                <Tag color="blue">{getQuestionTypeText(selectedQuestion.type)}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="科目">
+                {selectedQuestion.subject}
+              </Descriptions.Item>
+              <Descriptions.Item label="年级">
+                {selectedQuestion.grade}
+              </Descriptions.Item>
+              <Descriptions.Item label="级别">
+                <Tag color={getLevelColor(selectedQuestion.level)}>
+                  {selectedQuestion.level}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="难度">
+                <Tag color={getDifficultyColor(selectedQuestion.difficulty)}>
+                  {getDifficultyText(selectedQuestion.difficulty)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="建议分值">
+                {selectedQuestion.suggested_score} 分
+              </Descriptions.Item>
+              <Descriptions.Item label="题库范围">
+                {selectedQuestion.scope?.map((s) => (
+                  <Tag key={s} color="purple" style={{ marginBottom: 4 }}>
+                    {getScopeText(s).text}
+                  </Tag>
+                ))}
+              </Descriptions.Item>
+            </Descriptions>
+
+            <div style={{ marginTop: 16 }}>
+              <strong>题目内容：</strong>
+              <div style={{
+                marginTop: 8,
+                padding: 12,
+                background: '#f5f5f5',
+                borderRadius: 4,
+                whiteSpace: 'pre-wrap'
+              }}>
+                {selectedQuestion.content}
+              </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 8 }}>
-                <span style={{ color: 'red' }}>* </span>
-                审核结果：
-              </label>
-              <Radio.Group
-                value={reviewStatus}
-                onChange={(e) => setReviewStatus(e.target.value)}
-              >
-                <Radio value="approved">
-                  <CheckOutlined style={{ color: '#52c41a' }} /> 通过
-                </Radio>
-                <Radio value="rejected">
-                  <CloseOutlined style={{ color: '#ff4d4f' }} /> 拒绝
-                </Radio>
-              </Radio.Group>
-            </div>
-
-            {reviewStatus === 'approved' && (
-              <div style={{ marginBottom: 16, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 4 }}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={publishImmediately}
-                    onChange={(e) => setPublishImmediately(e.target.checked)}
-                    style={{ marginRight: 8 }}
-                  />
-                  <strong>立即发布到题库</strong>
-                </label>
-                <div style={{ marginTop: 4, color: '#666', fontSize: 12 }}>
-                  勾选后，题目审核通过将立即发布到 {getScopeText(selectedQuestion.target_scope).text}
+            {selectedQuestion.options && selectedQuestion.options.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <strong>选项：</strong>
+                <div style={{ marginTop: 8 }}>
+                  {selectedQuestion.options.map((option, index) => (
+                    <div key={index} style={{ padding: '4px 0' }}>
+                      {String.fromCharCode(65 + index)}. {option}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            <div>
-              <label style={{ display: 'block', marginBottom: 8 }}>
-                <span style={{ color: 'red' }}>* </span>
-                审核意见：
-              </label>
-              <TextArea
-                rows={4}
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                placeholder={
-                  reviewStatus === 'approved'
-                    ? '请填写审核通过意见，如：题目质量良好，符合标准，同意发布。'
-                    : '请填写拒绝原因，如：题目内容不清晰、答案有误等。'
-                }
-                maxLength={500}
-                showCount
-              />
+            <div style={{ marginTop: 16 }}>
+              <strong>正确答案：</strong>
+              <div style={{
+                marginTop: 8,
+                padding: 12,
+                background: '#e6f7ff',
+                borderRadius: 4
+              }}>
+                {renderAnswer(selectedQuestion)}
+              </div>
+            </div>
+
+            {selectedQuestion.explanation && (
+              <div style={{ marginTop: 16 }}>
+                <strong>题目解析：</strong>
+                <div style={{
+                  marginTop: 8,
+                  padding: 12,
+                  background: '#f5f5f5',
+                  borderRadius: 4,
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {selectedQuestion.explanation}
+                </div>
+              </div>
+            )}
+
+            {selectedQuestion.abilities && selectedQuestion.abilities.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <strong>考察能力：</strong>
+                <div style={{ marginTop: 8 }}>
+                  {selectedQuestion.abilities.map((ability, index) => (
+                    <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
+                      {ability}
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedQuestion.knowledge_points && selectedQuestion.knowledge_points.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <strong>知识点：</strong>
+                <div style={{ marginTop: 8 }}>
+                  {selectedQuestion.knowledge_points.map((kp, index) => (
+                    <Tag key={index} color="cyan" style={{ marginBottom: 4 }}>
+                      {kp}
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 24, borderTop: '1px solid #f0f0f0', paddingTop: 24 }}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  <span style={{ color: 'red' }}>* </span>
+                  审核决定：
+                </label>
+                <Radio.Group
+                  value={reviewStatus}
+                  onChange={(e) => setReviewStatus(e.target.value)}
+                >
+                  <Radio.Button value="approved">
+                    <CheckCircleOutlined style={{ color: '#52c41a' }} /> 批准通过
+                  </Radio.Button>
+                  <Radio.Button value="rejected">
+                    <CloseCircleOutlined style={{ color: '#ff4d4f' }} /> 拒绝
+                  </Radio.Button>
+                </Radio.Group>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: 8 }}>
+                  {reviewStatus === 'rejected' && <span style={{ color: 'red' }}>* </span>}
+                  审核意见{reviewStatus === 'rejected' ? '（必填）' : '（可选）'}：
+                </label>
+                <TextArea
+                  rows={4}
+                  placeholder={
+                    reviewStatus === 'approved'
+                      ? '可填写审核意见，如：题目质量良好，同意发布'
+                      : '请说明拒绝原因，如：题目内容不准确，需要修改'
+                  }
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  maxLength={500}
+                  showCount
+                />
+              </div>
             </div>
           </div>
         )}

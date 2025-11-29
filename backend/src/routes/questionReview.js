@@ -128,6 +128,27 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       }
     }
 
+    // 检查是否已经提交到该范围（包括所有状态的记录）
+    const checkSql = `
+      SELECT id, status FROM question_bank
+      WHERE draft_id = $1 AND scope = $2 AND is_active = true
+    `;
+    const checkResult = await query(checkSql, [id, target_scope]);
+
+    if (checkResult.rows.length > 0) {
+      const existingRecord = checkResult.rows[0];
+      const statusMessages = {
+        'pending_review': '该题目已经提交审核到此范围，请等待审核结果',
+        'published': '该题目已经发布到此范围',
+        'inactive': '该题目在此范围的发布记录已失效'
+      };
+
+      return res.status(400).json({
+        success: false,
+        error: statusMessages[existingRecord.status] || `该题目已存在于此范围（状态：${existingRecord.status}）`
+      });
+    }
+
     // 提交审核：在 question_bank 中创建待审核记录
     // 注意：question_bank 只是索引表，题目内容在 question_drafts 中
     const insertSql = `
@@ -159,10 +180,90 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   }
 });
 
-// 获取待我审核的题目列表 - 已废弃，使用新的草稿箱系统
+// 获取待我审核的题目列表（新版：从 question_bank 查询）
 router.get('/pending', authMiddleware, async (req, res) => {
-  // 返回空数组，避免前端报错
-  res.json({ success: true, data: [] });
+  try {
+    const { query } = require('../database/connection');
+
+    // 查询当前用户作为审核人的待审核题目
+    // 使用 question_bank_with_draft 视图获取完整信息
+    const sql = `
+      SELECT
+        qb.id as review_id,
+        qb.draft_id,
+        qb.scope,
+        qb.status,
+        qb.published_by,
+        qb.reviewer_id,
+        qb.review_comment,
+        qb.published_at as submitted_at,
+        qd.id,
+        qd.type,
+        qd.subject,
+        qd.grade,
+        qd.level,
+        qd.content,
+        qd.options,
+        qd.correct_answer,
+        qd.suggested_score,
+        qd.difficulty,
+        qd.explanation,
+        qd.abilities,
+        qd.knowledge_points,
+        qd.created_by,
+        qd.created_at,
+        qd.updated_at,
+        u.real_name as creator_name,
+        u.username as creator_username
+      FROM question_bank qb
+      JOIN question_drafts qd ON qb.draft_id = qd.id
+      LEFT JOIN users u ON qd.created_by = u.id
+      WHERE qb.reviewer_id = $1
+        AND qb.status = 'pending_review'
+        AND qb.is_active = true
+      ORDER BY qb.published_at DESC NULLS LAST, qb.id DESC
+    `;
+
+    const result = await query(sql, [req.user.id]);
+
+    // 格式化返回数据
+    const pendingReviews = result.rows.map(row => ({
+      // 使用 review_id 作为主键（而不是 draft_id）
+      id: row.review_id,
+      draft_id: row.draft_id,
+      type: row.type,
+      subject: row.subject,
+      grade: row.grade,
+      level: row.level,
+      content: row.content,
+      options: row.options,
+      correct_answer: row.correct_answer,
+      suggested_score: row.suggested_score,
+      difficulty: row.difficulty,
+      explanation: row.explanation,
+      abilities: row.abilities,
+      knowledge_points: row.knowledge_points,
+      status: row.status,
+      scope: [row.scope], // 包装成数组，兼容前端
+      created_by: row.created_by,
+      creator_name: row.creator_name,
+      creator_username: row.creator_username,
+      submitted_at: row.submitted_at,
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    }));
+
+    res.json({
+      success: true,
+      data: pendingReviews,
+      meta: {
+        count: pendingReviews.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending reviews:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // 获取审核统计信息
@@ -212,6 +313,14 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid status. Must be approved or rejected'
+      });
+    }
+
+    // 验证审核意见：拒绝时必须填写，批准时可选
+    if (status === 'rejected' && !comment?.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '拒绝时必须填写审核意见'
       });
     }
 
@@ -270,12 +379,26 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
     }
     // 普通审核（不立即发布）
     else {
-      reviewedQuestion = await QuestionBank.reviewQuestion(
-        id,
-        req.user.id,
-        status,
-        comment || ''
-      );
+      // 直接更新 question_bank 表的状态
+      const { query } = require('../database/connection');
+
+      // 更新审核状态
+      const updateSql = `
+        UPDATE question_bank
+        SET status = $1,
+            review_comment = $2,
+            reviewed_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+        RETURNING *
+      `;
+
+      const updateResult = await query(updateSql, [
+        status === 'approved' ? 'published' : 'inactive',  // approved变为published，rejected变为inactive
+        comment || '',
+        id
+      ]);
+
+      reviewedQuestion = updateResult.rows[0];
 
       // 记录审核历史
       await QuestionReview.create({
@@ -288,7 +411,7 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
       res.json({
         success: true,
         data: reviewedQuestion,
-        message: status === 'approved' ? 'Question approved' : 'Question rejected'
+        message: status === 'approved' ? '审核通过，题目已发布' : '已拒绝，题目未发布'
       });
     }
   } catch (error) {

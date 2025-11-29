@@ -17,10 +17,15 @@ import {
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import { activityApi } from '../../services/api';
+import { activityApi, permissionApi } from '../../services/api';
 import { RootState } from '../../store';
 import type { TimeLimitType } from '../../types/activity';
 import { SUBJECTS, getGradesBySubject, getAbilityLevelsBySubject } from '../../config/subjects';
+
+interface ScopeOption {
+  value: string;
+  label: string;
+}
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -37,6 +42,7 @@ const ActivityFormPage: React.FC = () => {
   const [allowRetake, setAllowRetake] = useState(false);
   const [timeLimitType, setTimeLimitType] = useState<TimeLimitType>('unlimited');
   const [selectedSubject, setSelectedSubject] = useState<string | undefined>(undefined);
+  const [availablePracticeScopes, setAvailablePracticeScopes] = useState<ScopeOption[]>([]);
 
   // 根据选中的科目获取可用的年级和能力等级
   const availableGrades = selectedSubject ? getGradesBySubject(selectedSubject) : [];
@@ -65,6 +71,23 @@ const ActivityFormPage: React.FC = () => {
     }
     return '/teacher/activities';
   };
+
+  // Load available practice scopes from backend
+  useEffect(() => {
+    const loadPracticeScopes = async () => {
+      try {
+        const response = await permissionApi.getMyPracticeScopes();
+        if (response.success && response.data?.scopeDetails) {
+          setAvailablePracticeScopes(response.data.scopeDetails);
+        }
+      } catch (error) {
+        console.error('Failed to load practice scopes:', error);
+        // Fallback to class only
+        setAvailablePracticeScopes([{ value: 'class', label: '班级' }]);
+      }
+    };
+    loadPracticeScopes();
+  }, []);
 
   useEffect(() => {
     if (isEditMode && activityId) {
@@ -350,15 +373,29 @@ const ActivityFormPage: React.FC = () => {
             <Form.Item
               label="范围"
               name="scope"
-              help="测评活动的发布范围"
+              help="发布范围"
             >
               <Select placeholder="请选择范围" virtual={false}>
                 <Option value="municipal">市级</Option>
                 <Option value="district">区县级</Option>
                 <Option value="base_school">基地学校</Option>
                 <Option value="municipal_school">市直属学校</Option>
-                <Option value="school">学校级</Option>
-                <Option value="class">班级</Option>
+              </Select>
+            </Form.Item>
+          )}
+
+          {!isAssessment && (
+            <Form.Item
+              label="范围"
+              name="scope"
+              help="发布范围（根据您的权限显示可用选项）"
+            >
+              <Select placeholder="请选择范围" virtual={false}>
+                {availablePracticeScopes.map(scope => (
+                  <Option key={scope.value} value={scope.value}>
+                    {scope.label}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
           )}

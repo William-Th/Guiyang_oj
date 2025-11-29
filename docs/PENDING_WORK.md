@@ -1,10 +1,283 @@
 # 待完成工作
 
-**最后更新**: 2025-11-22 (Bug #18-23 修复完成 + 数据修复)
+**最后更新**: 2025-11-26 (教学班管理系统前后端开发完成)
 
 ---
 
 ## 🔥 当前工作状态
+
+### ✅ 教学班管理系统开发 (2025-11-26)
+
+**目标**: 实现教学班（虚拟班级）管理功能，支持跨班级、跨校、跨区域组织学生
+
+**当前状态**: ✅ 前后端开发完成，待E2E测试
+
+**需求文档**: `docs/TEACHING_CLASS_REQUIREMENTS.md`
+
+#### 功能概述
+
+| 功能模块 | 描述 | 状态 |
+|---------|------|------|
+| 教学班创建 | 填写信息、选择范围（校级/区级/市级） | ✅ 后端完成 |
+| 三级审批流程 | 校级→区级→市级管理员审批 | ✅ 后端完成 |
+| 超时自动流转 | 7天未处理自动升级到上级 | ✅ 后端完成 |
+| 学生管理 | 添加/移除学生，范围限制 | ✅ 后端完成 |
+| 活动关联 | 关联练习/测评活动 | ✅ 后端完成 |
+| 数据统计 | 班级成绩分析和对比 | ❌ 待开发 |
+
+#### 开发计划（预计12天）
+
+| 阶段 | 任务 | 工期 | 状态 |
+|------|------|------|------|
+| 阶段1 | 数据库设计与基础API | 3天 | ✅ 完成 |
+| 阶段2 | 审批流程实现 | 2天 | ✅ 完成 |
+| 阶段3 | 学生管理功能 | 2天 | ✅ 完成 |
+| 阶段4 | 前端页面开发 | 3天 | ✅ 完成 |
+| 阶段5 | 测试与优化 | 2天 | 🔄 API测试完成(81%)，待E2E测试 |
+
+#### ✅ 阶段1-3: 后端开发已完成
+
+**数据库表** (已创建):
+- `teaching_classes` - 教学班基本信息
+- `teaching_class_members` - 班级学生关联
+- `teaching_class_teachers` - 班级教师关联
+- `teaching_class_approvals` - 审批记录
+- `teaching_class_activities` - 活动关联
+
+**已实现API**:
+- POST /api/teaching-classes - 创建教学班 ✅
+- GET /api/teaching-classes - 获取列表 ✅
+- GET /api/teaching-classes/:id - 获取详情 ✅
+- PUT /api/teaching-classes/:id - 更新 ✅
+- DELETE /api/teaching-classes/:id - 删除 ✅
+- POST /api/teaching-classes/:id/submit - 提交审批 ✅
+- GET /api/teaching-classes/admin/pending - 待审批列表 ✅
+- POST /api/teaching-classes/:id/approve - 批准 ✅
+- POST /api/teaching-classes/:id/reject - 拒绝 ✅
+- GET /api/teaching-classes/:id/students - 学生列表 ✅
+- POST /api/teaching-classes/:id/students - 添加学生 ✅
+- POST /api/teaching-classes/:id/students/batch - 批量添加 ✅
+- DELETE /api/teaching-classes/:id/students/:studentId - 移除 ✅
+- POST /api/teaching-classes/:id/activities - 关联活动 ✅
+- DELETE /api/teaching-classes/:id/activities/:activityId - 取消关联 ✅
+
+**相关文件**:
+- 数据库迁移: `database/migrations/026_teaching_class.sql`
+- 数据模型: `backend/src/models/TeachingClass.js`
+- API路由: `backend/src/routes/teachingClasses.js`
+- API测试: `tests/api/teaching-class-api-test.js`
+
+#### ✅ 阶段4: 前端页面（已完成）
+
+**已实现页面**:
+- /teacher/teaching-classes - 教学班列表页 (`TeachingClassList.tsx`)
+- /teacher/teaching-classes/create - 创建页 (`TeachingClassForm.tsx`)
+- /teacher/teaching-classes/:id - 详情页 (`TeachingClassDetail.tsx`)
+- /teacher/teaching-classes/:id/edit - 编辑页 (`TeachingClassForm.tsx`)
+- /teacher/teaching-classes/:id/students - 学生管理页 (`TeachingClassStudents.tsx`)
+- /admin/teaching-class-approvals - 管理员审批页 (`TeachingClassApprovals.tsx`)
+
+**前端文件**:
+- `frontend/src/pages/teacher/TeachingClassList.tsx` - 列表页
+- `frontend/src/pages/teacher/TeachingClassDetail.tsx` - 详情页
+- `frontend/src/pages/teacher/TeachingClassForm.tsx` - 创建/编辑表单
+- `frontend/src/pages/teacher/TeachingClassStudents.tsx` - 学生管理
+- `frontend/src/pages/admin/TeachingClassApprovals.tsx` - 管理员审批
+- `frontend/src/services/api.ts` - 新增 teachingClassApi
+- `frontend/src/App.tsx` - 路由配置
+- `frontend/src/components/layout/MainLayout.tsx` - 菜单入口
+
+#### 🔄 阶段5: 测试（待完成）
+
+- ✅ API测试已创建 (17/21 通过, 81%)
+- ❌ E2E测试（待编写）
+
+**待完成的测试工作**:
+
+1. **E2E测试用例编写** (`tests/e2e/regression/teaching-class.spec.ts`)
+   - TCL001: 教师创建校级教学班
+   - TCL002: 教师创建区级教学班
+   - TCL003: 教师提交教学班审批
+   - TCL004: 管理员批准教学班
+   - TCL005: 管理员拒绝教学班（含原因）
+   - TCL006: 教师修改被拒绝的教学班并重新提交
+   - TCL007: 教师添加学生到已批准的教学班
+   - TCL008: 教师批量添加学生
+   - TCL009: 教师移除学生
+   - TCL010: 教师归档教学班
+   - TCL011: 教学班列表筛选功能
+   - TCL012: 教学班详情页显示验证
+
+2. **API测试补充** (`tests/api/teaching-class-api-test.js`)
+   - 修复现有4个失败的测试用例
+   - 增加边界条件测试
+   - 增加权限验证测试
+
+3. **测试文档更新**
+   - 更新 `tests/docs/regression-test-tracking.md`
+   - 创建 `tests/docs/E2E_testcases/teaching-class-testcases.md`
+
+**参考文档**:
+- `docs/TEACHING_CLASS_REQUIREMENTS.md` - 详细需求
+- `docs/DEVELOPMENT_STATUS.md` - 开发追踪
+
+---
+
+### ✅ 数据可视化模块开发 (2025-11-24)
+
+**目标**: 实现学生、教师、管理员的数据统计与可视化功能
+
+**当前状态**: ✅ 后端完成 + E2E测试脚本已创建 (90%), 待前端页面实现
+
+| 模块 | 状态 | 完成度 | 备注 |
+|------|------|--------|------|
+| 数据库设计与迁移 | ✅ 完成 | 100% | 统计触发器正常工作 |
+| 测试数据创建 | ✅ 完成 | 100% | 8题目+2活动+40答题记录 |
+| 统计数据生成 | ✅ 完成 | 100% | 60能力+90知识点统计 |
+| 后端API层 | ✅ 完成 | 100% | 已修复Schema不匹配 |
+| API测试 | ✅ 完成 | 100% | 5/5测试通过 |
+| E2E测试脚本 | ✅ 完成 | 100% | 12个测试用例已创建 |
+| 前端页面开发 | ⏳ 待实现 | 0% | 需实现统计页面 |
+| E2E测试执行 | ⏳ 待执行 | 0% | 等待前端页面完成 |
+
+#### 已完成工作 ✅
+
+**1. 数据库架构验证**
+- ✅ 分析统计表结构（student_ability_stats, student_knowledge_stats）
+- ✅ 验证数据库触发器（trigger_update_student_ability_stats, trigger_update_student_knowledge_stats）
+- ✅ 确认实时视图可用（v_student_ability_realtime, v_student_knowledge_realtime）
+
+**2. 测试数据创建**（`database/test_data_statistics.sql`）
+- ✅ 创建8道题目（5道数学，3道语文）
+  - 每道题目包含abilities数组（如：运算能力、数感、逻辑推理）
+  - 每道题目包含knowledge_points数组（如：两位数加法、进位加法）
+- ✅ 创建2个活动
+  - 三年级数学综合练习（5道题）
+  - 三年级语文阅读练习（3道题）
+- ✅ 创建10个学生参与记录（5名学生 × 2个活动）
+- ✅ 创建40条答题记录
+  - 数学活动：每名学生5道题，正确率60%-100%
+  - 语文活动：每名学生3道题，正确率33%-100%
+
+**3. 统计数据验证**
+- ✅ 验证触发器自动更新统计：
+  - 60条能力统计记录（25条数学 + 35条语文）
+  - 90条知识点统计记录
+  - 5名学生完整追踪
+- ✅ 统计数据样例：
+  ```
+  学生3（数学）: 运算能力 5题全对，正确率100%, 平均7分
+  学生4（数学）: 运算能力 4/5对，正确率80%, 平均5.6分
+  学生7（语文）: 语言基础 1/3对，正确率33%, 平均2.3分
+  ```
+
+**4. 前端页面开发**
+- ✅ 创建教师数据分析页面（`frontend/src/pages/teacher/DataAnalytics.tsx`）
+  - 支持学校级和区级数据切换
+  - 雷达图显示年级对比
+  - 柱状图显示能力Top 10正确率
+  - 科目和年级筛选功能
+  - 详细统计卡片展示
+- ✅ 学生统计页面已存在（`frontend/src/pages/student/MyStatistics.tsx`）
+  - 学习概览卡片（参与活动、答题总数、正确率、学习时长）
+  - 能力雷达图
+  - 知识点掌握度柱状图
+- ✅ 集成导航菜单和路由
+
+**5. API测试脚本创建**
+- ✅ 创建统计API测试脚本（`tests/api/statistics-api-test.js`）
+  - 5个测试用例（学生概览、学生能力、学生知识点、学校能力、区域能力）
+  - 自动登录3个角色（学生、教师、管理员）
+  - 禁用代理以访问localhost
+
+**6. 后端API修复** (2025-11-24) ✅
+- ✅ **修复数据库视图定义**
+  - 在 `v_school_ability_realtime` 和 `v_district_ability_realtime` 中添加 `grade` 字段
+  - 更新GROUP BY子句包含 `s.grade`
+  - 重新创建视图成功
+
+- ✅ **修复权限查询**
+  - 将查询从 `admin_permissions` 改为 `teacher_permissions`
+  - 使用正确字段 `permission_type` 和 `scope_level`
+  - 实现市级管理员查看所有区域，区级管理员只看自己区域的逻辑
+
+- ✅ **修复字段名不匹配**
+  - 统一API查询字段名与视图定义一致
+  - `last_updated_at` → `last_activity_time`
+  - `total_students` → `student_count`
+  - `total_questions` → `total_attempts` (学校/区级) 或 `total_questions` (学生)
+  - `total_correct` → `correct_count`
+  - `avg_accuracy_rate` → `accuracy_rate`
+
+- ✅ **修复学生概况API**
+  - 简化字段映射，使用视图实际提供的字段
+  - 移除不存在的字段（`best_subject`, `weakest_subject`等）
+
+**API测试结果**: ✅ **5/5测试全部通过**
+- ✓ Student overview - 学生学习概况
+- ✓ Student abilities - 学生能力统计
+- ✓ Student knowledge points - 学生知识点统计
+- ✓ School abilities - 学校能力统计（教师）
+- ✓ District abilities - 区域能力统计（管理员）
+
+**7. E2E测试脚本创建** (2025-11-24) ✅
+- ✅ **创建学生统计页面测试**
+  - 测试文件：`tests/e2e/regression/student-statistics.spec.ts`
+  - 测试用例：STA101-STA105 (5个用例)
+  - 覆盖：页面访问、概览卡片、雷达图、柱状图、数据验证
+
+- ✅ **创建教师数据分析页面测试**
+  - 测试文件：`tests/e2e/regression/teacher-analytics.spec.ts`
+  - 测试用例：ANA101-ANA107 (7个用例)
+  - 覆盖：页面访问、级别切换、筛选功能、图表加载、权限验证
+
+- ✅ **测试执行验证**
+  - E2E测试脚本已创建并验证
+  - 测试依赖前端页面实现（当前未实现或路由未配置）
+  - 测试状态：⏳ 待执行（等待前端页面完成）
+
+#### 下一步工作 📋
+
+**优先级P1 - 前端页面实现**（预计2-3天）
+
+1. **学生统计页面开发**
+   - [ ] 创建 `/student/statistics` 路由
+   - [ ] 实现学习概览卡片组件
+   - [ ] 实现能力雷达图（Echarts）
+   - [ ] 实现知识点柱状图（Echarts）
+   - [ ] 集成统计API调用
+   - [ ] 添加"我的统计"菜单链接
+
+2. **教师数据分析页面开发**
+   - [ ] 创建 `/teacher/analytics` 路由
+   - [ ] 实现级别切换（学校/区级）
+   - [ ] 实现科目和年级筛选器
+   - [ ] 实现年级对比雷达图
+   - [ ] 实现能力Top 10柱状图
+   - [ ] 实现统计卡片展示
+   - [ ] 添加"数据分析"菜单链接
+   - [ ] 实现权限验证（区级权限检查）
+
+3. **前端完成后执行E2E测试**
+   - [ ] 运行学生统计测试：`npx playwright test tests/e2e/regression/student-statistics.spec.ts`
+   - [ ] 运行教师分析测试：`npx playwright test tests/e2e/regression/teacher-analytics.spec.ts`
+   - [ ] 确保12个测试用例全部通过
+   - [ ] 更新测试追踪文档状态
+
+4. **API测试完善**（可选）
+   - [ ] 补充边界条件测试（无数据、大数据量）
+   - [ ] 补充权限验证测试（非授权用户访问）
+   - [ ] 补充筛选参数组合测试
+
+**相关文件**:
+- 测试数据: `database/test_data_statistics.sql`
+- API测试: `tests/api/statistics-api-test.js`
+- 前端页面:
+  - `frontend/src/pages/teacher/DataAnalytics.tsx`
+  - `frontend/src/pages/student/MyStatistics.tsx`
+- 后端路由: `backend/src/routes/statistics.js`
+
+---
 
 ### ✅ Bug修复工作完成 (2025-11-22)
 
@@ -1334,9 +1607,9 @@ git merge feature/achievement-system
 
 ---
 
-**📅 文档最后更新**: 2025-11-20 (个人成就系统测试完成 🆕)
-**📊 项目整体进度**: 95% (成就系统Week 3: 100% ✅ | 个人成就测试: 100% ✅ | 评卷管理: 90% 🔧)
-**🎯 当前优先级**: 个人成就系统测试完成 ✅ | 成就自动触发逻辑开发（下一步）
+**📅 文档最后更新**: 2025-11-23 (数据可视化模块开发 - 数据层完成 🆕)
+**📊 项目整体进度**: 95% (成就系统Week 3: 100% ✅ | 个人成就测试: 100% ✅ | 评卷管理: 90% 🔧 | 数据可视化: 60% 🔄)
+**🎯 当前优先级**: 数据可视化API修复 (P0) | 成就自动触发逻辑开发 (P1)
 
 **✅ Week 3 核心成果**:
 - ✅ EventBus事件总线实现（异步/同步、优先级、错误隔离）
@@ -1377,25 +1650,31 @@ git merge feature/achievement-system
 - ✅ PENDING_WORK.md文档更新
 
 **🚀 下一步行动**:
-1. **成就自动触发逻辑开发** (P1 - 2-3天) - 核心功能
+1. **数据可视化API修复** (P0 - 1-2天) - 阻塞问题 🆕
+   - 修复统计视图缺少grade字段问题
+   - 修复admin_permissions查询字段不匹配
+   - 运行API测试验证修复（5/5测试通过）
+   - 补充E2E测试
+
+2. **成就自动触发逻辑开发** (P1 - 2-3天) - 核心功能
    - 实现AchievementDetector自动检测学生活动完成
    - 集成EventBus事件监听（STUDENT_ACTIVITY.COMPLETED）
    - 实现成就条件匹配算法（count类型）
    - 自动授予成就并发送通知
    - 编写自动触发测试用例
 
-2. **成就进度追踪功能** (P1 - 1-2天)
+3. **成就进度追踪功能** (P1 - 1-2天)
    - 实现achievement_progress表追踪未解锁成就进度
    - 更新 /api/achievements/student/:studentId/progress 接口
    - 返回未解锁成就的当前进度（如：5/10次练习）
    - 编写进度追踪测试
 
-3. **评卷管理 Phase 1** (P0 - 1-2天) - Bug修复与基础优化
+4. **评卷管理 Phase 1** (P0 - 1-2天) - Bug修复与基础优化
    - 筛选功能增强（活动选择、日期筛选、搜索）
    - 评卷详情页优化（题目导航、快捷键、进度条）
    - 错误处理优化
 
-4. **成就系统 Week 4** (待自动触发完成后) - 日常任务系统
+5. **成就系统 Week 4** (待自动触发完成后) - 日常任务系统
    - Day 1: 任务规则引擎设计
    - Day 2: DailyTaskDetector实现
    - Day 3: 任务完成奖励机制

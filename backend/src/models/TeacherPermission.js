@@ -421,6 +421,211 @@ class TeacherPermission {
     const result = await query(sql, [permissionId]);
     return result.rows[0];
   }
+
+  // ========================================
+  // 练习活动发布权限相关方法
+  // ========================================
+
+  /**
+   * 检查用户是否有特定范围的练习发布权限
+   * @param {number} userId - 用户ID
+   * @param {string} scope - 范围 (class, school, district, base_school, municipal_school, municipal)
+   * @param {number|null} districtId - 区域ID (可选)
+   * @param {number|null} schoolId - 学校ID (可选)
+   * @returns {Promise<boolean>}
+   */
+  static async hasPracticePublishPermission(userId, scope, districtId = null, schoolId = null) {
+    // 班级练习不需要权限
+    if (scope === 'class') {
+      return true;
+    }
+
+    // 获取用户角色
+    const userSql = 'SELECT role FROM users WHERE id = $1';
+    const userResult = await query(userSql, [userId]);
+    if (userResult.rows.length === 0) {
+      return false;
+    }
+    const userRole = userResult.rows[0].role;
+
+    // 管理员默认有对应范围的权限
+    if (userRole === 'system_admin' || userRole === 'municipal_admin') {
+      // 系统管理员和市级管理员有所有权限
+      return true;
+    }
+
+    if (userRole === 'district_admin' && scope === 'district') {
+      // 区级管理员默认有区级发布权限（检查是否在同一区域）
+      const adminSql = 'SELECT district_id FROM admin_permissions WHERE user_id = $1';
+      const adminResult = await query(adminSql, [userId]);
+      if (adminResult.rows.length > 0) {
+        const userDistrictId = adminResult.rows[0].district_id;
+        if (!districtId || userDistrictId === districtId) {
+          return true;
+        }
+      }
+    }
+
+    if (userRole === 'school_admin' && scope === 'school') {
+      // 校级管理员默认有校级发布权限（检查是否在同一学校）
+      const adminSql = 'SELECT school_id FROM admin_permissions WHERE user_id = $1';
+      const adminResult = await query(adminSql, [userId]);
+      if (adminResult.rows.length > 0) {
+        const userSchoolId = adminResult.rows[0].school_id;
+        if (!schoolId || userSchoolId === schoolId) {
+          return true;
+        }
+      }
+    }
+
+    if (userRole === 'base_school_admin' && scope === 'base_school') {
+      return true;
+    }
+
+    if (userRole === 'municipal_school_admin' && scope === 'municipal_school') {
+      return true;
+    }
+
+    // 检查 teacher_permissions 表中是否有授权
+    const permissionType = `practice_publish_${scope}`;
+    let sql = `
+      SELECT COUNT(*) as count
+      FROM teacher_permissions
+      WHERE user_id = $1
+        AND permission_type = $2
+        AND is_active = true
+        AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+    `;
+    const params = [userId, permissionType];
+
+    if (districtId) {
+      sql += ' AND (district_id IS NULL OR district_id = $3)';
+      params.push(districtId);
+    }
+
+    if (schoolId) {
+      const paramIndex = params.length + 1;
+      sql += ` AND (school_id IS NULL OR school_id = $${paramIndex})`;
+      params.push(schoolId);
+    }
+
+    const result = await query(sql, params);
+    return parseInt(result.rows[0].count) > 0;
+  }
+
+  /**
+   * 获取用户可发布练习的所有范围
+   * @param {number} userId - 用户ID
+   * @returns {Promise<string[]>} 可发布的范围列表
+   */
+  static async getAvailablePracticeScopes(userId) {
+    const scopes = ['class']; // 班级始终可用
+
+    // 获取用户角色和信息
+    const userSql = `
+      SELECT u.role, ap.district_id, ap.school_id
+      FROM users u
+      LEFT JOIN admin_permissions ap ON u.id = ap.user_id
+      WHERE u.id = $1
+    `;
+    const userResult = await query(userSql, [userId]);
+    if (userResult.rows.length === 0) {
+      return scopes;
+    }
+
+    const { role } = userResult.rows[0];
+
+    // 根据角色添加默认可用范围
+    if (role === 'system_admin' || role === 'municipal_admin') {
+      scopes.push('school', 'district', 'base_school', 'municipal_school', 'municipal');
+    } else if (role === 'district_admin') {
+      scopes.push('school', 'district');
+    } else if (role === 'school_admin') {
+      scopes.push('school');
+    } else if (role === 'base_school_admin') {
+      scopes.push('school', 'base_school');
+    } else if (role === 'municipal_school_admin') {
+      scopes.push('school', 'municipal_school');
+    }
+
+    // 检查额外授权的权限
+    const permissionSql = `
+      SELECT DISTINCT
+        REPLACE(permission_type, 'practice_publish_', '') as scope
+      FROM teacher_permissions
+      WHERE user_id = $1
+        AND permission_type LIKE 'practice_publish_%'
+        AND is_active = true
+        AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+    `;
+    const permissionResult = await query(permissionSql, [userId]);
+
+    for (const row of permissionResult.rows) {
+      if (!scopes.includes(row.scope)) {
+        scopes.push(row.scope);
+      }
+    }
+
+    return scopes;
+  }
+
+  /**
+   * 授予练习发布权限
+   * @param {number} userId - 被授权用户ID
+   * @param {string} scope - 范围 (school, district, base_school, municipal_school, municipal)
+   * @param {string[]} subjects - 科目列表
+   * @param {number} grantedBy - 授权人ID
+   * @param {number|null} districtId - 区域ID
+   * @param {number|null} schoolId - 学校ID
+   * @param {string|null} expiresAt - 过期时间
+   * @param {string|null} notes - 备注
+   * @returns {Promise<Object>}
+   */
+  static async grantPracticePublishPermission(userId, scope, subjects, grantedBy, districtId = null, schoolId = null, expiresAt = null, notes = null) {
+    const permissionType = `practice_publish_${scope}`;
+    const scopeLevel = scope === 'municipal' ? 'municipal' :
+      scope === 'district' ? 'district' : 'school';
+
+    return await this.create({
+      user_id: userId,
+      permission_type: permissionType,
+      subjects,
+      scope_level: scopeLevel,
+      district_id: districtId,
+      school_id: schoolId,
+      granted_by: grantedBy,
+      expires_at: expiresAt,
+      notes: notes || `${scope}级练习发布权限`
+    });
+  }
+
+  /**
+   * 撤销练习发布权限
+   * @param {number} userId - 用户ID
+   * @param {string} scope - 范围
+   * @param {number|null} districtId - 区域ID
+   * @returns {Promise<Object>}
+   */
+  static async revokePracticePublishPermission(userId, scope, districtId = null) {
+    const permissionType = `practice_publish_${scope}`;
+
+    let sql = `
+      UPDATE teacher_permissions
+      SET is_active = false, updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = $1 AND permission_type = $2
+    `;
+    const params = [userId, permissionType];
+
+    if (districtId) {
+      sql += ' AND district_id = $3';
+      params.push(districtId);
+    }
+
+    sql += ' RETURNING *';
+
+    const result = await query(sql, params);
+    return result.rows[0];
+  }
 }
 
 module.exports = TeacherPermission;
