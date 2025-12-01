@@ -208,7 +208,7 @@ router.get('/student-activity/:id',
           aq.order_index,
           grader.real_name as graded_by_name
         FROM answers a
-        JOIN question_bank qb ON a.question_id = qb.id
+        JOIN question_bank_with_draft qb ON a.question_id = qb.id
         JOIN activity_questions aq ON aq.activity_id = $2 AND aq.question_id = a.question_id
         LEFT JOIN users grader ON a.graded_by = grader.id
         WHERE a.student_exam_id = $1

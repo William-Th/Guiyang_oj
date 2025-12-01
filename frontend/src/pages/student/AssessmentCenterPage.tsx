@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Button, Space, message, Spin, Select } from 'antd';
-import { EyeOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { EyeOutlined, PlayCircleOutlined, FormOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import { SUBJECTS, getAllGrades, getAllAbilityLevels } from '../../config/subjects';
+import AssessmentRegistrationModal from '../../components/student/AssessmentRegistrationModal';
 
 interface Assessment {
   id: number;
@@ -21,12 +22,16 @@ interface Assessment {
   max_attempts: number;
   student_status?: string;
   attempt_number?: number;
+  registration_enabled?: boolean;
+  registration_status?: string;
 }
 
 const AssessmentCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [registrationModalVisible, setRegistrationModalVisible] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [filters, setFilters] = useState<{
     subject?: string;
     grade?: string;
@@ -157,32 +162,80 @@ const AssessmentCenterPage: React.FC = () => {
         ),
     },
     {
+      title: '报名状态',
+      dataIndex: 'registration_status',
+      key: 'registration_status',
+      width: 100,
+      render: (status: string, record: Assessment) => {
+        if (!record.registration_enabled) {
+          return <Tag>无需报名</Tag>;
+        }
+        const statusConfig: Record<string, { color: string; text: string }> = {
+          confirmed: { color: 'success', text: '已报名' },
+          pending: { color: 'processing', text: '待确认' },
+          cancelled: { color: 'default', text: '已取消' },
+          rejected: { color: 'error', text: '已拒绝' },
+        };
+        if (status && statusConfig[status]) {
+          return <Tag color={statusConfig[status].color}>{statusConfig[status].text}</Tag>;
+        }
+        return <Tag color="warning">未报名</Tag>;
+      },
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 220,
       fixed: 'right' as const,
-      render: (_: any, record: Assessment) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/student/activity/${record.id}`)}
-          >
-            查看详情
-          </Button>
-          <Button
-            size="small"
-            type="primary"
-            danger
-            icon={<PlayCircleOutlined />}
-            onClick={() => handleStartAssessment(record.id)}
-          >
-            开始测评
-          </Button>
-        </Space>
-      ),
+      render: (_: any, record: Assessment) => {
+        const isRegistered = record.registration_status === 'confirmed';
+        const needsRegistration = record.registration_enabled && !isRegistered;
+        const canStart = !record.registration_enabled || isRegistered;
+
+        return (
+          <Space>
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/student/activity/${record.id}`)}
+            >
+              详情
+            </Button>
+            {needsRegistration && (
+              <Button
+                size="small"
+                type="primary"
+                icon={<FormOutlined />}
+                onClick={() => handleRegisterClick(record)}
+              >
+                报名
+              </Button>
+            )}
+            {canStart && (
+              <Button
+                size="small"
+                type="primary"
+                danger
+                icon={<PlayCircleOutlined />}
+                onClick={() => handleStartAssessment(record.id)}
+              >
+                开始
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
+
+  const handleRegisterClick = (assessment: Assessment) => {
+    setSelectedAssessment(assessment);
+    setRegistrationModalVisible(true);
+  };
+
+  const handleRegistrationSuccess = () => {
+    loadAssessments();
+  };
 
   if (loading) {
     return (
@@ -198,6 +251,12 @@ const AssessmentCenterPage: React.FC = () => {
         title="测评中心"
         extra={
           <Space>
+            <Button
+              icon={<UnorderedListOutlined />}
+              onClick={() => navigate('/student/registrations')}
+            >
+              我的报名
+            </Button>
             <Select
               placeholder="科目"
               allowClear
@@ -252,6 +311,20 @@ const AssessmentCenterPage: React.FC = () => {
           }}
         />
       </Card>
+
+      {selectedAssessment && (
+        <AssessmentRegistrationModal
+          visible={registrationModalVisible}
+          activityId={selectedAssessment.id}
+          activityTitle={selectedAssessment.title}
+          abilityLevel={selectedAssessment.ability_level}
+          onClose={() => {
+            setRegistrationModalVisible(false);
+            setSelectedAssessment(null);
+          }}
+          onSuccess={handleRegistrationSuccess}
+        />
+      )}
     </div>
   );
 };

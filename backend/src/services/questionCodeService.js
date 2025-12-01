@@ -125,8 +125,13 @@ async function batchGenerateQuestionCodes(questionIds) {
 
   for (const id of questionIds) {
     try {
-      // 获取题目信息
-      const questionSql = 'SELECT id, subject, created_at FROM question_bank WHERE id = $1';
+      // 获取题目信息（从视图获取，包含科目信息）
+      const questionSql = `
+        SELECT qb.id, qd.subject, qb.published_at
+        FROM question_bank qb
+        JOIN question_drafts qd ON qb.draft_id = qd.id
+        WHERE qb.id = $1
+      `;
       const questionResult = await query(questionSql, [id]);
 
       if (questionResult.rows.length === 0) {
@@ -137,7 +142,7 @@ async function batchGenerateQuestionCodes(questionIds) {
       const question = questionResult.rows[0];
 
       // 生成编码
-      const code = await generateQuestionCode(question.subject, new Date(question.created_at));
+      const code = await generateQuestionCode(question.subject, new Date(question.published_at || Date.now()));
 
       // 更新题目
       const updateSql = 'UPDATE question_bank SET question_code = $1 WHERE id = $2 RETURNING *';
@@ -152,8 +157,31 @@ async function batchGenerateQuestionCodes(questionIds) {
   return results;
 }
 
+/**
+ * 为单个题目生成并设置编码
+ * @param {number} questionId - question_bank表中的记录ID
+ * @param {string} subject - 科目名称
+ * @returns {Promise<string>} 生成的题目编码
+ */
+async function generateAndSetQuestionCode(questionId, subject) {
+  try {
+    // 生成编码
+    const code = await generateQuestionCode(subject);
+
+    // 更新题目
+    const updateSql = 'UPDATE question_bank SET question_code = $1 WHERE id = $2 RETURNING question_code';
+    const result = await query(updateSql, [code, questionId]);
+
+    return result.rows[0]?.question_code || code;
+  } catch (error) {
+    console.error('Error generating and setting question code:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   generateQuestionCode,
+  generateAndSetQuestionCode,
   isCodeExists,
   getQuestionByCode,
   parseQuestionCode,

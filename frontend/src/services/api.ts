@@ -767,7 +767,7 @@ export const activityApi = {
     if (filters?.grade) params.append('grade', filters.grade);
     if (filters?.ability_level) params.append('ability_level', filters.ability_level);
 
-    const response = await api.get(`/student/activities/assessment${params.toString() ? '?' + params.toString() : ''}`);
+    const response = await api.get(`/activities/assessments${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
 
@@ -896,8 +896,6 @@ export const activityApi = {
   addQuestionToActivity: async (activityId: number, questionData: {
     questionId: number;
     score?: number;
-    isRequired?: boolean;
-    section?: string;
   }) => {
     const response = await api.post(`/activities/${activityId}/questions`, questionData);
     return response.data;
@@ -907,8 +905,6 @@ export const activityApi = {
   batchAddQuestions: async (activityId: number, questions: Array<{
     questionId: number;
     score?: number;
-    isRequired?: boolean;
-    section?: string;
   }>) => {
     const response = await api.post(`/activities/${activityId}/questions/batch`, { questions });
     return response.data;
@@ -920,11 +916,9 @@ export const activityApi = {
     return response.data;
   },
 
-  // Update question properties in activity
+  // Update question score in activity
   updateActivityQuestion: async (activityId: number, questionId: number, updates: {
     score?: number;
-    isRequired?: boolean;
-    section?: string;
   }) => {
     const response = await api.put(`/activities/${activityId}/questions/${questionId}`, updates);
     return response.data;

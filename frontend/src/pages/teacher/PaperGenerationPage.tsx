@@ -10,7 +10,6 @@ import {
   Input,
   Select,
   Modal,
-  Form,
   InputNumber,
   message,
   Spin,
@@ -36,6 +35,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';
+import { getAbilityLevelsBySubject } from '../../config/subjects';
 
 const { Option } = Select;
 const { Search } = Input;
@@ -70,8 +70,6 @@ interface ActivityQuestion {
   question_id: number;
   order_index: number;
   score: number;
-  is_required: boolean;
-  section: string | null;
   question_code: string;
   type: string;
   content: string;
@@ -118,17 +116,15 @@ const PaperGenerationPage: React.FC = () => {
   });
 
   // Modal state
-  const [addQuestionModalVisible, setAddQuestionModalVisible] = useState(false);
-  const [editQuestionModalVisible, setEditQuestionModalVisible] = useState(false);
   const [previewQuestionModalVisible, setPreviewQuestionModalVisible] = useState(false);
-  const [currentEditingQuestion, setCurrentEditingQuestion] = useState<ActivityQuestion | null>(null);
   const [previewQuestion, setPreviewQuestion] = useState<Question | ActivityQuestion | null>(null);
 
   // State for batch remove
   const [selectedPaperRowKeys, setSelectedPaperRowKeys] = useState<React.Key[]>([]);
 
-  const [addForm] = Form.useForm();
-  const [editForm] = Form.useForm();
+  // State for inline score editing
+  const [editingScoreId, setEditingScoreId] = useState<number | null>(null);
+  const [editingScoreValue, setEditingScoreValue] = useState<number>(0);
 
   useEffect(() => {
     if (activityId) {
@@ -207,24 +203,15 @@ const PaperGenerationPage: React.FC = () => {
     setTimeout(() => loadAvailableQuestions(), 100);
   };
 
-  // Add question handlers
-  const handleOpenAddModal = () => {
-    setAddQuestionModalVisible(true);
-    addForm.resetFields();
-  };
-
-  const handleAddQuestion = async (values: any) => {
+  // Add question handlers - 直接添加到列表，使用建议分值
+  const handleQuickAddQuestion = async (question: Question) => {
     setAddingQuestion(true);
     try {
       await activityApi.addQuestionToActivity(activityId, {
-        questionId: values.questionId,
-        score: values.score,
-        isRequired: values.isRequired !== undefined ? values.isRequired : true,
-        section: values.section,
+        questionId: question.id,
+        score: question.suggested_score || 5,
       });
       message.success('题目添加成功');
-      setAddQuestionModalVisible(false);
-      addForm.resetFields();
       await loadData();
     } catch (error: any) {
       message.error(error.response?.data?.message || '添加题目失败');
@@ -246,7 +233,6 @@ const PaperGenerationPage: React.FC = () => {
         return {
           questionId: key as number,
           score: question?.suggested_score || 5,
-          isRequired: true,
         };
       });
 
@@ -267,33 +253,30 @@ const PaperGenerationPage: React.FC = () => {
     }
   };
 
-  // Edit question handlers
-  const handleEditQuestion = (question: ActivityQuestion) => {
-    setCurrentEditingQuestion(question);
-    editForm.setFieldsValue({
-      score: question.score,
-      isRequired: question.is_required,
-      section: question.section,
-    });
-    setEditQuestionModalVisible(true);
+  // Inline score editing handlers
+  const handleStartEditScore = (question: ActivityQuestion) => {
+    setEditingScoreId(question.activity_question_id);
+    setEditingScoreValue(question.score);
   };
 
-  const handleUpdateQuestion = async (values: any) => {
-    if (!currentEditingQuestion) return;
-
+  const handleSaveScore = async (questionId: number) => {
     try {
       await activityApi.updateActivityQuestion(
         activityId,
-        currentEditingQuestion.question_id,
-        values
+        questionId,
+        { score: editingScoreValue }
       );
-      message.success('题目更新成功');
-      setEditQuestionModalVisible(false);
-      setCurrentEditingQuestion(null);
+      message.success('分值更新成功');
+      setEditingScoreId(null);
       await loadData();
     } catch (error: any) {
-      message.error(error.response?.data?.message || '更新题目失败');
+      message.error(error.response?.data?.message || '更新分值失败');
     }
+  };
+
+  const handleCancelEditScore = () => {
+    setEditingScoreId(null);
+    setEditingScoreValue(0);
   };
 
   // Remove question handlers
@@ -323,25 +306,35 @@ const PaperGenerationPage: React.FC = () => {
     try {
       const response = await activityApi.validateActivityPaper(activityId);
 
-      if (response.valid) {
+      // 额外检查总分是否一致 - 使用 Math.round 避免小数精度问题
+      const questionTotalScore = Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100;
+      const activityTotalScore = Math.round(Number(activity?.total_score || 0) * 100) / 100;
+      const scoreMatch = questionTotalScore === activityTotalScore;
+
+      if (response.valid && scoreMatch) {
         Modal.success({
           title: '试卷验证通过',
           content: (
             <div>
               <p>试卷满足发布要求</p>
-              <p>总分：{response.stats.total_score}</p>
+              <p>活动设置总分：{activityTotalScore} 分</p>
+              <p>题目分数总和：{questionTotalScore} 分</p>
               <p>题目数量：{response.stats.question_count}</p>
             </div>
           ),
         });
       } else {
+        const errors = [...(response.errors || [])];
+        if (!scoreMatch) {
+          errors.push(`题目分数总和(${questionTotalScore}分)与活动设置的总分(${activityTotalScore}分)不一致`);
+        }
         Modal.error({
           title: '试卷验证失败',
           content: (
             <div>
               <p>试卷存在以下问题：</p>
               <ul>
-                {response.errors.map((error: string, index: number) => (
+                {errors.map((error: string, index: number) => (
                   <li key={index}>{error}</li>
                 ))}
               </ul>
@@ -492,14 +485,8 @@ const PaperGenerationPage: React.FC = () => {
           <Button
             type="link"
             icon={<PlusOutlined />}
-            onClick={() => {
-              addForm.setFieldsValue({
-                questionId: record.id,
-                score: record.suggested_score,
-                isRequired: true,
-              });
-              handleOpenAddModal();
-            }}
+            loading={addingQuestion}
+            onClick={() => handleQuickAddQuestion(record)}
           >
             添加
           </Button>
@@ -551,30 +538,51 @@ const PaperGenerationPage: React.FC = () => {
       title: '分值',
       dataIndex: 'score',
       key: 'score',
-      width: 80,
-    },
-    {
-      title: '必答',
-      dataIndex: 'is_required',
-      key: 'is_required',
-      width: 80,
-      render: (isRequired: boolean) => (
-        <Tag color={isRequired ? 'green' : 'default'}>
-          {isRequired ? '是' : '否'}
-        </Tag>
-      ),
-    },
-    {
-      title: '章节',
-      dataIndex: 'section',
-      key: 'section',
       width: 120,
-      render: (section: string | null) => section || '-',
+      render: (score: number, record: ActivityQuestion) => {
+        if (editingScoreId === record.activity_question_id && canEdit) {
+          return (
+            <Space size="small">
+              <InputNumber
+                min={0}
+                max={100}
+                value={editingScoreValue}
+                onChange={(val) => setEditingScoreValue(val || 0)}
+                style={{ width: 60 }}
+                size="small"
+              />
+              <Button
+                type="link"
+                size="small"
+                onClick={() => handleSaveScore(record.question_id)}
+              >
+                保存
+              </Button>
+              <Button
+                type="link"
+                size="small"
+                onClick={handleCancelEditScore}
+              >
+                取消
+              </Button>
+            </Space>
+          );
+        }
+        return (
+          <span
+            style={{ cursor: canEdit ? 'pointer' : 'default' }}
+            onClick={() => canEdit && handleStartEditScore(record)}
+          >
+            {score}
+            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#1890ff' }} />}
+          </span>
+        );
+      },
     },
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 150,
       render: (_, record) => (
         <Space size="small">
           <Button
@@ -584,20 +592,14 @@ const PaperGenerationPage: React.FC = () => {
           >
             预览
           </Button>
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEditQuestion(record)}
-          >
-            编辑
-          </Button>
           <Popconfirm
             title="确定要移除这道题目吗？"
             onConfirm={() => handleRemoveQuestion(record.question_id)}
             okText="确定"
             cancelText="取消"
+            disabled={!canEdit}
           >
-            <Button type="link" danger icon={<DeleteOutlined />}>
+            <Button type="link" danger icon={<DeleteOutlined />} disabled={!canEdit}>
               移除
             </Button>
           </Popconfirm>
@@ -653,6 +655,7 @@ const PaperGenerationPage: React.FC = () => {
               刷新
             </Button>
             <Button
+              type="primary"
               icon={<CheckCircleOutlined />}
               onClick={handleValidatePaper}
             >
@@ -672,30 +675,55 @@ const PaperGenerationPage: React.FC = () => {
 
         {/* Statistics */}
         {paperStats && (
-          <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col span={4}>
-              <Statistic
-                title="总题数"
-                value={paperStats.question_count}
-                prefix={<BarChartOutlined />}
+          <>
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={4}>
+                <Statistic
+                  title="总题数"
+                  value={paperStats.question_count}
+                  prefix={<BarChartOutlined />}
+                />
+              </Col>
+              <Col span={4}>
+                <Statistic
+                  title="活动设置总分"
+                  value={activity.total_score}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Col>
+              <Col span={4}>
+                <Statistic
+                  title="题目分数和"
+                  value={Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100}
+                  valueStyle={{
+                    color: Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100 === Math.round(Number(activity.total_score) * 100) / 100
+                      ? '#52c41a'
+                      : '#ff4d4f'
+                  }}
+                />
+              </Col>
+              <Col span={3}>
+                <Statistic title="单选题" value={paperStats.single_choice_count} />
+              </Col>
+              <Col span={3}>
+                <Statistic title="多选题" value={paperStats.multiple_choice_count} />
+              </Col>
+              <Col span={3}>
+                <Statistic title="填空题" value={paperStats.blank_count} />
+              </Col>
+              <Col span={3}>
+                <Statistic title="问答题" value={paperStats.essay_count} />
+              </Col>
+            </Row>
+            {Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100 !== Math.round(Number(activity.total_score) * 100) / 100 && (
+              <Alert
+                message={`总分不一致：活动设置总分 ${activity.total_score} 分，题目分数和 ${Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100} 分`}
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
               />
-            </Col>
-            <Col span={4}>
-              <Statistic title="总分" value={paperStats.total_score} />
-            </Col>
-            <Col span={4}>
-              <Statistic title="单选题" value={paperStats.single_choice_count} />
-            </Col>
-            <Col span={4}>
-              <Statistic title="多选题" value={paperStats.multiple_choice_count} />
-            </Col>
-            <Col span={4}>
-              <Statistic title="填空题" value={paperStats.blank_count} />
-            </Col>
-            <Col span={4}>
-              <Statistic title="问答题" value={paperStats.essay_count} />
-            </Col>
-          </Row>
+            )}
+          </>
         )}
 
         <Divider />
@@ -800,9 +828,9 @@ const PaperGenerationPage: React.FC = () => {
                     style={{ width: '100%' }}
                     virtual={false}
                   >
-                    <Option value="基础">基础</Option>
-                    <Option value="提高">提高</Option>
-                    <Option value="拓展">拓展</Option>
+                    {activity && getAbilityLevelsBySubject(activity.subject).map(level => (
+                      <Option key={level.value} value={level.value}>{level.label}</Option>
+                    ))}
                   </Select>
                 </Col>
                 <Col span={8}>
@@ -854,76 +882,6 @@ const PaperGenerationPage: React.FC = () => {
           </div>
         )}
       </Card>
-
-      {/* Add Question Modal */}
-      <Modal
-        title="添加题目"
-        open={addQuestionModalVisible}
-        onOk={() => addForm.submit()}
-        onCancel={() => {
-          setAddQuestionModalVisible(false);
-          addForm.resetFields();
-        }}
-        confirmLoading={addingQuestion}
-      >
-        <Form form={addForm} layout="vertical" onFinish={handleAddQuestion}>
-          <Form.Item name="questionId" hidden>
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="分值"
-            name="score"
-            rules={[{ required: true, message: '请输入分值' }]}
-          >
-            <InputNumber min={0} max={100} style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item label="是否必答" name="isRequired" valuePropName="checked">
-            <Select style={{ width: '100%' }} virtual={false}>
-              <Option value={true}>是</Option>
-              <Option value={false}>否</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="章节" name="section">
-            <Input placeholder="如：第一章" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Edit Question Modal */}
-      <Modal
-        title="编辑题目"
-        open={editQuestionModalVisible}
-        onOk={() => editForm.submit()}
-        onCancel={() => {
-          setEditQuestionModalVisible(false);
-          setCurrentEditingQuestion(null);
-          editForm.resetFields();
-        }}
-      >
-        <Form form={editForm} layout="vertical" onFinish={handleUpdateQuestion}>
-          <Form.Item
-            label="分值"
-            name="score"
-            rules={[{ required: true, message: '请输入分值' }]}
-          >
-            <InputNumber min={0} max={100} style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item label="是否必答" name="isRequired" valuePropName="checked">
-            <Select style={{ width: '100%' }} virtual={false}>
-              <Option value={true}>是</Option>
-              <Option value={false}>否</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="章节" name="section">
-            <Input placeholder="如：第一章" />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Preview Question Modal */}
       <Modal

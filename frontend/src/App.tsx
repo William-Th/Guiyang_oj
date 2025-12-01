@@ -31,11 +31,13 @@ import AchievementManagementPage from './pages/admin/AchievementManagementPage';
 import AchievementPage from './pages/student/AchievementPage';
 import PointsPage from './pages/student/PointsPage';
 import MyStatistics from './pages/student/MyStatistics';
+import MyRegistrationsPage from './pages/student/MyRegistrationsPage';
 import DataAnalytics from './pages/teacher/DataAnalytics';
 import TeachingClassList from './pages/teacher/TeachingClassList';
 import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
 import TeachingClassForm from './pages/teacher/TeachingClassForm';
 import TeachingClassStudents from './pages/teacher/TeachingClassStudents';
+import NotificationCenterPage from './pages/common/NotificationCenterPage';
 
 const App: React.FC = () => {
   return (
@@ -52,6 +54,7 @@ const App: React.FC = () => {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="notifications" element={<NotificationCenterPage />} />
 
             {/* 管理员路由 - 导航在Header中 */}
             <Route path="admin">
@@ -80,6 +83,7 @@ const App: React.FC = () => {
               <Route path="achievements" element={<AchievementPage />} />
               <Route path="points" element={<PointsPage />} />
               <Route path="statistics" element={<MyStatistics />} />
+              <Route path="registrations" element={<MyRegistrationsPage />} />
             </Route>
 
             {/* 教师路由 - 题库管理 */}

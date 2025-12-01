@@ -16,6 +16,7 @@ import {
   BarChartOutlined,
   SolutionOutlined,
 } from '@ant-design/icons';
+import NotificationBell from '../common/NotificationBell';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { logout } from '@/store/authSlice';
@@ -322,16 +323,22 @@ const MainLayout: React.FC = () => {
           />
         )}
 
-        {/* 用户菜单 */}
-        <Dropdown
-          menu={{ items: userMenuItems, onClick: handleMenuClick }}
-          placement="bottomRight"
-        >
-          <Space style={{ color: 'white', cursor: 'pointer', marginLeft: 'auto' }}>
-            <Avatar icon={<UserOutlined />} />
-            <span>{user?.realName || user?.username || '用户'}</span>
-          </Space>
-        </Dropdown>
+        {/* 右侧区域：通知铃铛和用户菜单 */}
+        <Space style={{ marginLeft: 'auto' }} size="middle">
+          {/* 通知铃铛 */}
+          <NotificationBell />
+
+          {/* 用户菜单 */}
+          <Dropdown
+            menu={{ items: userMenuItems, onClick: handleMenuClick }}
+            placement="bottomRight"
+          >
+            <Space style={{ color: 'white', cursor: 'pointer' }}>
+              <Avatar icon={<UserOutlined />} />
+              <span>{user?.realName || user?.username || '用户'}</span>
+            </Space>
+          </Dropdown>
+        </Space>
       </Header>
       <Content style={{ padding: '24px', background: '#f0f2f5' }}>
         <div style={{ background: 'white', padding: '24px', borderRadius: '8px', minHeight: '100%' }}>

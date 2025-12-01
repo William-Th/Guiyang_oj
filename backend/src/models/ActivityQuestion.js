@@ -12,8 +12,6 @@ class ActivityQuestion {
    * @param {number} data.questionId - Question ID
    * @param {number} data.orderIndex - Order in the paper
    * @param {number} data.score - Score for this question
-   * @param {boolean} data.isRequired - Whether the question is required
-   * @param {string} data.section - Section name (optional)
    * @returns {Promise<Object>} Created activity question
    */
   static async addQuestion(data) {
@@ -21,16 +19,14 @@ class ActivityQuestion {
       activityId,
       questionId,
       orderIndex,
-      score,
-      isRequired = true,
-      section = null
+      score
     } = data;
 
     const result = await query(`
-      INSERT INTO activity_questions (activity_id, question_id, order_index, score, is_required, section)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO activity_questions (activity_id, question_id, order_index, score)
+      VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [activityId, questionId, orderIndex, score, isRequired, section]);
+    `, [activityId, questionId, orderIndex, score]);
 
     return result.rows[0];
   }
@@ -52,15 +48,15 @@ class ActivityQuestion {
     let paramCount = 0;
 
     questions.forEach((q, index) => {
-      const { questionId, score, isRequired = true, section = null } = q;
+      const { questionId, score } = q;
       const orderIndex = index + 1; // Start from 1
 
-      values.push(`($${++paramCount}, $${++paramCount}, $${++paramCount}, $${++paramCount}, $${++paramCount}, $${++paramCount})`);
-      params.push(activityId, questionId, orderIndex, score, isRequired, section);
+      values.push(`($${++paramCount}, $${++paramCount}, $${++paramCount}, $${++paramCount})`);
+      params.push(activityId, questionId, orderIndex, score);
     });
 
     const result = await query(`
-      INSERT INTO activity_questions (activity_id, question_id, order_index, score, is_required, section)
+      INSERT INTO activity_questions (activity_id, question_id, order_index, score)
       VALUES ${values.join(', ')}
       RETURNING *
     `, params);
@@ -160,6 +156,7 @@ class ActivityQuestion {
 
   /**
    * Get all questions for an activity (with question details)
+   * Uses question_bank_with_draft view to get complete question information
    * @param {number} activityId - Activity ID
    * @returns {Promise<Array>} Array of questions with details
    */
@@ -171,8 +168,6 @@ class ActivityQuestion {
         aq.question_id,
         aq.order_index,
         aq.score,
-        aq.is_required,
-        aq.section,
         qb.question_code,
         qb.type,
         qb.content,
@@ -183,9 +178,10 @@ class ActivityQuestion {
         qb.grade,
         qb.knowledge_points,
         qb.level,
-        qb.suggested_score
+        qb.suggested_score,
+        qb.scope
       FROM activity_questions aq
-      INNER JOIN question_bank qb ON aq.question_id = qb.id
+      INNER JOIN question_bank_with_draft qb ON aq.question_id = qb.id
       WHERE aq.activity_id = $1
       ORDER BY aq.order_index ASC
     `, [activityId]);
@@ -195,6 +191,7 @@ class ActivityQuestion {
 
   /**
    * Get activity paper statistics
+   * Uses question_bank_with_draft view to get complete question information
    * @param {number} activityId - Activity ID
    * @returns {Promise<Object>} Paper statistics
    */
@@ -218,7 +215,7 @@ class ActivityQuestion {
         COUNT(DISTINCT CASE WHEN qb.difficulty = 'hard' THEN aq.id END) as hard_count
       FROM activities a
       LEFT JOIN activity_questions aq ON a.id = aq.activity_id
-      LEFT JOIN question_bank qb ON aq.question_id = qb.id
+      LEFT JOIN question_bank_with_draft qb ON aq.question_id = qb.id
       WHERE a.id = $1
       GROUP BY a.id, a.title, a.type, a.subject, a.paper_status, a.total_score, a.question_count
     `, [activityId]);
@@ -228,6 +225,9 @@ class ActivityQuestion {
 
   /**
    * Get available questions for an activity (not yet added)
+   * Uses question_bank_with_draft view which joins question_bank with question_drafts
+   * to get complete question information including subject, grade, level, etc.
+   *
    * @param {number} activityId - Activity ID
    * @param {Object} filters - Filter criteria
    * @returns {Promise<Array>} Array of available questions
@@ -244,8 +244,11 @@ class ActivityQuestion {
 
     const activity = activityResult.rows[0];
 
+    // Use question_bank_with_draft view instead of question_bank table
+    // This view joins question_bank with question_drafts to get complete question info
     let whereClause = `
       WHERE qb.status = 'published'
+        AND qb.is_active = true
         AND qb.subject = $1
         AND qb.grade = $2
         AND qb.id NOT IN (
@@ -292,8 +295,9 @@ class ActivityQuestion {
         qb.suggested_score,
         qb.knowledge_points,
         qb.subject,
-        qb.grade
-      FROM question_bank qb
+        qb.grade,
+        qb.scope
+      FROM question_bank_with_draft qb
       ${whereClause}
       ORDER BY qb.question_code DESC
       LIMIT 100
@@ -371,25 +375,23 @@ class ActivityQuestion {
   }
 
   /**
-   * Update multiple fields for a question in an activity
+   * Update score for a question in an activity
    * @param {number} activityId - Activity ID
    * @param {number} questionId - Question ID
-   * @param {Object} updates - Updates {score, isRequired, section}
+   * @param {Object} updates - Updates {score}
    * @returns {Promise<Object>} Updated activity question
    */
   static async updateQuestion(activityId, questionId, updates) {
-    const { score, isRequired, section } = updates;
+    const { score } = updates;
 
     const result = await query(`
       UPDATE activity_questions
       SET
         score = COALESCE($1, score),
-        is_required = COALESCE($2, is_required),
-        section = COALESCE($3, section),
         updated_at = CURRENT_TIMESTAMP
-      WHERE activity_id = $4 AND question_id = $5
+      WHERE activity_id = $2 AND question_id = $3
       RETURNING *
-    `, [score, isRequired, section, activityId, questionId]);
+    `, [score, activityId, questionId]);
 
     return result.rows[0];
   }

@@ -241,6 +241,63 @@
 
 ---
 
+### 7.4 测评报名管理系统 (NEW - 2025-11-30)
+
+**背景**: 测评活动与练习活动的核心区别在于报名机制。测评分为两种模式：
+- **L1-L3 纯线上测评**: 学生在线报名后，直接在线上系统完成测评
+- **L4-L7 线下现场测评**: 学生在线报名并选择测评点，到现场使用线上系统完成测评
+
+**详细需求文档**: `docs/ASSESSMENT_REGISTRATION_REQUIREMENTS.md`
+
+**功能列表**:
+
+| 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
+|------|--------|---------|---------|------|---------|------|
+| **数据库设计** |  |  |  |  |  |  |
+| assessment_locations表 | ❌ | N/A | N/A | N/A | N/A | 测评点管理（L4+使用） |
+| assessment_registrations表 | ❌ | N/A | N/A | N/A | N/A | 报名记录管理 |
+| activities表报名字段 | ❌ | N/A | N/A | N/A | N/A | 报名开始/截止时间等 |
+| 报名计数触发器 | ❌ | N/A | N/A | N/A | N/A | 自动维护测评点已报名人数 |
+| **测评点管理** |  |  |  |  |  |  |
+| 创建测评点 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/locations |
+| 测评点列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/activities/:id/locations |
+| 编辑测评点 | ❌ | ❌ | ❌ | ❌ | ❌ | PUT /api/.../locations/:id |
+| 删除测评点 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/.../locations/:id |
+| **学生报名** |  |  |  |  |  |  |
+| 检查报名资格 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/activities/:id/registration/eligibility |
+| L1-L3报名 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/register (无测评点) |
+| L4+报名 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/register (含测评点) |
+| 取消报名 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/register/cancel |
+| 我的报名列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/assessments/my-registrations |
+| **管理员功能** |  |  |  |  |  |  |
+| 报名列表查询 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/activities/:id/registrations |
+| 报名统计 | ❌ | ❌ | ❌ | ❌ | ❌ | 按测评点/学校/年级统计 |
+| 导出报名名单 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/.../registrations/export |
+| 取消发布限制 | ❌ | ❌ | ❌ | ❌ | ❌ | 有报名后不可取消发布 |
+| **前端页面** |  |  |  |  |  |  |
+| 学生-测评报名列表 | N/A | N/A | N/A | ❌ | ❌ | /student/assessments |
+| 学生-测评详情报名 | N/A | N/A | N/A | ❌ | ❌ | /student/assessments/:id |
+| 学生-我的报名 | N/A | N/A | N/A | ❌ | ❌ | /student/my-registrations |
+| 管理员-测评点管理 | N/A | N/A | N/A | ❌ | ❌ | /admin/activities/:id/locations |
+| 管理员-报名管理 | N/A | N/A | N/A | ❌ | ❌ | /admin/activities/:id/registrations |
+
+**开发计划**:
+
+| 阶段 | 任务 | 工期 | 状态 |
+|------|------|------|------|
+| 1 | 数据库设计与迁移 | 1天 | ❌ 未开始 |
+| 2 | 后端API - 测评点管理 | 1天 | ❌ 未开始 |
+| 3 | 后端API - 学生报名 | 2天 | ❌ 未开始 |
+| 4 | 后端API - 管理员报名管理 | 1天 | ❌ 未开始 |
+| 5 | 前端 - 学生报名页面 | 2天 | ❌ 未开始 |
+| 6 | 前端 - 管理员管理页面 | 2天 | ❌ 未开始 |
+| 7 | 集成测试与优化 | 2天 | ❌ 未开始 |
+| **总计** | - | **11天** | - |
+
+**开发状态**: ❌ **未开始** | 需求设计完成 | 预计工期11天
+
+---
+
 ### 8. 系统配置
 
 | 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |

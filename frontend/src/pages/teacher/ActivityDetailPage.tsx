@@ -3,6 +3,8 @@ import { Card, Descriptions, Tag, Button, Space, message, Spin, Table, Statistic
 import { EditOutlined, BarChartOutlined, TeamOutlined, ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi } from '../../services/api';
+import LocationManagement from '../../components/admin/LocationManagement';
+import RegistrationManagement from '../../components/admin/RegistrationManagement';
 
 interface Activity {
   id: number;
@@ -51,7 +53,7 @@ const ActivityDetailPage: React.FC = () => {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'statistics'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'statistics' | 'locations' | 'registrations'>('info');
 
   const activityId = id ? parseInt(id) : 0;
 
@@ -230,6 +232,10 @@ const ActivityDetailPage: React.FC = () => {
           { key: 'info', tab: '基本信息' },
           { key: 'participants', tab: `参与者 (${participants.length})` },
           { key: 'statistics', tab: '统计数据' },
+          ...(activity.type === 'assessment' ? [
+            { key: 'locations', tab: '测评点管理' },
+            { key: 'registrations', tab: '报名管理' },
+          ] : []),
         ]}
         activeTabKey={activeTab}
         onTabChange={(key) => setActiveTab(key as any)}
@@ -367,6 +373,20 @@ const ActivityDetailPage: React.FC = () => {
               </Col>
             </Row>
           </div>
+        )}
+
+        {activeTab === 'locations' && activity.type === 'assessment' && (
+          <LocationManagement
+            activityId={activityId}
+            abilityLevel={activity.ability_level}
+          />
+        )}
+
+        {activeTab === 'registrations' && activity.type === 'assessment' && (
+          <RegistrationManagement
+            activityId={activityId}
+            abilityLevel={activity.ability_level}
+          />
         )}
       </Card>
     </div>

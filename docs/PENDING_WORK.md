@@ -1,10 +1,298 @@
 # 待完成工作
 
-**最后更新**: 2025-11-26 (教学班管理系统前后端开发完成)
+**最后更新**: 2025-12-01 (通知系统开发完成)
 
 ---
 
 ## 🔥 当前工作状态
+
+### ✅ 通知系统开发 (2025-12-01)
+
+**目标**: 实现用户通知系统，支持系统通知、活动通知、成就通知、公告等
+
+**当前状态**: ✅ 开发完成
+
+#### 功能概述
+
+通知系统包含以下核心功能：
+- **用户通知**: 个人通知（测评报名、成就解锁、题目审核等）
+- **系统公告**: 全局公告（管理员发布）
+- **通知中心**: 查看和管理所有通知
+- **通知铃铛**: 顶部导航栏未读提示
+
+#### 核心功能模块
+
+| 模块 | 功能 | 状态 |
+|------|------|------|
+| 用户通知表 | 存储发送给用户的通知 | ✅ 完成 |
+| 系统公告表 | 存储全局公告 | ✅ 完成 |
+| 通知模板 | 可复用的通知模板 | ✅ 完成 |
+| 通知偏好设置 | 用户通知开关设置 | ✅ 完成 |
+| NotificationBell | 顶部导航栏通知铃铛 | ✅ 完成 |
+| NotificationCenter | 通知中心页面 | ✅ 完成 |
+| 测评报名通知集成 | 报名确认/取消/拒绝通知 | ✅ 完成 |
+
+#### 开发完成记录 (2025-12-01)
+
+| 阶段 | 任务 | 状态 | 产出文件 |
+|------|------|------|---------|
+| 1 | 数据库设计与迁移 | ✅ 完成 | migrations/030_notification_system.sql |
+| 2 | 后端Model层 | ✅ 完成 | models/Notification.js, Announcement.js, NotificationTemplate.js |
+| 3 | 后端Service层 | ✅ 完成 | services/NotificationService.js |
+| 4 | 后端Route层 | ✅ 完成 | routes/notifications.js |
+| 5 | 前端API服务 | ✅ 完成 | services/notificationApi.ts |
+| 6 | 前端通知铃铛组件 | ✅ 完成 | components/common/NotificationBell.tsx |
+| 7 | 前端通知中心页面 | ✅ 完成 | pages/common/NotificationCenterPage.tsx |
+| 8 | 测评报名通知集成 | ✅ 完成 | routes/assessmentRegistration.js (添加通知发送) |
+
+#### API端点
+
+**用户通知API**:
+- `GET /api/notifications` - 获取通知列表
+- `GET /api/notifications/unread-count` - 获取未读数量
+- `PUT /api/notifications/:id/read` - 标记为已读
+- `PUT /api/notifications/batch-read` - 批量标记已读
+- `PUT /api/notifications/read-all` - 全部标记已读
+- `DELETE /api/notifications/:id` - 删除通知
+- `DELETE /api/notifications/batch` - 批量删除
+- `DELETE /api/notifications/read` - 删除所有已读
+
+**公告API**:
+- `GET /api/notifications/announcements` - 获取公告列表
+- `GET /api/notifications/announcements/popup` - 获取弹窗公告
+- `GET /api/notifications/announcements/:id` - 获取公告详情
+- `PUT /api/notifications/announcements/:id/read` - 标记公告已读
+
+**管理员API**:
+- `GET /api/notifications/admin/announcements` - 管理公告列表
+- `POST /api/notifications/admin/announcements` - 创建公告
+- `PUT /api/notifications/admin/announcements/:id` - 更新公告
+- `PUT /api/notifications/admin/announcements/:id/publish` - 发布公告
+- `PUT /api/notifications/admin/announcements/:id/archive` - 归档公告
+- `DELETE /api/notifications/admin/announcements/:id` - 删除公告
+
+#### 未完成工作
+
+**P1 - 高优先级（核心功能完善）**:
+
+| 任务 | 描述 | 相关文件 | 预估工作量 |
+|------|------|---------|-----------|
+| 公告管理页面 | 管理员端创建/编辑/发布/归档公告的UI | 新建 pages/admin/AnnouncementManagement.tsx | 1天 |
+| 测评发布通知集成 | 测评发布时自动通知目标学生 | routes/activities.js, NotificationService.js | 0.5天 |
+| 测评提醒通知 | 测评开始前1天/1小时自动提醒 | 新建定时任务 cron job | 0.5天 |
+| schema.sql同步 | 将migration表结构同步到schema.sql | database/schema.sql | 0.5天 |
+
+**P2 - 中优先级（用户体验优化）**:
+
+| 任务 | 描述 | 相关文件 | 预估工作量 |
+|------|------|---------|-----------|
+| 通知偏好设置页面 | 用户设置通知开关 | 新建 pages/common/NotificationSettings.tsx | 0.5天 |
+| 弹窗公告展示 | 登录后自动弹窗显示未读重要公告 | MainLayout.tsx, NotificationBell.tsx | 0.5天 |
+| 通知实时推送 | WebSocket实时推送新通知 | 需要WebSocket服务支持 | 1-2天 |
+
+**P3 - 低优先级（扩展功能）**:
+
+| 任务 | 描述 | 相关文件 | 预估工作量 |
+|------|------|---------|-----------|
+| 邮件通知 | 重要通知发送邮件 | 需要邮件服务配置 | 1天 |
+| 短信通知 | 重要通知发送短信 | 需要短信服务接入 | 1天 |
+| E2E测试补充 | 通知系统端到端测试 | tests/e2e/notifications.spec.ts | 0.5天 |
+
+**待集成的通知类型**:
+
+| 通知类型 | 模板代码 | 触发时机 | 状态 |
+|---------|---------|---------|------|
+| 报名成功 | registration_confirmed | 学生报名/管理员确认 | ✅ 已集成 |
+| 报名取消 | registration_cancelled | 管理员取消报名 | ✅ 已集成 |
+| 报名拒绝 | registration_rejected | 管理员拒绝报名 | ✅ 已集成 |
+| 测评发布 | assessment_published | 管理员发布测评 | 📋 待集成 |
+| 测评提醒 | assessment_reminder | 测评开始前定时触发 | 📋 待集成 |
+| 成就解锁 | achievement_unlocked | 成就解锁时 | ✅ 已集成(EventBus) |
+| 题目审核通过 | question_approved | 题目审核通过时 | ✅ 已集成(EventBus) |
+| 题目审核拒绝 | question_rejected | 题目审核拒绝时 | ✅ 已集成(EventBus) |
+| 欢迎通知 | welcome | 新用户注册时 | 📋 待集成 |
+| 密码修改 | password_changed | 用户修改密码时 | 📋 待集成 |
+
+---
+
+### ✅ 测评报名功能开发 (2025-11-30)
+
+**目标**: 实现测评活动的学生报名管理功能，支持线上测评和线下现场测评两种模式
+
+**当前状态**: ✅ 开发完成
+
+**详细需求文档**: `docs/ASSESSMENT_REGISTRATION_REQUIREMENTS.md`
+
+#### 功能概述
+
+测评分为两种模式：
+- **L1-L3 纯线上测评**: 学生在线报名后，直接在线上系统完成测评
+- **L4-L7 线下现场测评**: 学生在线报名并选择测评点，到现场使用线上系统完成测评
+
+| 能力等级 | 测评模式 | 报名流程 | 人数限制 |
+|---------|---------|---------|---------|
+| L1-L3 | 纯线上 | 直接报名 | 可选限制 |
+| L4-L7 | 线下现场 | 报名+选择测评点 | **必须限制** |
+
+#### 核心功能模块
+
+| 模块 | 功能 | 优先级 |
+|------|------|--------|
+| 测评点管理 | 创建/编辑/删除测评点，容量管理 | P1 |
+| 学生报名 | 资格检查、报名、选择测评点(L4+) | P1 |
+| 取消报名 | 学生取消、释放名额 | P1 |
+| 报名管理 | 查看列表、统计、导出 | P1 |
+| 活动限制 | 有报名后不可取消发布 | P1 |
+
+#### 数据库设计
+
+**新增表**:
+- `assessment_locations` - 测评点表（L4+使用）
+- `assessment_registrations` - 测评报名表
+
+**修改表**:
+- `activities` - 添加报名相关字段
+
+详见: `docs/ASSESSMENT_REGISTRATION_REQUIREMENTS.md` 第3章
+
+#### 开发完成记录 (2025-11-30)
+
+| 阶段 | 任务 | 状态 | 产出文件 |
+|------|------|------|---------|
+| 1 | 数据库设计与迁移 | ✅ 完成 | migrations/029_assessment_registration.sql |
+| 2 | 后端API - 测评点管理 | ✅ 完成 | models/AssessmentLocation.js |
+| 3 | 后端API - 学生报名 | ✅ 完成 | models/AssessmentRegistration.js |
+| 4 | 后端API - 管理员报名管理 | ✅ 完成 | routes/assessmentRegistration.js |
+| 5 | 前端 - 学生报名页面 | ✅ 完成 | pages/student/MyRegistrationsPage.tsx, components/student/AssessmentRegistrationModal.tsx |
+| 6 | 前端 - 管理员管理页面 | ✅ 完成 | components/admin/LocationManagement.tsx, components/admin/RegistrationManagement.tsx |
+| 7 | 前端API路径修复 | ✅ 完成 | services/api.ts (getStudentAssessments修复) |
+| 8 | 集成测试与优化 | 📋 待完成 | 待补充E2E测试 |
+
+#### Bug修复记录 (2025-11-30)
+
+| 问题 | 原因 | 修复 |
+|------|------|------|
+| 后端启动失败: Route.post() requires callback | 中间件名称错误导入 (authenticateToken vs authMiddleware) | 修正导入为 authMiddleware |
+| SQL错误: column u.id_card does not exist | users表无id_card字段 | 移除id_card字段引用 |
+| SQL错误: column st.class_name does not exist | students表字段名为class | 改为st.class |
+| 前端API 404错误 | getStudentAssessments路径错误 | 修正为 /activities/assessments |
+
+#### 与活动生命周期的关系
+
+| 活动状态 | 可否报名 | 可否取消报名 | 可否取消发布 |
+|---------|---------|-------------|-------------|
+| draft | ❌ | - | ✅ 可删除 |
+| published | ✅ 在报名时间内 | ✅ 在取消截止前 | **❌ 有报名则不可** |
+| ongoing | ❌ | ❌ | ❌ |
+| finished | ❌ | ❌ | ❌ |
+
+#### 通知系统集成 (✅ 已完成)
+
+测评报名已集成通知系统：
+- ✅ 报名成功通知 (`registration_confirmed` 模板)
+- ✅ 报名取消通知 (`registration_cancelled` 模板)
+- ✅ 报名拒绝通知 (`registration_rejected` 模板)
+- 📋 测评发布通知 (待集成)
+- 📋 报名截止提醒 (待集成)
+- 📋 测评即将开始提醒 (待集成)
+- 📋 测评点变更通知 (待集成)
+
+**相关文件**:
+- 详细需求: `docs/ASSESSMENT_REGISTRATION_REQUIREMENTS.md`
+- 功能需求: `docs/FEATURE_REQUIREMENTS.md` (4.3.5 活动生命周期管理)
+- 活动路由: `backend/src/routes/activities.js`
+- 活动模型: `backend/src/models/Activity.js`
+- 通知服务: `backend/src/services/NotificationService.js`
+
+---
+
+### ⏳ 测评创建权限管理开发 (2025-11-29)
+
+**目标**: 实现测评创建的细粒度权限控制
+
+**当前状态**: ⏳ 计划已制定，待开发
+
+**需求概述**:
+
+| 角色 | 默认权限 | 可授权范围 | 等级限制 |
+|-----|---------|-----------|---------|
+| 普通老师 (teacher) | ❌ 无测评创建权限 | 可被区级管理员授权 | L4-L6（学科配置） |
+| 校级管理员 (school_admin) | ❌ 无测评创建权限 | - | - |
+| 区级管理员 (district_admin) | ✅ 默认有测评创建权限 | 可授权老师对应科目 | L4-L6（学科配置） |
+| 市级管理员 (municipal_admin) | ✅ 有测评创建权限 | 可授权所有科目 | **全等级 L1-L7** |
+| 系统管理员 (system_admin) | ✅ 有测评创建权限 | 可授权所有科目 | **全等级 L1-L7** |
+
+#### 开发计划
+
+| 阶段 | 任务 | 工期 | 状态 |
+|------|------|------|------|
+| 1 | 后端配置 - 创建学科等级权限配置文件 | 0.5天 | ⏳ 待开始 |
+| 2 | 数据库设计 - 新增权限类型 | 0.5天 | ⏳ 待开始 |
+| 3 | 后端模型 - 扩展 TeacherPermission | 1天 | ⏳ 待开始 |
+| 4 | 后端中间件 - 修改 activityPermission.js | 1天 | ⏳ 待开始 |
+| 5 | 后端路由 - 扩展权限API | 0.5天 | ⏳ 待开始 |
+| 6 | 前端配置 - 同步学科等级权限 | 0.5天 | ⏳ 待开始 |
+| 7 | 前端页面 - 更新权限管理页面 | 1天 | ⏳ 待开始 |
+| 8 | 文档更新 | 0.5天 | ⏳ 待开始 |
+| 9 | 测试验证 | 1天 | ⏳ 待开始 |
+| **总计** | - | **6-7天** | - |
+
+#### 详细开发步骤
+
+**1. 后端配置 - 创建学科等级权限配置文件**
+- 文件: `backend/src/config/subjectPermissions.js`
+- 内容:
+  - 定义不同角色可创建测评的等级范围
+  - 区级管理员/授权教师: L4-L6
+  - 市级/系统管理员: L1-L7
+
+**2. 数据库设计 - 新增权限类型**
+- 新增权限类型: `assessment_create_{subject}` (如 `assessment_create_数学`)
+- 复用 `teacher_permissions` 表，添加新类型
+
+**3. 后端模型 - 扩展 TeacherPermission**
+- 新增方法:
+  - `hasAssessmentCreatePermission(userId, subject, abilityLevel)` - 检查测评创建权限
+  - `getAvailableAssessmentLevels(userId, subject)` - 获取可创建的等级范围
+  - `grantAssessmentCreatePermission(...)` - 授予测评创建权限
+
+**4. 后端中间件 - 修改 activityPermission.js**
+- 修改 `requireActivityPermission('assessment')`:
+  - 移除 `school_admin` 从默认允许角色
+  - 添加数据库权限检查逻辑
+  - 添加能力等级限制检查
+- 修改 `validateAbilityLevel`:
+  - 增加角色-等级限制验证
+
+**5. 后端路由 - 扩展权限API**
+- 新增端点:
+  - `POST /permissions/grant-assessment-create` - 授予测评创建权限
+  - `GET /permissions/my-assessment-create` - 获取我的测评创建权限
+  - `GET /permissions/available-assessment-levels` - 获取可用等级
+
+**6. 前端配置 - 同步学科等级权限**
+- 文件: `frontend/src/config/subjectPermissions.ts`
+- 同步后端配置
+
+**7. 前端页面 - 更新权限管理**
+- 修改: `frontend/src/pages/admin/PermissionManagement.tsx`
+- 添加"测评创建权限"类型选项
+- 区级管理员可授权本区老师
+- 显示等级限制说明
+
+**8. 文档更新**
+- `documents/API_Document.md` - 新增API说明
+- `documents/FEATURE_REQUIREMENTS.md` - 权限需求更新
+
+**相关文件**:
+- 后端配置: `backend/src/config/subjectPermissions.js` (新建)
+- 后端模型: `backend/src/models/TeacherPermission.js`
+- 后端中间件: `backend/src/middleware/activityPermission.js`
+- 后端路由: `backend/src/routes/permissions.js`
+- 前端配置: `frontend/src/config/subjectPermissions.ts` (新建)
+- 前端页面: `frontend/src/pages/admin/PermissionManagement.tsx`
+
+---
 
 ### ✅ 教学班管理系统开发 (2025-11-26)
 

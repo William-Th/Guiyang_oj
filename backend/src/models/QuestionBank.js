@@ -1,5 +1,6 @@
 const { query } = require('../database/connection');
 const QuestionDraft = require('./QuestionDraft');
+const { generateAndSetQuestionCode } = require('../services/questionCodeService');
 
 /**
  * QuestionBank Model (Redesigned)
@@ -41,10 +42,26 @@ class QuestionBank {
     const values = [draft_id, scope, published_by, reviewer_id, status];
     const result = await query(sql, values);
 
+    const publishedRecord = result.rows[0];
+
+    // 如果是发布状态，生成题目编码
+    if (status === 'published' && publishedRecord) {
+      try {
+        // 获取草稿的科目信息
+        const draft = await QuestionDraft.findById(draft_id);
+        if (draft && draft.subject) {
+          await generateAndSetQuestionCode(publishedRecord.id, draft.subject);
+        }
+      } catch (codeError) {
+        console.error('Error generating question code:', codeError);
+        // 编码生成失败不影响发布
+      }
+    }
+
     // 更新草稿的发布计数
     await QuestionDraft.updatePublishCount(draft_id);
 
-    return result.rows[0];
+    return publishedRecord;
   }
 
   /**

@@ -379,20 +379,20 @@ router.get('/:id/questions',
       }
 
       // Get questions (without correct_answer for security)
+      // Use question_bank_with_draft view to get question content
       const questionsResult = await query(`
         SELECT
           aq.id as activity_question_id,
           aq.question_id,
           aq.order_index,
           aq.score as max_score,
-          aq.is_required,
           qb.question_code,
           qb.type,
           qb.content,
           qb.options,
           qb.difficulty
         FROM activity_questions aq
-        JOIN question_bank qb ON aq.question_id = qb.id
+        JOIN question_bank_with_draft qb ON aq.question_id = qb.id
         WHERE aq.activity_id = $1
         ORDER BY aq.order_index ASC
       `, [activityId]);
@@ -424,7 +424,7 @@ router.post('/:id/answers',
   [
     param('id').isInt().withMessage('Invalid activity ID'),
     body('questionId').isInt().withMessage('Question ID is required'),
-    body('answer').notEmpty().withMessage('Answer is required')
+    body('answer').exists().withMessage('Answer field is required')  // Allow empty answers
   ],
   async (req, res) => {
     try {
@@ -707,7 +707,7 @@ router.get('/:id/result',
           qb.correct_answer,
           aq.score as max_score
         FROM answers a
-        JOIN question_bank qb ON a.question_id = qb.id
+        JOIN question_bank_with_draft qb ON a.question_id = qb.id
         JOIN activity_questions aq ON aq.activity_id = $2 AND aq.question_id = a.question_id
         WHERE a.student_exam_id = $1
         ORDER BY qb.id ASC

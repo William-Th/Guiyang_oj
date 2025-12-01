@@ -29,9 +29,7 @@ export async function addQuestionsToActivity(
 
       const questions = questionIds.map(questionId => ({
         questionId,
-        score: defaultScore,
-        isRequired: true,
-        section: null
+        score: defaultScore
       }));
 
       const response = await fetch(`http://localhost:3001/api/activities/${activityId}/questions/batch`, {

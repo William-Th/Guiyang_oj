@@ -75,7 +75,7 @@ class Answer {
              q.content as question_content, q.type as question_type,
              q.correct_answer, q.explanation
       FROM answers a
-      JOIN question_bank q ON a.question_id = q.id
+      JOIN question_bank_with_draft q ON a.question_id = q.id
       JOIN student_activities sa ON a.student_exam_id = sa.id
       JOIN activity_questions aq ON sa.activity_id = aq.activity_id AND a.question_id = aq.question_id
       WHERE a.student_exam_id = $1

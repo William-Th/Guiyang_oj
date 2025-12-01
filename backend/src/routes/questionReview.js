@@ -4,6 +4,7 @@ const QuestionBank = require('../models/QuestionBank');
 const QuestionReview = require('../models/QuestionReview');
 const TeacherPermission = require('../models/TeacherPermission');
 const { authMiddleware } = require('../middleware/auth');
+const { generateAndSetQuestionCode } = require('../services/questionCodeService');
 
 // 获取我的草稿
 router.get('/drafts', authMiddleware, async (req, res) => {
@@ -399,6 +400,20 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
       ]);
 
       reviewedQuestion = updateResult.rows[0];
+
+      // 如果批准（状态变为published），生成题目编码
+      if (status === 'approved' && reviewedQuestion) {
+        try {
+          // 从 question_bank_with_draft 视图获取题目的科目信息
+          const questionWithDraft = await QuestionBank.findById(id);
+          if (questionWithDraft && questionWithDraft.subject) {
+            await generateAndSetQuestionCode(reviewedQuestion.id, questionWithDraft.subject);
+          }
+        } catch (codeError) {
+          console.error('Error generating question code:', codeError);
+          // 编码生成失败不影响审核结果
+        }
+      }
 
       // 记录审核历史
       await QuestionReview.create({

@@ -152,7 +152,7 @@ class Activity {
       return null;
     }
 
-    // Query questions from activity_questions and question_bank (new schema)
+    // Query questions from activity_questions and question_bank_with_draft view
     const questionsResult = await query(`
       SELECT
         qb.id,
@@ -163,10 +163,9 @@ class Activity {
         qb.explanation,
         qb.difficulty,
         aq.score,
-        aq.order_index as order_no,
-        aq.is_required
+        aq.order_index as order_no
       FROM activity_questions aq
-      INNER JOIN question_bank qb ON aq.question_id = qb.id
+      INNER JOIN question_bank_with_draft qb ON aq.question_id = qb.id
       WHERE aq.activity_id = $1
       ORDER BY aq.order_index ASC
     `, [id]);
@@ -668,12 +667,25 @@ class Activity {
   }
 
   /**
-   * Delete activity (soft delete by setting status to 'cancelled')
+   * Delete activity (hard delete - will cascade delete related data)
    * @param {number} id - Activity ID
-   * @returns {Promise<Object>} Deleted activity
+   * @returns {Promise<Object>} Deleted activity info
    */
   static async delete(id) {
-    return this.updateStatus(id, 'cancelled');
+    // First get the activity info for logging
+    const activity = await this.findById(id);
+    if (!activity) {
+      return null;
+    }
+
+    // Hard delete - will cascade delete:
+    // - activity_questions (题目关联)
+    // - student_activities (学生参与记录)
+    // - answers (学生答案，通过 student_activities 级联)
+    const sql = 'DELETE FROM activities WHERE id = $1 RETURNING id, title';
+    const result = await query(sql, [id]);
+
+    return result.rows[0] || null;
   }
 }
 

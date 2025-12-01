@@ -79,7 +79,11 @@ INSERT INTO users (username, password, role, real_name, phone, email) VALUES
 INSERT INTO users (username, password, role, real_name, phone, email) VALUES
 ('13800138003', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '张小明', '13800138003', 'student01@example.com'),
 ('13800138004', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '李小红', '13800138004', 'student02@example.com'),
-('13800138005', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '王小刚', '13800138005', 'student03@example.com');
+('13800138005', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '王小刚', '13800138005', 'student03@example.com'),
+-- 云岩区第一小学学生 (school_id = 6)
+('13812340001', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '云岩一小-王明', '13812340001', NULL),
+('13812340002', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '云岩一小-李华', '13812340002', NULL),
+('13812340003', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'student', '云岩一小-张伟', '13812340003', NULL);
 
 -- Insert teacher records (18 teachers for 3 districts)
 -- School mapping: school_id 1 (云岩区), 2 (南明区), 4 (白云区)
@@ -110,7 +114,11 @@ INSERT INTO teachers (user_id, teacher_no, school_id, subjects, title) VALUES
 INSERT INTO students (user_id, student_no, school_id, grade, class, guardian_name, guardian_phone) VALUES
 ((SELECT id FROM users WHERE username = '520102200801011234'), 'S2024001', 1, '三年级', '3班', '张父亲', '13900139001'),
 ((SELECT id FROM users WHERE username = '520102200802012345'), 'S2024002', 1, '三年级', '3班', '李母亲', '13900139002'),
-((SELECT id FROM users WHERE username = '520102200803013456'), 'S2024003', 1, '三年级', '3班', '王父亲', '13900139003');
+((SELECT id FROM users WHERE username = '520102200803013456'), 'S2024003', 1, '三年级', '3班', '王父亲', '13900139003'),
+-- 云岩区第一小学学生 (school_id = 6)
+((SELECT id FROM users WHERE username = '13812340001'), 'YY-PS-01-2025001', 6, '三年级', '1班', NULL, NULL),
+((SELECT id FROM users WHERE username = '13812340002'), 'YY-PS-01-2025002', 6, '三年级', '1班', NULL, NULL),
+((SELECT id FROM users WHERE username = '13812340003'), 'YY-PS-01-2025003', 6, '四年级', '2班', NULL, NULL);
 
 -- Insert admin permissions (管理员权限配置)
 -- District administrators

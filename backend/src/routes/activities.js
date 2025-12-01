@@ -12,6 +12,7 @@ const Activity = require('../models/Activity');
 const StudentExam = require('../models/StudentExam'); // Will be renamed to StudentActivity later
 const Answer = require('../models/Answer');
 const logger = require('../utils/logger');
+const { query } = require('../database/connection');
 
 // ========================================
 // Student-specific APIs
@@ -866,6 +867,22 @@ router.put('/:id/status', [
       });
     }
 
+    // 检查测评活动取消发布时是否有报名记录
+    if (activity.type === 'assessment' && activity.status === 'published' && status === 'draft') {
+      const registrationCheck = await query(`
+        SELECT COUNT(*) as count
+        FROM assessment_registrations
+        WHERE activity_id = $1 AND status NOT IN ('cancelled', 'rejected')
+      `, [id]);
+
+      if (parseInt(registrationCheck.rows[0].count) > 0) {
+        return res.status(400).json({
+          success: false,
+          message: '该测评已有学生报名，无法取消发布。如需取消，请先处理报名记录。'
+        });
+      }
+    }
+
     // Update the status
     const updatedActivity = await Activity.updateStatus(id, status);
 
@@ -1041,15 +1058,15 @@ router.delete('/:id', [
       });
     }
 
-    // Only allow deleting draft activities
+    // Only allow deleting draft (unpublished) activities
     if (activity.status !== 'draft') {
       return res.status(400).json({
         success: false,
-        message: '只能删除草稿状态的活动'
+        message: '只能删除未发布的活动，请先取消发布'
       });
     }
 
-    // Delete the activity (soft delete: set status to 'cancelled')
+    // Hard delete the activity (will cascade delete related data)
     const deletedActivity = await Activity.delete(id);
 
     if (!deletedActivity) {
@@ -1059,16 +1076,17 @@ router.delete('/:id', [
       });
     }
 
-    logger.info('Activity deleted', {
+    logger.info('Activity deleted (hard delete)', {
       activityId: id,
       title: activity.title,
+      status: activity.status,
       deletedBy: req.user.id,
       role: req.user.role
     });
 
     res.json({
       success: true,
-      message: '活动删除成功'
+      message: '活动及相关数据删除成功'
     });
   } catch (error) {
     logger.error('Delete activity error:', error);
@@ -1224,9 +1242,7 @@ router.post('/:id/questions',
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     body('questionId').isInt().withMessage('Question ID is required and must be an integer'),
-    body('score').optional().isFloat({ min: 0 }).withMessage('Score must be a positive number'),
-    body('isRequired').optional().isBoolean().withMessage('isRequired must be a boolean'),
-    body('section').optional().isString().withMessage('Section must be a string')
+    body('score').optional().isFloat({ min: 0 }).withMessage('Score must be a positive number')
   ],
   async (req, res) => {
     try {
@@ -1240,12 +1256,12 @@ router.post('/:id/questions',
       }
 
       const activityId = parseInt(req.params.id);
-      const { questionId, score, isRequired, section } = req.body;
+      const { questionId, score } = req.body;
 
       const addedQuestion = await PaperGenerationService.addQuestionToActivity(
         activityId,
         questionId,
-        { score, isRequired, section },
+        { score },
         req.user
       );
 
@@ -1422,9 +1438,7 @@ router.put('/:id/questions/:questionId',
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     param('questionId').isInt().withMessage('Question ID must be an integer'),
-    body('score').optional().isFloat({ min: 0 }).withMessage('Score must be a positive number'),
-    body('isRequired').optional().isBoolean().withMessage('isRequired must be a boolean'),
-    body('section').optional().isString().withMessage('Section must be a string')
+    body('score').optional().isFloat({ min: 0 }).withMessage('Score must be a positive number')
   ],
   async (req, res) => {
     try {
@@ -1439,12 +1453,12 @@ router.put('/:id/questions/:questionId',
 
       const activityId = parseInt(req.params.id);
       const questionId = parseInt(req.params.questionId);
-      const { score, isRequired, section } = req.body;
+      const { score } = req.body;
 
       const updatedQuestion = await PaperGenerationService.updateActivityQuestion(
         activityId,
         questionId,
-        { score, isRequired, section },
+        { score },
         req.user
       );
 

@@ -34,7 +34,7 @@ class AutoGradingService {
           qb.correct_answer,
           aq.score as max_score
         FROM answers a
-        JOIN question_bank qb ON a.question_id = qb.id
+        JOIN question_bank_with_draft qb ON a.question_id = qb.id
         JOIN activity_questions aq ON aq.question_id = a.question_id
         JOIN student_activities sa ON a.student_exam_id = sa.id
         WHERE a.student_exam_id = $1
@@ -407,7 +407,7 @@ class AutoGradingService {
           aq.score as max_score,
           a.student_exam_id
         FROM answers a
-        JOIN question_bank qb ON a.question_id = qb.id
+        JOIN question_bank_with_draft qb ON a.question_id = qb.id
         JOIN activity_questions aq ON aq.question_id = a.question_id
         WHERE a.id = $1
       `, [answerId]);

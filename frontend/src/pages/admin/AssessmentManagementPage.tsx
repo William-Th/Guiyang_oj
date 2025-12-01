@@ -56,7 +56,7 @@ const AssessmentManagementPage: React.FC = () => {
   const handleDelete = async (assessmentId: number) => {
     Modal.confirm({
       title: '确认删除',
-      content: '确定要删除这个测评吗？此操作不可恢复。',
+      content: '确定要删除这个活动吗？此操作不可恢复。注意：只能删除未发布的活动。',
       okText: '确认',
       cancelText: '取消',
       okButtonProps: { danger: true },

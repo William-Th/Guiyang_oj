@@ -48,7 +48,7 @@ class PaperGenerationService {
    * Add a question to an activity
    * @param {number} activityId - Activity ID
    * @param {number} questionId - Question ID
-   * @param {Object} options - Options {score, isRequired, section}
+   * @param {Object} options - Options {score}
    * @param {Object} user - User object
    * @returns {Promise<Object>} Added question
    */
@@ -110,9 +110,7 @@ class PaperGenerationService {
       activityId,
       questionId,
       orderIndex,
-      score,
-      isRequired: options.isRequired !== undefined ? options.isRequired : true,
-      section: options.section || null
+      score
     });
 
     return addedQuestion;
@@ -121,7 +119,7 @@ class PaperGenerationService {
   /**
    * Add multiple questions to an activity (batch)
    * @param {number} activityId - Activity ID
-   * @param {Array} questions - Array of {questionId, score, isRequired, section}
+   * @param {Array} questions - Array of {questionId, score}
    * @param {Object} user - User object
    * @returns {Promise<Object>} Result with added questions and errors
    */
@@ -157,7 +155,7 @@ class PaperGenerationService {
         const addedQuestion = await this.addQuestionToActivity(
           activityId,
           q.questionId,
-          { score: q.score, isRequired: q.isRequired, section: q.section },
+          { score: q.score },
           user
         );
         results.added.push(addedQuestion);
@@ -215,7 +213,7 @@ class PaperGenerationService {
    * Update question properties in an activity
    * @param {number} activityId - Activity ID
    * @param {number} questionId - Question ID
-   * @param {Object} updates - Updates {score, isRequired, section}
+   * @param {Object} updates - Updates {score}
    * @param {Object} user - User object
    * @returns {Promise<Object>} Updated question
    */
