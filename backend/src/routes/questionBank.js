@@ -166,9 +166,31 @@ router.get('/bank/search', authMiddleware, async (req, res) => {
 });
 
 // Get a single question by ID
+// Supports both question_drafts.id (from POST /bank) and question_bank.id (published)
+// Priority: question_drafts.id first (since POST /bank returns draft_id)
 router.get('/bank/:id', authMiddleware, async (req, res) => {
   try {
-    const question = await QuestionBank.findById(req.params.id);
+    let question = null;
+    const QuestionDraft = require('../models/QuestionDraft');
+
+    // First try to find by question_drafts.id (since POST /bank returns draft_id)
+    const draft = await QuestionDraft.findById(req.params.id);
+    if (draft) {
+      // Return draft - include is_published flag
+      question = {
+        ...draft,
+        is_published: false,
+        status: draft.status || 'draft'
+      };
+    }
+
+    // If no draft found, try question_bank.id (for backwards compatibility with published questions)
+    if (!question) {
+      question = await QuestionBank.findById(req.params.id);
+      if (question) {
+        question.is_published = true;
+      }
+    }
 
     if (!question) {
       return res.status(404).json({ success: false, error: 'Question not found' });

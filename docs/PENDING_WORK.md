@@ -1,10 +1,105 @@
 # 待完成工作
 
-**最后更新**: 2025-12-01 (通知系统开发完成)
+**最后更新**: 2025-12-10 (编程题判题系统测试修复)
 
 ---
 
 ## 🔥 当前工作状态
+
+### ✅ 编程题判题系统 (2025-12-10)
+
+**目标**: 集成代码评测功能，支持在线编程题的自动判题
+
+**当前状态**: ✅ 核心功能完成，API测试通过
+
+#### 已完成工作
+
+| 阶段 | 任务 | 状态 | 产出文件 |
+|------|------|------|---------|
+| 1 | 数据库设计 | ✅ 完成 | migrations/031_judge_system.sql |
+| 2 | Judge Service微服务 | ✅ 完成 | judge-service/src/ |
+| 3 | Docker沙箱环境 | ✅ 完成 | judge-service/sandbox/, Dockerfile |
+| 4 | 后端API代理 | ✅ 完成 | backend/src/routes/judge.js |
+| 5 | 前端代码编辑器 | ✅ 完成 | frontend/src/components/CodeEditor/ |
+| 6 | 前端判题结果组件 | ✅ 完成 | frontend/src/components/JudgeResult/ |
+| 7 | 前端编程题组件 | ✅ 完成 | frontend/src/components/CodeQuestion/ |
+| 8 | 列名映射修复 | ✅ 完成 | judge-service/src/models/Submission.js |
+| 9 | 状态码标准化 | ✅ 完成 | JudgeService.js, Executor.js, Checker.js |
+| 10 | 数据库约束修复 | ✅ 完成 | migrations/033_fix_code_submissions.sql |
+| 11 | TestCase模型ID映射修复 | ✅ 完成 | judge-service/src/models/TestCase.js |
+| 12 | Python语言支持 | ✅ 完成 | sandbox/Dockerfile, config.js, Compiler.js |
+| 13 | GET /bank/:id API修复 | ✅ 完成 | backend/src/routes/questionBank.js |
+| 14 | Docker stdin竞态条件修复 | ✅ 完成 | judge-service/src/sandbox/DockerSandbox.js |
+| 15 | API测试脚本 | ✅ 完成 | tests/api/test-code-question-flow.js |
+
+#### 技术实现
+
+**Judge Service架构**:
+- 消息队列: Redis + Bull 处理判题任务
+- 沙箱执行: Docker容器隔离，资源限制
+- 编译执行: 支持 C++ (g++)、C (gcc)、Python 3
+- 结果比对: 支持严格匹配、忽略行尾空白等模式
+
+**数据库表**:
+- `test_cases`: 测试用例存储
+- `code_submissions`: 代码提交记录
+- `judge_queue`: 判题队列状态
+
+**状态码** (符合数据库CHECK约束):
+- `pending`, `judging`, `accepted`, `wrong_answer`
+- `compile_error`, `runtime_error`, `time_limit`
+- `memory_limit`, `output_limit`, `system_error`
+
+#### 测试结果
+
+**API测试 (test-code-question-flow.js)**:
+| 测试步骤 | 描述 | 结果 |
+|---------|------|------|
+| 创建编程题 | POST /api/question-bank/bank | ✅ 通过 |
+| 获取编程题 | GET /api/question-bank/bank/:id | ✅ type=code |
+| 添加测试用例 | POST /api/testcases/:id/bulk | ✅ 4个用例 |
+| 获取示例用例 | GET /api/judge/testcases/:id/samples | ✅ 2个示例 |
+| 代码执行 | POST /api/judge/run | ✅ 正确输出 |
+| 代码提交判题 | POST /api/judge/submit | ✅ accepted 100/100 |
+| 错误答案检测 | 提交错误代码 | ✅ wrong_answer |
+
+**语言测试**:
+| 测试场景 | 语言 | 预期状态 | 实际结果 |
+|---------|------|---------|---------|
+| 正确代码 | C++ | accepted | ✅ 100/100 |
+| 正确代码 | Python | accepted | ✅ 100/100 |
+| 错误输出 | C++ | wrong_answer | ✅ 通过 |
+| 编译错误 | C++ | compile_error | ✅ 通过 |
+| 死循环代码 | C++ | time_limit | ✅ 通过 |
+
+#### 待完成工作
+
+**P0 - 高优先级（全部已解决）**:
+
+| 任务 | 描述 | 状态 |
+|------|------|------|
+| 测试用例ID映射修复 | TestCase模型支持question_bank.id和question_drafts.id | ✅ 已修复 |
+| Python语言支持 | 添加Python 3到沙箱镜像和配置 | ✅ 已完成 |
+| GET /bank/:id API修复 | 优先检查question_drafts.id，兼容POST返回的草稿ID | ✅ 已修复 |
+| Docker stdin竞态条件 | 使用文件输入替代stdin流，避免竞态条件 | ✅ 已修复 |
+
+**P1 - 中优先级（功能完善）**:
+
+| 任务 | 描述 | 相关文件 | 预估工作量 |
+|------|------|---------|-----------|
+| 前端CodeQuestion集成测试 | 测试编程题在测评中的完整流程 | tests/e2e/ | 1天 |
+| 编程题创建表单完善 | 教师端创建编程题的表单组件 | CodeQuestionForm.tsx | 0.5天 |
+
+**P2 - 低优先级（优化扩展）**:
+
+| 任务 | 描述 | 相关文件 | 预估工作量 |
+|------|------|---------|-----------|
+| E2E测试补充 | 判题流程端到端测试 | tests/e2e/judge.spec.ts | 1天 |
+| 内存限制功能 | 实现真正的内存限制检测 | Executor.js, DockerSandbox.js | 1天 |
+| 特判程序支持 | 支持自定义判题程序 | Checker.js | 1天 |
+| 代码高亮优化 | Monaco编辑器主题和代码补全 | CodeEditor.tsx | 0.5天 |
+
+---
 
 ### ✅ 通知系统开发 (2025-12-01)
 
@@ -1938,31 +2033,36 @@ git merge feature/achievement-system
 - ✅ PENDING_WORK.md文档更新
 
 **🚀 下一步行动**:
-1. **数据可视化API修复** (P0 - 1-2天) - 阻塞问题 🆕
+1. **编程题判题系统完善** (P0 - 1天) - 当前进行中 🆕
+   - 排查1个测试用例失败的原因（可能是行尾空白）
+   - 同步schema.sql（031-033迁移文件）
+   - 补充Python/Java语言支持
+
+2. **数据可视化API修复** (P0 - 1-2天) - 阻塞问题
    - 修复统计视图缺少grade字段问题
    - 修复admin_permissions查询字段不匹配
    - 运行API测试验证修复（5/5测试通过）
    - 补充E2E测试
 
-2. **成就自动触发逻辑开发** (P1 - 2-3天) - 核心功能
+3. **成就自动触发逻辑开发** (P1 - 2-3天) - 核心功能
    - 实现AchievementDetector自动检测学生活动完成
    - 集成EventBus事件监听（STUDENT_ACTIVITY.COMPLETED）
    - 实现成就条件匹配算法（count类型）
    - 自动授予成就并发送通知
    - 编写自动触发测试用例
 
-3. **成就进度追踪功能** (P1 - 1-2天)
+4. **成就进度追踪功能** (P1 - 1-2天)
    - 实现achievement_progress表追踪未解锁成就进度
    - 更新 /api/achievements/student/:studentId/progress 接口
    - 返回未解锁成就的当前进度（如：5/10次练习）
    - 编写进度追踪测试
 
-4. **评卷管理 Phase 1** (P0 - 1-2天) - Bug修复与基础优化
+5. **评卷管理 Phase 1** (P0 - 1-2天) - Bug修复与基础优化
    - 筛选功能增强（活动选择、日期筛选、搜索）
    - 评卷详情页优化（题目导航、快捷键、进度条）
    - 错误处理优化
 
-5. **成就系统 Week 4** (待自动触发完成后) - 日常任务系统
+6. **成就系统 Week 4** (待自动触发完成后) - 日常任务系统
    - Day 1: 任务规则引擎设计
    - Day 2: DailyTaskDetector实现
    - Day 3: 任务完成奖励机制

@@ -929,10 +929,17 @@ CREATE TABLE public.question_bank (
     published_at timestamp without time zone,
     published_by integer,
     question_code character varying(20),
+    code_template text,
+    time_limit integer DEFAULT 1000,
+    memory_limit integer DEFAULT 256,
+    judge_mode character varying(20) DEFAULT 'standard'::character varying,
+    special_judge_code text,
+    supported_languages text[] DEFAULT '{cpp}'::text[],
     CONSTRAINT question_bank_difficulty_check CHECK (((difficulty)::text = ANY ((ARRAY['easy'::character varying, 'medium'::character varying, 'hard'::character varying])::text[]))),
     CONSTRAINT question_bank_level_check CHECK (((level)::text = ANY ((ARRAY['L1'::character varying, 'L2'::character varying, 'L3'::character varying, 'L4'::character varying, 'L5'::character varying, 'L6'::character varying, 'L7'::character varying, 'L8'::character varying, 'L9'::character varying])::text[]))),
     CONSTRAINT question_bank_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'approved'::character varying, 'rejected'::character varying, 'published'::character varying])::text[]))),
-    CONSTRAINT question_bank_type_check CHECK (((type)::text = ANY ((ARRAY['single'::character varying, 'multiple'::character varying, 'blank'::character varying, 'true_false'::character varying, 'essay'::character varying, 'code'::character varying, 'matching'::character varying])::text[])))
+    CONSTRAINT question_bank_type_check CHECK (((type)::text = ANY ((ARRAY['single'::character varying, 'multiple'::character varying, 'blank'::character varying, 'true_false'::character varying, 'essay'::character varying, 'code'::character varying, 'matching'::character varying])::text[]))),
+    CONSTRAINT question_bank_judge_mode_check CHECK ((judge_mode IS NULL OR (judge_mode)::text = ANY ((ARRAY['standard'::character varying, 'special'::character varying])::text[])))
 );
 
 
@@ -989,7 +996,49 @@ COMMENT ON COLUMN public.question_bank.scope IS '题库范围数组: assessment-
 -- Name: COLUMN question_bank.question_code; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.question_bank.question_code IS '题目唯一编码，格式：科目代码+年月�?序号，如MATH250120001';
+COMMENT ON COLUMN public.question_bank.question_code IS '题目唯一编码，格式：科目代码+年月日+序号，如MATH250120001';
+
+
+--
+-- Name: COLUMN question_bank.code_template; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.question_bank.code_template IS '编程题代码模板，预填充给学生作为起始代码';
+
+
+--
+-- Name: COLUMN question_bank.time_limit; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.question_bank.time_limit IS '编程题默认时间限制(毫秒)，各测试点可单独设置';
+
+
+--
+-- Name: COLUMN question_bank.memory_limit; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.question_bank.memory_limit IS '编程题默认内存限制(MB)，各测试点可单独设置';
+
+
+--
+-- Name: COLUMN question_bank.judge_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.question_bank.judge_mode IS '判题模式: standard-标准输出比对, special-使用特判程序';
+
+
+--
+-- Name: COLUMN question_bank.special_judge_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.question_bank.special_judge_code IS '特判程序C++代码，用于有多个正确答案的题目';
+
+
+--
+-- Name: COLUMN question_bank.supported_languages; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.question_bank.supported_languages IS '支持的编程语言列表，默认只支持cpp';
 
 
 --
@@ -5575,6 +5624,21 @@ COMMENT ON VIEW v_pending_teaching_classes IS '待审批教学班视图 - 显示
 
 -- =====================================================
 -- 测评报名管理系统 完成
+-- =====================================================
+
+
+-- =====================================================
+-- 编程题判题系统
+-- 迁移文件: 031_judge_system.sql, 032_update_question_bank_view.sql, 033_fix_code_submissions.sql
+-- =====================================================
+
+-- 导入迁移脚本
+\i migrations/031_judge_system.sql
+\i migrations/032_update_question_bank_view.sql
+\i migrations/033_fix_code_submissions.sql
+
+-- =====================================================
+-- 编程题判题系统 完成
 -- =====================================================
 
 

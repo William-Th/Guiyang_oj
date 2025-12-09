@@ -2233,6 +2233,9 @@ Authorization: Bearer <token>
 | RESULT_001 | 成绩不存在 |
 | CERT_001 | 证书不存在 |
 | CERT_002 | 证书无效 |
+| JUDGE_001 | 提交不存在 |
+| JUDGE_002 | 判题服务不可用 |
+| JUDGE_003 | 不支持的编程语言 |
 
 ### 错误响应格式
 
@@ -2246,6 +2249,111 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+---
+
+## 📝 代码判题 API
+
+### 提交代码
+
+**POST** `/api/judge/submit`
+
+提交代码进行判题。
+
+**请求参数**:
+```json
+{
+  "questionId": 1,           // 题目ID (question_bank.id)
+  "code": "#include...",     // 源代码
+  "language": "cpp",         // 编程语言: cpp, c, python, java
+  "studentActivityId": 123   // 可选，学生活动ID
+}
+```
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "submissionId": 456,
+    "status": "pending",
+    "message": "提交成功，正在判题中"
+  }
+}
+```
+
+### 查询判题状态
+
+**GET** `/api/judge/status/:submissionId`
+
+查询提交的判题状态和结果。
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "submissionId": 456,
+    "status": "accepted",      // pending, judging, accepted, wrong_answer, compile_error, runtime_error, time_limit, memory_limit, partial
+    "score": 75,
+    "totalScore": 100,
+    "compileOutput": "Compilation successful",
+    "executionTime": 120,      // 毫秒
+    "testResults": [
+      {
+        "caseNumber": 1,
+        "status": "accepted",
+        "score": 25,
+        "executionTime": 30
+      }
+    ],
+    "submittedAt": "2025-12-09T10:00:00Z",
+    "judgedAt": "2025-12-09T10:00:05Z"
+  }
+}
+```
+
+### 获取测试用例
+
+**GET** `/api/judge/test-cases/:questionId`
+
+获取题目的样例测试用例（is_sample=true的测试点）。
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "testCases": [
+      {
+        "caseNumber": 1,
+        "input": "5\n1 2 3 4 5",
+        "expectedOutput": "15",
+        "description": "样例1：基础求和"
+      }
+    ],
+    "timeLimit": 1000,
+    "memoryLimit": 256,
+    "supportedLanguages": ["cpp", "c", "python"]
+  }
+}
+```
+
+### 判题状态说明
+
+| 状态码 | 说明 |
+|-------|------|
+| pending | 等待判题 |
+| judging | 判题中 |
+| accepted | 全部通过 (AC) |
+| wrong_answer | 答案错误 (WA) |
+| compile_error | 编译错误 (CE) |
+| runtime_error | 运行错误 (RE) |
+| time_limit | 运行超时 (TLE) |
+| memory_limit | 内存超限 (MLE) |
+| output_limit | 输出超限 (OLE) |
+| partial | 部分通过 |
+| system_error | 系统错误 |
 
 ---
 
@@ -2298,6 +2406,16 @@ Authorization: Bearer <your_jwt_token>
 
 ## 🔄 版本历史
 
+### v1.2 (2025-12-09)
+- ⭐ **新增**: 代码判题 API
+  - 提交代码、查询判题状态
+  - 获取样例测试用例
+  - 支持 C++ 语言（可扩展 Python、Java）
+- ⭐ **新增**: Judge Service 微服务
+  - Docker 沙箱执行环境
+  - Bull 队列异步判题
+  - 多种判题状态支持
+
 ### v1.1 (2025-10-30)
 - ⭐ **新增**: 学生答题 API
   - 开始活动、获取题目、提交答案
@@ -2326,5 +2444,5 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-*最后更新: 2025-10-30*
+*最后更新: 2025-12-09*
 *文档维护: 开发团队*

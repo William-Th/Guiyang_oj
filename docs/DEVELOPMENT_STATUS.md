@@ -309,6 +309,57 @@
 
 ---
 
+### 13. 编程题判题系统 (NEW - 2025-12-09)
+
+**背景**: 支持编程题（type='code'）的在线评测功能，包括代码编译、执行、测试用例评测、自动评分等。
+
+**设计文档**: `documents/JUDGE_SERVICE_DESIGN.md`
+
+**目标**:
+- 支持 C++ 和 C 语言代码在线编译和执行
+- 支持测试用例管理和自动评测
+- 支持时间/内存限制检测
+- 集成到现有的活动系统中
+
+| 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
+|------|--------|---------|---------|------|---------|------|
+| **数据库设计** |  |  |  |  |  |  |
+| test_cases表 | ✅ | N/A | N/A | N/A | N/A | 测试用例管理 |
+| code_submissions表 | ✅ | N/A | N/A | N/A | N/A | 代码提交记录 |
+| judge_queue表 | ✅ | N/A | N/A | N/A | N/A | 判题队列 |
+| question_drafts编程字段 | ✅ | N/A | N/A | N/A | N/A | code_template, time_limit, memory_limit等 |
+| question_bank_with_draft视图更新 | ✅ | N/A | N/A | N/A | N/A | 包含编程题字段 |
+| **Judge-Service微服务** |  |  |  |  |  |  |
+| Docker沙箱执行 | ✅ | ✅ | ✅ | N/A | N/A | DockerSandbox.js |
+| 代码编译 | ✅ | ✅ | ✅ | N/A | N/A | Compiler.js |
+| 代码执行 | ✅ | ✅ | ✅ | N/A | N/A | Executor.js |
+| 结果检查 | ✅ | ✅ | ✅ | N/A | N/A | Checker.js |
+| 异步队列处理 | ✅ | ✅ | ✅ | N/A | N/A | RedisQueue.js, Consumer.js |
+| **后端API** |  |  |  |  |  |  |
+| POST /api/judge/submit | ✅ | ✅ | ✅ | N/A | N/A | 提交代码评测 |
+| POST /api/judge/run | ✅ | ✅ | ✅ | N/A | N/A | 快速运行（不保存） |
+| GET /api/judge/status/:id | ✅ | ✅ | ✅ | N/A | N/A | 获取评测状态 |
+| GET /api/judge/languages | ✅ | ✅ | ✅ | N/A | N/A | 获取支持的语言 |
+| 测试用例CRUD | ✅ | ✅ | ✅ | N/A | N/A | /api/testcases/* |
+| **前端组件** |  |  |  |  |  |  |
+| CodeEditor组件 | N/A | N/A | N/A | ✅ | ❌ | Monaco Editor集成 |
+| CodeQuestion组件 | N/A | N/A | N/A | ✅ | ❌ | 学生答题页面 |
+| JudgeResult组件 | N/A | N/A | N/A | ✅ | ❌ | 评测结果展示 |
+| CodeQuestionForm组件 | N/A | N/A | N/A | ✅ | ❌ | 题目配置表单 |
+| TakeActivityPage集成 | N/A | N/A | N/A | ✅ | ❌ | 答题页面集成 |
+| QuestionFormPage集成 | N/A | N/A | N/A | ✅ | ❌ | 题目创建表单集成 |
+
+**开发状态**: ✅ **基础功能已完成** | API测试通过 | 前端集成完成 | E2E测试待补充
+
+**迁移文件**:
+- `database/migrations/031_judge_system.sql` - 判题系统主表
+- `database/migrations/032_update_question_bank_view.sql` - 视图更新
+- `database/migrations/033_fix_code_submissions.sql` - 约束修复
+
+**未完成工作**: 参见 `docs/PENDING_WORK.md` - 编程题判题系统
+
+---
+
 ### 12. 教学班管理系统 (NEW - 2025-11-26)
 
 **背景**: 教学班是虚拟班级概念，支持教师跨越物理班级界限组织学生进行学习和测评活动。教学班可以在学校、区县、市级三个行政级别创建，需要对应级别管理员审批。
@@ -538,6 +589,35 @@
    - 状态：待优化
 
 ## 近期更新
+
+### 2025-12-09
+- ✅ **编程题判题系统开发完成**
+  - **数据库**: 3个迁移文件 (031-033)
+    - test_cases表: 测试用例管理
+    - code_submissions表: 代码提交记录
+    - judge_queue表: 判题队列
+    - question_drafts表扩展: 编程题字段
+    - question_bank_with_draft视图更新
+  - **Judge-Service微服务** (Docker独立容器):
+    - DockerSandbox: 沙箱执行环境
+    - Compiler: 代码编译 (C++/C)
+    - Executor: 代码执行 (时间/内存限制)
+    - Checker: 结果比对
+    - RedisQueue + Consumer: 异步队列处理
+  - **后端API**:
+    - POST /api/judge/submit - 提交代码评测
+    - POST /api/judge/run - 快速运行
+    - GET /api/judge/status/:id - 获取评测状态
+    - GET /api/judge/languages - 支持的语言
+    - /api/testcases/* - 测试用例CRUD
+  - **前端组件**:
+    - CodeEditor: Monaco Editor代码编辑器
+    - CodeQuestion: 学生答题组件
+    - JudgeResult: 评测结果展示
+    - CodeQuestionForm: 题目配置表单
+    - TakeActivityPage/QuestionFormPage集成
+  - **测试结果**: 基础流程测试通过 (75/100分, 3/4测试用例通过)
+  - **未完成**: E2E测试、Python/Java语言支持、前端CodeQuestion测试集成
 
 ### 2025-11-26
 - ✅ **教学班管理系统前后端开发完成**

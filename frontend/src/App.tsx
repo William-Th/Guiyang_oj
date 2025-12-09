@@ -38,6 +38,7 @@ import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
 import TeachingClassForm from './pages/teacher/TeachingClassForm';
 import TeachingClassStudents from './pages/teacher/TeachingClassStudents';
 import NotificationCenterPage from './pages/common/NotificationCenterPage';
+import CodeJudgeTestPage from './pages/CodeJudgeTestPage';
 
 const App: React.FC = () => {
   return (
@@ -55,6 +56,7 @@ const App: React.FC = () => {
             <Route index element={<HomePage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="notifications" element={<NotificationCenterPage />} />
+            <Route path="code-judge-test" element={<CodeJudgeTestPage />} />
 
             {/* 管理员路由 - 导航在Header中 */}
             <Route path="admin">

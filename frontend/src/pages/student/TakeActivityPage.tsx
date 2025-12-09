@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Form,
@@ -22,6 +22,8 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import CountdownTimer from '../../components/common/CountdownTimer';
+import CodeQuestion from '../../components/CodeQuestion';
+import type { CodeQuestionData } from '../../components/CodeQuestion';
 import type { ActivityQuestion, StudentActivity } from '../../types/activity';
 
 const { TextArea } = Input;
@@ -89,6 +91,60 @@ interface ActivityData {
   pass_score: number;
   questions: ActivityQuestion[];
 }
+
+// Code Question Wrapper Component - renders programming questions with code editor
+interface CodeQuestionWrapperProps {
+  question: ActivityQuestion;
+  activityId: number | undefined;
+  fieldName: string;
+  form: any;
+  onAnswerChange: () => void;
+}
+
+const CodeQuestionWrapper: React.FC<CodeQuestionWrapperProps> = ({
+  question,
+  activityId,
+  fieldName,
+  form,
+  onAnswerChange,
+}) => {
+  // Transform ActivityQuestion to CodeQuestionData
+  const codeQuestionData: CodeQuestionData = {
+    id: question.id,
+    content: question.content,
+    codeTemplate: (question as any).code_template,
+    timeLimit: (question as any).time_limit || 1000,
+    memoryLimit: (question as any).memory_limit || 256,
+    supportedLanguages: (question as any).supported_languages || ['cpp', 'c'],
+    sampleTestCases: [], // Will be loaded by CodeQuestion component
+  };
+
+  const handleSubmitSuccess = useCallback((submissionId: number) => {
+    // Store the submission info in the form for grading
+    const answerData = JSON.stringify({
+      submissionId,
+      questionId: question.id,
+      timestamp: new Date().toISOString(),
+    });
+    form.setFieldValue(fieldName, answerData);
+    onAnswerChange();
+    message.success('代码已提交，将在最终提交时计入成绩');
+  }, [question.id, fieldName, form, onAnswerChange]);
+
+  return (
+    <div>
+      <CodeQuestion
+        question={codeQuestionData}
+        activityId={activityId}
+        onSubmitSuccess={handleSubmitSuccess}
+      />
+      {/* Hidden field to store submission result */}
+      <Form.Item name={fieldName} hidden>
+        <Input />
+      </Form.Item>
+    </div>
+  );
+};
 
 /**
  * Take Activity Page
@@ -449,15 +505,15 @@ const TakeActivityPage: React.FC = () => {
           </Form.Item>
         )}
 
-        {/* Code */}
+        {/* Code - using CodeQuestion component */}
         {question.type === 'code' && (
-          <Form.Item name={fieldName}>
-            <TextArea
-              rows={12}
-              placeholder="请输入代码"
-              style={{ fontFamily: 'monospace' }}
-            />
-          </Form.Item>
+          <CodeQuestionWrapper
+            question={question}
+            activityId={activityId}
+            fieldName={fieldName}
+            form={form}
+            onAnswerChange={() => handleFormChange()}
+          />
         )}
       </Card>
     );

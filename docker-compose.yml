@@ -106,9 +106,46 @@ services:
     networks:
       - guiyang_network
 
+  # Judge Service - Code execution and judging
+  judge-service:
+    build:
+      context: ./judge-service
+      dockerfile: Dockerfile
+    container_name: guiyang_oj_judge
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: guiyang_oj
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SANDBOX_IMAGE: guiyang_oj_sandbox:latest
+      WORKER_ID: judge_worker_1
+      MAX_CONCURRENT: 2
+      COMPILE_TIMEOUT: 10000
+      RUN_TIMEOUT: 2000
+      MEMORY_LIMIT: 268435456
+      # Use Docker named volume for sandbox temp directory
+      SANDBOX_TEMP_DIR: /judge-sandbox
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - judge_sandbox:/judge-sandbox
+    networks:
+      - guiyang_network
+    privileged: true
+
 volumes:
   postgres_data:
   redis_data:
+  judge_sandbox:
 
 networks:
   guiyang_network:

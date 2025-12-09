@@ -1301,4 +1301,139 @@ export const teachingClassApi = {
   },
 };
 
+// Judge API - Code judging service
+export const judgeAPI = {
+  // Submit code for judging
+  submit: async (data: {
+    questionId: number;
+    activityId?: number;
+    code: string;
+    language?: string;
+  }) => {
+    const response = await api.post('/judge/submit', data);
+    return response.data;
+  },
+
+  // Quick run - execute code without saving (for testing)
+  run: async (data: {
+    code: string;
+    language?: string;
+    input?: string;
+    expectedOutput?: string;
+  }) => {
+    const response = await api.post('/judge/run', data);
+    return response.data;
+  },
+
+  // Get submission status and results
+  getStatus: async (submissionId: number | string) => {
+    const response = await api.get(`/judge/status/${submissionId}`);
+    return response.data;
+  },
+
+  // Get full submission details
+  getSubmission: async (submissionId: number | string) => {
+    const response = await api.get(`/judge/submission/${submissionId}`);
+    return response.data;
+  },
+
+  // Get submission history for current user on a question
+  getHistory: async (questionId: number, limit?: number) => {
+    const response = await api.get(`/judge/history/${questionId}`, {
+      params: { limit }
+    });
+    return response.data;
+  },
+
+  // Get supported programming languages
+  getLanguages: async () => {
+    const response = await api.get('/judge/languages');
+    return response.data;
+  },
+
+  // Get sample test cases for a question
+  getSampleTestCases: async (questionId: number) => {
+    const response = await api.get(`/judge/testcases/${questionId}/samples`);
+    return response.data;
+  },
+
+  // Get queue statistics (admin only)
+  getQueueStats: async () => {
+    const response = await api.get('/judge/queue/stats');
+    return response.data;
+  },
+};
+
+// Test Case Management API
+export const testCaseAPI = {
+  // Get all test cases for a question
+  getTestCases: async (questionId: number) => {
+    const response = await api.get(`/testcases/${questionId}`);
+    return response.data;
+  },
+
+  // Get sample test cases only (public)
+  getSamples: async (questionId: number) => {
+    const response = await api.get(`/testcases/${questionId}/samples`);
+    return response.data;
+  },
+
+  // Create a single test case
+  create: async (questionId: number, testCase: {
+    input_data?: string;
+    expected_output: string;
+    score?: number;
+    time_limit?: number;
+    memory_limit?: number;
+    is_sample?: boolean;
+    description?: string;
+  }) => {
+    const response = await api.post(`/testcases/${questionId}`, testCase);
+    return response.data;
+  },
+
+  // Bulk create/replace test cases
+  bulkCreate: async (questionId: number, testCases: Array<{
+    input_data?: string;
+    expected_output: string;
+    score?: number;
+    time_limit?: number;
+    memory_limit?: number;
+    is_sample?: boolean;
+    description?: string;
+  }>, replace: boolean = false) => {
+    const response = await api.post(`/testcases/${questionId}/bulk`, {
+      testCases,
+      replace
+    });
+    return response.data;
+  },
+
+  // Update a test case
+  update: async (questionId: number, testCaseId: number, data: {
+    input_data?: string;
+    expected_output?: string;
+    score?: number;
+    time_limit?: number;
+    memory_limit?: number;
+    is_sample?: boolean;
+    description?: string;
+  }) => {
+    const response = await api.put(`/testcases/${questionId}/${testCaseId}`, data);
+    return response.data;
+  },
+
+  // Delete a test case
+  delete: async (questionId: number, testCaseId: number) => {
+    const response = await api.delete(`/testcases/${questionId}/${testCaseId}`);
+    return response.data;
+  },
+
+  // Delete all test cases for a question
+  deleteAll: async (questionId: number) => {
+    const response = await api.delete(`/testcases/${questionId}`);
+    return response.data;
+  },
+};
+
 export default api;

@@ -13,6 +13,10 @@
 const { query } = require('../database/connection');
 const logger = require('../utils/logger');
 const EventEmitter = require('./EventEmitter');
+const fetch = require('node-fetch');
+
+// Judge service URL
+const JUDGE_SERVICE_URL = process.env.JUDGE_SERVICE_URL || 'http://judge-service:3002';
 
 class AutoGradingService {
   /**
@@ -87,8 +91,40 @@ class AutoGradingService {
           gradedCount++;
 
           logger.debug(`Graded answer ${answer_id}: ${gradingResult.isCorrect ? 'correct' : 'incorrect'}, score: ${gradingResult.score}`);
+        } else if (question_type === 'code') {
+          // Programming question - submit to judge service
+          const codeResult = await this.gradeCodeQuestion(
+            studentActivityId,
+            answer.question_id,
+            student_answer,
+            max_score
+          );
+
+          if (codeResult.success) {
+            // Update answer with grading result
+            await query(`
+              UPDATE answers
+              SET
+                is_correct = $1,
+                score = $2,
+                auto_score = $2,
+                grading_status = 'auto_graded',
+                feedback = $3,
+                updated_at = CURRENT_TIMESTAMP
+              WHERE id = $4
+            `, [codeResult.isCorrect, codeResult.score, codeResult.feedback, answer_id]);
+
+            totalScore += codeResult.score;
+            gradedCount++;
+
+            logger.debug(`Graded code answer ${answer_id}: ${codeResult.status}, score: ${codeResult.score}`);
+          } else {
+            // Judge service failed, mark as pending for manual review
+            hasSubjectiveQuestions = true;
+            logger.warn(`Code grading failed for answer ${answer_id}: ${codeResult.error}`);
+          }
         } else {
-          // Subjective question - leave for manual grading
+          // Subjective question (essay) - leave for manual grading
           hasSubjectiveQuestions = true;
           logger.debug(`Answer ${answer_id} is subjective (${question_type}), skipping auto-grading`);
         }
@@ -497,6 +533,200 @@ class AutoGradingService {
       logger.error('Recalculate total score error:', error);
       throw error;
     }
+  }
+
+  /**
+   * Grade a programming question by submitting to judge service
+   * @param {number} studentActivityId - Student activity ID
+   * @param {number} questionId - Question ID (question_bank.id)
+   * @param {string} sourceCode - Student's source code (may be JSON with code and language)
+   * @param {number} maxScore - Maximum score for this question
+   * @returns {Promise<Object>} Grading result
+   */
+  static async gradeCodeQuestion(studentActivityId, questionId, sourceCode, maxScore) {
+    try {
+      // Parse source code - it might be JSON with code and language
+      let code = sourceCode;
+      let language = 'cpp';
+
+      if (sourceCode && sourceCode.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(sourceCode);
+          code = parsed.code || sourceCode;
+          language = parsed.language || 'cpp';
+        } catch (e) {
+          // Not JSON, use as-is
+        }
+      }
+
+      if (!code || code.trim() === '') {
+        return {
+          success: true,
+          isCorrect: false,
+          score: 0,
+          status: 'no_submission',
+          feedback: 'No code submitted'
+        };
+      }
+
+      // Get question draft ID from question_bank
+      const questionResult = await query(`
+        SELECT qb.draft_id, qd.time_limit, qd.memory_limit
+        FROM question_bank qb
+        JOIN question_drafts qd ON qb.draft_id = qd.id
+        WHERE qb.id = $1
+      `, [questionId]);
+
+      if (questionResult.rows.length === 0) {
+        return {
+          success: false,
+          error: 'Question not found'
+        };
+      }
+
+      const { draft_id, time_limit, memory_limit } = questionResult.rows[0];
+
+      // Submit to judge service
+      logger.info(`Submitting code to judge service for question ${questionId}`);
+
+      const response = await fetch(`${JUDGE_SERVICE_URL}/api/judge/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questionId: draft_id, // Use draft_id for test cases lookup
+          studentActivityId,
+          code,
+          language,
+          timeLimit: time_limit || 1000,
+          memoryLimit: memory_limit || 256
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.message || 'Judge service error'
+        };
+      }
+
+      // Poll for result (judge is async)
+      const submissionId = result.data.submissionId;
+      const judgeResult = await this.pollJudgeResult(submissionId);
+
+      if (!judgeResult) {
+        return {
+          success: false,
+          error: 'Judging timeout'
+        };
+      }
+
+      // Calculate score based on test results
+      const earnedScore = judgeResult.score || 0;
+      const isAccepted = judgeResult.status === 'AC' || judgeResult.status === 'accepted';
+
+      // Generate feedback
+      let feedback = '';
+      if (judgeResult.status === 'AC' || judgeResult.status === 'accepted') {
+        feedback = 'All test cases passed!';
+      } else if (judgeResult.status === 'CE' || judgeResult.status === 'compile_error') {
+        feedback = 'Compile error: ' + (judgeResult.compileOutput || '').substring(0, 500);
+      } else if (judgeResult.status === 'WA' || judgeResult.status === 'wrong_answer') {
+        const passed = judgeResult.testResults?.filter(t => t.status === 'AC').length || 0;
+        const total = judgeResult.testResults?.length || 0;
+        feedback = `Wrong answer. Passed ${passed}/${total} test cases.`;
+      } else if (judgeResult.status === 'TLE' || judgeResult.status === 'time_limit') {
+        feedback = 'Time limit exceeded';
+      } else if (judgeResult.status === 'MLE' || judgeResult.status === 'memory_limit') {
+        feedback = 'Memory limit exceeded';
+      } else if (judgeResult.status === 'RE' || judgeResult.status === 'runtime_error') {
+        feedback = 'Runtime error';
+      } else if (judgeResult.status === 'partial') {
+        const passed = judgeResult.testResults?.filter(t => t.status === 'AC').length || 0;
+        const total = judgeResult.testResults?.length || 0;
+        feedback = `Partial score. Passed ${passed}/${total} test cases.`;
+      } else {
+        feedback = `Judge result: ${judgeResult.status}`;
+      }
+
+      // Save to code_submissions table
+      try {
+        await query(`
+          INSERT INTO code_submissions
+          (student_activity_id, question_id, student_id, source_code, language,
+           status, score, total_score, time_used, memory_used, compile_output, judge_result)
+          SELECT $1, $2, sa.student_id, $3, $4, $5, $6, $7, $8, $9, $10, $11
+          FROM student_activities sa WHERE sa.id = $1
+        `, [
+          studentActivityId,
+          questionId,
+          code,
+          language,
+          judgeResult.status,
+          earnedScore,
+          maxScore,
+          judgeResult.executionTime || null,
+          judgeResult.memoryUsed || null,
+          judgeResult.compileOutput || null,
+          JSON.stringify(judgeResult.testResults || [])
+        ]);
+      } catch (saveError) {
+        logger.warn('Failed to save code submission:', saveError.message);
+      }
+
+      return {
+        success: true,
+        isCorrect: isAccepted,
+        score: earnedScore,
+        status: judgeResult.status,
+        feedback,
+        testResults: judgeResult.testResults
+      };
+
+    } catch (error) {
+      logger.error('Grade code question error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Poll judge service for submission result
+   * @param {number} submissionId - Submission ID
+   * @returns {Promise<Object|null>} Judge result or null if timeout
+   */
+  static async pollJudgeResult(submissionId) {
+    const maxAttempts = 60; // 60 seconds max
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const response = await fetch(`${JUDGE_SERVICE_URL}/api/judge/status/${submissionId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const status = result.data.status;
+          // Check if judging is complete
+          if (status !== 'pending' && status !== 'judging') {
+            return result.data;
+          }
+        }
+      } catch (error) {
+        logger.warn(`Poll attempt ${attempts} failed:`, error.message);
+      }
+
+      // Wait 1 second before next poll
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+
+    logger.warn(`Judging timeout for submission ${submissionId} after ${maxAttempts} seconds`);
+    return null;
   }
 }
 

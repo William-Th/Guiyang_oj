@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Form,
@@ -15,11 +15,13 @@ import {
   Col,
   Alert,
   Tag,
+  Divider,
 } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { questionBankApi, questionReviewApi } from '../../services/api';
+import { questionBankApi, questionReviewApi, testCaseAPI } from '../../services/api';
 import { SUBJECTS, getGradesBySubject } from '../../config/subjects';
+import { CodeQuestionForm, CodeQuestionConfig, TestCase } from '../../components/questions';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -54,6 +56,16 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePoint[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [questionCode, setQuestionCode] = useState<string>('');
+
+  // Programming question specific state
+  const [codeConfig, setCodeConfig] = useState<CodeQuestionConfig>({
+    time_limit: 1000,
+    memory_limit: 256,
+    judge_mode: 'standard',
+    supported_languages: ['cpp', 'c'],
+    testCases: [],
+  });
+  const codeConfigRef = useRef<CodeQuestionConfig>(codeConfig);
 
   const id = editQuestionId || (routeId ? parseInt(routeId) : undefined);
   const isEditMode = !!id;
@@ -129,12 +141,40 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       if (question.question_code) {
         setQuestionCode(question.question_code);
       }
+
+      // Load programming question config if applicable
+      if (question.type === 'code') {
+        const newCodeConfig: CodeQuestionConfig = {
+          code_template: question.code_template || '',
+          time_limit: question.time_limit || 1000,
+          memory_limit: question.memory_limit || 256,
+          judge_mode: question.judge_mode || 'standard',
+          special_judge_code: question.special_judge_code || '',
+          supported_languages: question.supported_languages || ['cpp', 'c'],
+          testCases: [],
+        };
+        setCodeConfig(newCodeConfig);
+        codeConfigRef.current = newCodeConfig;
+      }
     } catch (error: any) {
       message.error('加载题目失败');
       navigate('/teacher/question-bank');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCodeConfigChange = (newConfig: CodeQuestionConfig) => {
+    setCodeConfig(newConfig);
+    codeConfigRef.current = newConfig;
+  };
+
+  const handleTestCasesSave = async (testCases: TestCase[]) => {
+    if (!id) {
+      message.warning('请先保存题目，然后再添加测试用例');
+      return;
+    }
+    await testCaseAPI.bulkCreate(id, testCases, true);
   };
 
   const handleSubmit = async (values: any) => {
@@ -149,20 +189,41 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
         correctAnswer = correctAnswer === 'true' || correctAnswer === true;
       }
 
-      const questionData = {
+      // Build question data
+      const questionData: any = {
         ...values,
         correct_answer: correctAnswer,
-        target_scope: values.target_scope, // 包含 target_scope
+        target_scope: values.target_scope,
       };
+
+      // Add programming question fields if applicable
+      if (questionType === 'code') {
+        const currentConfig = codeConfigRef.current;
+        questionData.code_template = currentConfig.code_template;
+        questionData.time_limit = currentConfig.time_limit;
+        questionData.memory_limit = currentConfig.memory_limit;
+        questionData.judge_mode = currentConfig.judge_mode;
+        questionData.special_judge_code = currentConfig.special_judge_code;
+        questionData.supported_languages = currentConfig.supported_languages;
+      }
 
       let createdQuestionId: number | undefined;
 
       if (isEditMode) {
         await questionBankApi.updateQuestion(id!, questionData);
+        // Save test cases for programming questions
+        if (questionType === 'code' && codeConfigRef.current.testCases.length > 0) {
+          await testCaseAPI.bulkCreate(id!, codeConfigRef.current.testCases, true);
+        }
         message.success('更新成功');
       } else {
         const response = await questionBankApi.createQuestion(questionData);
         createdQuestionId = response.data?.id;
+
+        // Save test cases for programming questions
+        if (questionType === 'code' && createdQuestionId && codeConfigRef.current.testCases.length > 0) {
+          await testCaseAPI.bulkCreate(createdQuestionId, codeConfigRef.current.testCases, true);
+        }
 
         // 如果选择了校级题库，直接发布（无需审核）
         if (values.target_scope === 'practice_school' && createdQuestionId) {
@@ -179,6 +240,14 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       form.resetFields();
       setQuestionType('single');
       setSelectedSubject('');
+      // Reset code config
+      setCodeConfig({
+        time_limit: 1000,
+        memory_limit: 256,
+        judge_mode: 'standard',
+        supported_languages: ['cpp', 'c'],
+        testCases: [],
+      });
 
       if (onSuccess) {
         onSuccess();
@@ -353,7 +422,6 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
         );
 
       case 'essay':
-      case 'code':
         return (
           <Form.Item
             label="参考答案"
@@ -362,6 +430,30 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           >
             <TextArea rows={4} placeholder="请输入参考答案" />
           </Form.Item>
+        );
+
+      case 'code':
+        return (
+          <>
+            <Form.Item
+              label="参考答案"
+              name="correct_answer"
+              help="编程题的参考代码，仅供教师参考，不用于自动评分"
+            >
+              <TextArea
+                rows={4}
+                placeholder="请输入参考代码（可选）"
+                style={{ fontFamily: 'monospace' }}
+              />
+            </Form.Item>
+            <Divider />
+            <CodeQuestionForm
+              questionId={id}
+              initialConfig={codeConfig}
+              onChange={handleCodeConfigChange}
+              onTestCasesSave={handleTestCasesSave}
+            />
+          </>
         );
 
       default:

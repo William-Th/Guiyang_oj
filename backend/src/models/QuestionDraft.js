@@ -26,14 +26,22 @@ class QuestionDraft {
       image_url,
       created_by,
       abilities,
-      knowledge_points
+      knowledge_points,
+      // Programming question fields
+      code_template,
+      time_limit,
+      memory_limit,
+      judge_mode,
+      special_judge_code,
+      supported_languages
     } = draftData;
 
     const sql = `
       INSERT INTO question_drafts
       (type, subject, grade, content, options, correct_answer, suggested_score, level,
-       difficulty, explanation, tags, image_url, created_by, abilities, knowledge_points)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       difficulty, explanation, tags, image_url, created_by, abilities, knowledge_points,
+       code_template, time_limit, memory_limit, judge_mode, special_judge_code, supported_languages)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING *
     `;
 
@@ -52,7 +60,14 @@ class QuestionDraft {
       image_url,
       created_by,
       abilities || [],
-      knowledge_points || []
+      knowledge_points || [],
+      // Programming question fields (only set for code type)
+      type === 'code' ? code_template : null,
+      type === 'code' ? (time_limit || 1000) : null,
+      type === 'code' ? (memory_limit || 256) : null,
+      type === 'code' ? (judge_mode || 'standard') : null,
+      type === 'code' ? special_judge_code : null,
+      type === 'code' ? (supported_languages || ['cpp']) : null
     ];
 
     const result = await query(sql, values);
@@ -98,7 +113,14 @@ class QuestionDraft {
       tags,
       image_url,
       abilities,
-      knowledge_points
+      knowledge_points,
+      // Programming question fields
+      code_template,
+      time_limit,
+      memory_limit,
+      judge_mode,
+      special_judge_code,
+      supported_languages
     } = updateData;
 
     const sql = `
@@ -118,8 +140,14 @@ class QuestionDraft {
         image_url = COALESCE($12, image_url),
         abilities = COALESCE($13, abilities),
         knowledge_points = COALESCE($14, knowledge_points),
+        code_template = COALESCE($15, code_template),
+        time_limit = COALESCE($16, time_limit),
+        memory_limit = COALESCE($17, memory_limit),
+        judge_mode = COALESCE($18, judge_mode),
+        special_judge_code = COALESCE($19, special_judge_code),
+        supported_languages = COALESCE($20, supported_languages),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $15 AND is_active = true
+      WHERE id = $21 AND is_active = true
       RETURNING *
     `;
 
@@ -138,6 +166,12 @@ class QuestionDraft {
       image_url,
       abilities,
       knowledge_points,
+      code_template,
+      time_limit,
+      memory_limit,
+      judge_mode,
+      special_judge_code,
+      supported_languages,
       id
     ];
 
