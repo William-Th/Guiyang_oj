@@ -33,9 +33,9 @@ test.describe('题库管理页面加载测试', () => {
     // 等待登录成功 - 教师登录后跳转到首页
     await page.waitForURL('/', { timeout: 15000 });
 
-    // 2. 通过点击导航到题库管理页面（而不是直接URL跳转）
-    const questionBankLink = page.locator('a', { hasText: /题库管理/ }).first();
-    await expect(questionBankLink).toBeAttached({ timeout: 5000 });
+    // 2. 通过点击导航到题库管理页面（菜单项是menuitem角色）
+    const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
+    await expect(questionBankLink).toBeVisible({ timeout: 5000 });
     await questionBankLink.click();
 
     // 等待URL变化到题库管理页面
@@ -65,17 +65,25 @@ test.describe('题库管理页面加载测试', () => {
   });
 
   test('QBPL002: 管理员登录后应该能访问题库管理页面并看到区县筛选', async ({ page }) => {
-    // 1. 登录为管理员
-    await page.goto('http://localhost:3000/login');
-    await page.fill('input[placeholder="请输入用户名"]', 'admin');
-    await page.fill('input[placeholder="请输入密码"]', 'password123');
-    await page.click('button:has-text("登录")');
+    // 1. 登录为管理员 - 使用教师入口
+    await page.goto('/login');
+    await page.click('text=教师入口');
+    await page.waitForTimeout(500);
 
-    // 等待登录成功
-    await page.waitForURL(/\/admin/);
+    const activeTabPane = page.locator('.ant-tabs-tabpane-active');
+    await activeTabPane.locator('input[placeholder="用户名"]').fill('admin');
+    await activeTabPane.locator('input[placeholder="密码"]').fill('password123');
+    await activeTabPane.locator('button[type="submit"]').click();
+
+    // 等待登录成功 - 管理员可能跳转到首页或admin页面
+    await page.waitForURL(/\/(admin|$)/, { timeout: 15000 });
 
     // 2. 导航到题库管理页面
-    await page.goto('http://localhost:3000/teacher/question-bank');
+    const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
+    await expect(questionBankLink).toBeVisible({ timeout: 5000 });
+    await questionBankLink.click();
+    // 管理员可能跳转到 /admin/question-bank 或 /teacher/question-bank
+    await page.waitForURL(/\/(admin|teacher)\/question-bank/);
 
     // 3. 验证页面加载成功
     await expect(page.locator('text=筛选：')).toBeAttached({ timeout: 5000 });
@@ -115,9 +123,9 @@ test.describe('题库管理页面加载测试', () => {
     // 等待登录成功
     await page.waitForURL('/', { timeout: 15000 });
 
-    // 2. 通过点击导航到题库管理页面
-    const questionBankLink = page.locator('a', { hasText: /题库管理/ }).first();
-    await expect(questionBankLink).toBeAttached({ timeout: 5000 });
+    // 2. 通过点击导航到题库管理页面（菜单项是menuitem角色）
+    const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
+    await expect(questionBankLink).toBeVisible({ timeout: 5000 });
     await questionBankLink.click();
 
     await page.waitForURL(/\/teacher\/question-bank/);

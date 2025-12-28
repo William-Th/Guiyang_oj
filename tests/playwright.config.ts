@@ -31,7 +31,7 @@ export default defineConfig({
 
   // 全局配置
   use: {
-    baseURL: 'http://localhost:80',
+    baseURL: 'http://localhost:8080',  // nginx proxy (maps 80 -> 8080 on host)
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

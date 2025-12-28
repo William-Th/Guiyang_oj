@@ -535,7 +535,7 @@ router.delete('/:id', [
 // Get all students (admin and teacher)
 router.get('/students', [
   authMiddleware,
-  requireRole(['admin', 'teacher'])
+  requireRole(['system_admin', 'municipal_admin', 'district_admin', 'school_admin', 'teacher'])
 ], async (req, res) => {
   try {
     const students = await User.findAll({ role: 'student' });

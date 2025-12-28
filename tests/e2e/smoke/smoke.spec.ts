@@ -21,9 +21,10 @@ test.describe('Smoke Tests - 冒烟测试', () => {
 
     // 选择学生入口
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
+    await page.waitForTimeout(500);
 
-    // 输入学生凭证
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, TEST_CONFIG.STUDENT.idCard);
+    // 输入学生凭证 - 使用手机号登录
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, TEST_CONFIG.STUDENT.password);
 
     // 点击登录
@@ -84,10 +85,11 @@ test.describe('Smoke Tests - 冒烟测试', () => {
   });
 
   test('S004 - 学生首页基本元素正常显示', async ({ page }) => {
-    // 先登录
+    // 先登录 - 使用手机号
     await page.goto('/login');
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, TEST_CONFIG.STUDENT.idCard);
+    await page.waitForTimeout(500);
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, TEST_CONFIG.STUDENT.password);
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
     await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });

@@ -5,7 +5,7 @@ export const ADMIN_STORAGE_STATE = 'tests/.auth/admin.json';
 export const TEST_CONFIG = {
   // Demo accounts from CLAUDE.md
   STUDENT: {
-    idCard: '520102200801011234',
+    phone: '13800138003',  // 学生使用手机号登录
     password: 'password123'
   },
   TEACHER: {
@@ -33,7 +33,8 @@ export const SELECTORS = {
     STUDENT_TAB: 'text=学生入口',
     TEACHER_TAB: 'text=教师入口',
     ID_CARD_INPUT: 'input[placeholder="身份证号"]',
-    USERNAME_INPUT: 'input[placeholder="用户�?]',
+    PHONE_INPUT: 'input[placeholder="手机号"]',
+    USERNAME_INPUT: 'input[placeholder="用户名"]',
     PASSWORD_INPUT: 'input[placeholder="密码"]',
     SUBMIT_BUTTON: 'button[type="submit"]'
   },

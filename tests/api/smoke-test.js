@@ -10,7 +10,7 @@
 const http = require('http');
 
 // 配置
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3003';
 const TIMEOUT = 5000; // 5秒超�?
 
 // 测试结果
@@ -118,7 +118,7 @@ async function runSmokeTests() {
   console.log(`\n${colors.blue}=== API Smoke Tests ===${colors.reset}`);
   console.log(`API Base URL: ${API_BASE_URL}\n`);
 
-  // 测试1: 健康检�?
+  // 测试1: 健康检查
   await runTest('Health check endpoint', async () => {
     const response = await makeRequest({ path: '/health' });
     assert(response.statusCode === 200, `Expected status 200, got ${response.statusCode}`);
@@ -126,7 +126,7 @@ async function runSmokeTests() {
     assert(data && data.status === 'OK', 'Health check should return status OK');
   });
 
-  // 测试2: 数据库连�?
+  // 测试2: 数据库连接
   await runTest('Database connectivity', async () => {
     const response = await makeRequest({ path: '/health' });
     const data = response.json();
@@ -181,7 +181,7 @@ async function runSmokeTests() {
   // 测试6: 教师登录API
   await runTest('Teacher login endpoint', async () => {
     const postData = JSON.stringify({
-      username: 'teacher_yy_ps_math',
+      username: 'teacher01',
       password: 'password123',
       loginType: 'username'
     });
@@ -235,12 +235,12 @@ async function runSmokeTests() {
     assert(response.statusCode === 404, `Expected status 404 for non-existent route, got ${response.statusCode}`);
   });
 
-  // 测试10: CORS配置
+  // 测试10: CORS配置 (使用允许的Origin: localhost:3100)
   await runTest('CORS headers', async () => {
     const response = await makeRequest({
       path: '/health',
       headers: {
-        'Origin': 'http://localhost:3000'
+        'Origin': 'http://localhost:3100'
       }
     });
     assert(response.headers['access-control-allow-origin'], 'CORS headers should be present');
