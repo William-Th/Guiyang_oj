@@ -319,13 +319,13 @@ export const questionBankApi = {
 
   // Update question
   updateQuestion: async (id: number, questionData: any) => {
-    const response = await api.put(`/question-bank/bank/${id}`, questionData);
+    const response = await api.put(`/question-drafts/${id}`, questionData);
     return response.data;
   },
 
   // Delete question
   deleteQuestion: async (id: number) => {
-    const response = await api.delete(`/question-bank/bank/${id}`);
+    const response = await api.delete(`/question-drafts/${id}`);
     return response.data;
   },
 
@@ -371,6 +371,14 @@ export const questionBankApi = {
   // Get all knowledge points
   getAllKnowledgePoints: async () => {
     const response = await api.get('/question-bank/config/knowledge-points');
+    return response.data;
+  },
+
+  // Get formatted scope texts (将scope代码转换为中文显示)
+  getScopeTexts: async (scopes: string[]) => {
+    const response = await api.get('/question-bank/config/scopes', {
+      params: { scopes: scopes.join(',') }
+    });
     return response.data;
   },
 

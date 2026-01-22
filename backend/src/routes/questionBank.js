@@ -61,6 +61,72 @@ router.get('/config/knowledge-points', authMiddleware, async (req, res) => {
   }
 });
 
+// Get formatted scope text (将scope代码转换为中文显示)
+// Query params: scopes - comma-separated scope values (e.g., "practice_municipal,practice_district_YY")
+router.get('/config/scopes', authMiddleware, async (req, res) => {
+  try {
+    const { scopes } = req.query;
+    if (!scopes) {
+      return res.json({ success: true, data: {} });
+    }
+
+    const scopeList = Array.isArray(scopes) ? scopes : scopes.split(',');
+    const { query } = require('../database/connection');
+    const DISTRICT_CODES = require('../config/districts').DISTRICT_CODES;
+
+    const result = {};
+
+    for (const scope of scopeList) {
+      const s = scope.trim();
+      if (!s) continue;
+
+      let text = s;
+
+      if (s === 'assessment') {
+        text = '测评题库';
+      } else if (s === 'practice_municipal') {
+        text = '市级练习';
+      } else if (s.startsWith('practice_district_')) {
+        // 区级练习 - practice_district_YY -> "区级练习-云岩区"
+        const districtCode = s.replace('practice_district_', '');
+        const district = DISTRICT_CODES[districtCode];
+        text = district ? `区级练习-${district.name}` : s;
+      } else if (s.startsWith('practice_school_')) {
+        // 校级练习 - practice_school_1 -> "校级练习-贵阳市第一小学"
+        const schoolId = parseInt(s.replace('practice_school_', ''));
+        if (!isNaN(schoolId)) {
+          const schoolResult = await query(
+            'SELECT name FROM schools WHERE id = $1',
+            [schoolId]
+          );
+          if (schoolResult.rows.length > 0) {
+            text = `校级练习-${schoolResult.rows[0].name}`;
+          }
+        }
+      } else if (s.startsWith('school_')) {
+        // 学校 - school_1 -> "贵阳市第一小学"
+        const schoolId = parseInt(s.replace('school_', ''));
+        if (!isNaN(schoolId)) {
+          const schoolResult = await query(
+            'SELECT name FROM schools WHERE id = $1',
+            [schoolId]
+          );
+          if (schoolResult.rows.length > 0) {
+            text = schoolResult.rows[0].name;
+          }
+        }
+      }
+
+      result[s] = text;
+    }
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error fetching scope texts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get all questions from the bank (支持 scope 过滤、区县筛选和权限控制)
 router.get('/bank', authMiddleware, async (req, res) => {
   try {
@@ -154,7 +220,7 @@ router.get('/bank/search', authMiddleware, async (req, res) => {
     const { q, subject, grade } = req.query;
 
     if (!q) {
-      return res.status(400).json({ success: false, error: 'Search term required' });
+      return res.status(400).json({ success: false, error: '请输入搜索关键词' });
     }
 
     const questions = await QuestionBank.searchQuestions(q, { subject, grade });
@@ -193,7 +259,7 @@ router.get('/bank/:id', authMiddleware, async (req, res) => {
     }
 
     if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
     res.json({ success: true, data: question });
@@ -209,7 +275,7 @@ router.get('/bank/code/:code', authMiddleware, async (req, res) => {
     const question = await questionCodeService.getQuestionByCode(req.params.code);
 
     if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
     res.json({ success: true, data: question });
@@ -238,7 +304,7 @@ router.post('/bank', authMiddleware, async (req, res) => {
       'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
 
     if (!isTeacherOrAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can create questions' });
+      return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以创建题目' });
     }
 
     const questionData = {
@@ -268,14 +334,14 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
       'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
 
     if (!isTeacherOrAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can update questions' });
+      return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以更新题目' });
     }
 
     // Get the existing question to check ownership
     const existingQuestion = await QuestionBank.findById(req.params.id);
 
     if (!existingQuestion) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
     // Check permission: system_admin can update all, others can only update their own questions
@@ -285,7 +351,7 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
     if (!isSystemAdmin && !isCreator) {
       return res.status(403).json({
         success: false,
-        error: 'Unauthorized: You can only update questions you created. System admins can update all questions.'
+        error: '无权限：您只能更新自己创建的题目。系统管理员可以更新所有题目。'
       });
     }
 
@@ -314,14 +380,14 @@ router.delete('/bank/:id', authMiddleware, async (req, res) => {
       'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
 
     if (!isTeacherOrAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can delete questions' });
+      return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以删除题目' });
     }
 
     // Get the existing question to check ownership
     const existingQuestion = await QuestionBank.findById(req.params.id);
 
     if (!existingQuestion) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
     // Check permission: system_admin can delete all, others can only delete their own questions
@@ -331,13 +397,13 @@ router.delete('/bank/:id', authMiddleware, async (req, res) => {
     if (!isSystemAdmin && !isCreator) {
       return res.status(403).json({
         success: false,
-        error: 'Unauthorized: You can only delete questions you created. System admins can delete all questions.'
+        error: '无权限：您只能删除自己创建的题目。系统管理员可以删除所有题目。'
       });
     }
 
     await QuestionBank.delete(req.params.id);
 
-    res.json({ success: true, message: 'Question deleted successfully' });
+    res.json({ success: true, message: '题目删除成功' });
   } catch (error) {
     console.error('Error deleting question:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -352,13 +418,13 @@ router.post('/exam/:examId/questions', authMiddleware, async (req, res) => {
       'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
 
     if (!isTeacherOrAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can add questions to exams' });
+      return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以添加题目到考试' });
     }
 
     const { questionIds, scores } = req.body;
     
     if (!questionIds || !Array.isArray(questionIds)) {
-      return res.status(400).json({ success: false, error: 'Question IDs required' });
+      return res.status(400).json({ success: false, error: '请提供题目ID列表' });
     }
 
     const questions = await QuestionBank.addToExam(req.params.examId, questionIds, scores);
@@ -388,11 +454,11 @@ router.post('/import', authMiddleware, upload.single('file'), async (req, res) =
       'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
 
     if (!isTeacherOrAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can import questions' });
+      return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以导入题目' });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
+      return res.status(400).json({ success: false, error: '未上传文件' });
     }
 
     const batchId = uuidv4();
@@ -453,7 +519,7 @@ router.get('/import/template', (req, res) => {
   res.download(templatePath, 'question_import_template.csv', (err) => {
     if (err) {
       console.error('Error downloading template:', err);
-      res.status(404).json({ success: false, error: 'Template file not found' });
+      res.status(404).json({ success: false, error: '模板文件不存在' });
     }
   });
 });
@@ -490,7 +556,7 @@ router.post('/categories', authMiddleware, async (req, res) => {
       'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role);
 
     if (!isTeacherOrAdmin) {
-      return res.status(403).json({ success: false, error: 'Unauthorized: Only teachers and admins can create categories' });
+      return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以创建分类' });
     }
 
     const category = await QuestionCategory.create(req.body);
@@ -506,37 +572,37 @@ function validateQuestion(question) {
   const { type, content, correct_answer } = question;
 
   if (!type || !content) {
-    return 'Question type and content are required';
+    return '题目类型和内容不能为空';
   }
 
   switch (type) {
   case 'single':
     if (!question.options || question.options.length < 2) {
-      return 'Single choice questions must have at least 2 options';
+      return '单选题必须至少有2个选项';
     }
     if (!correct_answer) {
-      return 'Single choice questions must have a correct answer';
+      return '单选题必须有正确答案';
     }
     break;
 
   case 'multiple':
     if (!question.options || question.options.length < 2) {
-      return 'Multiple choice questions must have at least 2 options';
+      return '多选题必须至少有2个选项';
     }
     if (!correct_answer || !Array.isArray(correct_answer) || correct_answer.length === 0) {
-      return 'Multiple choice questions must have at least one correct answer';
+      return '多选题必须至少有一个正确答案';
     }
     break;
 
   case 'blank':
     if (!correct_answer || (Array.isArray(correct_answer) && correct_answer.length === 0)) {
-      return 'Fill-in-the-blank questions must have at least one correct answer';
+      return '填空题必须至少有一个正确答案';
     }
     break;
 
   case 'true_false':
     if (typeof correct_answer !== 'boolean') {
-      return 'True/false questions must have a boolean correct answer';
+      return '判断题的正确答案必须是布尔值';
     }
     break;
 
@@ -546,7 +612,7 @@ function validateQuestion(question) {
     break;
 
   default:
-    return 'Invalid question type';
+    return '无效的题目类型';
   }
 
   return null;

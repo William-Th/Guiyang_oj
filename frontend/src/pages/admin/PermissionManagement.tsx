@@ -286,9 +286,9 @@ const PermissionManagement: React.FC = () => {
       // 审核权限
       question_bank_review: { text: '练习题库审核（旧）', color: 'default' },
       assessment_review: { text: '测评题库审核', color: 'orange' },
-      practice_municipal_review: { text: '市级练习审核', color: 'blue' },
-      practice_district_review: { text: '区级练习审核', color: 'cyan' },
-      competition_review: { text: '竞赛题库审核', color: 'red' },
+      practice_municipal_review: { text: '市级练习题库审核', color: 'blue' },
+      practice_district_review: { text: '区级练习题库审核', color: 'cyan' },
+      competition_review: { text: '竞赛审核', color: 'red' },
       // 练习发布权限
       practice_publish_municipal: { text: '市级练习发布', color: 'purple' },
       practice_publish_district: { text: '区级练习发布', color: 'green' },

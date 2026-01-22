@@ -388,13 +388,13 @@ router.get('/dashboard/stats', [
 
     // Total exams count
     const examCount = await query(`
-      SELECT COUNT(*) as count FROM exams
+      SELECT COUNT(*) as count FROM activities
     `);
 
     // This month exams count
     const thisMonthExams = await query(`
       SELECT COUNT(*) as count
-      FROM exams
+      FROM activities
       WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
     `);
 
@@ -411,16 +411,16 @@ router.get('/dashboard/stats', [
     // Recent exams with statistics
     const recentExams = await query(`
       SELECT
-        e.id,
-        e.title as name,
-        COUNT(DISTINCT se.student_id) as participants,
-        ROUND(AVG(se.score), 1) as avg_score,
-        TO_CHAR(e.start_time, 'YYYY-MM-DD') as date
-      FROM exams e
-      LEFT JOIN student_exams se ON e.id = se.exam_id AND se.status = 'graded'
-      WHERE e.status IN ('published', 'ongoing', 'finished')
-      GROUP BY e.id, e.title, e.start_time
-      ORDER BY e.start_time DESC
+        a.id,
+        a.title as name,
+        COUNT(DISTINCT sa.student_id) as participants,
+        ROUND(AVG(sa.score), 1) as avg_score,
+        TO_CHAR(a.start_time, 'YYYY-MM-DD') as date
+      FROM activities a
+      LEFT JOIN student_activities sa ON a.id = sa.activity_id AND sa.status = 'completed'
+      WHERE a.status IN ('published', 'ongoing', 'finished')
+      GROUP BY a.id, a.title, a.start_time
+      ORDER BY a.start_time DESC
       LIMIT 10
     `);
 

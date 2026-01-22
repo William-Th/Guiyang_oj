@@ -129,7 +129,7 @@ router.get('/certificates/available', (req, res) => {
     res.json(eligibleCertificates);
   } catch (error) {
     console.error('Error getting available certificates:', error);
-    res.status(500).json({ error: 'Failed to get available certificates' });
+    res.status(500).json({ error: '获取可用证书失败' });
   }
 });
 
@@ -165,7 +165,7 @@ router.post('/certificate', (req, res) => {
     });
   } catch (error) {
     console.error('Error applying for certificate:', error);
-    res.status(500).json({ error: 'Failed to apply for certificate' });
+    res.status(500).json({ error: '申请证书失败' });
   }
 });
 
@@ -190,7 +190,7 @@ router.get('/certificate/:examId/download', async (req, res) => {
     res.send(Buffer.from(mockCertificateContent));
   } catch (error) {
     console.error('Error downloading certificate:', error);
-    res.status(500).json({ error: 'Failed to download certificate' });
+    res.status(500).json({ error: '下载证书失败' });
   }
 });
 

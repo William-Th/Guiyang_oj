@@ -135,7 +135,7 @@ async function batchGenerateQuestionCodes(questionIds) {
       const questionResult = await query(questionSql, [id]);
 
       if (questionResult.rows.length === 0) {
-        results.push({ id, success: false, error: 'Question not found' });
+        results.push({ id, success: false, error: '题目不存在' });
         continue;
       }
 

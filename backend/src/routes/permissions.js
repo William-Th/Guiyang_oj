@@ -20,7 +20,7 @@ const adminOnly = async (req, res, next) => {
     if (!permissions) {
       return res.status(403).json({
         success: false,
-        error: 'No management permissions found'
+        error: '未找到管理权限'
       });
     }
     req.managementScope = {
@@ -34,7 +34,7 @@ const adminOnly = async (req, res, next) => {
 
   return res.status(403).json({
     success: false,
-    error: 'Only administrators can manage permissions'
+    error: '只有管理员可以管理权限'
   });
 };
 
@@ -75,7 +75,7 @@ router.get('/user/:userId', authMiddleware, async (req, res) => {
         req.user.id !== parseInt(userId)) {
       return res.status(403).json({
         success: false,
-        error: 'You do not have permission to view this user\'s permissions'
+        error: '您没有权限查看该用户的权限'
       });
     }
 
@@ -146,7 +146,7 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
       if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
         return res.status(403).json({
           success: false,
-          error: 'Only municipal or system admins can grant assessment review permission'
+          error: '只有市级管理员或系统管理员可以授予测评审核权限'
         });
       }
     }
@@ -156,7 +156,7 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
       if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
         return res.status(403).json({
           success: false,
-          error: 'Only municipal or system admins can grant municipal practice review permission'
+          error: '只有市级管理员或系统管理员可以授予市级练习审核权限'
         });
       }
     }
@@ -169,7 +169,7 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
         if (!managementScope || !managementScope.district_id) {
           return res.status(403).json({
             success: false,
-            error: 'District admin has no associated district'
+            error: '区级管理员没有关联区域'
           });
         }
 
@@ -195,7 +195,7 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
       } else {
         return res.status(403).json({
           success: false,
-          error: 'Only district, municipal, or system admins can grant district review permission'
+          error: '只有区级、市级或系统管理员可以授予区级审核权限'
         });
       }
     }
@@ -237,7 +237,7 @@ router.post('/revoke', authMiddleware, adminOnly, async (req, res) => {
     if (!permission) {
       return res.status(404).json({
         success: false,
-        error: 'Permission not found'
+        error: '权限不存在'
       });
     }
 
@@ -288,7 +288,7 @@ router.get('/available-teachers', authMiddleware, adminOnly, async (req, res) =>
       if (!managementScope || !managementScope.district_id) {
         return res.status(403).json({
           success: false,
-          error: 'District admin has no associated district'
+          error: '区级管理员没有关联区域'
         });
       }
       teachers = await TeacherPermission.getTeachersByDistrict(managementScope.district_id);
@@ -297,7 +297,7 @@ router.get('/available-teachers', authMiddleware, adminOnly, async (req, res) =>
     else {
       return res.status(403).json({
         success: false,
-        error: 'Only administrators can view available teachers'
+        error: '只有管理员可以查看可用教师列表'
       });
     }
 
@@ -348,7 +348,7 @@ router.delete('/:permissionId', authMiddleware, adminOnly, async (req, res) => {
     if (!permission) {
       return res.status(404).json({
         success: false,
-        error: 'Permission not found'
+        error: '权限不存在'
       });
     }
 
@@ -360,7 +360,7 @@ router.delete('/:permissionId', authMiddleware, adminOnly, async (req, res) => {
     if (!isExpired && !isInactive) {
       return res.status(400).json({
         success: false,
-        error: 'Cannot delete active permission. Please revoke it first.'
+        error: '无法删除有效权限，请先撤销权限'
       });
     }
 

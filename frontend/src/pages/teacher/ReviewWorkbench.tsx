@@ -25,11 +25,26 @@ import {
   CloseCircleOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { questionReviewApi } from '../../services/api';
+import { questionReviewApi, questionBankApi } from '../../services/api';
 import { SUBJECTS } from '../../config/subjects';
 
 const { TextArea } = Input;
 const { Option } = Select;
+
+// 能力配置接口
+interface Ability {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// 知识点配置接口
+interface KnowledgePoint {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+}
 
 interface Question {
   id: number;
@@ -74,6 +89,11 @@ const ReviewWorkbench: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // 配置数据
+  const [abilitiesConfig, setAbilitiesConfig] = useState<Ability[]>([]);
+  const [knowledgePointsConfig, setKnowledgePointsConfig] = useState<Record<string, KnowledgePoint[]>>({});
+  const [scopeTextsMap, setScopeTextsMap] = useState<Record<string, string>>({});
+
   // 筛选条件
   const [filters, setFilters] = useState({
     subject: '',
@@ -91,8 +111,68 @@ const ReviewWorkbench: React.FC = () => {
   });
 
   useEffect(() => {
+    loadConfig();
     loadPendingReviews();
   }, [filters]);
+
+  // 加载配置数据
+  const loadConfig = async () => {
+    try {
+      // 加载能力配置
+      const abilitiesRes = await questionBankApi.getAbilities();
+      const abilities = abilitiesRes.data?.abilities || abilitiesRes.data || [];
+      console.log('[ReviewWorkbench] Loaded abilities:', abilities);
+      setAbilitiesConfig(abilities);
+
+      // 加载所有科目知识点配置
+      const kpRes = await questionBankApi.getAllKnowledgePoints();
+      console.log('[ReviewWorkbench] Knowledge points raw response:', kpRes);
+      if (kpRes.data) {
+        const kpMap: Record<string, KnowledgePoint[]> = {};
+        // 后端返回的是对象：{ math: {...}, physics: {...}, ... }
+        Object.entries(kpRes.data).forEach(([key, value]: [string, any]) => {
+          if (value.knowledge_points) {
+            kpMap[key] = value.knowledge_points;
+          }
+        });
+        console.log('[ReviewWorkbench] Knowledge points map:', kpMap);
+        setKnowledgePointsConfig(kpMap);
+      }
+    } catch (error) {
+      console.error('[ReviewWorkbench] Load config error:', error);
+    }
+  };
+
+  // 科目中文名称到英文代码的映射
+  const getSubjectCode = (subjectName: string): string => {
+    const subjectMap: Record<string, string> = {
+      '数学': 'math',
+      '物理': 'physics',
+      '化学': 'chemistry',
+      '生物': 'biology',
+      '信息科技': 'computer',
+      '计算机': 'computer'
+    };
+    return subjectMap[subjectName] || subjectName;
+  };
+
+  // 获取能力名称
+  const getAbilityName = (id: string): string => {
+    const ability = abilitiesConfig.find(a => a.id === id);
+    const result = ability?.name || id;
+    console.log('[ReviewWorkbench] getAbilityName:', id, '->', result, 'config length:', abilitiesConfig.length);
+    return result;
+  };
+
+  // 获取知识点名称
+  const getKnowledgePointName = (subject: string, id: string): string => {
+    const subjectCode = getSubjectCode(subject);
+    const kps = knowledgePointsConfig[subjectCode] || [];
+    const kp = kps.find(k => k.id === id);
+    const result = kp?.name || id;
+    console.log('[ReviewWorkbench] getKnowledgePointName:', {subject, subjectCode, id, result, kpsLength: kps.length});
+    return result;
+  };
 
   const loadPendingReviews = async () => {
     try {
@@ -131,15 +211,49 @@ const ReviewWorkbench: React.FC = () => {
     }
   };
 
-  const handleViewDetail = (question: Question) => {
+  const handleViewDetail = async (question: Question) => {
     setSelectedQuestion(question);
+
+    // 加载该题目的scope文本映射
+    const scopesToLoad = question.scope || [];
+    if (question.target_scope && !scopesToLoad.includes(question.target_scope)) {
+      scopesToLoad.push(question.target_scope);
+    }
+    if (scopesToLoad.length > 0) {
+      try {
+        const scopeRes = await questionBankApi.getScopeTexts(scopesToLoad);
+        if (scopeRes.data) {
+          setScopeTextsMap(scopeRes.data);
+        }
+      } catch (error) {
+        console.error('Load scope texts error:', error);
+      }
+    }
+
     setDetailModalVisible(true);
   };
 
-  const handleReviewClick = (question: Question) => {
+  const handleReviewClick = async (question: Question) => {
     setSelectedQuestion(question);
     setReviewStatus('approved');
     setReviewComment('');
+
+    // 加载该题目的scope文本映射
+    const scopesToLoad = question.scope || [];
+    if (question.target_scope && !scopesToLoad.includes(question.target_scope)) {
+      scopesToLoad.push(question.target_scope);
+    }
+    if (scopesToLoad.length > 0) {
+      try {
+        const scopeRes = await questionBankApi.getScopeTexts(scopesToLoad);
+        if (scopeRes.data) {
+          setScopeTextsMap(scopeRes.data);
+        }
+      } catch (error) {
+        console.error('Load scope texts error:', error);
+      }
+    }
+
     setReviewModalVisible(true);
   };
 
@@ -229,12 +343,15 @@ const ReviewWorkbench: React.FC = () => {
 
   const getScopeText = (scope?: string): { text: string; color: string } => {
     if (!scope) return { text: '-', color: 'default' };
-    const scopes: Record<string, { text: string; color: string }> = {
-      assessment: { text: '测评题库', color: 'orange' },
-      practice_municipal: { text: '市级练习', color: 'blue' },
-      practice_district: { text: '区级练习', color: 'cyan' },
-    };
-    return scopes[scope] || { text: scope, color: 'default' };
+    // 使用从后端API加载的scope文本映射
+    const text = scopeTextsMap[scope] || scope;
+    // 根据scope类型设置颜色
+    let color = 'default';
+    if (scope === 'assessment') color = 'orange';
+    else if (scope === 'practice_municipal') color = 'blue';
+    else if (scope.startsWith('practice_district_')) color = 'cyan';
+    else if (scope.startsWith('practice_school_')) color = 'purple';
+    return { text, color };
   };
 
   const columns = [
@@ -656,7 +773,7 @@ const ReviewWorkbench: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.abilities.map((ability, index) => (
                     <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
-                      {ability}
+                      {getAbilityName(ability)}
                     </Tag>
                   ))}
                 </div>
@@ -669,7 +786,7 @@ const ReviewWorkbench: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.knowledge_points.map((kp, index) => (
                     <Tag key={index} color="cyan" style={{ marginBottom: 4 }}>
-                      {kp}
+                      {getKnowledgePointName(selectedQuestion.subject, kp)}
                     </Tag>
                   ))}
                 </div>
