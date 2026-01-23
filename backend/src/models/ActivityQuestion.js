@@ -205,6 +205,7 @@ class ActivityQuestion {
         a.paper_status,
         a.total_score,
         a.question_count,
+        COALESCE(SUM(aq.score), 0) as actual_total_score,
         COUNT(DISTINCT CASE WHEN qb.type = 'single' THEN aq.id END) as single_choice_count,
         COUNT(DISTINCT CASE WHEN qb.type = 'multiple' THEN aq.id END) as multiple_choice_count,
         COUNT(DISTINCT CASE WHEN qb.type = 'blank' THEN aq.id END) as blank_count,

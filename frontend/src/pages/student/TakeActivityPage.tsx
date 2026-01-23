@@ -14,10 +14,12 @@ import {
   Typography,
   Divider,
   Progress,
+  Affix,
 } from 'antd';
 import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
+  CheckOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi } from '../../services/api';
@@ -168,14 +170,17 @@ const TakeActivityPage: React.FC = () => {
   const [activity, setActivity] = useState<ActivityData | null>(null);
   const [studentActivity, setStudentActivity] = useState<StudentActivity | null>(null);
   const [answeredCount, setAnsweredCount] = useState(0);
-  const [autoSaving, setAutoSaving] = useState(false);
   const [networkError, setNetworkError] = useState(false);
   const [hasLocalBackup, setHasLocalBackup] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+
+  // Refs for question scrolling
+  const questionRefs = useRef<(HTMLElement | null)[]>([]);
 
   const activityId = id ? parseInt(id) : undefined;
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasStartedRef = useRef(false);
-  const retryCountRef = useRef(0);
 
   // Calculate deadline for countdown timer
   const getDeadline = (): string | null => {
@@ -241,36 +246,65 @@ const TakeActivityPage: React.FC = () => {
       const questionsResponse = await activityApi.getActivityQuestions(activityId);
       if (questionsResponse.activity) {
         setActivity(questionsResponse.activity);
-      }
 
-      // Check for localStorage backup
-      const localBackup = loadAnswersFromLocalStorage(activityId);
-
-      // Load existing answers from server
-      let formValues: any = {};
-      try {
-        const answersResponse = await activityApi.getMyAnswers(activityId);
-        if (answersResponse.answers && answersResponse.answers.length > 0) {
-          answersResponse.answers.forEach((answer: any) => {
-            formValues[`question_${answer.question_id}`] = answer.answer;
+        // Convert old field names to new format after activity is loaded
+        const activity = questionsResponse.activity;
+        const convertFieldNames = (values: any) => {
+          const converted: any = {};
+          Object.entries(values).forEach(([key, value]) => {
+            // Check if this is an old field name (question_${id})
+            const match = key.match(/^question_(\d+)$/);
+            if (match) {
+              const questionId = parseInt(match[1]);
+              // Find the index of this question
+              const index = activity.questions.findIndex((q: any) => q.id === questionId);
+              if (index !== -1) {
+                // Convert to new format: q_${index}_${question.id}
+                converted[`q_${index}_${questionId}`] = value;
+              } else {
+                // Keep old format if question not found
+                converted[key] = value;
+              }
+            } else {
+              // Keep new format or other fields as is
+              converted[key] = value;
+            }
           });
+          return converted;
+        };
+
+        // Check for localStorage backup
+        const localBackup = loadAnswersFromLocalStorage(activityId);
+
+        // Load existing answers from server
+        let formValues: any = {};
+        try {
+          const answersResponse = await activityApi.getMyAnswers(activityId);
+          if (answersResponse.answers && answersResponse.answers.length > 0) {
+            answersResponse.answers.forEach((answer: any) => {
+              formValues[`question_${answer.question_id}`] = answer.answer;
+            });
+          }
+        } catch (error) {
+          console.log('No existing answers found');
         }
-      } catch (error) {
-        console.log('No existing answers found');
-      }
 
-      if (localBackup) {
-        // Merge with localStorage backup (localStorage takes priority for newer answers)
-        formValues = { ...formValues, ...localBackup };
-        setHasLocalBackup(true);
+        if (localBackup) {
+          // Merge with localStorage backup (localStorage takes priority for newer answers)
+          formValues = { ...formValues, ...localBackup };
+          setHasLocalBackup(true);
 
-        // Show message about restored answers
-        message.info('已恢复本地保存的答案');
-      }
+          // Show message about restored answers
+          message.info('已恢复本地保存的答案');
+        }
 
-      if (Object.keys(formValues).length > 0) {
-        form.setFieldsValue(formValues);
-        updateAnsweredCount(formValues);
+        if (Object.keys(formValues).length > 0) {
+          // Convert field names to new format
+          const convertedValues = convertFieldNames(formValues);
+          form.setFieldsValue(convertedValues);
+          // Update answered tracking using the converted values
+          updateAnsweredTracking(convertedValues);
+        }
       }
     } catch (error: any) {
       console.error('Load activity error:', error);
@@ -292,96 +326,55 @@ const TakeActivityPage: React.FC = () => {
     }
   };
 
-  // Update answered question count
-  const updateAnsweredCount = (values?: any) => {
+  // Update answered question tracking - marks which questions have been answered
+  // Pass values explicitly to avoid relying on form state
+  const updateAnsweredTracking = (values?: any) => {
+    if (!activity) return;
+
+    // If no values provided, get from form
     const formValues = values || form.getFieldsValue();
-    const answered = Object.values(formValues).filter((v) => {
-      if (Array.isArray(v)) return v.length > 0;
-      return v !== undefined && v !== null && v !== '';
-    }).length;
-    setAnsweredCount(answered);
+    const answeredSet = new Set<number>();
+
+    activity.questions.forEach((q, index) => {
+      // Use the exact field name format: q_${index}_${q.id}
+      const fieldName = `q_${index}_${q.id}`;
+      const value = formValues[fieldName];
+
+      if (value !== undefined && value !== null && value !== '') {
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            answeredSet.add(index);
+          }
+        } else {
+          answeredSet.add(index);
+        }
+      }
+    });
+
+    setAnsweredQuestions(answeredSet);
+    setAnsweredCount(answeredSet.size);
   };
 
-  // Auto-save answers
-  const handleFormChange = () => {
-    updateAnsweredCount();
+  // Scroll to question
+  const scrollToQuestion = (index: number) => {
+    setCurrentQuestionIndex(index);
+    const ref = questionRefs.current[index];
+    if (ref) {
+      ref.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
-    // Save to localStorage immediately (fast, no network required)
+  // Auto-save answers to localStorage only - NO automatic backend calls
+  const handleFormChange = () => {
+    // Get all form values (not just touched) to properly track answered questions
+    const allValues = form.getFieldsValue();
+    updateAnsweredTracking(allValues);
+
+    // Only save to localStorage (fast, no network required)
     if (activityId) {
-      const values = form.getFieldsValue();
-      saveAnswersToLocalStorage(activityId, values);
+      saveAnswersToLocalStorage(activityId, allValues);
       setHasLocalBackup(true);
     }
-
-    // Debounce server auto-save
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(() => {
-      autoSaveAnswers();
-    }, 2000); // Save to server after 2 seconds of inactivity
-  };
-
-  const autoSaveAnswers = async () => {
-    if (!activity || !activityId) return;
-
-    try {
-      setAutoSaving(true);
-      const values = form.getFieldsValue();
-      const answers = prepareAnswers(values);
-
-      if (answers.length === 0) return; // No answers to save
-
-      // Submit each answer individually using new API
-      const savePromises = answers.map(answer =>
-        activityApi.submitAnswer(activityId, {
-          questionId: answer.questionId,
-          answer: answer.answer
-        })
-      );
-
-      await Promise.all(savePromises);
-
-      // Success - clear network error flag
-      if (networkError) {
-        setNetworkError(false);
-        message.success('网络已恢复，答案已同步');
-      }
-      retryCountRef.current = 0;
-    } catch (error: any) {
-      console.error('Auto-save error:', error);
-      setNetworkError(true);
-
-      // Retry logic for network errors
-      if (retryCountRef.current < 3) {
-        retryCountRef.current++;
-        setTimeout(() => {
-          autoSaveAnswers();
-        }, 5000 * retryCountRef.current); // Exponential backoff: 5s, 10s, 15s
-      }
-
-      // Don't show error message for auto-save failures (answers are in localStorage)
-    } finally {
-      setAutoSaving(false);
-    }
-  };
-
-  // Prepare answers in API format
-  const prepareAnswers = (values: any): any[] => {
-    if (!activity) return [];
-
-    return activity.questions
-      .map((q) => {
-        const answer = values[`question_${q.id}`];
-        if (answer === undefined || answer === null || answer === '') return null;
-
-        return {
-          questionId: q.id,
-          answer: Array.isArray(answer) ? answer : String(answer),
-        };
-      })
-      .filter((a) => a !== null);
   };
 
   // Handle manual submit
@@ -442,33 +435,48 @@ const TakeActivityPage: React.FC = () => {
   };
 
   // Render question based on type
+  // Use index to ensure unique field names and prevent state sharing between questions
   const renderQuestion = (question: ActivityQuestion, index: number) => {
-    const fieldName = `question_${question.id}`;
+    // Use both index and question.id to ensure absolute uniqueness
+    const fieldName = `q_${index}_${question.id}`;
 
     return (
       <Card
-        key={question.id}
-        style={{ marginBottom: 16 }}
+        key={`card-${index}-${question.id}`}
+        ref={(el: any) => (questionRefs.current[index] = el)}
+        id={`question-${index}`}
+        style={{ marginBottom: 20, fontSize: '16px' }}
         title={
-          <Space>
-            <Text strong>第 {index + 1} 题</Text>
-            <Text type="secondary">({question.score} 分)</Text>
-            {question.difficulty && (
-              <Text type="secondary">难度: {question.difficulty}</Text>
+          <Space style={{ fontSize: '17px' }}>
+            <Text strong style={{ fontSize: '17px' }}>第 {index + 1} 题</Text>
+            <Text type="secondary" style={{ fontSize: '15px' }}>({question.score} 分)</Text>
+            {answeredQuestions.has(index) && (
+              <CheckOutlined style={{ color: '#52c41a' }} />
             )}
           </Space>
         }
       >
-        <Paragraph>{question.content}</Paragraph>
+        <Paragraph style={{ fontSize: '18px', marginBottom: 16, lineHeight: '1.8' }}>
+          {question.content}
+        </Paragraph>
 
-        {/* Single choice */}
-        {question.type === 'single' && (
-          <Form.Item name={fieldName}>
+        {/* Single choice - use index in key to prevent React reusing components */}
+        {question.type === 'single' && question.options && (
+          <Form.Item
+            key={`single-${index}`}
+            name={fieldName}
+            preserve={false}
+            style={{ marginBottom: 0, fontSize: '17px' }}
+          >
             <Radio.Group style={{ width: '100%' }}>
-              <Space direction="vertical" style={{ width: '100%' }}>
-                {question.options?.map((option, i) => (
-                  <Radio key={i} value={String.fromCharCode(65 + i)}>
-                    {String.fromCharCode(65 + i)}. {option}
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                {question.options.map((option, optIndex) => (
+                  <Radio
+                    key={`${index}-${optIndex}`}
+                    value={String.fromCharCode(65 + optIndex)}
+                    style={{ fontSize: '17px', lineHeight: '1.8' }}
+                  >
+                    {String.fromCharCode(65 + optIndex)}. {option}
                   </Radio>
                 ))}
               </Space>
@@ -477,13 +485,22 @@ const TakeActivityPage: React.FC = () => {
         )}
 
         {/* Multiple choice */}
-        {question.type === 'multiple' && (
-          <Form.Item name={fieldName}>
+        {question.type === 'multiple' && question.options && (
+          <Form.Item
+            key={`multiple-${index}`}
+            name={fieldName}
+            preserve={false}
+            style={{ marginBottom: 0, fontSize: '17px' }}
+          >
             <Checkbox.Group style={{ width: '100%' }}>
-              <Space direction="vertical" style={{ width: '100%' }}>
-                {question.options?.map((option, i) => (
-                  <Checkbox key={i} value={String.fromCharCode(65 + i)}>
-                    {String.fromCharCode(65 + i)}. {option}
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                {question.options.map((option, optIndex) => (
+                  <Checkbox
+                    key={`${index}-${optIndex}`}
+                    value={String.fromCharCode(65 + optIndex)}
+                    style={{ fontSize: '17px', lineHeight: '1.8' }}
+                  >
+                    {String.fromCharCode(65 + optIndex)}. {option}
                   </Checkbox>
                 ))}
               </Space>
@@ -493,17 +510,28 @@ const TakeActivityPage: React.FC = () => {
 
         {/* Fill in the blank */}
         {question.type === 'blank' && (
-          <Form.Item name={fieldName}>
-            <Input placeholder="请输入答案" />
+          <Form.Item
+            key={`blank-${index}`}
+            name={fieldName}
+            preserve={false}
+            style={{ marginBottom: 0, fontSize: '17px' }}
+          >
+            <Input placeholder="请输入答案" style={{ fontSize: '16px' }} />
           </Form.Item>
         )}
 
         {/* Essay */}
         {question.type === 'essay' && (
-          <Form.Item name={fieldName}>
-            <TextArea rows={6} placeholder="请输入您的答案" />
+          <Form.Item
+            key={`essay-${index}`}
+            name={fieldName}
+            preserve={false}
+            style={{ marginBottom: 0, fontSize: '17px' }}
+          >
+            <TextArea rows={6} placeholder="请输入您的答案" style={{ fontSize: '16px' }} />
           </Form.Item>
         )}
+
 
         {/* Code - using CodeQuestion component */}
         {question.type === 'code' && (
@@ -541,107 +569,203 @@ const TakeActivityPage: React.FC = () => {
   const deadline = getDeadline();
   const progress = (answeredCount / activity.questions.length) * 100;
 
+  // Question type name mapping for display
+  const getTypeName = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      'single': '单选题',
+      'multiple': '多选题',
+      'blank': '填空题',
+      'essay': '主观题',
+      'code': '编程题',
+      'true_false': '判断题',
+    };
+    return typeMap[type] || '其他';
+  };
+
+  // Group questions by type
+  const groupQuestionsByType = () => {
+    const groups: Record<string, Array<{ question: ActivityQuestion; index: number }>> = {};
+    activity.questions.forEach((q, index) => {
+      const typeName = getTypeName(q.type);
+      if (!groups[typeName]) {
+        groups[typeName] = [];
+      }
+      groups[typeName].push({ question: q, index });
+    });
+    return groups;
+  };
+
+  const questionGroups = groupQuestionsByType();
+
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px' }}>
-      {/* Activity Header */}
-      <Card style={{ marginBottom: 16 }}>
-        <Title level={3}>{activity.title}</Title>
-        {activity.description && <Paragraph>{activity.description}</Paragraph>}
-
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          {/* Time limit info */}
-          {deadline && (
-            <CountdownTimer
-              deadline={deadline}
-              onTimeExpired={handleTimeExpired}
-              showWarning={true}
-              warningThreshold={5}
-            />
-          )}
-
-          {activity.time_limit_type === 'unlimited' && (
-            <Alert
-              message="无时间限制"
-              description="您可以随时保存并继续答题"
-              type="info"
-              showIcon
-            />
-          )}
-
-          {/* Network Error Alert */}
-          {networkError && (
-            <Alert
-              message="网络连接异常"
-              description="答案已保存在本地，网络恢复后将自动同步到服务器"
-              type="warning"
-              showIcon
-              closable
-            />
-          )}
-
-          {/* LocalStorage Backup Info */}
-          {hasLocalBackup && !networkError && (
-            <Alert
-              message="答案已本地备份"
-              description="您的答案已自动保存到本地，即使刷新页面也不会丢失"
-              type="success"
-              showIcon
-              closable
-            />
-          )}
-
-          {/* Progress */}
-          <div>
-            <Space>
-              <Text>答题进度：</Text>
-              <Text strong>
-                {answeredCount} / {activity.questions.length}
-              </Text>
-              {autoSaving && <Text type="secondary">(自动保存中...)</Text>}
-            </Space>
-            <Progress percent={Math.round(progress)} status="active" />
+    <div style={{ display: 'flex', gap: '20px', padding: '24px', fontSize: '16px', overflowX: 'hidden' }}>
+      {/* Left Sidebar - Question Navigation */}
+      <Affix offsetTop={24}>
+        <Card
+          title={<span style={{ fontSize: '14px', fontWeight: 'bold' }}>答题卡</span>}
+          style={{ width: 150, maxHeight: 'calc(100vh - 80px)', overflow: 'visible' }}
+          size="small"
+          bodyStyle={{ padding: '8px' }}
+        >
+          <div style={{ overflowX: 'hidden' }}>
+            {Object.entries(questionGroups).map(([typeName, questions]) => (
+              <div key={typeName} style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px', fontWeight: 500 }}>
+                  {typeName} ({questions.length})
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gap: '4px'
+                }}>
+                  {questions.map(({ question, index }) => {
+                    const isAnswered = answeredQuestions.has(index);
+                    const isCurrent = index === currentQuestionIndex;
+                    return (
+                      <Button
+                        key={question.id}
+                        size="small"
+                        type={isCurrent ? 'primary' : isAnswered ? 'default' : 'dashed'}
+                        danger={isAnswered}
+                        onClick={() => scrollToQuestion(index)}
+                        style={{
+                          padding: '2px 4px',
+                          height: '28px',
+                          minWidth: 'unset',
+                          fontWeight: isAnswered ? 'bold' : 'normal',
+                          fontSize: '13px',
+                        }}
+                      >
+                        {index + 1}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Activity info */}
-          <Space split={<Divider type="vertical" />}>
-            <Text>科目: {activity.subject}</Text>
-            <Text>年级: {activity.grade}</Text>
-            <Text>总分: {activity.total_score}</Text>
-            <Text>及格分: {activity.pass_score}</Text>
+          <Divider style={{ margin: '8px 0' }} />
+
+          <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+            <div style={{ marginBottom: '4px' }}>
+              <span style={{ color: '#52c41a', fontWeight: 'bold' }}>●</span> 已答 {answeredCount}
+            </div>
+            <div>
+              <span style={{ color: '#d9d9d9' }}>○</span> 未答 {activity.questions.length - answeredCount}
+            </div>
+          </div>
+        </Card>
+      </Affix>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, marginLeft: 'auto', maxWidth: 1000, overflowX: 'hidden' }}>
+        {/* Submit Button - Fixed at top */}
+        <Card style={{ marginBottom: 16 }}>
+          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+            <div>
+              <Title level={4} style={{ margin: 0 }}>
+                {activity.title}
+              </Title>
+              {activity.description && (
+                <Paragraph style={{ margin: 0, marginBottom: 8 }}>
+                  {activity.description}
+                </Paragraph>
+              )}
+              <Space split={<Divider type="vertical" />}>
+                <Text>科目: {activity.subject}</Text>
+                <Text>年级: {activity.grade}</Text>
+                <Text>总分: {activity.total_score}</Text>
+                <Text>及格分: {activity.pass_score}</Text>
+              </Space>
+            </div>
+            <Space>
+              <Button
+                type="default"
+                size="large"
+                onClick={() => navigate(-1)}
+                disabled={submitting}
+              >
+                放弃答题
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                icon={<CheckCircleOutlined />}
+                onClick={handleSubmit}
+                loading={submitting}
+                disabled={answeredCount === 0}
+              >
+                提交答案 ({answeredCount}/{activity.questions.length})
+              </Button>
+            </Space>
           </Space>
-        </Space>
-      </Card>
+        </Card>
 
-      {/* Questions Form */}
-      <Form form={form} layout="vertical" onValuesChange={handleFormChange}>
-        {activity.questions.map((question, index) =>
-          renderQuestion(question, index)
-        )}
-      </Form>
+        {/* Time and Status Info */}
+        <Card style={{ marginBottom: 16 }}>
+          <Space direction="vertical" style={{ width: '100%' }} size="small">
+            {/* Time limit info */}
+            {deadline && (
+              <CountdownTimer
+                deadline={deadline}
+                onTimeExpired={handleTimeExpired}
+                showWarning={true}
+                warningThreshold={5}
+              />
+            )}
 
-      {/* Submit Button */}
-      <Card>
-        <Space size="large" style={{ width: '100%', justifyContent: 'center' }}>
-          <Button
-            type="default"
-            size="large"
-            onClick={() => navigate(-1)}
-            disabled={submitting}
-          >
-            放弃答题
-          </Button>
-          <Button
-            type="primary"
-            size="large"
-            icon={<CheckCircleOutlined />}
-            onClick={handleSubmit}
-            loading={submitting}
-            disabled={answeredCount === 0}
-          >
-            提交答案
-          </Button>
-        </Space>
-      </Card>
+            {activity.time_limit_type === 'unlimited' && (
+              <Alert
+                message="无时间限制"
+                description="您可以随时保存并继续答题"
+                type="info"
+                showIcon
+              />
+            )}
+
+            {/* Network Error Alert */}
+            {networkError && (
+              <Alert
+                message="网络连接异常"
+                description="答案已保存在本地，网络恢复后将自动同步到服务器"
+                type="warning"
+                showIcon
+                closable
+              />
+            )}
+
+            {/* LocalStorage Backup Info */}
+            {hasLocalBackup && !networkError && (
+              <Alert
+                message="答案已本地备份"
+                description="您的答案已自动保存到本地，即使刷新页面也不会丢失"
+                type="success"
+                showIcon
+                closable
+              />
+            )}
+
+            {/* Progress */}
+            <Progress
+              percent={Math.round(progress)}
+              format={(percent) => `${answeredCount}/${activity.questions.length} 题 (${percent}%)`}
+            />
+          </Space>
+        </Card>
+
+        {/* Questions Form */}
+        <Form
+          form={form}
+          layout="vertical"
+          onValuesChange={handleFormChange}
+          preserve={false}
+        >
+          {activity.questions.map((question, index) =>
+            renderQuestion(question, index)
+          )}
+        </Form>
+      </div>
     </div>
   );
 };

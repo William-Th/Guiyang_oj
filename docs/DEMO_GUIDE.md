@@ -12,6 +12,7 @@
    - [Level 5: 系统总管理员](#level-5-系统总管理员)
    - [Level 4: 市级管理员](#level-4-市级管理员)
    - [Level 3: 区县级管理员](#level-3-区县级管理员)
+   - [Level 2: 校级管理员](#level-2-校级管理员)
 2. [教师账号](#教师账号)
 3. [学生账号](#学生账号)
 
@@ -42,6 +43,8 @@
 | 账号 | 角色 | 姓名 | 密码 | 权限范围 |
 |------|------|------|------|----------|
 | `guiyang_admin` | municipal_admin | 贵阳市教育局管理员 | `password123` | 贵阳市 |
+| `municipal_school_admin` | municipal_school_admin | 市直属学校总管理员 | `password123` | 市直属学校 |
+| `base_school_admin` | base_school_admin | 信息技术基地校管理员 | `password123` | 基地学校 |
 
 **权限**:
 - 管理所有区县
@@ -57,15 +60,17 @@
 
 | 账号 | 角色 | 姓名 | 密码 | 管辖区县 |
 |------|------|------|------|----------|
-| `yunyan_admin` | district_admin | 云岩区管理员 | `password123` | 云岩区 |
-| `nanming_admin` | district_admin | 南明区管理员 | `password123` | 南明区 |
-| `guanshanhu_admin` | district_admin | 观山湖区管理员 | `password123` | 观山湖区 |
-| `baiyun_admin` | district_admin | 白云区教育局管理员 | `password123` | 白云区 |
-| `qingzhen_admin` | district_admin | 清镇市教育局管理员 | `password123` | 清镇市 |
-| `xiuwen_admin` | district_admin | 修文县教育局管理员 | `password123` | 修文县 |
-| `xifeng_admin` | district_admin | 息烽县教育局管理员 | `password123` | 息烽县 |
-| `kaiyang_admin` | district_admin | 开阳县教育局管理员 | `password123` | 开阳县 |
-| `guian_admin` | district_admin | 贵安新区教育局管理员 | `password123` | 贵安新区 |
+| `yunyan_admin` | district_admin | 云岩区管理员 | `password123` | 云岩区 (YY) |
+| `nanming_admin` | district_admin | 南明区管理员 | `password123` | 南明区 (NM) |
+| `guanshanhu_admin` | district_admin | 观山湖区管理员 | `password123` | 观山湖区 (GSH) |
+| `baiyun_admin` | district_admin | 白云区教育局管理员 | `password123` | 白云区 (BY) |
+| `qingzhen_admin` | district_admin | 清镇市教育局管理员 | `password123` | 清镇市 (QZ) |
+| `xiuwen_admin` | district_admin | 修文县教育局管理员 | `password123` | 修文县 (XW) |
+| `xifeng_admin` | district_admin | 息烽县教育局管理员 | `password123` | 息烽县 (XF) |
+| `kaiyang_admin` | district_admin | 开阳县教育局管理员 | `password123` | 开阳县 (KY) |
+| `guian_admin` | district_admin | 贵安新区教育局管理员 | `password123` | 贵安新区 (GAXQ) |
+| `huaxi_admin` | district_admin | 花溪区教育局管理员 | `password123` | 花溪区 (HX) |
+| `wudang_admin` | district_admin | 乌当区教育局管理员 | `password123` | 乌当区 (WD) |
 
 **权限**:
 - 管理所辖区县内的学校
@@ -80,8 +85,6 @@
   - 可管理白云区教师提交的题库
   - 可查看题目审核统计
 
-**注**: 历史测试账号 `district_admin01` 和 `test_district_admin_*` 已从系统中移除。测试时请使用上述具体区县的管理员账号（如 `yunyan_admin`、`nanming_admin` 等）。
-
 ---
 
 ### Level 2: 校级管理员
@@ -89,7 +92,7 @@
 校级管理员，管理学校内的教师和学生。
 
 **账号命名规范**: `school_admin_{区县代码}_{学校类型}_{编号}`
-- 区县代码: `yy`(云岩), `nm`(南明), `gsh`(观山湖), `by`(白云), `hx`(花溪), `wd`(乌当), `qz`(清镇), `xw`(修文), `xf`(息烽), `ky`(开阳), `gaxq`(贵安新区), `gyszsx`(市直属)
+- 区县代码: `yy`(云岩), `nm`(南明), `gsh`(观山湖), `by`(白云), `hx`(花溪), `qz`(清镇), `xw`(修文), `xf`(息烽), `ky`(开阳), `gaxq`(贵安新区), `gyszsx`(市直属)
 - 学校类型: `ps`(小学), `ms`(中学), `hs`(高中)
 - 编号: `01`, `02`, `03`...
 
@@ -132,14 +135,6 @@
 | `school_admin_hx_ps_01` | school_admin | 花溪区第一小学管理员 | `password123` | 花溪区第一小学 |
 | `school_admin_hx_ms_01` | school_admin | 花溪区第一中学管理员 | `password123` | 花溪区第一中学 |
 | `school_admin_hx_hs_01` | school_admin | 花溪区第一高中管理员 | `password123` | 花溪区第一高中 |
-
-#### 乌当区学校管理员
-
-| 账号 | 角色 | 姓名 | 密码 | 管辖学校 |
-|------|------|------|------|----------|
-| `school_admin_wd_ps_01` | school_admin | 乌当区第一小学管理员 | `password123` | 乌当区第一小学 |
-| `school_admin_wd_ms_01` | school_admin | 乌当区第一中学管理员 | `password123` | 乌当区第一中学 |
-| `school_admin_wd_hs_01` | school_admin | 乌当区第一高中管理员 | `password123` | 乌当区第一高中 |
 
 #### 清镇市学校管理员
 
@@ -189,13 +184,19 @@
 | `school_admin_gyszsx_ms_01` | school_admin | 市直属第一中学管理员 | `password123` | 贵阳市直属第一中学 |
 | `school_admin_gyszsx_hs_01` | school_admin | 市直属第一高中管理员 | `password123` | 贵阳市直属第一高中 |
 
+**其他校级管理员账号**（旧命名规范）:
+| 账号 | 角色 | 姓名 | 管辖学校 |
+|------|------|------|----------|
+| `school_admin_01` | school_admin | 第一小学管理员 | 贵阳市第一小学 |
+| `school_admin_02` | school_admin | 第二小学管理员 | 贵阳市第二小学 |
+
 **权限**:
 - 管理本校教师账号
 - 管理本校学生账号
 - 查看本校统计数据
 - 审批本校活动和资源申请
 
-**总计**: 39个校级管理员账号（覆盖所有学校）
+**总计**: 39个新规范校级管理员账号 + 2个旧账号
 
 ---
 
@@ -203,50 +204,124 @@
 
 教师账号，负责教学和练习活动管理。
 
-**重要变更 (2025-11-04)**: 已移除通用教师账号 (teacher01, teacher02, teacher03)，改为使用学校特定教师账号，便于测试和数据追溯。
-
 ### 账号命名规范
 
-格式: `teacher_{区县代码}_{学校类型}_{科目}`
+**新规范**: `teacher_{区县代码}_{学校类型}_{科目}`（推荐）
+**旧规范**: `teacher{区县代码}_{学校类型}_{编号}`（部分区县）
 
-- **区县代码**: `by`(白云), `nm`(南明), `yy`(云岩)
+- **区县代码**: `by`(白云), `nm`(南明), `yy`(云岩), `gsh`(观山湖), `hx`(花溪), `qz`(清镇), `xw`(修文), `xf`(息烽), `ky`(开阳), `gaxq`(贵安新区), `gyszsx`(市直属)
 - **学校类型**: `ps`(小学), `ms`(中学), `hs`(高中)
 - **科目**: `math`(数学), `it`(信息科技)
 
 示例: `teacher_by_ps_math` = 白云区第一小学数学老师
 
-### 白云区教师 (6人)
+### 白云区教师 (9人)
 
 | 账号 | 姓名 | 密码 | 学校 | 科目 | 教师编号 |
 |------|------|------|------|------|----------|
-| `teacher_by_ps_math` | 陈刚-白云一小 | `password123` | 白云区第一小学 | 数学 | T_BY_PS_MATH |
+| `teacher_by_ps_01` | 陈刚 | `password123` | 白云区第一小学 | 数学 | T-BY-PS-01-001 |
+| `teacher_by_ps_math` | 陈刚-白云一小 | `password123` | 白云区第一小学 | 信息科技 | T_BY_PS_IT |
 | `teacher_by_ps_it` | 李敏-白云一小 | `password123` | 白云区第一小学 | 信息科技 | T_BY_PS_IT |
-| `teacher_by_ms_math` | 张华-白云一中 | `password123` | 白云区第一中学 | 数学 | T_BY_MS_MATH |
+| `teacher_by_ms_01` | 蒋敏 | `password123` | 白云区第一中学 | 信息科技 | T-BY-MS-01-001 |
 | `teacher_by_ms_it` | 王芳-白云一中 | `password123` | 白云区第一中学 | 信息科技 | T_BY_MS_IT |
-| `teacher_by_hs_math` | 刘强-白云一高 | `password123` | 白云区第一高中 | 数学 | T_BY_HS_MATH |
+| `teacher_by_ms_math` | 张华-白云一中 | `password123` | 白云区第一中学 | 数学 | T_BY_MS_MATH |
+| `teacher_by_hs_01` | 沈浩 | `password123` | 白云区第一高中 | 数学/计算机 | T-BY-HS-01-001 |
 | `teacher_by_hs_it` | 杨丽-白云一高 | `password123` | 白云区第一高中 | 信息科技 | T_BY_HS_IT |
+| `teacher_by_hs_math` | 刘强-白云一高 | `password123` | 白云区第一高中 | 数学 | T_BY_HS_MATH |
 
-### 南明区教师 (6人)
+### 南明区教师 (9人)
 
 | 账号 | 姓名 | 密码 | 学校 | 科目 | 教师编号 |
 |------|------|------|------|------|----------|
+| `teacher_nm_ps_01` | 赵丽 | `password123` | 南明区第一小学 | - | T-NM-PS-01-001 |
 | `teacher_nm_ps_math` | 赵勇-南明一小 | `password123` | 南明区第一小学 | 数学 | T_NM_PS_MATH |
 | `teacher_nm_ps_it` | 孙静-南明一小 | `password123` | 南明区第一小学 | 信息科技 | T_NM_PS_IT |
+| `teacher_nm_ms_01` | 孙伟 | `password123` | 南明区第一中学 | 数学 | T-NM-MS-01-001 |
 | `teacher_nm_ms_math` | 周杰-南明一中 | `password123` | 南明区第一中学 | 数学 | T_NM_MS_MATH |
 | `teacher_nm_ms_it` | 吴梅-南明一中 | `password123` | 南明区第一中学 | 信息科技 | T_NM_MS_IT |
+| `teacher_nm_hs_01` | 周杰 | `password123` | 南明区第一高中 | 计算机 | T-NM-HS-01-001 |
 | `teacher_nm_hs_math` | 郑鹏-南明一高 | `password123` | 南明区第一高中 | 数学 | T_NM_HS_MATH |
 | `teacher_nm_hs_it` | 冯娟-南明一高 | `password123` | 南明区第一高中 | 信息科技 | T_NM_HS_IT |
 
-### 云岩区教师 (6人)
+### 云岩区教师 (9人)
 
 | 账号 | 姓名 | 密码 | 学校 | 科目 | 教师编号 |
 |------|------|------|------|------|----------|
+| `teacher_yy_ps_01` | 张明 | `password123` | 云岩区第一小学 | 数学 | T-YY-PS-01-001 |
 | `teacher_yy_ps_math` | 蒋磊-云岩一小 | `password123` | 云岩区第一小学 | 数学 | T_YY_PS_MATH |
 | `teacher_yy_ps_it` | 韩雪-云岩一小 | `password123` | 云岩区第一小学 | 信息科技 | T_YY_PS_IT |
+| `teacher_yy_ms_01` | 李芳 | `password123` | 云岩区第一中学 | - | T-YY-MS-01-001 |
 | `teacher_yy_ms_math` | 曹斌-云岩一中 | `password123` | 云岩区第一中学 | 数学 | T_YY_MS_MATH |
 | `teacher_yy_ms_it` | 许红-云岩一中 | `password123` | 云岩区第一中学 | 信息科技 | T_YY_MS_IT |
+| `teacher_yy_hs_01` | 王强 | `password123` | 云岩区第一高中 | 数学/计算机 | T-YY-HS-01-001 |
 | `teacher_yy_hs_math` | 邓涛-云岩一高 | `password123` | 云岩区第一高中 | 数学 | T_YY_HS_MATH |
 | `teacher_yy_hs_it` | 夏婷-云岩一高 | `password123` | 云岩区第一高中 | 信息科技 | T_YY_HS_IT |
+
+### 其他区县教师
+
+**观山湖区** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_gsh_ps_01` | 吴雪 | 观山湖区第一小学 | - | T-GSH-PS-01-001 |
+| `teacher_gsh_ms_01` | 郑涛 | 观山湖区第一中学 | 数学 | T-GSH-MS-01-001 |
+| `teacher_gsh_hs_01` | 冯婷 | 观山湖区第一高中 | 计算机 | T-GSH-HS-01-001 |
+
+**花溪区** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_hx_ps_01` | 韩冰 | 花溪区第一小学 | - | T-HX-PS-01-001 |
+| `teacher_hx_ms_01` | 魏洋 | 花溪区第一中学 | 数学 | T-HX-MS-01-001 |
+| `teacher_hx_hs_01` | 姚鹏 | 花溪区第一高中 | 计算机 | T-HX-HS-01-001 |
+
+**清镇市** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_qz_ps_01` | 戴秀 | 清镇市第一小学 | - | T-QZ-PS-01-001 |
+| `teacher_qz_ms_01` | 石娜 | 清镇市第一中学 | 数学 | T-QZ-MS-01-001 |
+| `teacher_qz_hs_01` | 段宇 | 清镇市第一高中 | 计算机 | T-QZ-HS-01-001 |
+
+**修文县** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_xw_ps_01` | 傅杰 | 修文县第一小学 | 数学 | T-XW-PS-01-001 |
+| `teacher_xw_ms_01` | 汤霞 | 修文县第一中学 | - | T-XW-MS-01-001 |
+| `teacher_xw_hs_01` | 邹斌 | 修文县第一高中 | 数学/计算机 | T-XW-HS-01-001 |
+
+**息烽县** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_xf_ps_01` | 熊芬 | 息烽县第一小学 | - | T-XF-PS-01-001 |
+| `teacher_xf_ms_01` | 金龙 | 息烽县第一中学 | 数学 | T-XF-MS-01-001 |
+| `teacher_xf_hs_01` | 谷亮 | 息烽县第一高中 | 计算机 | T-XF-HS-01-001 |
+
+**开阳县** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_ky_ps_01` | 丁晴 | 开阳县第一小学 | 数学 | T-KY-PS-01-001 |
+| `teacher_ky_ms_01` | 於涛 | 开阳县第一中学 | - | T-KY-MS-01-001 |
+| `teacher_ky_hs_01` | 刁强 | 开阳县第一高中 | 数学/计算机 | T-KY-HS-01-001 |
+
+**贵安新区** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_gaxq_ps_01` | 毛琴 | 贵安新区第一小学 | - | T-GAXQ-PS-01-001 |
+| `teacher_gaxq_ms_01` | 文静 | 贵安新区第一中学 | 数学 | T-GAXQ-MS-01-001 |
+| `teacher_gaxq_hs_01` | 云霞 | 贵安新区第一高中 | 计算机 | T-GAXQ-HS-01-001 |
+
+**市直属学校** (3人):
+| 账号 | 姓名 | 学校 | 科目 | 教师编号 |
+|------|------|------|------|----------|
+| `teacher_gyszsx_ps_01` | 卞梅 | 踪阳市直属第一小学 | 数学 | T-GYSZSX-PS-01-001 |
+| `teacher_gyszsx_ms_01` | 廉刚 | 贵阳市直属第一中学 | - | T-GYSZSX-MS-01-001 |
+| `teacher_gyszsx_hs_01` | 房亮 | 贵阳市直属第一高中 | 数学/计算机 | T-GYSZSX-HS-01-001 |
+
+### 旧版教师账号（兼容保留）
+
+| 账号 | 姓名 | 密码 | 说明 |
+|------|------|------|------|
+| `teacher01` | Bug11Test-1762622809524 | `password123` | 通用测试账号1（数学） |
+| `teacher02` | 王老师 | `password123` | 通用测试账号2（无科目） |
+| `teacher03` | 王芳 | `password123` | 通用测试账号3（无科目） |
 
 ### 教师权限
 
@@ -261,7 +336,7 @@
 - **科目测试**: 使用数学和信息科技教师创建和管理对应科目的题目和活动
 - **区域隔离测试**: 验证不同区县教师之间的数据隔离
 - **权限测试**: 测试教师创建校级题库和提交市级审核流程
-- **选择教师**: 推荐主要使用 `teacher_yy_ps_math` 或 `teacher_by_ps_math` 进行日常测试
+- **推荐教师**: `teacher_yy_ps_math`（云岩区数学教师）或 `teacher_by_ps_math`（白云区数学教师）
 
 ---
 
@@ -269,11 +344,9 @@
 
 学生账号，用于参加练习和测评活动。
 
-**重要**: 学生登录已从身份证号改为手机号登录，以保护学生隐私。系统不再存储完整身份证号，仅保留后4位用于身份验证。
+**重要**: 学生登录使用手机号（即username），系统不再存储完整身份证号，仅保留后4位用于身份验证。
 
 ### 测试学生账号
-
-以下为每个区县主要学校的测试学生账号，方便测试不同学校和区域的功能：
 
 #### 云岩区第一小学学生 (3人)
 
@@ -283,13 +356,18 @@
 | `13812340002` | student | 云岩一小-李华 | `password123` | 三年级 | 1班 | YY-PS-01-2025002 |
 | `13812340003` | student | 云岩一小-张伟 | `password123` | 四年级 | 2班 | YY-PS-01-2025003 |
 
+#### 贵阳市第一小学学生 (4人)
+
+| 手机号 | 角色 | 姓名 | 密码 | 年级 | 所属学校 | 所属区县 |
+|------|------|------|------|------|----------|----------|
+| `13800138003` | student | StudentBug11-1762622809583 | `password123` | 三年级 | 贵阳市第一小学 | 云岩区 |
+| `13800138004` | student | 李小红 | `password123` | 三年级 | 贵阳市第一小学 | 云岩区 |
+| `13800138005` | student | 王小刚 | `password123` | 三年级 | 贵阳市第一小学 | 云岩区 |
+
 #### 其他区县测试学生
 
 | 手机号 | 角色 | 姓名 | 密码 | 年级 | 所属学校 | 所属区县 |
 |------|------|------|------|------|----------|----------|
-| `13800138003` | student | 张小明 | `password123` | 三年级 | 贵阳市第一小学 | 云岩区 |
-| `13800138004` | student | 李小红 | `password123` | 三年级 | 贵阳市第一小学 | 云岩区 |
-| `13800138005` | student | 王小刚 | `password123` | 三年级 | 贵阳市第一小学 | 云岩区 |
 | `13800138006` | student | 南明测试学生 | `password123` | 三年级 | 南明区第一小学 | 南明区 |
 | `13800138017` | student | 市二小测试学生 | `password123` | 三年级 | 贵阳市第二小学 | 南明区 |
 | `13800138007` | student | 观山湖测试学生 | `password123` | 三年级 | 观山湖区第一小学 | 观山湖区 |
@@ -306,7 +384,7 @@
 **登录方式**: 使用手机号作为账号登录
 
 **登录示例**:
-- 账号: `13800138003`
+- 账号: `13812340001`
 - 密码: `password123`
 
 **权限**:
@@ -317,11 +395,11 @@
 - 下载成绩证书
 
 **注意**:
-- 共18个测试学生账号，覆盖12个区县的主要小学
+- 共17个标准测试学生账号，覆盖12个区县的主要小学
 - 云岩区第一小学有3个专用测试学生账号（含学号和班级信息）
 - 每个区县至少有1个测试学生账号，方便测试跨区域功能
 - 所有学生密码均为 `password123`
-- 系统仅存储身份证后4位（如: `1234`），不存储完整身份证号
+- 数据库中还有一些E2E测试学生（如139xxxxx系列），用于自动化测试
 
 ---
 
@@ -329,18 +407,20 @@
 
 ### 所有区县（12个）
 
-1. 云岩区 (YY)
-2. 南明区 (NM)
-3. 观山湖区 (GSH)
-4. 白云区 (BY)
-5. 花溪区 (HX)
-6. 乌当区 (WD)
-7. 清镇市 (QZ)
-8. 修文县 (XW)
-9. 息烽县 (XF)
-10. 开阳县 (KY)
-11. 贵安新区 (GAXQ)
-12. 贵阳市直属学校 (GYSZSX) - 市级单位
+| 代码 | 名称 | 管理员账号 |
+|------|------|-----------|
+| YY | 云岩区 | yunyan_admin |
+| NM | 南明区 | nanming_admin |
+| GSH | 观山湖区 | guanshanhu_admin |
+| BY | 白云区 | baiyun_admin |
+| HX | 花溪区 | huaxi_admin |
+| WD | 乌当区 | wudang_admin |
+| QZ | 清镇市 | qingzhen_admin |
+| XW | 修文县 | xiuwen_admin |
+| XF | 息烽县 | xifeng_admin |
+| KY | 开阳县 | kaiyang_admin |
+| GAXQ | 贵安新区 | guian_admin |
+| GYSZSX | 贵阳市直属学校 | municipal_school_admin |
 
 ### 学校数量
 
@@ -358,18 +438,16 @@
 - 云岩区第一中学 (YY-MS-01)
 - 云岩区第一高中 (YY-HS-01)
 
-完整学校列表详见配置文件: `config/schools.json`
-
 ---
 
 ## 角色层级体系
 
 ```
 Level 5: 系统总管理员 (admin)
-   └─ Level 4: 市级管理员 (guiyang_admin)
+   └─ Level 4: 市级管理员 (guiyang_admin, municipal_school_admin, base_school_admin)
         └─ Level 3: 区县级管理员 (yunyan_admin, nanming_admin, ...)
-             └─ Level 2: 校级管理员 (待创建)
-                  └─ Level 1: 教师 (teacher01, teacher02, ...)
+             └─ Level 2: 校级管理员 (school_admin_yy_ps_01, ...)
+                  └─ Level 1: 教师 (teacher_yy_ps_math, ...)
 ```
 
 **账号创建规则**:
@@ -423,8 +501,8 @@ Level 5: 系统总管理员 (admin)
 
 ### 学生测试流程
 
-1. **登录** (`13800138003`):
-   - 使用手机号 `13800138003` / `password123` 登录
+1. **登录** (`13812340001`):
+   - 使用手机号 `13812340001` / `password123` 登录
 
 2. **参加活动**:
    - 查看可参加的活动列表
@@ -444,67 +522,21 @@ Level 5: 系统总管理员 (admin)
 1. **密码安全**: 所有测试账号使用统一密码 `password123`，仅用于测试环境
 2. **数据隔离**: 测试数据与生产数据完全隔离
 3. **定期清理**: 建议定期清理测试产生的活动和成绩数据
-4. **配置文件**: 区县和学校配置存储在 `config/` 目录，可随时更新
+4. **配置文件**: 区县和学校配置存储在数据库中，可通过管理员界面修改
 
 ---
 
-## 配置文件说明
+## 数据库账号统计
 
-### config/districts.json
+| 角色 | 数量 | 说明 |
+|------|------|------|
+| system_admin | 1 | admin |
+| municipal_admin | 1 | guiyang_admin |
+| municipal_school_admin | 1 | 市直属学校总管理员 |
+| base_school_admin | 1 | 基地校管理员 |
+| district_admin | 12 | 12个区县（全覆盖） |
+| school_admin | 41 | 包含39个新规范账号 + 2个旧账号 |
+| teacher | 57 | 包含新规范账号 + 3个旧账号 |
+| student | 50+ | 包含测试学生 + E2E测试学生 |
 
-包含12个区县的完整配置，格式如下:
-
-```json
-{
-  "districts": [
-    {
-      "id": "YY",
-      "name": "云岩区",
-      "code": "YY",
-      "type": "district",
-      "fullName": "贵阳市云岩区"
-    }
-  ]
-}
-```
-
-### config/schools.json
-
-包含36所学校的完整配置，按区县分组:
-
-```json
-{
-  "schools": [
-    {
-      "districtId": "YY",
-      "districtName": "云岩区",
-      "schools": [
-        {
-          "code": "YY-PS-01",
-          "name": "云岩区第一小学",
-          "type": "primary",
-          "level": "小学",
-          "address": "贵阳市云岩区"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### config/role-hierarchy.json
-
-定义5级角色层级体系和权限:
-
-```json
-{
-  "roleHierarchy": {
-    "level5": {
-      "code": "system_admin",
-      "name": "系统总管理员",
-      "canCreate": ["municipal_admin", "district_admin", "school_admin", "teacher"]
-    }
-  }
-}
-```
-
+**最后更新**: 2026-01-23

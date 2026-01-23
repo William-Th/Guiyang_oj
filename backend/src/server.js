@@ -99,7 +99,7 @@ app.get('/health', async (req, res) => {
       status: 'ERROR',
       timestamp: new Date().toISOString(),
       database: 'disconnected',
-      error: 'Database connection failed'
+      error: '数据库连接失败'
     });
   }
 });

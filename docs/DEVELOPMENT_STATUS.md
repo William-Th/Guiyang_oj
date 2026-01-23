@@ -808,4 +808,51 @@
 
 ---
 
-*最后更新时间：2025-01-21*
+### 2026-01-23
+- ✅ **补全缺失的区县级管理员账号**
+  - 创建 `huaxi_admin` (花溪区教育局管理员) 和 `wudang_admin` (乌当区教育局管理员)
+  - 更新 `docs/DEMO_GUIDE.md` 文档，移除"暂无"警告
+  - 当前区县级管理员数量: 12 (全覆盖)
+
+- ✅ **组卷功能Bug修复** - 教师组卷页面
+  - **Bug 1**: 题目分数和显示 "NaN 分"
+    - 原因: API返回的score是字符串类型，JavaScript进行字符串拼接
+    - 修复: 使用 `Number()` 转换分数值
+    - 文件: `frontend/src/pages/teacher/PaperGenerationPage.tsx`
+  - **Bug 2**: 创建活动设置的总分被题目总分覆盖
+    - 原因: 数据库触发器 `update_activity_paper_stats()` 自动更新 total_score
+    - 修复:
+      - 修改触发器只更新 question_count，保留用户设置的 total_score
+      - 后端添加 `actual_total_score` 字段返回实际题目分数和
+      - 前端使用后端提供的 actual_total_score
+    - 文件:
+      - `database/migrations/039_fix_activity_total_score_trigger.sql`
+      - `backend/src/models/ActivityQuestion.js`
+      - `frontend/src/pages/teacher/PaperGenerationPage.tsx`
+
+- ✅ **学生答题页面UI优化和Bug修复** - 已完成
+  - **UI优化**:
+    - 添加左侧题目导航（答题卡），5列网格布局
+    - 按题型分组显示（单选题、多选题、填空题、主观题、编程题）
+    - 提交按钮移至页面顶部
+    - 已答题显示绿色，当前题高亮
+    - 字体大小优化：题目18px，选项17px
+    - 紧凑布局，答题卡自适应宽度
+    - 隐藏题目难度显示
+  - **Bug修复**:
+    - **Bug 1**: 选择题目时其他题目同步被选中
+      - 原因: React key冲突 + field name重复
+      - 修复: 使用 `q_${index}_${question.id}` 确保字段名绝对唯一
+      - Radio/Checkbox key改为 `${index}-${optIndex}`
+    - **Bug 2**: 答题卡标记错误（刷新后消失、点击一题全标记）
+      - 原因: `updateAnsweredTracking` 没有正确获取表单值
+      - 修复: `handleFormChange` 显式传递 `allValues` 给跟踪函数
+    - **Bug 3**: 答题时出现400后端错误
+      - 原因: `autoSaveAnswers()` 函数每次表单变化都调用后端API
+      - 修复: 完全移除自动保存逻辑，只使用localStorage备份
+  - **文件**: `frontend/src/pages/student/TakeActivityPage.tsx`
+  - **状态**: ✅ 已完成，待用户验证
+
+---
+
+*最后更新时间：2026-01-23*
