@@ -3,6 +3,7 @@ const StudentPoints = require('../../models/StudentPoints');
 const eventBus = require('../EventBus');
 const { STUDENT_ACTIVITY, STUDENT_LOGIN, STUDENT_PRACTICE, STUDENT_EXAM, ACHIEVEMENT } = require('../EventTypes');
 const logger = require('../../utils/logger');
+const { query } = require('../../database/connection');
 
 /**
  * AchievementDetector - 成就检测器
@@ -138,13 +139,29 @@ class AchievementDetector {
         return;
       }
 
-      const { studentId } = eventData;
+      const { studentId: userId } = eventData;
+
+      // Convert user_id to student_id (student_achievements references students.id, not users.id)
+      const studentResult = await query(
+        'SELECT id FROM students WHERE user_id = $1',
+        [userId]
+      );
+
+      if (studentResult.rows.length === 0) {
+        logger.debug(`No student record found for user_id ${userId}, skipping achievement detection`);
+        return;
+      }
+
+      const studentId = studentResult.rows[0].id;
 
       for (const achievement of rules) {
         const satisfied = await this.checkCondition(achievement, eventData);
 
         if (satisfied) {
           await this.awardAchievement(studentId, achievement);
+        } else {
+          // 即使未满足条件，也更新进度追踪
+          await this.updateAchievementProgress(studentId, achievement, eventData);
         }
       }
     } catch (error) {
@@ -339,6 +356,89 @@ class AchievementDetector {
     }
 
     return false;
+  }
+
+  /**
+   * 更新成就进度
+   * @param {number} studentId
+   * @param {Object} achievement
+   * @param {Object} eventData
+   */
+  async updateAchievementProgress(studentId, achievement, eventData) {
+    try {
+      const { achievement_id, trigger_condition } = achievement;
+      const { condition_type } = trigger_condition;
+
+      let currentValue = 0;
+      let targetValue = 0;
+
+      // 根据条件类型计算当前值和目标值
+      switch (condition_type) {
+      case 'count': {
+        // 计数型：需要查询数据库统计当前计数
+        targetValue = trigger_condition.target_count || 0;
+
+        // 获取user_id (因为student_activities.student_id引用users.id)
+        const userResult = await query(
+          'SELECT user_id FROM students WHERE id = $1',
+          [studentId]
+        );
+
+        if (userResult.rows.length === 0) {
+          logger.warn(`Student ${studentId} not found`);
+          return;
+        }
+
+        const userId = userResult.rows[0].user_id;
+
+        // 查询student_activities表统计已完成的活动数量
+        const filter = trigger_condition.filter || {};
+        const result = await query(
+          `SELECT COUNT(*) as count
+           FROM student_activities sa
+           JOIN activities a ON sa.activity_id = a.id
+           WHERE sa.student_id = $1
+           AND sa.status = 'graded'
+           ${filter.type ? 'AND a.type = $2' : ''}`,
+          filter.type ? [userId, filter.type] : [userId]
+        );
+        currentValue = parseInt(result.rows[0].count) || 0;
+        break;
+      }
+
+      case 'threshold': {
+        // 阈值型：当前值就是事件数据中的值
+        targetValue = trigger_condition.threshold_value || 0;
+        const threshold_field = trigger_condition.threshold_field;
+        currentValue = threshold_field ? eventData[threshold_field] : (eventData.value || 0);
+        break;
+      }
+
+      case 'consecutive': {
+        // 连续型：连续天数/周数
+        if (trigger_condition.consecutive_days) {
+          targetValue = trigger_condition.consecutive_days;
+          currentValue = eventData.consecutiveDays || 0;
+        } else if (trigger_condition.consecutive_weeks) {
+          targetValue = trigger_condition.consecutive_weeks;
+          currentValue = eventData.consecutiveWeeks || 0;
+        }
+        break;
+      }
+
+      default:
+        // 其他类型暂不追踪进度
+        return;
+      }
+
+      // 只有在有明确目标值的情况下才更新进度
+      if (targetValue > 0) {
+        await Achievement.updateProgress(studentId, achievement_id, currentValue, targetValue);
+        logger.debug(`Updated progress for achievement ${achievement_id}: ${currentValue}/${targetValue}`);
+      }
+    } catch (error) {
+      logger.error('Error updating achievement progress:', error);
+    }
   }
 
   /**

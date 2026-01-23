@@ -164,7 +164,7 @@ class AutoGradingService {
               sa.submit_time,
               a.type as activity_type,
               a.subject,
-              a.grade_level,
+              a.grade as grade_level,
               a.total_score as max_possible_score,
               (SELECT COUNT(*) FROM answers WHERE student_exam_id = sa.id) as total_questions,
               (SELECT COUNT(*) FROM answers WHERE student_exam_id = sa.id AND is_correct = true) as correct_answers

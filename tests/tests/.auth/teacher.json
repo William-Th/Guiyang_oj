@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8080",
+      "localStorage": [
+        {
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE2MywidXNlcm5hbWUiOiJ0ZWFjaGVyX3l5X3BzX21hdGgiLCJyb2xlIjoidGVhY2hlciIsImlhdCI6MTc2Njg0OTIwMywiZXhwIjoxNzY3NDU0MDAzfQ.GAD9grWiOsBzEfSxOI_Li9Xo5Dwjk8nO_Y7_JT1L7Hw"
+        },
+        {
+          "name": "user",
+          "value": "{\"id\":163,\"username\":\"teacher_yy_ps_math\",\"role\":\"teacher\",\"realName\":\"蒋磊-云岩一小\",\"phone\":\"13800138121\",\"email\":\"teacher_yy_ps_math@guiyang.edu\",\"avatarUrl\":null,\"status\":\"active\",\"createdAt\":\"2025-11-04T15:06:11.766Z\",\"updatedAt\":\"2025-12-27T15:26:43.118Z\",\"teacherNo\":\"T_YY_PS_MATH\",\"subjects\":[\"数学\"],\"title\":\"中级教师\",\"schoolId\":6,\"school\":\"云岩区第一小学\",\"districtId\":1,\"district\":\"云岩区\"}"
+        }
+      ]
+    }
+  ]
+}

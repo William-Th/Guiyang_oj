@@ -1036,6 +1036,12 @@ export const achievementApi = {
     return response.data;
   },
 
+  // Get student achievement progress
+  getStudentAchievementProgress: async (studentId: number) => {
+    const response = await api.get(`/achievements/student/${studentId}/progress`);
+    return response.data;
+  },
+
   // Award achievement to student (admin/teacher only)
   awardAchievement: async (studentId: number, achievementId: number) => {
     const response = await api.post('/achievements/award', {

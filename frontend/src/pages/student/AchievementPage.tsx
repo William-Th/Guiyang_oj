@@ -13,6 +13,8 @@ import {
   Spin,
   message,
   Select,
+  Progress,
+  Modal,
 } from 'antd';
 import {
   TrophyOutlined,
@@ -21,6 +23,7 @@ import {
   RiseOutlined,
   LockOutlined,
   CheckCircleOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import { achievementApi, pointsApi } from '../../services/api';
 import './AchievementPage.css';
@@ -54,6 +57,16 @@ interface PointsAccount {
   total_spent: number;
 }
 
+interface AchievementProgress {
+  achievement_id: number;
+  achievement_code: string;
+  achievement_name: string;
+  current_value: number;
+  target_value: number;
+  progress_percentage: number;
+  last_updated: string;
+}
+
 /**
  * 学生成就页面
  * 展示学生已获得的成就、成就墙、成就进度等
@@ -63,11 +76,26 @@ const AchievementPage: React.FC = () => {
   const [studentAchievements, setStudentAchievements] = useState<StudentAchievement[]>([]);
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
   const [pointsAccount, setPointsAccount] = useState<PointsAccount | null>(null);
+  const [achievementProgress, setAchievementProgress] = useState<AchievementProgress[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedRarity, setSelectedRarity] = useState<string>('all');
+  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
 
   // 从localStorage获取当前登录用户的ID
-  const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+  const [currentUserId, setCurrentUserId] = useState<number>(0);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setCurrentUserId(user.id || 0);
+      } catch (error) {
+        console.error('Failed to parse user from localStorage:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (currentUserId) {
@@ -80,10 +108,11 @@ const AchievementPage: React.FC = () => {
       setLoading(true);
 
       // 并行加载数据
-      const [achievementsRes, allAchievementsRes, pointsRes] = await Promise.all([
+      const [achievementsRes, allAchievementsRes, pointsRes, progressRes] = await Promise.all([
         achievementApi.getStudentAchievements(currentUserId),
         achievementApi.getAllAchievements({ is_active: true }),
         pointsApi.getPointsAccount(currentUserId),
+        achievementApi.getStudentAchievementProgress(currentUserId),
       ]);
 
       if (achievementsRes.success) {
@@ -103,6 +132,10 @@ const AchievementPage: React.FC = () => {
 
       if (pointsRes.success) {
         setPointsAccount(pointsRes.data);
+      }
+
+      if (progressRes.success) {
+        setAchievementProgress(progressRes.data || []);
       }
     } catch (error: any) {
       console.error('Failed to load achievements:', error);
@@ -145,6 +178,11 @@ const AchievementPage: React.FC = () => {
     return earned?.awarded_count || 0;
   };
 
+  // 获取成就进度
+  const getAchievementProgress = (achievementId: number) => {
+    return achievementProgress.find(p => p.achievement_id === achievementId);
+  };
+
   // 筛选成就列表
   const getFilteredAchievements = () => {
     return allAchievements.filter(achievement => {
@@ -166,6 +204,7 @@ const AchievementPage: React.FC = () => {
     const studentAchievement = studentAchievements.find(
       a => a.achievement_id === achievement.achievement_id
     );
+    const progress = getAchievementProgress(achievement.achievement_id);
 
     return (
       <Card
@@ -175,6 +214,10 @@ const AchievementPage: React.FC = () => {
         style={{
           opacity: earned ? 1 : 0.6,
           borderColor: earned ? rarityInfo.color : '#d9d9d9',
+        }}
+        onClick={() => {
+          setSelectedAchievement(achievement);
+          setDetailModalVisible(true);
         }}
       >
         <div className="achievement-header">
@@ -209,6 +252,27 @@ const AchievementPage: React.FC = () => {
                 <Tag>{achievement.subcategory}</Tag>
               )}
             </Space>
+
+            {/* 进度条显示（未获得的成就） */}
+            {!earned && progress && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ fontSize: 12, color: '#8c8c8c' }}>进度</Text>
+                  <Text style={{ fontSize: 12, color: '#1890ff' }}>
+                    {progress.current_value}/{progress.target_value}
+                  </Text>
+                </div>
+                <Progress
+                  percent={progress.progress_percentage}
+                  size="small"
+                  status="active"
+                  strokeColor={{
+                    '0%': '#108ee9',
+                    '100%': '#87d068',
+                  }}
+                />
+              </div>
+            )}
 
             <div style={{ marginTop: 8 }}>
               <Space>
@@ -382,6 +446,119 @@ const AchievementPage: React.FC = () => {
           )}
         </TabPane>
       </Tabs>
+
+      {/* 成就详情模态框 */}
+      {selectedAchievement && (
+        <Modal
+          title={
+            <Space>
+              <InfoCircleOutlined />
+              <span>成就详情</span>
+            </Space>
+          }
+          open={detailModalVisible}
+          onCancel={() => {
+            setDetailModalVisible(false);
+            setSelectedAchievement(null);
+          }}
+          footer={null}
+          width={600}
+        >
+          {(() => {
+            const rarityInfo = getRarityInfo(selectedAchievement.rarity);
+            const categoryInfo = getCategoryInfo(selectedAchievement.category);
+            const earned = isAchievementEarned(selectedAchievement.achievement_id);
+            const studentAchievement = studentAchievements.find(
+              a => a.achievement_id === selectedAchievement.achievement_id
+            );
+            const progress = getAchievementProgress(selectedAchievement.achievement_id);
+
+            return (
+              <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                {/* 成就图标和名称 */}
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 72, color: rarityInfo.color, marginBottom: 16 }}>
+                    {earned ? rarityInfo.icon : <LockOutlined />}
+                  </div>
+                  <Title level={3} style={{ marginBottom: 8 }}>
+                    {selectedAchievement.achievement_name}
+                  </Title>
+                  <Space size="small" wrap>
+                    <Tag color={categoryInfo.color}>{categoryInfo.label}</Tag>
+                    <Tag color={rarityInfo.color}>{rarityInfo.label}</Tag>
+                    {selectedAchievement.subcategory && (
+                      <Tag>{selectedAchievement.subcategory}</Tag>
+                    )}
+                  </Space>
+                </div>
+
+                {/* 成就描述 */}
+                <Card size="small">
+                  <Paragraph style={{ margin: 0 }}>
+                    {selectedAchievement.achievement_desc}
+                  </Paragraph>
+                </Card>
+
+                {/* 成就进度（未获得的成就） */}
+                {!earned && progress && (
+                  <Card size="small" title="完成进度">
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text>当前进度</Text>
+                        <Text strong style={{ color: '#1890ff' }}>
+                          {progress.current_value} / {progress.target_value}
+                        </Text>
+                      </div>
+                      <Progress
+                        percent={progress.progress_percentage}
+                        strokeColor={{
+                          '0%': '#108ee9',
+                          '100%': '#87d068',
+                        }}
+                      />
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        最后更新: {new Date(progress.last_updated).toLocaleString('zh-CN')}
+                      </Text>
+                    </Space>
+                  </Card>
+                )}
+
+                {/* 成就奖励 */}
+                <Card size="small" title="奖励">
+                  <Statistic
+                    value={selectedAchievement.points_reward}
+                    prefix={<StarOutlined />}
+                    suffix="积分"
+                    valueStyle={{ color: '#fa8c16' }}
+                  />
+                </Card>
+
+                {/* 获得信息（已获得的成就） */}
+                {earned && studentAchievement && (
+                  <Card size="small" title="获得信息">
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text>获得时间</Text>
+                        <Text strong>
+                          {new Date(studentAchievement.awarded_at).toLocaleString('zh-CN')}
+                        </Text>
+                      </div>
+                      {selectedAchievement.max_times && selectedAchievement.max_times > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Text>获得次数</Text>
+                          <Text strong>
+                            {studentAchievement.awarded_count} / {selectedAchievement.max_times}
+                          </Text>
+                        </div>
+                      )}
+                    </Space>
+                  </Card>
+                )}
+              </Space>
+            );
+          })()}
+        </Modal>
+      )}
     </div>
   );
 };

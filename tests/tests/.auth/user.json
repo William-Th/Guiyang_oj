@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8080",
+      "localStorage": [
+        {
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjExLCJ1c2VybmFtZSI6IjEzODAwMTM4MDAzIiwicm9sZSI6InN0dWRlbnQiLCJpYXQiOjE3NjY4NDkyMDEsImV4cCI6MTc2NzQ1NDAwMX0.u6nx7ztV6NwaW95gPogBVx-2vxDWAdYyvdMWFOJ9o3w"
+        },
+        {
+          "name": "user",
+          "value": "{\"id\":11,\"username\":\"13800138003\",\"role\":\"student\",\"realName\":\"StudentBug11-1762622809583\",\"phone\":null,\"email\":null,\"avatarUrl\":null,\"status\":\"active\",\"createdAt\":\"2025-09-24T15:09:18.518Z\",\"updatedAt\":\"2025-12-27T15:26:41.635Z\",\"studentNo\":\"S2024001\",\"grade\":\"三年级\",\"class\":\"3班\",\"schoolId\":1,\"school\":\"贵阳市第一小学\",\"districtId\":1,\"district\":\"云岩区\",\"guardianName\":\"张父测试\",\"guardianPhone\":\"13900139999\"}"
+        }
+      ]
+    }
+  ]
+}
