@@ -17,10 +17,39 @@ router.get('/drafts', authMiddleware, async (req, res) => {
   }
 });
 
-// 获取我提交的审核列表 - 已废弃，使用新的草稿箱系统
+// 获取我提交的审核列表
 router.get('/my-submissions', authMiddleware, async (req, res) => {
-  // 返回空数组，避免前端报错
-  res.json({ success: true, data: [] });
+  try {
+    const QuestionDraft = require('../models/QuestionDraft');
+    const { page = 1, page_size = 20, status, subject, type, search } = req.query;
+
+    const filters = {};
+    if (status) filters.status = status;
+    if (subject) filters.subject = subject;
+    if (type) filters.type = type;
+    if (search) filters.search = search;
+
+    const limit = parseInt(page_size);
+    const offset = (parseInt(page) - 1) * limit;
+
+    const [submissions, total] = await Promise.all([
+      QuestionDraft.getMySubmissions(req.user.id, { ...filters, limit, offset }),
+      QuestionDraft.countMySubmissions(req.user.id, filters)
+    ]);
+
+    res.json({
+      success: true,
+      data: submissions,
+      meta: {
+        total,
+        page: parseInt(page),
+        page_size: limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching my submissions:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // 获取可以审核的老师列表（新版：基于 target_scope）
@@ -77,13 +106,13 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
     );
 
     if (draftResult.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Question not found in drafts' });
+      return res.status(404).json({ success: false, error: '草稿箱中未找到该题目' });
     }
 
     const question = draftResult.rows[0];
 
     if (question.created_by !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'You can only submit your own questions' });
+      return res.status(403).json({ success: false, error: '您只能提交自己创建的题目' });
     }
 
     // 验证审核人权限（使用 getReviewersForScope 直接验证）
@@ -131,17 +160,44 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 
     // 检查是否已经提交到该范围（包括所有状态的记录）
     const checkSql = `
-      SELECT id, status FROM question_bank
+      SELECT id, status, reviewer_id FROM question_bank
       WHERE draft_id = $1 AND scope = $2 AND is_active = true
     `;
     const checkResult = await query(checkSql, [id, target_scope]);
 
     if (checkResult.rows.length > 0) {
       const existingRecord = checkResult.rows[0];
+
+      // 如果是已拒绝(inactive)的记录，允许重新提交（更新已有记录）
+      if (existingRecord.status === 'inactive') {
+        const updateSql = `
+          UPDATE question_bank
+          SET status = 'pending_review',
+              reviewer_id = $1,
+              review_comment = NULL,
+              reviewed_at = NULL,
+              published_at = CURRENT_TIMESTAMP
+          WHERE id = $2
+          RETURNING *
+        `;
+        const updateResult = await query(updateSql, [
+          reviewer_id,
+          existingRecord.id
+        ]);
+
+        res.json({
+          success: true,
+          data: updateResult.rows[0],
+          message: `已重新提交审核到 ${target_scope}`,
+          resubmitted: true
+        });
+        return;
+      }
+
+      // 其他状态则不允许重新提交
       const statusMessages = {
         'pending_review': '该题目已经提交审核到此范围，请等待审核结果',
-        'published': '该题目已经发布到此范围',
-        'inactive': '该题目在此范围的发布记录已失效'
+        'published': '该题目已经发布到此范围'
       };
 
       return res.status(400).json({
@@ -313,7 +369,7 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
     if (!status || !['approved', 'rejected'].includes(status)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid status. Must be approved or rejected'
+        error: '无效的状态，必须是approved或rejected'
       });
     }
 
@@ -334,14 +390,14 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
     if (question.reviewer_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        error: 'You are not the assigned reviewer for this question'
+        error: '您不是该题目的指定审核人'
       });
     }
 
     if (question.status !== 'pending_review') {
       return res.status(400).json({
         success: false,
-        error: 'Question is not pending review'
+        error: '题目不在待审核状态'
       });
     }
 
@@ -445,7 +501,7 @@ router.post('/:id/publish-school', authMiddleware, async (req, res) => {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({
         success: false,
-        error: 'Only teachers can publish to school-level question bank'
+        error: '只有教师可以发布到校级题库'
       });
     }
 
@@ -456,13 +512,13 @@ router.post('/:id/publish-school', authMiddleware, async (req, res) => {
     }
 
     if (question.created_by !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'You can only publish your own questions' });
+      return res.status(403).json({ success: false, error: '您只能发布自己创建的题目' });
     }
 
     if (question.status !== 'draft' && question.status !== 'approved') {
       return res.status(400).json({
         success: false,
-        error: 'Only draft or approved questions can be published to school'
+        error: '只有草稿或已批准的题目可以发布到学校'
       });
     }
 
@@ -479,7 +535,7 @@ router.post('/:id/publish-school', authMiddleware, async (req, res) => {
       if (teacherResult.rows.length === 0 || !teacherResult.rows[0].school_id) {
         return res.status(400).json({
           success: false,
-          error: 'Teacher has no associated school'
+          error: '教师没有关联学校'
         });
       }
 
@@ -501,28 +557,90 @@ router.post('/:id/publish-school', authMiddleware, async (req, res) => {
 });
 
 // 获取题目审核历史
+// id 可以是 submission_id (question_bank.id) 或 draft_id
 router.get('/:id/history', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const { query } = require('../database/connection');
 
-    // 检查权限：题目创建者、审核者或管理员可以查看
-    const question = await QuestionBank.findById(id);
-    if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+    // 首先尝试作为 submission_id 查询
+    let sql = `
+      SELECT
+        qb.id as submission_id,
+        qb.draft_id,
+        qb.scope,
+        qb.status,
+        qb.reviewer_id,
+        qb.review_comment,
+        qb.reviewed_at,
+        qb.published_at,
+        qb.published_by,
+        u.real_name as reviewer_name,
+        u.username as reviewer_username
+      FROM question_bank qb
+      LEFT JOIN users u ON qb.reviewer_id = u.id
+      WHERE qb.id = $1 AND qb.is_active = true
+    `;
+    let result = await query(sql, [id]);
+
+    // 如果没找到，尝试作为 draft_id 查询
+    if (result.rows.length === 0) {
+      sql = `
+        SELECT
+          qb.id as submission_id,
+          qb.draft_id,
+          qb.scope,
+          qb.status,
+          qb.reviewer_id,
+          qb.review_comment,
+          qb.reviewed_at,
+          qb.published_at,
+          qb.published_by,
+          u.real_name as reviewer_name,
+          u.username as reviewer_username
+        FROM question_bank qb
+        LEFT JOIN users u ON qb.reviewer_id = u.id
+        WHERE qb.draft_id = $1 AND qb.is_active = true
+        ORDER BY qb.published_at DESC
+      `;
+      result = await query(sql, [id]);
     }
 
-    const isCreator = question.created_by === req.user.id;
-    const isReviewer = question.reviewer_id === req.user.id;
-    const isAdmin = req.user.role === 'system_admin';
-
-    if (!isCreator && !isReviewer && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'You do not have permission to view this question\'s review history'
-      });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: '未找到审核记录' });
     }
 
-    const history = await QuestionReview.getByQuestionId(id);
+    // 检查权限：题目提交者、审核者或管理员可以查看
+    // 只要有任意一条记录满足权限条件即可
+    const isAdmin = ['system_admin', 'municipal_admin', 'district_admin'].includes(req.user.role);
+
+    if (!isAdmin) {
+      // 检查用户是否是任意一条记录的提交者或审核者
+      const hasPermission = result.rows.some(row =>
+        row.published_by === req.user.id || row.reviewer_id === req.user.id
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: '您没有权限查看该题目的审核历史'
+        });
+      }
+    }
+
+    // 格式化返回数据
+    const history = result.rows.map(row => ({
+      id: row.submission_id,
+      question_id: row.draft_id,
+      reviewer_id: row.reviewer_id,
+      reviewer_name: row.reviewer_name,
+      status: row.status,
+      comment: row.review_comment,
+      reviewed_at: row.reviewed_at,
+      created_at: row.published_at,
+      scope: row.scope
+    }));
+
     res.json({ success: true, data: history });
   } catch (error) {
     console.error('Error fetching review history:', error);

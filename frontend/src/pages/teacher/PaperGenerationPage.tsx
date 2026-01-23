@@ -82,15 +82,16 @@ interface PaperStats {
   activity_id: number;
   title: string;
   total_score: number;
+  actual_total_score: number | string;
   question_count: number;
-  single_choice_count: number;
-  multiple_choice_count: number;
-  blank_count: number;
-  essay_count: number;
-  code_count: number;
-  easy_count: number;
-  medium_count: number;
-  hard_count: number;
+  single_choice_count: number | string;
+  multiple_choice_count: number | string;
+  blank_count: number | string;
+  essay_count: number | string;
+  code_count: number | string;
+  easy_count: number | string;
+  medium_count: number | string;
+  hard_count: number | string;
 }
 
 const PaperGenerationPage: React.FC = () => {
@@ -307,7 +308,7 @@ const PaperGenerationPage: React.FC = () => {
       const response = await activityApi.validateActivityPaper(activityId);
 
       // 额外检查总分是否一致 - 使用 Math.round 避免小数精度问题
-      const questionTotalScore = Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100;
+      const questionTotalScore = Math.round(Number(paperStats?.actual_total_score || 0) * 100) / 100;
       const activityTotalScore = Math.round(Number(activity?.total_score || 0) * 100) / 100;
       const scoreMatch = questionTotalScore === activityTotalScore;
 
@@ -694,9 +695,9 @@ const PaperGenerationPage: React.FC = () => {
               <Col span={4}>
                 <Statistic
                   title="题目分数和"
-                  value={Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100}
+                  value={Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100}
                   valueStyle={{
-                    color: Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100 === Math.round(Number(activity.total_score) * 100) / 100
+                    color: Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100 === Math.round(Number(activity.total_score) * 100) / 100
                       ? '#52c41a'
                       : '#ff4d4f'
                   }}
@@ -715,9 +716,9 @@ const PaperGenerationPage: React.FC = () => {
                 <Statistic title="问答题" value={paperStats.essay_count} />
               </Col>
             </Row>
-            {Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100 !== Math.round(Number(activity.total_score) * 100) / 100 && (
+            {Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100 !== Math.round(Number(activity.total_score) * 100) / 100 && (
               <Alert
-                message={`总分不一致：活动设置总分 ${activity.total_score} 分，题目分数和 ${Math.round(selectedQuestions.reduce((sum, q) => sum + q.score, 0) * 100) / 100} 分`}
+                message={`总分不一致：活动设置总分 ${activity.total_score} 分，题目分数和 ${Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100} 分`}
                 type="warning"
                 showIcon
                 style={{ marginBottom: 16 }}

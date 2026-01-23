@@ -73,8 +73,56 @@ router.get('/unread-count',
 );
 
 /**
+ * 批量标记通知为已读
+ * PUT /api/notifications/batch-read
+ * 注意：必须放在 /:id/read 之前
+ */
+router.put('/batch-read',
+  authMiddleware,
+  body('notification_ids').isArray().withMessage('通知ID列表必须是数组'),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, errors: errors.array() });
+      }
+
+      const count = await Notification.markBatchAsRead(
+        req.body.notification_ids,
+        req.user.userId
+      );
+
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error('Batch mark as read error:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
+ * 标记所有通知为已读
+ * PUT /api/notifications/read-all
+ * 注意：必须放在 /:id/read 之前
+ */
+router.put('/read-all',
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { type } = req.body;
+      const count = await Notification.markAllAsRead(req.user.userId, type);
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error('Mark all as read error:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
  * 标记单个通知为已读
  * PUT /api/notifications/:id/read
+ * 注意：必须放在具体路由之后
  */
 router.put('/:id/read',
   authMiddleware,
@@ -104,84 +152,9 @@ router.put('/:id/read',
 );
 
 /**
- * 批量标记通知为已读
- * PUT /api/notifications/batch-read
- */
-router.put('/batch-read',
-  authMiddleware,
-  body('notification_ids').isArray().withMessage('通知ID列表必须是数组'),
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ success: false, errors: errors.array() });
-      }
-
-      const count = await Notification.markBatchAsRead(
-        req.body.notification_ids,
-        req.user.userId
-      );
-
-      res.json({ success: true, count });
-    } catch (error) {
-      console.error('Batch mark as read error:', error);
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-);
-
-/**
- * 标记所有通知为已读
- * PUT /api/notifications/read-all
- */
-router.put('/read-all',
-  authMiddleware,
-  async (req, res) => {
-    try {
-      const { type } = req.body;
-      const count = await Notification.markAllAsRead(req.user.userId, type);
-      res.json({ success: true, count });
-    } catch (error) {
-      console.error('Mark all as read error:', error);
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-);
-
-/**
- * 删除单个通知
- * DELETE /api/notifications/:id
- */
-router.delete('/:id',
-  authMiddleware,
-  param('id').isInt().withMessage('通知ID必须是整数'),
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ success: false, errors: errors.array() });
-      }
-
-      const deleted = await Notification.delete(
-        parseInt(req.params.id),
-        req.user.userId
-      );
-
-      if (!deleted) {
-        return res.status(404).json({ success: false, message: '通知不存在' });
-      }
-
-      res.json({ success: true, message: '删除成功' });
-    } catch (error) {
-      console.error('Delete notification error:', error);
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-);
-
-/**
  * 批量删除通知
  * DELETE /api/notifications/batch
+ * 注意：必须放在 /:id 之前，否则会被 /:id 匹配
  */
 router.delete('/batch',
   authMiddleware,
@@ -209,6 +182,7 @@ router.delete('/batch',
 /**
  * 删除所有已读通知
  * DELETE /api/notifications/read
+ * 注意：必须放在 /:id 之前，否则会被 /:id 匹配
  */
 router.delete('/read',
   authMiddleware,
@@ -218,6 +192,38 @@ router.delete('/read',
       res.json({ success: true, count });
     } catch (error) {
       console.error('Delete all read error:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+/**
+ * 删除单个通知
+ * DELETE /api/notifications/:id
+ * 注意：必须放在具体路由之后
+ */
+router.delete('/:id',
+  authMiddleware,
+  param('id').isInt().withMessage('通知ID必须是整数'),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, errors: errors.array() });
+      }
+
+      const deleted = await Notification.delete(
+        parseInt(req.params.id),
+        req.user.userId
+      );
+
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: '通知不存在' });
+      }
+
+      res.json({ success: true, message: '删除成功' });
+    } catch (error) {
+      console.error('Delete notification error:', error);
       res.status(500).json({ success: false, message: error.message });
     }
   }

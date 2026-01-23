@@ -24,7 +24,7 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!name || !scope || !academic_year) {
       return res.status(400).json({
         success: false,
-        error: 'name, scope, and academic_year are required'
+        error: 'name、scope和academic_year为必填项'
       });
     }
 
@@ -32,7 +32,7 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!['school', 'district', 'municipal'].includes(scope)) {
       return res.status(400).json({
         success: false,
-        error: 'scope must be: school, district, or municipal'
+        error: 'scope必须是：school、district或municipal'
       });
     }
 
@@ -41,7 +41,7 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!canCreate) {
       return res.status(403).json({
         success: false,
-        error: `You do not have permission to create ${scope} level teaching class`
+        error: `您没有权限创建${scope}级别的教学班`
       });
     }
 
@@ -147,7 +147,7 @@ router.get('/', authMiddleware, async (req, res) => {
     console.error('Get teaching classes error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get teaching classes'
+      error: '获取教学班失败'
     });
   }
 });
@@ -164,7 +164,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -192,7 +192,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     console.error('Get teaching class error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get teaching class'
+      error: '获取教学班失败'
     });
   }
 });
@@ -209,7 +209,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -217,7 +217,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (teachingClass.created_by !== req.user.id) {
       return res.status(403).json({
         success: false,
-        error: 'Only the creator can update this teaching class'
+        error: '只有创建者可以更新此教学班'
       });
     }
 
@@ -255,7 +255,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -263,7 +263,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (teachingClass.created_by !== req.user.id) {
       return res.status(403).json({
         success: false,
-        error: 'Only the creator can delete this teaching class'
+        error: '只有创建者可以删除此教学班'
       });
     }
 
@@ -296,7 +296,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -304,7 +304,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
     if (teachingClass.created_by !== req.user.id) {
       return res.status(403).json({
         success: false,
-        error: 'Only the creator can submit this teaching class for approval'
+        error: '只有创建者可以提交此教学班进行审批'
       });
     }
 
@@ -336,7 +336,7 @@ router.get('/admin/pending', authMiddleware, async (req, res) => {
     if (!adminInfo) {
       return res.status(403).json({
         success: false,
-        error: 'You do not have admin permissions to review teaching classes'
+        error: '您没有管理权限来审核教学班'
       });
     }
 
@@ -354,7 +354,7 @@ router.get('/admin/pending', authMiddleware, async (req, res) => {
     console.error('Get pending teaching classes error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get pending teaching classes'
+      error: '获取待审核教学班失败'
     });
   }
 });
@@ -372,7 +372,7 @@ router.post('/:id/approve', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -381,7 +381,7 @@ router.post('/:id/approve', authMiddleware, async (req, res) => {
     if (!adminInfo) {
       return res.status(403).json({
         success: false,
-        error: 'You do not have permission to approve teaching classes'
+        error: '您没有权限批准教学班'
       });
     }
 
@@ -390,7 +390,7 @@ router.post('/:id/approve', authMiddleware, async (req, res) => {
     if (!canApprove) {
       return res.status(403).json({
         success: false,
-        error: 'You do not have permission to approve this teaching class'
+        error: '您没有权限批准此教学班'
       });
     }
 
@@ -422,7 +422,7 @@ router.post('/:id/reject', authMiddleware, async (req, res) => {
     if (!reason) {
       return res.status(400).json({
         success: false,
-        error: 'Rejection reason is required'
+        error: '请提供拒绝原因'
       });
     }
 
@@ -430,7 +430,7 @@ router.post('/:id/reject', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -439,7 +439,7 @@ router.post('/:id/reject', authMiddleware, async (req, res) => {
     if (!adminInfo) {
       return res.status(403).json({
         success: false,
-        error: 'You do not have permission to reject teaching classes'
+        error: '您没有权限拒绝教学班'
       });
     }
 
@@ -448,7 +448,7 @@ router.post('/:id/reject', authMiddleware, async (req, res) => {
     if (!canReject) {
       return res.status(403).json({
         success: false,
-        error: 'You do not have permission to reject this teaching class'
+        error: '您没有权限拒绝此教学班'
       });
     }
 
@@ -489,7 +489,7 @@ router.get('/:id/students', authMiddleware, async (req, res) => {
     console.error('Get students error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get students'
+      error: '获取学生失败'
     });
   }
 });
@@ -514,7 +514,7 @@ router.post('/:id/students', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
@@ -522,7 +522,7 @@ router.post('/:id/students', authMiddleware, async (req, res) => {
     if (teachingClass.status !== 'approved') {
       return res.status(400).json({
         success: false,
-        error: 'Can only add students to approved teaching classes'
+        error: '只能向已批准的教学班添加学生'
       });
     }
 
@@ -570,14 +570,14 @@ router.post('/:id/students/batch', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
     if (teachingClass.status !== 'approved') {
       return res.status(400).json({
         success: false,
-        error: 'Can only add students to approved teaching classes'
+        error: '只能向已批准的教学班添加学生'
       });
     }
 
@@ -607,7 +607,7 @@ router.post('/:id/students/batch', authMiddleware, async (req, res) => {
     console.error('Batch add students error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to add students'
+      error: '添加学生失败'
     });
   }
 });
@@ -654,7 +654,7 @@ router.get('/:id/activities', authMiddleware, async (req, res) => {
     console.error('Get activities error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get activities'
+      error: '获取活动失败'
     });
   }
 });
@@ -679,14 +679,14 @@ router.post('/:id/activities', authMiddleware, async (req, res) => {
     if (!teachingClass) {
       return res.status(404).json({
         success: false,
-        error: 'Teaching class not found'
+        error: '教学班不存在'
       });
     }
 
     if (teachingClass.status !== 'approved') {
       return res.status(400).json({
         success: false,
-        error: 'Can only add activities to approved teaching classes'
+        error: '只能向已批准的教学班添加活动'
       });
     }
 
@@ -748,7 +748,7 @@ router.get('/:id/statistics', authMiddleware, async (req, res) => {
     console.error('Get statistics error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get statistics'
+      error: '获取统计数据失败'
     });
   }
 });

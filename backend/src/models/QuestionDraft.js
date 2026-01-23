@@ -208,6 +208,10 @@ class QuestionDraft {
       FROM question_drafts qd
       LEFT JOIN users u ON qd.created_by = u.id
       WHERE qd.created_by = $1 AND qd.is_active = true
+        AND NOT EXISTS (
+          SELECT 1 FROM question_bank qb
+          WHERE qb.draft_id = qd.id AND qb.is_active = true
+        )
     `;
     const values = [userId];
     let paramCount = 1;
@@ -281,6 +285,10 @@ class QuestionDraft {
       SELECT COUNT(*) as count
       FROM question_drafts qd
       WHERE qd.created_by = $1 AND qd.is_active = true
+        AND NOT EXISTS (
+          SELECT 1 FROM question_bank qb
+          WHERE qb.draft_id = qd.id AND qb.is_active = true
+        )
     `;
     const values = [userId];
     let paramCount = 1;
@@ -442,6 +450,189 @@ class QuestionDraft {
 
     const result = await query(sql, values);
     return result.rows;
+  }
+
+  /**
+   * 获取我的提交（已提交审核的题目）
+   * @param {number} userId - 用户ID
+   * @param {Object} filters - 筛选条件
+   * @returns {Promise<Array>} 提交列表
+   */
+  static async getMySubmissions(userId, filters = {}) {
+    const { query } = require('../database/connection');
+    const DISTRICT_CODES = require('../config/districts').DISTRICT_CODES;
+
+    let sql = `
+      SELECT
+        qb.id as submission_id,
+        qb.draft_id,
+        qb.scope,
+        qb.status,
+        qb.reviewer_id,
+        qb.review_comment,
+        qb.reviewed_at,
+        qb.published_at as submitted_at,
+        qd.id,
+        qd.type,
+        qd.subject,
+        qd.grade,
+        qd.level,
+        qd.content,
+        qd.difficulty,
+        qd.suggested_score,
+        qd.abilities,
+        qd.knowledge_points,
+        qd.created_at as draft_created_at,
+        reviewer.real_name as reviewer_name,
+        reviewer.username as reviewer_username
+      FROM question_bank qb
+      INNER JOIN question_drafts qd ON qb.draft_id = qd.id
+      LEFT JOIN users reviewer ON qb.reviewer_id = reviewer.id
+      WHERE qb.published_by = $1 AND qb.is_active = true
+    `;
+    const values = [userId];
+    let paramCount = 1;
+
+    // 筛选条件
+    if (filters.status) {
+      paramCount++;
+      sql += ` AND qb.status = $${paramCount}`;
+      values.push(filters.status);
+    }
+
+    if (filters.subject) {
+      paramCount++;
+      sql += ` AND qd.subject = $${paramCount}`;
+      values.push(filters.subject);
+    }
+
+    if (filters.type) {
+      paramCount++;
+      sql += ` AND qd.type = $${paramCount}`;
+      values.push(filters.type);
+    }
+
+    // 搜索（题目内容）
+    if (filters.search) {
+      paramCount++;
+      sql += ` AND qd.content ILIKE $${paramCount}`;
+      values.push(`%${filters.search}%`);
+    }
+
+    sql += ' ORDER BY qb.published_at DESC';
+
+    // 分页
+    if (filters.limit) {
+      paramCount++;
+      sql += ` LIMIT $${paramCount}`;
+      values.push(filters.limit);
+
+      if (filters.offset) {
+        paramCount++;
+        sql += ` OFFSET $${paramCount}`;
+        values.push(filters.offset);
+      }
+    }
+
+    const result = await query(sql, values);
+
+    // 格式化返回数据
+    return result.rows.map(row => {
+      // 格式化scope文本
+      let scopeText = row.scope;
+      if (row.scope === 'assessment') {
+        scopeText = '测评题库';
+      } else if (row.scope === 'practice_municipal') {
+        scopeText = '市级练习';
+      } else if (row.scope.startsWith('practice_district_')) {
+        const districtCode = row.scope.replace('practice_district_', '');
+        const district = DISTRICT_CODES[districtCode];
+        scopeText = district ? `区级练习-${district.name}` : row.scope;
+      } else if (row.scope.startsWith('practice_school_')) {
+        scopeText = '校级练习';
+      }
+
+      // 格式化状态文本
+      let statusText = row.status;
+      let statusColor = 'default';
+      if (row.status === 'pending_review') {
+        statusText = '待审核';
+        statusColor = 'orange';
+      } else if (row.status === 'published') {
+        statusText = '已通过';
+        statusColor = 'green';
+      } else if (row.status === 'inactive') {
+        statusText = '已拒绝';
+        statusColor = 'red';
+      }
+
+      return {
+        submission_id: row.submission_id,
+        draft_id: row.draft_id,
+        id: row.id, // 草稿ID
+        type: row.type,
+        subject: row.subject,
+        grade: row.grade,
+        level: row.level,
+        content: row.content,
+        difficulty: row.difficulty,
+        suggested_score: row.suggested_score,
+        abilities: row.abilities,
+        knowledge_points: row.knowledge_points,
+        scope: row.scope,
+        scope_text: scopeText,
+        status: row.status,
+        status_text: statusText,
+        status_color: statusColor,
+        reviewer_id: row.reviewer_id,
+        reviewer_name: row.reviewer_name,
+        review_comment: row.review_comment,
+        reviewed_at: row.reviewed_at,
+        submitted_at: row.submitted_at,
+        draft_created_at: row.draft_created_at
+      };
+    });
+  }
+
+  /**
+   * 统计我的提交数量
+   * @param {number} userId - 用户ID
+   * @param {Object} filters - 筛选条件
+   * @returns {Promise<number>} 提交数量
+   */
+  static async countMySubmissions(userId, filters = {}) {
+    const { query } = require('../database/connection');
+
+    let sql = `
+      SELECT COUNT(*) as count
+      FROM question_bank qb
+      INNER JOIN question_drafts qd ON qb.draft_id = qd.id
+      WHERE qb.published_by = $1 AND qb.is_active = true
+    `;
+    const values = [userId];
+    let paramCount = 1;
+
+    // 筛选条件
+    if (filters.status) {
+      paramCount++;
+      sql += ` AND qb.status = $${paramCount}`;
+      values.push(filters.status);
+    }
+
+    if (filters.subject) {
+      paramCount++;
+      sql += ` AND qd.subject = $${paramCount}`;
+      values.push(filters.subject);
+    }
+
+    if (filters.type) {
+      paramCount++;
+      sql += ` AND qd.type = $${paramCount}`;
+      values.push(filters.type);
+    }
+
+    const result = await query(sql, values);
+    return parseInt(result.rows[0].count);
   }
 }
 

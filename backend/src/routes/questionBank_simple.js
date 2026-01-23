@@ -58,7 +58,7 @@ router.get('/bank/search', authMiddleware, async (req, res) => {
     const { q, subject, grade } = req.query;
     
     if (!q) {
-      return res.status(400).json({ success: false, error: 'Search term required' });
+      return res.status(400).json({ success: false, error: '请输入搜索关键词' });
     }
 
     const questions = await QuestionBank.searchQuestions(q, { subject, grade });
@@ -75,7 +75,7 @@ router.get('/bank/:id', authMiddleware, async (req, res) => {
     const question = await QuestionBank.findById(req.params.id);
     
     if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
     
     res.json({ success: true, data: question });
@@ -89,7 +89,7 @@ router.get('/bank/:id', authMiddleware, async (req, res) => {
 router.post('/bank', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: '无权限' });
     }
 
     const questionData = {
@@ -115,7 +115,7 @@ router.post('/bank', authMiddleware, async (req, res) => {
 router.put('/bank/:id', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: '无权限' });
     }
 
     // Validate question if type is being changed
@@ -129,7 +129,7 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
     const question = await QuestionBank.update(req.params.id, req.body);
     
     if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
     
     res.json({ success: true, data: question });
@@ -143,13 +143,13 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
 router.delete('/bank/:id', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: '无权限' });
     }
 
     const question = await QuestionBank.delete(req.params.id);
     
     if (!question) {
-      return res.status(404).json({ success: false, error: 'Question not found' });
+      return res.status(404).json({ success: false, error: '题目不存在' });
     }
     
     res.json({ success: true, message: 'Question deleted successfully' });
@@ -163,13 +163,13 @@ router.delete('/bank/:id', authMiddleware, async (req, res) => {
 router.post('/exam/:examId/questions', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: '无权限' });
     }
 
     const { questionIds, scores } = req.body;
     
     if (!questionIds || !Array.isArray(questionIds)) {
-      return res.status(400).json({ success: false, error: 'Question IDs required' });
+      return res.status(400).json({ success: false, error: '请提供题目ID列表' });
     }
 
     const questions = await QuestionBank.addToExam(req.params.examId, questionIds, scores);
@@ -219,7 +219,7 @@ router.get('/categories/hierarchy', authMiddleware, async (req, res) => {
 router.post('/categories', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: '无权限' });
     }
 
     const category = await QuestionCategory.create(req.body);
@@ -234,11 +234,11 @@ router.post('/categories', authMiddleware, async (req, res) => {
 router.post('/import', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: '无权限' });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
+      return res.status(400).json({ success: false, error: '未上传文件' });
     }
 
     const batchId = uuidv4();
@@ -299,7 +299,7 @@ router.get('/import/template', (req, res) => {
   res.download(templatePath, 'question_import_template.csv', (err) => {
     if (err) {
       console.error('Error downloading template:', err);
-      res.status(404).json({ success: false, error: 'Template file not found' });
+      res.status(404).json({ success: false, error: '模板文件不存在' });
     }
   });
 });

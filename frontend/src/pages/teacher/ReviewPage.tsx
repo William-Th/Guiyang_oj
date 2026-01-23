@@ -18,9 +18,24 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import { questionReviewApi } from '../../services/api';
+import { questionReviewApi, questionBankApi } from '../../services/api';
 
 const { TextArea } = Input;
+
+// 能力配置接口
+interface Ability {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// 知识点配置接口
+interface KnowledgePoint {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+}
 
 interface Question {
   id: number;
@@ -53,9 +68,64 @@ const ReviewPage: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // 配置数据
+  const [abilitiesConfig, setAbilitiesConfig] = useState<Ability[]>([]);
+  const [knowledgePointsConfig, setKnowledgePointsConfig] = useState<Record<string, KnowledgePoint[]>>({});
+  const [scopeTextsMap, setScopeTextsMap] = useState<Record<string, string>>({});
+
   useEffect(() => {
+    loadConfig();
     loadPendingReviews();
   }, []);
+
+  // 加载配置数据
+  const loadConfig = async () => {
+    try {
+      const abilitiesRes = await questionBankApi.getAbilities();
+      const abilities = abilitiesRes.data?.abilities || abilitiesRes.data || [];
+      setAbilitiesConfig(abilities);
+
+      const kpRes = await questionBankApi.getAllKnowledgePoints();
+      if (kpRes.data) {
+        const kpMap: Record<string, KnowledgePoint[]> = {};
+        Object.entries(kpRes.data).forEach(([key, value]: [string, any]) => {
+          if (value.knowledge_points) {
+            kpMap[key] = value.knowledge_points;
+          }
+        });
+        setKnowledgePointsConfig(kpMap);
+      }
+    } catch (error) {
+      console.error('Load config error:', error);
+    }
+  };
+
+  // 科目中文名称到英文代码的映射
+  const getSubjectCode = (subjectName: string): string => {
+    const subjectMap: Record<string, string> = {
+      '数学': 'math',
+      '物理': 'physics',
+      '化学': 'chemistry',
+      '生物': 'biology',
+      '信息科技': 'computer',
+      '计算机': 'computer'
+    };
+    return subjectMap[subjectName] || subjectName;
+  };
+
+  // 获取能力名称
+  const getAbilityName = (id: string): string => {
+    const ability = abilitiesConfig.find(a => a.id === id);
+    return ability?.name || id;
+  };
+
+  // 获取知识点名称
+  const getKnowledgePointName = (subject: string, id: string): string => {
+    const subjectCode = getSubjectCode(subject);
+    const kps = knowledgePointsConfig[subjectCode] || [];
+    const kp = kps.find(k => k.id === id);
+    return kp?.name || id;
+  };
 
   const loadPendingReviews = async () => {
     try {
@@ -70,10 +140,23 @@ const ReviewPage: React.FC = () => {
     }
   };
 
-  const handleReviewClick = (question: Question) => {
+  const handleReviewClick = async (question: Question) => {
     setSelectedQuestion(question);
     setReviewStatus('approved');
     setReviewComment('');
+
+    // 加载该题目的scope文本映射
+    if (question.scope && question.scope.length > 0) {
+      try {
+        const scopeRes = await questionBankApi.getScopeTexts(question.scope);
+        if (scopeRes.data) {
+          setScopeTextsMap(scopeRes.data);
+        }
+      } catch (error) {
+        console.error('Load scope texts error:', error);
+      }
+    }
+
     setReviewModalVisible(true);
   };
 
@@ -123,6 +206,15 @@ const ReviewPage: React.FC = () => {
     return colors[difficulty] || 'default';
   };
 
+  const getDifficultyText = (difficulty: string) => {
+    const texts: Record<string, string> = {
+      easy: '简单',
+      medium: '中等',
+      hard: '困难',
+    };
+    return texts[difficulty] || difficulty;
+  };
+
   const getLevelColor = (level: string) => {
     const levelNum = parseInt(level.replace('L', ''));
     if (levelNum <= 3) return 'green';
@@ -131,12 +223,8 @@ const ReviewPage: React.FC = () => {
   };
 
   const getScopeText = (scope: string) => {
-    const scopes: Record<string, string> = {
-      practice: '练习题库',
-      assessment: '测评题库',
-      competition: '竞赛题库',
-    };
-    return scopes[scope] || scope;
+    // 使用从后端API加载的scope文本映射
+    return scopeTextsMap[scope] || scope;
   };
 
   const renderAnswer = (question: Question) => {
@@ -303,7 +391,7 @@ const ReviewPage: React.FC = () => {
               </Descriptions.Item>
               <Descriptions.Item label="难度">
                 <Tag color={getDifficultyColor(selectedQuestion.difficulty)}>
-                  {selectedQuestion.difficulty}
+                  {getDifficultyText(selectedQuestion.difficulty)}
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="建议分值">
@@ -377,7 +465,7 @@ const ReviewPage: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.abilities.map((ability, index) => (
                     <Tag key={index} color="geekblue" style={{ marginBottom: 4 }}>
-                      {ability}
+                      {getAbilityName(ability)}
                     </Tag>
                   ))}
                 </div>
@@ -390,7 +478,7 @@ const ReviewPage: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.knowledge_points.map((kp, index) => (
                     <Tag key={index} color="cyan" style={{ marginBottom: 4 }}>
-                      {kp}
+                      {getKnowledgePointName(selectedQuestion.subject, kp)}
                     </Tag>
                   ))}
                 </div>

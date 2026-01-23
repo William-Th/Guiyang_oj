@@ -590,6 +590,79 @@
 
 ## 近期更新
 
+### 2025-01-21
+- 🐛 **修复通知API路由顺序问题** - `DELETE /notifications/read` 返回400错误
+  - 问题: Express将 `/read` 路由匹配到 `/:id` 路由，导致验证失败
+  - 解决: 将具体路由（`/batch`、`/read`）放在参数化路由（`/:id`）之前
+  - 文件: `backend/src/routes/notifications.js`
+  - 状态: ✅ 已修复
+- 🐛 **修复审核题目500错误** - 外键约束指向错误的备份表
+  - 问题: `question_reviews.question_id` 外键指向 `question_bank_old_backup_20251122` 而不是 `question_bank`
+  - 原因: 迁移 024 重命名表时外键未正确更新
+  - 解决: 删除错误外键，清理5条无效记录，创建正确外键
+  - 迁移文件: `database/migrations/038_fix_question_reviews_fk.sql`
+  - 状态: ✅ 已修复
+- ✅ **审核页面中文名称显示** - 已完成
+  - 后端新增API: `GET /api/question-bank/config/scopes` - 根据数据库返回格式化的scope文本
+  - 修复内容:
+    - `abilities` (考察能力): `computational_thinking` → "计算思维能力"
+    - `knowledge_points` (知识点): `cs_basics` → "计算机基础"
+    - `difficulty` (难度): `easy` → "简单", `medium` → "中等", `hard` → "困难"
+    - `scope` (题库范围): 从数据库动态获取区县和学校名称
+  - 文件:
+    - `backend/src/routes/questionBank.js` - 新增 `/config/scopes` 端点
+    - `frontend/src/services/api.ts` - 新增 `getScopeTexts` 方法
+    - `frontend/src/pages/teacher/ReviewWorkbench.tsx` - 使用API获取scope文本
+    - `frontend/src/pages/teacher/ReviewPage.tsx` - 使用API获取scope文本
+  - 状态: ✅ 完成
+- ✅ **修复草稿和提交页面问题**
+  - 问题1: "我的草稿"提交后仍显示 - 修复: 排除已提交审核的草稿
+  - 问题2: "我的提交"页面为空 - 修复: 重新实现提交记录显示
+  - 文件:
+    - `backend/src/models/QuestionDraft.js` - 更新 `getMyDrafts` 排除已提交草稿，新增 `getMySubmissions` 方法
+    - `backend/src/routes/questionReview.js` - 更新 `/my-submissions` 端点
+    - `frontend/src/pages/teacher/MySubmissionsPage.tsx` - 更新数据结构适配
+  - 状态: ✅ 完成
+- ✅ **拒绝后重新提交功能**
+  - 功能: 已拒绝的题目可以修改后重新提交，更新已有记录而非新建
+  - 实现逻辑: 检测到 `inactive` 状态时，更新为 `pending_review` 并重置审核字段
+  - 文件: `backend/src/routes/questionReview.js` - 更新 `/:id/submit` 端点
+  - 状态: ✅ 完成
+- ✅ **修复API端点路径错误**
+  - 问题: 题目编辑使用了错误的端点 `/question-bank/bank/:id`
+  - 修复: 改为 `/question-bank/drafts/:id`
+  - 文件: `frontend/src/services/api.ts`
+  - 状态: ✅ 完成
+- ✅ **修复审核历史权限问题**
+  - 问题: 权限检查使用了错误的字段导致403错误
+  - 修复: 检查提交者(published_by)而非创建者，添加published_by到查询
+  - 文件: `backend/src/routes/questionReview.js` - 更新 `/:id/history` 端点
+  - 状态: ✅ 完成
+- ✅ **我的提交页面重新提交审核按钮** - 已完成
+  - 功能: 在"我的提交"表格中为被拒绝的记录添加"重新提交审核"按钮
+  - 实现细节:
+    - 在操作列中添加"重新提交"按钮（仅被拒绝状态显示）
+    - 点击按钮打开模态框，显示上次拒绝原因
+    - 可选择新的目标范围和审核人
+    - 调用现有的`submitForReview` API，会自动更新已有记录
+  - 操作流程:
+    1. 在"我的提交"页面查看被拒绝的记录
+    2. 点击"修改"按钮编辑题目内容
+    3. 修改完成后，点击"重新提交"按钮
+    4. 选择新的审核人和目标范围，提交审核
+  - 文件:
+    - `frontend/src/pages/teacher/MySubmissionsPage.tsx` - 添加重新提交功能
+    - `frontend/src/pages/teacher/QuestionFormPage.tsx` - 移除重新提交功能，保持纯粹的编辑功能
+  - 状态: ✅ 完成
+- ✅ **修复审核历史403权限错误** - 已完成
+  - 问题: 前端调用历史API时使用了错误的ID字段
+  - 原因: 后端 `getMySubmissions` 返回的 `id` 字段是 `draft_id`，应该使用 `submission_id`
+  - 数据说明: 同一个draft可能有多条提交记录（不同范围），需要使用正确的 submission_id
+  - 修复: 前端使用 `question.submission_id` 调用历史API
+  - 文件:
+    - `frontend/src/pages/teacher/MySubmissionsPage.tsx` - 使用正确的ID字段调用历史API
+  - 状态: ✅ 完成
+
 ### 2025-12-09
 - ✅ **编程题判题系统开发完成**
   - **数据库**: 3个迁移文件 (031-033)
@@ -700,4 +773,86 @@
 
 ---
 
-*最后更新时间：2025-11-05 18:30*
+### 2025-01-21
+- ✅ **题库管理筛选条件热更新优化**
+  - **问题**: 点击筛选子选项时无法热更新，需要手动刷新页面
+  - **原因分析**:
+    1. 筛选条件变化时没有重置页码，导致用户可能在非第一页看不到新筛选结果
+    2. 缺少防抖机制，快速切换选项时可能产生多次不必要的API请求
+    3. 年级选择器状态可能不同步
+  - **优化措施**:
+    1. 添加 `useCallback` 创建稳定的 `loadQuestions` 函数
+    2. 创建 `updateFiltersWithReset` 函数，统一处理筛选条件更新和页码重置
+    3. 所有筛选条件（科目、年级、难度、题型、区县、范围）变化时自动重置到第一页
+    4. 科目变化时自动清空年级选择
+    5. 重置筛选按钮增加 `selectedDistrictCode` 清理
+  - **修改文件**:
+    - `frontend/src/pages/teacher/QuestionBankPage.tsx`
+      - 新增 `useRef`, `useCallback` 导入
+      - 新增 `debounceTimerRef` 防抖定时器引用
+      - `loadQuestions` 使用 `useCallback` 包装
+      - 新增 `updateFiltersWithReset` 统一筛选更新函数
+      - 所有筛选器 onChange 使用新函数
+  - **状态**: ✅ 完成，前端构建成功
+
+- ✅ **我的提交页面重新提交审核按钮** - 已完成
+  - 功能: 在"我的提交"表格中为被拒绝的记录添加"重新提交审核"按钮
+  - 修改文件: `frontend/src/pages/teacher/MySubmissionsPage.tsx`
+  - 状态: ✅ 完成
+
+- ✅ **修复审核历史403权限错误** - 已完成
+  - 问题: 前端调用历史API时使用了错误的ID字段
+  - 原因: 后端 `getMySubmissions` 返回的 `id` 字段是 `draft_id`，应该使用 `submission_id`
+  - 修复: 前端使用 `question.submission_id` 调用历史API
+  - 状态: ✅ 完成
+
+---
+
+### 2026-01-23
+- ✅ **补全缺失的区县级管理员账号**
+  - 创建 `huaxi_admin` (花溪区教育局管理员) 和 `wudang_admin` (乌当区教育局管理员)
+  - 更新 `docs/DEMO_GUIDE.md` 文档，移除"暂无"警告
+  - 当前区县级管理员数量: 12 (全覆盖)
+
+- ✅ **组卷功能Bug修复** - 教师组卷页面
+  - **Bug 1**: 题目分数和显示 "NaN 分"
+    - 原因: API返回的score是字符串类型，JavaScript进行字符串拼接
+    - 修复: 使用 `Number()` 转换分数值
+    - 文件: `frontend/src/pages/teacher/PaperGenerationPage.tsx`
+  - **Bug 2**: 创建活动设置的总分被题目总分覆盖
+    - 原因: 数据库触发器 `update_activity_paper_stats()` 自动更新 total_score
+    - 修复:
+      - 修改触发器只更新 question_count，保留用户设置的 total_score
+      - 后端添加 `actual_total_score` 字段返回实际题目分数和
+      - 前端使用后端提供的 actual_total_score
+    - 文件:
+      - `database/migrations/039_fix_activity_total_score_trigger.sql`
+      - `backend/src/models/ActivityQuestion.js`
+      - `frontend/src/pages/teacher/PaperGenerationPage.tsx`
+
+- ✅ **学生答题页面UI优化和Bug修复** - 已完成
+  - **UI优化**:
+    - 添加左侧题目导航（答题卡），5列网格布局
+    - 按题型分组显示（单选题、多选题、填空题、主观题、编程题）
+    - 提交按钮移至页面顶部
+    - 已答题显示绿色，当前题高亮
+    - 字体大小优化：题目18px，选项17px
+    - 紧凑布局，答题卡自适应宽度
+    - 隐藏题目难度显示
+  - **Bug修复**:
+    - **Bug 1**: 选择题目时其他题目同步被选中
+      - 原因: React key冲突 + field name重复
+      - 修复: 使用 `q_${index}_${question.id}` 确保字段名绝对唯一
+      - Radio/Checkbox key改为 `${index}-${optIndex}`
+    - **Bug 2**: 答题卡标记错误（刷新后消失、点击一题全标记）
+      - 原因: `updateAnsweredTracking` 没有正确获取表单值
+      - 修复: `handleFormChange` 显式传递 `allValues` 给跟踪函数
+    - **Bug 3**: 答题时出现400后端错误
+      - 原因: `autoSaveAnswers()` 函数每次表单变化都调用后端API
+      - 修复: 完全移除自动保存逻辑，只使用localStorage备份
+  - **文件**: `frontend/src/pages/student/TakeActivityPage.tsx`
+  - **状态**: ✅ 已完成，待用户验证
+
+---
+
+*最后更新时间：2026-01-23*

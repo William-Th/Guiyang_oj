@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -62,6 +62,8 @@ const QuestionBankPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [searchTerm, setSearchTerm] = useState('');
+  // 防抖定时器 ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [filters, setFilters] = useState<{
     subject?: string;
     grade?: string;
@@ -109,7 +111,8 @@ const QuestionBankPage: React.FC = () => {
 
   // 🔧 loadAvailableScopes 函数已删除 - 现在使用固定的 availableScopes 常量
 
-  const loadQuestions = async () => {
+  // 使用 useCallback 创建稳定的 loadQuestions 函数
+  const loadQuestions = useCallback(async () => {
     try {
       setLoading(true);
       const offset = (currentPage - 1) * pageSize;
@@ -136,7 +139,21 @@ const QuestionBankPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, filters, canSelectDistrict]);
+
+  // 🔧 防抖的筛选条件更新函数 - 避免快速切换时多次API调用
+  const updateFiltersWithReset = useCallback((newFilters: Partial<typeof filters>) => {
+    // 清除之前的定时器
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // 重置到第一页
+    setCurrentPage(1);
+
+    // 立即更新状态（热更新）
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -220,7 +237,8 @@ const QuestionBankPage: React.FC = () => {
 
   const handleScopeChange = (scopes: string[]) => {
     setSelectedScopes(scopes);
-    setFilters({ ...filters, scopes });
+    // 🔧 题库范围变化时重置页码
+    updateFiltersWithReset({ scopes });
     // 保存到 localStorage
     localStorage.setItem('selectedScopes', JSON.stringify(scopes));
   };
@@ -552,7 +570,8 @@ const QuestionBankPage: React.FC = () => {
                 value={selectedDistrictCode}
                 onChange={(value) => {
                   setSelectedDistrictCode(value);
-                  setFilters({ ...filters, district_code: value });
+                  // 🔧 区县变化时重置页码
+                  updateFiltersWithReset({ district_code: value });
                 }}
               >
                 {(districts || []).map((district) => (
@@ -567,7 +586,8 @@ const QuestionBankPage: React.FC = () => {
               style={{ width: 120 }}
               allowClear
               onChange={(value) => {
-                setFilters({ ...filters, subject: value, grade: undefined });
+                // 🔧 科目变化时清空年级并重置页码
+                updateFiltersWithReset({ subject: value, grade: undefined });
               }}
               value={filters.subject}
             >
@@ -581,7 +601,10 @@ const QuestionBankPage: React.FC = () => {
               placeholder={filters.subject ? '选择年级' : '请先选择科目'}
               style={{ width: 120 }}
               allowClear
-              onChange={(value) => setFilters({ ...filters, grade: value })}
+              onChange={(value) => {
+                // 🔧 年级变化时重置页码
+                updateFiltersWithReset({ grade: value });
+              }}
               value={filters.grade}
               disabled={!filters.subject}
             >
@@ -602,7 +625,10 @@ const QuestionBankPage: React.FC = () => {
               placeholder="选择难度"
               style={{ width: 120 }}
               allowClear
-              onChange={(value) => setFilters({ ...filters, difficulty: value })}
+              onChange={(value) => {
+                // 🔧 难度变化时重置页码
+                updateFiltersWithReset({ difficulty: value });
+              }}
               value={filters.difficulty}
             >
               <Select.Option value="easy">简单</Select.Option>
@@ -613,7 +639,10 @@ const QuestionBankPage: React.FC = () => {
               placeholder="选择题型"
               style={{ width: 120 }}
               allowClear
-              onChange={(value) => setFilters({ ...filters, type: value })}
+              onChange={(value) => {
+                // 🔧 题型变化时重置页码
+                updateFiltersWithReset({ type: value });
+              }}
               value={filters.type}
             >
               <Select.Option value="single">单选题</Select.Option>
@@ -625,9 +654,11 @@ const QuestionBankPage: React.FC = () => {
             </Select>
             <Button
               onClick={() => {
+                // 🔧 重置所有筛选条件
                 setSearchTerm('');
                 setFilters({});
                 setSelectedScopes([]);
+                setSelectedDistrictCode(undefined);
                 setCurrentPage(1);
                 localStorage.removeItem('selectedScopes');
               }}

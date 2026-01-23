@@ -580,7 +580,7 @@ class AutoGradingService {
       if (questionResult.rows.length === 0) {
         return {
           success: false,
-          error: 'Question not found'
+          error: '题目不存在'
         };
       }
 
@@ -620,7 +620,7 @@ class AutoGradingService {
       if (!judgeResult) {
         return {
           success: false,
-          error: 'Judging timeout'
+          error: '判题超时'
         };
       }
 
