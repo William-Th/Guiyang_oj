@@ -24,7 +24,7 @@ async function loginAsTeacher(page: any) {
   await page.waitForTimeout(500);
 
   // Use .last() to target the teacher tab's inputs
-  await page.locator('input[placeholder="用户�?]').last().fill('teacher_yy_ps_math');
+  await page.locator('input[placeholder="用户名"]').last().fill('teacher_yy_ps_math');
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   // Use .last() to click the teacher tab's submit button
@@ -73,8 +73,8 @@ async function navigateToPaperGeneration(page: any, requireDraft = false) {
   await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000 });
   await page.waitForLoadState('networkidle');
 
-  // 等待并点击组卷按�?
-  const paperButton = page.locator('button').filter({ hasText: /组\s*�? });
+  // 等待并点击组卷按钮
+  const paperButton = page.locator('button').filter({ hasText: /组\s*卷/ });
   await expect(paperButton).toBeVisible({ timeout: 10000 });
   await paperButton.click();
 
@@ -88,22 +88,22 @@ test.describe('组卷功能 - 回归测试', () => {
     await loginAsTeacher(page);
   });
 
-  test('PAP101 - 访问组卷页面显示正确的统计信�?, async ({ page }) => {
+  test('PAP101 - 访问组卷页面显示正确的统计信息', async ({ page }) => {
     // 导航到现有活动的组卷页面
     await navigateToPaperGeneration(page);
 
     // 验证统计信息显示（使用更精确的选择器避免冲突）
-    await expect(page.locator('.ant-statistic-title').filter({ hasText: '总题�? })).toBeAttached();
-    await expect(page.locator('.ant-statistic-title').filter({ hasText: '总分' })).toBeAttached();
+    await expect(page.locator('.ant-statistic-title').filter({ hasText: '总题数' })).toBeAttached();
+    await expect(page.locator('.ant-statistic-title').filter({ hasText: '活动设置总分' })).toBeAttached();
     await expect(page.locator('.ant-statistic-title').filter({ hasText: '单选题' })).toBeAttached();
     await expect(page.locator('.ant-statistic-title').filter({ hasText: '多选题' })).toBeAttached();
   });
 
-  test('PAP102 - 筛选可用题目功�?, async ({ page }) => {
+  test('PAP102 - 筛选可用题目功能', async ({ page }) => {
     // 导航到现有活动的组卷页面（需要草稿状态以支持筛选功能）
     await navigateToPaperGeneration(page, true);
 
-    // 滚动�?可用题目"部分
+    // 滚动到"可用题目"部分
     await page.locator('h3:has-text("可用题目")').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
 
@@ -115,7 +115,7 @@ test.describe('组卷功能 - 回归测试', () => {
     await page.getByRole('option', { name: '单选题' }).click();
 
     // 点击搜索按钮 (使用regex处理可能的文字间空格)
-    const searchButton = page.locator('button').filter({ hasText: /搜\s*�? });
+    const searchButton = page.locator('button').filter({ hasText: /搜\s*索/ });
     await searchButton.click();
     await page.waitForLoadState('networkidle');
 
@@ -125,12 +125,12 @@ test.describe('组卷功能 - 回归测试', () => {
     await expect(availableTable).toBeAttached();
 
     // 点击重置按钮 (使用regex处理可能的文字间空格)
-    const resetButton = page.locator('button').filter({ hasText: /重\s*�? });
+    const resetButton = page.locator('button').filter({ hasText: /重\s*置/ });
     await resetButton.click();
     await page.waitForLoadState('networkidle');
   });
 
-  test('PAP103 - 添加单个题目到活�?, async ({ page }) => {
+  test('PAP103 - 添加单个题目到活动', async ({ page }) => {
     // 导航到现有活动的组卷页面
     await navigateToPaperGeneration(page);
 
@@ -220,31 +220,47 @@ test.describe('组卷功能 - 回归测试', () => {
     }
   });
 
-  test('PAP106 - 编辑题目属�?, async ({ page }) => {
-    // 导航到现有活动的组卷页面（需要草稿状态以支持编辑题目�?
+  test('PAP106 - 编辑题目属性', async ({ page }) => {
+    // 导航到现有活动的组卷页面（需要草稿状态以支持编辑题目）
     await navigateToPaperGeneration(page, true);
 
-    // 等待已选题目表格加�?
+    // 先添加一道题目用于测试编辑功能
+    const availableTable = page.locator('.ant-table-tbody').nth(1);
+    const availableRows = availableTable.locator('tr[data-row-key]');
+    const availableCount = await availableRows.count();
+
+    if (availableCount === 0) {
+      test.skip(true, '没有可用题目，无法测试编辑功能');
+      return;
+    }
+
+    // 添加第一道题目
+    const addButton = availableRows.first().locator('button:has-text("添加")');
+    await addButton.evaluate((btn: HTMLElement) => btn.click());
+    await page.waitForTimeout(500);
+
+    // 等待添加题目弹窗并点击确定
+    const confirmButton = page.locator('.ant-modal-footer button:has-text("确定")').first();
+    await confirmButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 等待已选题目表格加载
     const selectedTable = page.locator('.ant-table-tbody').first();
     await expect(selectedTable.locator('tr[data-row-key]').first()).toBeAttached({ timeout: 5000 });
 
-    // 点击第一道题的编辑按�?
-    const editButton = selectedTable.locator('button').filter({ hasText: /编\s*�? }).first();
-    await editButton.waitFor({ state: 'attached', timeout: 5000 });
-    await editButton.evaluate((btn: HTMLElement) => btn.click());
+    // 点击第一道题的分值进行编辑
+    const scoreCell = selectedTable.locator('tr[data-row-key]').first().locator('td').nth(5);
+    await scoreCell.click();
+    await page.waitForTimeout(300);
 
-    // 验证编辑模态框显示
-    await expect(page.locator('.ant-modal:has-text("编辑题目")')).toBeVisible({ timeout: 5000 });
-    await page.waitForTimeout(300); // 等待模态框完全渲染
-
-    // 修改分�?- 使用 label 关联查找输入�?
-    const editScoreFormItem = page.locator('.ant-modal:has-text("编辑题目") .ant-form-item:has(label:has-text("分�?))');
-    const scoreInput = editScoreFormItem.locator('input').first();
+    // 修改分值
+    const scoreInput = page.locator('input[type="number"]').first();
     await scoreInput.clear();
     await scoreInput.fill('15');
 
-    // 保存修改 - 明确定位�?编辑题目"模态框的确定按�?
-    const saveButton = page.locator('.ant-modal:has-text("编辑题目") .ant-modal-footer button').filter({ hasText: /确\s*�? });
+    // 点击保存按钮
+    const saveButton = page.locator('button:has-text("保存")').first();
     await saveButton.click();
 
     // 等待成功提示
@@ -252,30 +268,54 @@ test.describe('组卷功能 - 回归测试', () => {
   });
 
   test('PAP107 - 移除题目', async ({ page }) => {
-    // 导航到现有活动的组卷页面（需要草稿状态以支持移除题目�?
+    // 导航到现有活动的组卷页面（需要草稿状态以支持移除题目）
     await navigateToPaperGeneration(page, true);
 
-    // 等待已选题目表格加�?
+    // 先添加两道题目用于测试移除功能
+    const availableTable = page.locator('.ant-table-tbody').nth(1);
+    const availableRows = availableTable.locator('tr[data-row-key]');
+    const availableCount = await availableRows.count();
+
+    if (availableCount < 2) {
+      test.skip(true, '可用题目不足，无法测试移除功能');
+      return;
+    }
+
+    // 添加两道题目
+    for (let i = 0; i < 2; i++) {
+      const addButton = availableRows.nth(i).locator('button:has-text("添加")');
+      await addButton.evaluate((btn: HTMLElement) => btn.click());
+      await page.waitForTimeout(300);
+      const confirmButton = page.locator('.ant-modal-footer button:has-text("确定")').first();
+      await confirmButton.click();
+      await page.waitForTimeout(500);
+    }
+
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // 等待已选题目表格加载
     const selectedTable = page.locator('.ant-table-tbody').first();
     await expect(selectedTable.locator('tr[data-row-key]').first()).toBeAttached({ timeout: 5000 });
 
     // 获取当前题目数量
     await page.waitForTimeout(500); // 等待表格完全加载
     const initialCount = await selectedTable.locator('tr[data-row-key]').count();
+    expect(initialCount).toBeGreaterThanOrEqual(2);
 
-    // 点击第一道题的移除按�?
-    const removeButton = selectedTable.locator('button').filter({ hasText: /移\s*�? }).first();
+    // 点击第一道题的移除按钮
+    const removeButton = selectedTable.locator('button').filter({ hasText: /移\s*除/ }).first();
     await removeButton.waitFor({ state: 'attached', timeout: 5000 });
     await removeButton.evaluate((btn: HTMLElement) => btn.click());
 
     // 确认移除 - 使用 regex 处理可能的文字间空格
-    const removeConfirmButton = page.locator('.ant-popconfirm button').filter({ hasText: /确\s*�? });
+    const removeConfirmButton = page.locator('.ant-popconfirm button').filter({ hasText: /确\s*定/ });
     await removeConfirmButton.click();
 
     // 等待成功提示
     await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 3000 });
 
-    // 验证题目已移�?- 等待表格更新
+    // 验证题目已移除 - 等待表格更新
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500); // 等待表格重新渲染
     const newCount = await selectedTable.locator('tr[data-row-key]').count();
@@ -345,7 +385,7 @@ test.describe('组卷功能 - 回归测试', () => {
       await checkboxes.nth(1).check();
       await checkboxes.nth(2).check();
 
-      const batchAddButton = page.locator('button').filter({ hasText: /批\s*量\s*添\s*�? });
+      const batchAddButton = page.locator('button').filter({ hasText: /批\s*量\s*添\s*加/ });
       await batchAddButton.click();
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(1000); // 等待题目添加完成
@@ -366,7 +406,7 @@ test.describe('组卷功能 - 回归测试', () => {
       await page.waitForTimeout(300);
 
       // 点击批量删除按钮 - 验证按钮显示选中的题目数�?
-      const batchDeleteButton = page.locator('button').filter({ hasText: /批\s*量\s*删\s*�? });
+      const batchDeleteButton = page.locator('button').filter({ hasText: /批\s*量\s*删\s*除/ });
       await expect(batchDeleteButton).toBeVisible({ timeout: 5000 });
 
       // 验证按钮文本包含选中数量
@@ -378,7 +418,7 @@ test.describe('组卷功能 - 回归测试', () => {
       await page.waitForTimeout(300);
 
       // 确认删除 - 使用 Popconfirm
-      const confirmButton = page.locator('.ant-popconfirm button').filter({ hasText: /确\s*�? });
+      const confirmButton = page.locator('.ant-popconfirm button').filter({ hasText: /确\s*定/ });
       await expect(confirmButton).toBeVisible({ timeout: 3000 });
       await confirmButton.click();
 

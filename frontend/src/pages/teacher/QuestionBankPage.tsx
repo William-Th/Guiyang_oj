@@ -22,6 +22,8 @@ import {
   UploadOutlined,
   DownloadOutlined,
   EyeOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -79,6 +81,9 @@ const QuestionBankPage: React.FC = () => {
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [selectedDistrictCode, setSelectedDistrictCode] = useState<string | undefined>();  // 🆕 选中的区县
   const [districts] = useState<District[]>(getAllDistricts());  // 🆕 区县列表
+  const [exportModalVisible, setExportModalVisible] = useState(false);  // 🆕 导出弹窗
+  const [exportFormat, setExportFormat] = useState<'excel' | 'csv'>('excel');  // 🆕 导出格式
+  const [exportLoading, setExportLoading] = useState(false);  // 🆕 导出加载状态
 
   // 🆕 权限判断：是否可以使用区县筛选
   const canSelectDistrict = user?.role === 'system_admin' || user?.role === 'municipal_admin';
@@ -232,6 +237,70 @@ const QuestionBankPage: React.FC = () => {
       link.remove();
     } catch (error) {
       message.error('下载模板失败');
+    }
+  };
+
+  // 🆕 导出题目功能
+  const handleExport = async (exportCurrentFilters: boolean = true) => {
+    try {
+      setExportLoading(true);
+
+      // 准备导出参数
+      const exportFilters: {
+        subject?: string;
+        grade?: string;
+        difficulty?: string;
+        type?: string;
+        scopes?: string[];
+        district_code?: string;
+        format: 'excel' | 'csv';
+      } = {
+        format: exportFormat,
+      };
+
+      // 如果导出当前筛选结果，则使用当前筛选条件
+      if (exportCurrentFilters) {
+        if (filters.subject) exportFilters.subject = filters.subject;
+        if (filters.grade) exportFilters.grade = filters.grade;
+        if (filters.difficulty) exportFilters.difficulty = filters.difficulty;
+        if (filters.type) exportFilters.type = filters.type;
+        if (selectedScopes && selectedScopes.length > 0) exportFilters.scopes = selectedScopes;
+        if (canSelectDistrict && filters.district_code) exportFilters.district_code = filters.district_code;
+      }
+
+      const response = await questionBankApi.exportQuestions(exportFilters);
+
+      // 生成文件名
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const fileName = exportFormat === 'excel'
+        ? `题目导出_${timestamp}.xlsx`
+        : `题目导出_${timestamp}.csv`;
+
+      // 触发下载
+      const url = window.URL.createObjectURL(new Blob([response.data], {
+        type: exportFormat === 'excel'
+          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          : 'text/csv;charset=utf-8'
+      }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      message.success(`导出成功！共导出文件：${fileName}`);
+      setExportModalVisible(false);
+    } catch (error: any) {
+      console.error('Export error:', error);
+      if (error.response?.status === 404) {
+        message.warning('没有符合条件的题目可导出');
+      } else {
+        message.error(error.response?.data?.error || '导出失败');
+      }
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -501,6 +570,12 @@ const QuestionBankPage: React.FC = () => {
         extra={
           <Space>
             {/* 草稿箱功能暂未实现，已移除 */}
+            <Button
+              icon={<FileExcelOutlined />}
+              onClick={() => setExportModalVisible(true)}
+            >
+              导出题目
+            </Button>
             <Button
               icon={<DownloadOutlined />}
               onClick={handleDownloadTemplate}
@@ -785,6 +860,102 @@ const QuestionBankPage: React.FC = () => {
             </p>
           </div>
         )}
+      </Modal>
+
+      {/* 🆕 Export Modal */}
+      <Modal
+        title="导出题目"
+        open={exportModalVisible}
+        onCancel={() => setExportModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setExportModalVisible(false)}>
+            取消
+          </Button>,
+          <Button
+            key="exportAll"
+            onClick={() => handleExport(false)}
+            loading={exportLoading}
+          >
+            导出全部题目
+          </Button>,
+          <Button
+            key="exportFiltered"
+            type="primary"
+            onClick={() => handleExport(true)}
+            loading={exportLoading}
+          >
+            导出当前筛选结果
+          </Button>,
+        ]}
+        width={500}
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size="large">
+          {/* 导出格式选择 */}
+          <div>
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>选择导出格式：</div>
+            <Select
+              style={{ width: '100%' }}
+              value={exportFormat}
+              onChange={setExportFormat}
+            >
+              <Select.Option value="excel">
+                <FileExcelOutlined style={{ color: '#1dbf73', marginRight: 8 }} />
+                Excel (.xlsx)
+              </Select.Option>
+              <Select.Option value="csv">
+                <FileTextOutlined style={{ color: '#666', marginRight: 8 }} />
+                CSV (.csv)
+              </Select.Option>
+            </Select>
+          </div>
+
+          {/* 当前筛选条件显示 */}
+          <div>
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>当前筛选条件：</div>
+            <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: 4 }}>
+              {selectedScopes && selectedScopes.length > 0 ? (
+                <Space size="small" wrap style={{ marginBottom: 8 }}>
+                  <span>题库范围：</span>
+                  {selectedScopes.map(scope => {
+                    const config = getScopeText(scope);
+                    return (
+                      <Tag key={scope} color={config.color}>{config.text}</Tag>
+                    );
+                  })}
+                </Space>
+              ) : null}
+              {filters.subject && (
+                <div style={{ marginBottom: 4 }}>
+                  <Tag color="blue">科目：{filters.subject}</Tag>
+                </div>
+              )}
+              {filters.grade && (
+                <div style={{ marginBottom: 4 }}>
+                  <Tag color="green">年级：{filters.grade}</Tag>
+                </div>
+              )}
+              {filters.difficulty && (
+                <div style={{ marginBottom: 4 }}>
+                  <Tag color="orange">难度：{getDifficultyText(filters.difficulty)}</Tag>
+                </div>
+              )}
+              {filters.type && (
+                <div style={{ marginBottom: 4 }}>
+                  <Tag color="purple">题型：{getQuestionTypeText(filters.type)}</Tag>
+                </div>
+              )}
+              {!selectedScopes?.length && !filters.subject && !filters.grade && !filters.difficulty && !filters.type && (
+                <span style={{ color: '#999' }}>无筛选条件</span>
+              )}
+            </div>
+          </div>
+
+          {/* 说明 */}
+          <div style={{ color: '#666', fontSize: 13 }}>
+            <div>• <strong>导出全部题目</strong>：导出您有权限查看的所有题目</div>
+            <div>• <strong>导出当前筛选结果</strong>：仅导出符合当前筛选条件的题目</div>
+          </div>
+        </Space>
       </Modal>
     </div>
   );

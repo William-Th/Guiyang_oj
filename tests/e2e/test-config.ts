@@ -1,6 +1,8 @@
-export const STORAGE_STATE = 'tests/.auth/user.json';
-export const TEACHER_STORAGE_STATE = 'tests/.auth/teacher.json';
-export const ADMIN_STORAGE_STATE = 'tests/.auth/admin.json';
+export const STORAGE_STATE = {
+  STUDENT: 'tests/.auth/user.json',
+  TEACHER: 'tests/.auth/teacher.json',
+  ADMIN: 'tests/.auth/admin.json'
+};
 
 export const TEST_CONFIG = {
   // Demo accounts from CLAUDE.md

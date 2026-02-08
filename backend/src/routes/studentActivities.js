@@ -665,13 +665,14 @@ router.get('/:id/result',
       const activityId = parseInt(req.params.id);
       const studentId = req.user.id;
 
-      // Get latest submitted or graded attempt
+      // Get latest submitted or graded attempt with activity details
       const attemptResult = await query(`
         SELECT
           sa.*,
           a.title as activity_title,
           a.type as activity_type,
-          a.total_score as activity_total_score
+          a.total_score as activity_total_score,
+          a.result_publish_time
         FROM student_activities sa
         JOIN activities a ON sa.activity_id = a.id
         WHERE sa.student_id = $1
@@ -690,6 +691,38 @@ router.get('/:id/result',
 
       const studentActivity = attemptResult.rows[0];
       const studentActivityId = studentActivity.id;
+
+      // Determine if correct answers should be shown
+      // - Practice (练习): Always show answers immediately
+      // - Assessment (测评): Only show answers after result_publish_time
+      const activityType = studentActivity.activity_type;
+      const resultPublishTime = studentActivity.result_publish_time;
+      const currentTime = new Date();
+
+      let showAnswers = false;
+      let showAnswersReason = '';
+
+      if (activityType === 'practice') {
+        // 练习类活动：立即显示答案
+        showAnswers = true;
+        showAnswersReason = 'practice_immediate';
+      } else if (activityType === 'assessment') {
+        // 测评类活动：检查结果发布时间
+        if (!resultPublishTime) {
+          // 未设置发布时间，立即显示
+          showAnswers = true;
+          showAnswersReason = 'assessment_no_time_set';
+        } else {
+          const publishTime = new Date(resultPublishTime);
+          if (currentTime >= publishTime) {
+            showAnswers = true;
+            showAnswersReason = 'assessment_published';
+          } else {
+            showAnswers = false;
+            showAnswersReason = 'assessment_pending';
+          }
+        }
+      }
 
       // Get all answers with details
       const answersResult = await query(`
@@ -723,8 +756,21 @@ router.get('/:id/result',
         correct_questions: answersResult.rows.filter(a => a.is_correct === true).length
       };
 
+      // Prepare answers - hide correct_answer if not allowed to show
+      const processedAnswers = answersResult.rows.map(answer => {
+        if (!showAnswers) {
+          // Remove sensitive information when answers are not yet published
+          const { correct_answer: _ca, is_correct: _ic, ...rest } = answer;
+          return rest;
+        }
+        return answer;
+      });
+
       res.json({
         success: true,
+        can_show_answers: showAnswers,
+        show_answers_reason: showAnswersReason,
+        result_publish_time: resultPublishTime,
         student_activity: {
           id: studentActivity.id,
           status: studentActivity.status,
@@ -739,7 +785,7 @@ router.get('/:id/result',
           activity_total_score: studentActivity.activity_total_score
         },
         statistics: stats,
-        answers: answersResult.rows
+        answers: processedAnswers
       });
 
     } catch (error) {

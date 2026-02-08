@@ -103,11 +103,24 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
       return;
     }
 
-    const firstRow = tableRows.first();
-    await expect(firstRow).toBeAttached();
+    await expect(tableRows.first()).toBeAttached();
+
+    // 优先选择"【测试】学生答题流程测试活动"（已知有5道题）
+    let targetRow = tableRows.first();
+
+    for (let i = 0; i < rowCount; i++) {
+      const row = tableRows.nth(i);
+      const rowText = await row.textContent();
+      // 查找测试活动
+      if (rowText.includes('【测试】学生答题流程测试活动')) {
+        targetRow = row;
+        console.log(`找到测试活动`);
+        break;
+      }
+    }
 
     // 点击开始按钮
-    const startButton = firstRow.locator('button:has-text("开始练习"), button:has-text("继续练习")').first();
+    const startButton = targetRow.locator('button:has-text("开始练习"), button:has-text("继续练习")').first();
 
     // 使用 evaluate 绕过可见性检查（虚拟滚动表格）
     await startButton.waitFor({ state: 'attached', timeout: 5000 });
@@ -115,6 +128,11 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
 
     // 等待导航到答题页面
     await page.waitForURL(/\/student\/(practice|activity)\/\d+/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+
+    // 检查实际URL
+    const actualUrl = page.url();
+    console.log(`导航后URL: ${actualUrl}`);
+
     await page.waitForLoadState('networkidle');
 
     // 提取活动ID
@@ -125,9 +143,43 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
       console.log(`活动ID: ${activityId}`);
     }
 
-    // 验证答题页面元素
-    const questionCards = page.locator('.ant-card', { has: page.locator('text=/第.*题|题目/') });
+    // 验证答题页面元素 - 等待题目卡片加载
+    // 题目卡片包含 "第 X 题" 文本
+    await page.waitForTimeout(5000); // 增加等待时间
+
+    // 调试：打印页面内容
+    const pageContent = await page.textContent('body');
+    console.log(`页面内容预览: ${pageContent.substring(0, 500)}...`);
+
+    // 检查是否有错误提示
+    const hasError = await page.locator('.ant-message-error, .ant-alert-error').count();
+    if (hasError > 0) {
+      const errorText = await page.locator('.ant-message-error, .ant-alert-error').first().textContent();
+      console.log(`页面错误: ${errorText}`);
+    }
+
+    // 检查是否有加载状态
+    const hasSpin = await page.locator('.ant-spin-spinning').count();
+    console.log(`加载状态Spin数量: ${hasSpin}`);
+
+    // 尝试多种选择器
+    const allCards = page.locator('.ant-card');
+    const allCardCount = await allCards.count();
+    console.log(`页面上的所有Card数量: ${allCardCount}`);
+
+    const questionCards = page.locator('.ant-card').filter({ hasText: /第\s*\d+\s*题/ });
     const questionCount = await questionCards.count();
+
+    if (questionCount === 0) {
+      console.log('未找到题目卡片，检查是否有相关文本...');
+      const hasQuestionText = await page.locator('text=/题/').count();
+      console.log(`包含"题"的元素数量: ${hasQuestionText}`);
+
+      // 检查是否有"开始答题"按钮
+      const hasStartButton = await page.locator('button:has-text("开始答题")').count();
+      console.log(`开始答题按钮数量: ${hasStartButton}`);
+    }
+
     expect(questionCount).toBeGreaterThan(0);
     console.log(`找到 ${questionCount} 道题目`);
 
@@ -162,7 +214,7 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
     await page.waitForTimeout(1000);
 
     // 找到所有题目
-    const questions = page.locator('.ant-card').filter({ has: page.locator('text=/第.*题/') });
+    const questions = page.locator('.ant-card').filter({ hasText: /第\s*\d+\s*题/ });
     const questionCount = await questions.count();
 
     if (questionCount === 0) {

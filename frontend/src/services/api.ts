@@ -22,6 +22,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle 401 responses globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Silently handle 401 errors - these are expected when user is not logged in
+    if (error.response?.status === 401) {
+      // You could optionally redirect to login or clear expired tokens
+      // For now, just suppress the error
+      return Promise.reject({ ...error, silent: true });
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Certificate API
 export const certificateApi = {
   // Apply for certificate
@@ -386,6 +400,33 @@ export const questionBankApi = {
   getMyScopes: async () => {
     const response = await api.get('/question-bank/my-scopes');
     return response.data;
+  },
+
+  // Export questions to Excel or CSV
+  exportQuestions: async (filters?: {
+    subject?: string;
+    grade?: string;
+    difficulty?: string;
+    type?: string;
+    scopes?: string[];
+    district_code?: string;
+    format?: 'excel' | 'csv';
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.grade) params.append('grade', filters.grade);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.scopes && filters.scopes.length > 0) {
+      filters.scopes.forEach(scope => params.append('scope', scope));
+    }
+    if (filters?.district_code) params.append('district_code', filters.district_code);
+    params.append('format', filters?.format || 'excel');
+
+    const response = await api.get(`/question-bank/export${params.toString() ? '?' + params.toString() : ''}`, {
+      responseType: 'blob',
+    });
+    return response;
   },
 };
 

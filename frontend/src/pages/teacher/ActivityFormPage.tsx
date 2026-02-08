@@ -134,6 +134,7 @@ const ActivityFormPage: React.FC = () => {
         allowRetake: activity.allow_retake,
         maxAttempts: activity.max_attempts,
         isOfficial: activity.is_official,
+        resultPublishTime: activity.result_publish_time ? dayjs(activity.result_publish_time) : null,
       });
 
       setSelectedSubject(activity.subject);
@@ -165,6 +166,7 @@ const ActivityFormPage: React.FC = () => {
         scope: values.scope,
         allowRetake: values.allowRetake,
         maxAttempts: values.maxAttempts || 1,
+        resultPublishTime: values.resultPublishTime ? values.resultPublishTime.toISOString() : null,
       };
 
       const selectedType = values.type || activityType;
@@ -469,6 +471,39 @@ const ActivityFormPage: React.FC = () => {
           >
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
+
+          {isAssessment && (
+            <>
+              <Divider orientation="left">结果发布设置</Divider>
+
+              <Form.Item
+                label="结果发布时间"
+                name="resultPublishTime"
+                help="测评类型活动：设置此时间后，学生只能在此时间之后查看答案和详细结果。留空表示立即显示结果。"
+              >
+                <DatePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="选择结果发布时间（可选）"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+
+              <Alert
+                message="结果发布说明"
+                description={
+                  <div>
+                    <p>• <strong>练习活动</strong>：学生提交后可立即查看答案和解析</p>
+                    <p>• <strong>测评活动</strong>：可设置结果发布时间，学生只能在此时间之后查看答案</p>
+                    <p>• 留空则表示学生提交后可立即查看结果</p>
+                  </div>
+                }
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            </>
+          )}
 
           <Divider orientation="left">重做设置</Divider>
 

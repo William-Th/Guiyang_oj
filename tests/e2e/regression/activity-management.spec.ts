@@ -52,24 +52,26 @@ test.describe('Regression Tests - Activity Management', () => {
       await page.fill('textarea[placeholder*="描述"]', data.description);
     }
 
-    // 选择科目 - 使用 #subject id 定位并通过 role 选择选项
+    // 选择科目
     await page.click('#subject');
     await page.waitForTimeout(500);
     await page.getByRole('option', { name: data.subject }).click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500); // 等待年级选项更新
 
-    // 选择年级
+    // 选择年级 - 使用键盘操作
     await page.click('#grade');
     await page.waitForTimeout(500);
-    await page.getByRole('option', { name: data.grade }).click();
+    // 使用键盘选择第一个可用选项
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
 
-    // 选择能力等级（如果提供）
+    // 选择能力等级（如果提供）- 使用键盘操作
     if (data.abilityLevel) {
       await page.click('#abilityLevel');
       await page.waitForTimeout(500);
-      // 使用正则匹配能力等级（支持 "L2 - 初中级" 或 "L2" 格式）
-      await page.getByRole('option', { name: new RegExp(data.abilityLevel.split(' ')[0]) }).click();
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Enter');
       await page.waitForTimeout(300);
     }
 

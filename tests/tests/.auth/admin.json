@@ -6,11 +6,11 @@
       "localStorage": [
         {
           "name": "token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoic3lzdGVtX2FkbWluIiwiaWF0IjoxNzY2ODQ5MjAzLCJleHAiOjE3Njc0NTQwMDN9.BilJOjKWCgDbFqb5YmmzQR4ormxdHsAAExdIwiMNWec"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoic3lzdGVtX2FkbWluIiwiaWF0IjoxNzY5OTMzOTc3LCJleHAiOjE3NzA1Mzg3Nzd9.VDv2_6k5Ah-7OYnE7XzWG9FdCsnamnTKRLNAhZ1a5P0"
         },
         {
           "name": "user",
-          "value": "{\"id\":1,\"username\":\"admin\",\"role\":\"system_admin\",\"realName\":\"系统管理员\",\"phone\":\"13800138000\",\"email\":\"admin@guiyang.edu\",\"avatarUrl\":null,\"status\":\"active\",\"createdAt\":\"2025-09-24T15:09:18.513Z\",\"updatedAt\":\"2025-12-27T15:26:43.163Z\"}"
+          "value": "{\"id\":1,\"username\":\"admin\",\"role\":\"system_admin\",\"realName\":\"系统管理员\",\"phone\":\"13800138000\",\"email\":\"admin@guiyang.edu\",\"avatarUrl\":null,\"status\":\"active\",\"createdAt\":\"2025-09-24T15:09:18.513Z\",\"updatedAt\":\"2026-02-01T08:19:37.696Z\"}"
         }
       ]
     }

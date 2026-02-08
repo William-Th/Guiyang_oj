@@ -585,6 +585,7 @@ CREATE TABLE public.activities (
     target_audience jsonb DEFAULT '{"grades": [], "classes": [], "schools": []}'::jsonb,
     certificate_config jsonb DEFAULT '{"enabled": false, "template": null}'::jsonb,
     time_limit_type character varying(20) DEFAULT 'unlimited'::character varying NOT NULL,
+    result_publish_time timestamp without time zone,
     question_count integer DEFAULT 0,
     paper_status character varying(20) DEFAULT 'empty'::character varying,
     CONSTRAINT activities_paper_status_check CHECK (((paper_status)::text = ANY ((ARRAY['empty'::character varying, 'draft'::character varying, 'completed'::character varying])::text[]))),
@@ -675,6 +676,13 @@ COMMENT ON COLUMN public.activities.certificate_config IS 'JSON configuration fo
 --
 
 COMMENT ON COLUMN public.activities.time_limit_type IS '时间限制类型: unlimited(无限�?, scheduled(固定时间�?, timed(限时作答)';
+
+
+--
+-- Name: COLUMN activities.result_publish_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.activities.result_publish_time IS '结果发布时间 - 仅用于测评类型活动，在此时间之后学生才能查看答案和详细结果';
 
 
 --

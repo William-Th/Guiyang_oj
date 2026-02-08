@@ -1,5 +1,5 @@
 import { test as setup, expect } from '@playwright/test';
-import { STORAGE_STATE, TEACHER_STORAGE_STATE, ADMIN_STORAGE_STATE } from './test-config';
+import { STORAGE_STATE } from './test-config';
 
 setup('authenticate as student', async ({ page }) => {
   // Perform authentication steps
@@ -10,20 +10,20 @@ setup('authenticate as student', async ({ page }) => {
 
   // Fill in student credentials (using phone number login)
   // Note: Students now login with phone number only (ID card field removed)
-  await page.fill('input[placeholder="手机号"]', '13800138003');
+  await page.fill('input[placeholder="手机号"]', '13900139002');
   await page.fill('input[placeholder="密码"]', 'password123');
 
   // Click login button
   await page.click('button[type="submit"]');
 
   // Wait for successful login and redirect
-  await page.waitForURL('/');
+  await page.waitForURL('/', { timeout: 15000 });
 
   // Verify login was successful
   await expect(page).toHaveURL('/');
 
   // Save signed-in state to 'STORAGE_STATE'.
-  await page.context().storageState({ path: STORAGE_STATE });
+  await page.context().storageState({ path: STORAGE_STATE.STUDENT });
 });
 
 setup('authenticate as teacher', async ({ page }) => {
@@ -49,7 +49,7 @@ setup('authenticate as teacher', async ({ page }) => {
   await expect(page).toHaveURL('/');
 
   // Save signed-in state
-  await page.context().storageState({ path: TEACHER_STORAGE_STATE });
+  await page.context().storageState({ path: STORAGE_STATE.TEACHER });
 });
 
 setup('authenticate as admin', async ({ page }) => {
@@ -99,5 +99,5 @@ setup('authenticate as admin', async ({ page }) => {
   }
 
   // Save signed-in state
-  await page.context().storageState({ path: ADMIN_STORAGE_STATE });
+  await page.context().storageState({ path: STORAGE_STATE.ADMIN });
 });

@@ -56,7 +56,7 @@ async function autoSubmitExpiredActivities() {
         const answersResult = await query(`
           SELECT SUM(score) as total_score
           FROM answers
-          WHERE student_activity_id = $1
+          WHERE student_exam_id = $1
         `, [record.id]);
 
         const totalScore = answersResult.rows[0].total_score || 0;

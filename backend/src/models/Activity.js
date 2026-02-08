@@ -208,7 +208,9 @@ class Activity {
       certificateConfig,
       certificate_config, // Support both naming conventions
       timeLimitType,
-      time_limit_type  // Support both naming conventions
+      time_limit_type,  // Support both naming conventions
+      resultPublishTime,
+      result_publish_time  // Support both naming conventions
     } = activityData;
 
     // Use snake_case values if camelCase is not provided
@@ -219,6 +221,7 @@ class Activity {
     const finalTargetAudience = targetAudience || target_audience || { grades: [], schools: [], classes: [] };
     const finalCertificateConfig = certificateConfig || certificate_config || { enabled: false, template: null };
     const finalTimeLimitType = time_limit_type || timeLimitType || 'unlimited';
+    const finalResultPublishTime = result_publish_time || resultPublishTime || null;
 
     // For backward compatibility: if unlimited type, clear time-related fields
     let finalStartTime = startTime;
@@ -244,17 +247,17 @@ class Activity {
         title, description, subject, grade, start_time, end_time,
         duration, total_score, pass_score, created_by, type, ability_level,
         scope, allow_retake, max_attempts, is_official, target_audience,
-        certificate_config, time_limit_type
+        certificate_config, time_limit_type, result_publish_time
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING id, title, subject, grade, start_time, end_time, duration, total_score,
                 pass_score, status, type, ability_level, scope, is_official, allow_retake,
-                max_attempts, created_at, time_limit_type
+                max_attempts, created_at, time_limit_type, result_publish_time
     `, [
       title, description, subject, grade, finalStartTime, finalEndTime, finalDuration,
       totalScore, passScore, createdBy, type, finalAbilityLevel, scope, finalAllowRetake,
       finalMaxAttempts, finalIsOfficial, JSON.stringify(finalTargetAudience),
-      JSON.stringify(finalCertificateConfig), finalTimeLimitType
+      JSON.stringify(finalCertificateConfig), finalTimeLimitType, finalResultPublishTime
     ]);
 
     return result.rows[0];
@@ -412,7 +415,9 @@ class Activity {
       maxAttempts,
       targetAudience,
       certificateConfig,
-      timeLimitType
+      timeLimitType,
+      resultPublishTime,
+      result_publish_time
     } = updateData;
 
     // If time limit type is being updated, validate the configuration
@@ -433,6 +438,11 @@ class Activity {
       this.validateTimeLimitConfig(mergedData);
     }
 
+    // Support both naming conventions for result_publish_time
+    const finalResultPublishTime = result_publish_time !== undefined
+      ? result_publish_time
+      : (resultPublishTime !== undefined ? resultPublishTime : undefined);
+
     const result = await query(`
       UPDATE activities
       SET
@@ -449,6 +459,7 @@ class Activity {
         target_audience = COALESCE($11, target_audience),
         certificate_config = COALESCE($12, certificate_config),
         time_limit_type = COALESCE($13, time_limit_type),
+        result_publish_time = $15,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $14
       RETURNING *
@@ -466,7 +477,8 @@ class Activity {
       targetAudience ? JSON.stringify(targetAudience) : null,
       certificateConfig ? JSON.stringify(certificateConfig) : null,
       timeLimitType,
-      id
+      id,
+      finalResultPublishTime
     ]);
 
     return result.rows[0];

@@ -524,6 +524,238 @@ router.get('/import/template', (req, res) => {
   });
 });
 
+// Export questions to Excel/CSV
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    // 支持的导出格式：excel, csv
+    const format = req.query.format || 'excel';
+    if (!['excel', 'csv'].includes(format)) {
+      return res.status(400).json({ success: false, error: '不支持的导出格式' });
+    }
+
+    // 构建筛选条件（与查询接口保持一致）
+    const filters = {
+      scope: req.query.scope,
+      district_code: req.query.district_code,
+      subject: req.query.subject,
+      grade: req.query.grade,
+      difficulty: req.query.difficulty,
+      type: req.query.type,
+      level: req.query.level,
+      status: req.query.status,
+      search: req.query.search,
+      // 导出时不限制数量，获取所有符合条件的题目
+      limit: 100000,
+      offset: 0
+    };
+
+    // 构建用户信息（用于权限控制）
+    const User = require('../models/User');
+    const userDetail = await User.getDetailedProfile(req.user.id);
+
+    const userInfo = {
+      userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
+      districtId: userDetail.district_id || userDetail.teacher?.district_id,
+      districtCode: userDetail.district_code || userDetail.teacher?.district_code,
+      schoolId: userDetail.school_id || userDetail.teacher?.school_id
+    };
+
+    // 查询题目列表（带权限控制）
+    const [questions] = await Promise.all([
+      QuestionBank.findAll(filters, userInfo)
+    ]);
+
+    if (!questions || questions.length === 0) {
+      return res.status(404).json({ success: false, error: '没有符合条件的题目' });
+    }
+
+    // 准备导出数据
+    const exportData = questions.map(q => {
+      // 解析JSON字段（数据库返回的可能是JSON字符串或已解析的对象）
+      let options = [];
+      try {
+        options = typeof q.options === 'string' ? JSON.parse(q.options || '[]') : (q.options || []);
+        if (!Array.isArray(options)) options = [];
+      } catch (e) {
+        options = [];
+      }
+
+      let tags = [];
+      try {
+        tags = typeof q.tags === 'string' ? JSON.parse(q.tags || '[]') : (q.tags || []);
+        if (!Array.isArray(tags)) tags = [];
+      } catch (e) {
+        tags = [];
+      }
+
+      let abilities = [];
+      try {
+        abilities = typeof q.abilities === 'string' ? JSON.parse(q.abilities || '[]') : (q.abilities || []);
+        if (!Array.isArray(abilities)) abilities = [];
+      } catch (e) {
+        abilities = [];
+      }
+
+      let knowledgePoints = [];
+      try {
+        knowledgePoints = typeof q.knowledge_points === 'string' ? JSON.parse(q.knowledge_points || '[]') : (q.knowledge_points || []);
+        if (!Array.isArray(knowledgePoints)) knowledgePoints = [];
+      } catch (e) {
+        knowledgePoints = [];
+      }
+
+      // scope可能是字符串或数组
+      let scopeValue = '';
+      if (Array.isArray(q.scope)) {
+        scopeValue = q.scope.join(', ');
+      } else if (q.scope) {
+        scopeValue = String(q.scope);
+      }
+
+      let correctAnswer = q.correct_answer;
+      try {
+        if (typeof q.correct_answer === 'string') {
+          correctAnswer = JSON.parse(q.correct_answer || 'null');
+        } else {
+          correctAnswer = q.correct_answer;
+        }
+      } catch (e) {
+        correctAnswer = q.correct_answer;
+      }
+
+      return {
+        '题目编码': q.question_code || '',
+        '题型': getQuestionTypeText(q.type),
+        '科目': q.subject || '',
+        '年级': q.grade || '',
+        '级别': q.level || '',
+        '题目内容': q.content || '',
+        '选项': Array.isArray(options) ? options.join(' | ') : '',
+        '正确答案': formatCorrectAnswer(correctAnswer, q.type),
+        '解析': q.explanation || '',
+        '难度': getDifficultyText(q.difficulty),
+        '分值': q.score || q.suggested_score || 0,
+        '标签': Array.isArray(tags) ? tags.join(', ') : '',
+        '能力': Array.isArray(abilities) ? abilities.join(', ') : '',
+        '知识点': Array.isArray(knowledgePoints) ? knowledgePoints.join(', ') : '',
+        '题库范围': scopeValue,
+        '出题人': q.creator_name || '',
+        '审核人': q.reviewer_name || '',
+        '使用次数': q.usage_count || 0,
+        '创建时间': q.created_at ? new Date(q.created_at).toLocaleString('zh-CN') : ''
+      };
+    });
+
+    // 生成文件
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const fileName = format === 'excel'
+      ? `题目导出_${timestamp}.xlsx`
+      : `题目导出_${timestamp}.csv`;
+
+    if (format === 'excel') {
+      // 生成Excel文件（支持多个Sheet）
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '题目列表');
+
+      // 设置列宽
+      worksheet['!cols'] = [
+        { wch: 15 }, // 题目编码
+        { wch: 10 }, // 题型
+        { wch: 10 }, // 科目
+        { wch: 10 }, // 年级
+        { wch: 8 },  // 级别
+        { wch: 50 }, // 题目内容
+        { wch: 30 }, // 选项
+        { wch: 20 }, // 正确答案
+        { wch: 30 }, // 解析
+        { wch: 10 }, // 难度
+        { wch: 8 },  // 分值
+        { wch: 20 }, // 标签
+        { wch: 20 }, // 能力
+        { wch: 20 }, // 知识点
+        { wch: 30 }, // 题库范围
+        { wch: 15 }, // 出题人
+        { wch: 15 }, // 审核人
+        { wch: 10 }, // 使用次数
+        { wch: 20 } // 创建时间
+      ];
+
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+      res.send(buffer);
+    } else {
+      // 生成CSV文件
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+      // 添加UTF-8 BOM以确保Excel正确显示中文
+      res.send('\uFEFF' + csv);
+    }
+
+    console.log(`Export successful: ${questions.length} questions exported as ${format}`);
+  } catch (error) {
+    console.error('Error exporting questions:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Helper functions for export
+function getQuestionTypeText(type) {
+  const types = {
+    single: '单选题',
+    multiple: '多选题',
+    blank: '填空题',
+    true_false: '判断题',
+    essay: '问答题',
+    code: '编程题',
+    matching: '匹配题'
+  };
+  return types[type] || type;
+}
+
+function getDifficultyText(difficulty) {
+  const texts = {
+    easy: '简单',
+    medium: '中等',
+    hard: '困难'
+  };
+  return texts[difficulty] || difficulty;
+}
+
+function formatCorrectAnswer(answer, type) {
+  if (answer === null || answer === undefined || answer === '') return '';
+
+  switch (type) {
+  case 'multiple':
+    if (Array.isArray(answer)) return answer.join(', ');
+    if (typeof answer === 'string') return answer;
+    return String(answer);
+  case 'blank':
+    if (Array.isArray(answer)) return answer.join(' | ');
+    if (typeof answer === 'string') return answer;
+    return String(answer);
+  case 'true_false':
+    if (typeof answer === 'boolean') return answer ? '正确' : '错误';
+    if (answer === 'true' || answer === 't') return '正确';
+    if (answer === 'false' || answer === 'f') return '错误';
+    return String(answer);
+  case 'single':
+    // 答案可能是 A, B, C, D 或索引 0, 1, 2, 3
+    if (typeof answer === 'number') {
+      const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+      return letters[answer] || String(answer);
+    }
+    return String(answer);
+  default:
+    return typeof answer === 'object' ? JSON.stringify(answer) : String(answer);
+  }
+}
+
 // Question Categories Routes
 
 // Get all categories
