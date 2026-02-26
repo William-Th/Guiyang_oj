@@ -181,6 +181,7 @@ const TakeActivityPage: React.FC = () => {
   const activityId = id ? parseInt(id) : undefined;
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasStartedRef = useRef(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Calculate deadline for countdown timer
   const getDeadline = (): string | null => {
@@ -220,8 +221,66 @@ const TakeActivityPage: React.FC = () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
     };
   }, [activityId]);
+
+  // Setup scroll listener to track current visible question
+  useEffect(() => {
+    if (!activity || questionRefs.current.length === 0) return;
+
+    // Find which question is currently most visible in viewport
+    const updateCurrentQuestion = () => {
+      const viewportMiddle = window.innerHeight / 2;
+      let closestIndex = 0;
+      let closestDistance = Infinity;
+
+      questionRefs.current.forEach((ref, index) => {
+        if (!ref) return;
+
+        const rect = ref.getBoundingClientRect();
+        const questionMiddle = rect.top + rect.height / 2;
+        const distance = Math.abs(viewportMiddle - questionMiddle);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+
+      setCurrentQuestionIndex(closestIndex);
+    };
+
+    // Use setTimeout to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      updateCurrentQuestion();
+
+      // Add scroll listener with throttling
+      let ticking = false;
+      const handleScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            updateCurrentQuestion();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll, true); // Use capture phase
+
+      // Store cleanup function
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+      };
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [activity]);
 
   const loadActivityAndStart = async () => {
     if (!activityId) return;
@@ -245,10 +304,11 @@ const TakeActivityPage: React.FC = () => {
       // Get activity with questions
       const questionsResponse = await activityApi.getActivityQuestions(activityId);
       if (questionsResponse.activity) {
-        setActivity(questionsResponse.activity);
+        const activityData = questionsResponse.activity;
+        setActivity(activityData);
 
         // Convert old field names to new format after activity is loaded
-        const activity = questionsResponse.activity;
+        // Use activityData directly instead of state to avoid async issues
         const convertFieldNames = (values: any) => {
           const converted: any = {};
           Object.entries(values).forEach(([key, value]) => {
@@ -257,7 +317,7 @@ const TakeActivityPage: React.FC = () => {
             if (match) {
               const questionId = parseInt(match[1]);
               // Find the index of this question
-              const index = activity.questions.findIndex((q: any) => q.id === questionId);
+              const index = activityData.questions.findIndex((q: any) => q.id === questionId);
               if (index !== -1) {
                 // Convert to new format: q_${index}_${question.id}
                 converted[`q_${index}_${questionId}`] = value;
@@ -302,8 +362,24 @@ const TakeActivityPage: React.FC = () => {
           // Convert field names to new format
           const convertedValues = convertFieldNames(formValues);
           form.setFieldsValue(convertedValues);
-          // Update answered tracking using the converted values
-          updateAnsweredTracking(convertedValues);
+          // Update answered tracking using the converted values and activityData
+          // Use activityData directly to avoid async state issues
+          const answeredSet = new Set<number>();
+          activityData.questions.forEach((q: any, index: number) => {
+            const fieldName = `q_${index}_${q.id}`;
+            const value = convertedValues[fieldName];
+            if (value !== undefined && value !== null && value !== '') {
+              if (Array.isArray(value)) {
+                if (value.length > 0) {
+                  answeredSet.add(index);
+                }
+              } else {
+                answeredSet.add(index);
+              }
+            }
+          });
+          setAnsweredQuestions(answeredSet);
+          setAnsweredCount(answeredSet.size);
         }
       }
     } catch (error: any) {
@@ -621,20 +697,63 @@ const TakeActivityPage: React.FC = () => {
                   {questions.map(({ question, index }) => {
                     const isAnswered = answeredQuestions.has(index);
                     const isCurrent = index === currentQuestionIndex;
+
+                    // Determine button style based on state
+                    // Use type="default" to avoid Ant Design overriding custom styles
+                    let buttonStyle: React.CSSProperties = {
+                      padding: '2px 4px',
+                      height: '28px',
+                      minWidth: 'unset',
+                      fontSize: '13px',
+                      fontWeight: isAnswered ? 'bold' : 'normal',
+                    };
+
+                    let buttonType: 'default' | 'dashed' = 'dashed';
+
+                    if (isCurrent && isAnswered) {
+                      // Current + Answered: dark green background
+                      buttonType = 'default';
+                      buttonStyle = {
+                        ...buttonStyle,
+                        backgroundColor: '#52c41a',
+                        borderColor: '#52c41a',
+                        color: '#fff',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                      };
+                    } else if (isCurrent && !isAnswered) {
+                      // Current + Not Answered: blue border
+                      buttonType = 'default';
+                      buttonStyle = {
+                        ...buttonStyle,
+                        backgroundColor: '#e6f4ff',
+                        borderColor: '#1677ff',
+                        color: '#1677ff',
+                        borderWidth: '2px',
+                        borderStyle: 'solid',
+                        fontWeight: 'bold',
+                      };
+                    } else if (!isCurrent && isAnswered) {
+                      // Not Current + Answered: light green background
+                      buttonType = 'default';
+                      buttonStyle = {
+                        ...buttonStyle,
+                        backgroundColor: '#f6ffed',
+                        borderColor: '#b7eb8f',
+                        color: '#52c41a',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                      };
+                    }
+                    // else: dashed (default for unanswered)
+
                     return (
                       <Button
                         key={question.id}
                         size="small"
-                        type={isCurrent ? 'primary' : isAnswered ? 'default' : 'dashed'}
-                        danger={isAnswered}
+                        type={buttonType}
                         onClick={() => scrollToQuestion(index)}
-                        style={{
-                          padding: '2px 4px',
-                          height: '28px',
-                          minWidth: 'unset',
-                          fontWeight: isAnswered ? 'bold' : 'normal',
-                          fontSize: '13px',
-                        }}
+                        style={buttonStyle}
                       >
                         {index + 1}
                       </Button>
