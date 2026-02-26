@@ -884,4 +884,29 @@
 
 ---
 
-*最后更新时间：2026-02-03*
+### 2026-02-26
+- ✅ **项目整理 - 清理过期文件和备份**
+  - **删除备份文件**:
+    - `backend/src/models/QuestionBank.js.backup_20251122`
+    - `backend/src/routes/questionBank.js.backup_20251122`
+    - `backend/src/models/QuestionBank.js.bak`
+    - `backend/tests/api/fixtures/test_questions.csv`
+  - **清理临时文件**:
+    - `backend/combined.log`
+    - `backend/error.log`
+    - `tests/test-results/*`
+  - **新增文档**:
+    - `docs/TEST_CLEANUP_REPORT.md` - 测试缺失分析报告
+    - `docs/archive/README.md` - 归档文档索引（35个文件）
+  - **测试状态分析**:
+    - E2E测试: 42个文件正常运行
+    - API测试: 45个文件正常运行
+    - 缺失测试: 30+项（详见TEST_CLEANUP_REPORT.md）
+  - **提交记录**:
+    - `f07d805` chore: remove backup files and test fixtures
+    - `9a51288` docs: add test cleanup report and archive index
+  - **状态**: ✅ 项目整理完成
+
+---
+
+*最后更新时间：2026-02-26*
