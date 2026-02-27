@@ -190,7 +190,7 @@ const PracticeCenterPage: React.FC = () => {
       dataIndex: 'duration',
       key: 'duration',
       width: 100,
-      render: (duration: number) => `${duration}分钟`,
+      render: (duration: number | null) => duration != null ? `${duration}分钟` : '-',
     },
     {
       title: '总分',

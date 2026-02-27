@@ -458,17 +458,49 @@ const TakeActivityPage: React.FC = () => {
     }
   };
 
-  // Auto-save answers to localStorage only - NO automatic backend calls
-  const handleFormChange = () => {
+  // Auto-save answers to localStorage AND backend
+  const handleFormChange = async () => {
     // Get all form values (not just touched) to properly track answered questions
     const allValues = form.getFieldsValue();
     updateAnsweredTracking(allValues);
 
-    // Only save to localStorage (fast, no network required)
+    // Save to localStorage (fast, no network required)
     if (activityId) {
       saveAnswersToLocalStorage(activityId, allValues);
       setHasLocalBackup(true);
     }
+
+    // Debounced backend save - only save to server after user stops typing for 2 seconds
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (!activityId || !studentActivity) return;
+
+      // Save each answered question to backend
+      const questions = activity?.questions || [];
+      const savePromises: Promise<void>[] = [];
+
+      questions.forEach((question) => {
+        const fieldName = `question_${question.id}`;
+        const answer = allValues[fieldName];
+
+        // Only save non-empty answers
+        if (answer !== undefined && answer !== null && answer !== '') {
+          savePromises.push(
+            activityApi.submitAnswer(activityId, {
+              questionId: question.id,
+              answer: answer
+            }).catch(err => {
+              console.error(`Failed to save answer for question ${question.id}:`, err);
+            })
+          );
+        }
+      });
+
+      await Promise.allSettled(savePromises);
+    }, 2000); // 2 second debounce
   };
 
   // Handle manual submit
@@ -528,119 +560,6 @@ const TakeActivityPage: React.FC = () => {
     submitAnswers();
   };
 
-  // Render question based on type
-  // Use index to ensure unique field names and prevent state sharing between questions
-  const renderQuestion = (question: ActivityQuestion, index: number) => {
-    // Use both index and question.id to ensure absolute uniqueness
-    const fieldName = `q_${index}_${question.id}`;
-
-    return (
-      <Card
-        key={`card-${index}-${question.id}`}
-        ref={(el: any) => (questionRefs.current[index] = el)}
-        id={`question-${index}`}
-        style={{ marginBottom: 20, fontSize: '16px' }}
-        title={
-          <Space style={{ fontSize: '17px' }}>
-            <Text strong style={{ fontSize: '17px' }}>第 {index + 1} 题</Text>
-            <Text type="secondary" style={{ fontSize: '15px' }}>({question.score} 分)</Text>
-            {answeredQuestions.has(index) && (
-              <CheckOutlined style={{ color: '#52c41a' }} />
-            )}
-          </Space>
-        }
-      >
-        <Paragraph style={{ fontSize: '18px', marginBottom: 16, lineHeight: '1.8' }}>
-          {question.content}
-        </Paragraph>
-
-        {/* Single choice - use index in key to prevent React reusing components */}
-        {question.type === 'single' && question.options && (
-          <Form.Item
-            key={`single-${index}`}
-            name={fieldName}
-            preserve={false}
-            style={{ marginBottom: 0, fontSize: '17px' }}
-          >
-            <Radio.Group style={{ width: '100%' }}>
-              <Space direction="vertical" style={{ width: '100%' }} size="large">
-                {question.options.map((option, optIndex) => (
-                  <Radio
-                    key={`${index}-${optIndex}`}
-                    value={String.fromCharCode(65 + optIndex)}
-                    style={{ fontSize: '17px', lineHeight: '1.8' }}
-                  >
-                    {String.fromCharCode(65 + optIndex)}. {option}
-                  </Radio>
-                ))}
-              </Space>
-            </Radio.Group>
-          </Form.Item>
-        )}
-
-        {/* Multiple choice */}
-        {question.type === 'multiple' && question.options && (
-          <Form.Item
-            key={`multiple-${index}`}
-            name={fieldName}
-            preserve={false}
-            style={{ marginBottom: 0, fontSize: '17px' }}
-          >
-            <Checkbox.Group style={{ width: '100%' }}>
-              <Space direction="vertical" style={{ width: '100%' }} size="large">
-                {question.options.map((option, optIndex) => (
-                  <Checkbox
-                    key={`${index}-${optIndex}`}
-                    value={String.fromCharCode(65 + optIndex)}
-                    style={{ fontSize: '17px', lineHeight: '1.8' }}
-                  >
-                    {String.fromCharCode(65 + optIndex)}. {option}
-                  </Checkbox>
-                ))}
-              </Space>
-            </Checkbox.Group>
-          </Form.Item>
-        )}
-
-        {/* Fill in the blank */}
-        {question.type === 'blank' && (
-          <Form.Item
-            key={`blank-${index}`}
-            name={fieldName}
-            preserve={false}
-            style={{ marginBottom: 0, fontSize: '17px' }}
-          >
-            <Input placeholder="请输入答案" style={{ fontSize: '16px' }} />
-          </Form.Item>
-        )}
-
-        {/* Essay */}
-        {question.type === 'essay' && (
-          <Form.Item
-            key={`essay-${index}`}
-            name={fieldName}
-            preserve={false}
-            style={{ marginBottom: 0, fontSize: '17px' }}
-          >
-            <TextArea rows={6} placeholder="请输入您的答案" style={{ fontSize: '16px' }} />
-          </Form.Item>
-        )}
-
-
-        {/* Code - using CodeQuestion component */}
-        {question.type === 'code' && (
-          <CodeQuestionWrapper
-            question={question}
-            activityId={activityId}
-            fieldName={fieldName}
-            form={form}
-            onAnswerChange={() => handleFormChange()}
-          />
-        )}
-      </Card>
-    );
-  };
-
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '100px 0' }}>
@@ -672,8 +591,24 @@ const TakeActivityPage: React.FC = () => {
       'essay': '主观题',
       'code': '编程题',
       'true_false': '判断题',
+      'matching': '匹配题',
     };
     return typeMap[type] || '其他';
+  };
+
+  // Get display number for a question (per-type numbering)
+  const getQuestionDisplayNumber = (index: number): string => {
+    const question = activity.questions[index];
+    const typeName = getTypeName(question.type);
+
+    // Count questions of this type before the current one
+    let count = 0;
+    for (let i = 0; i < index; i++) {
+      if (getTypeName(activity.questions[i].type) === typeName) {
+        count++;
+      }
+    }
+    return `${count + 1}`;
   };
 
   // Group questions by type
@@ -776,7 +711,7 @@ const TakeActivityPage: React.FC = () => {
                         onClick={() => scrollToQuestion(index)}
                         style={buttonStyle}
                       >
-                        {index + 1}
+                        {getQuestionDisplayNumber(index)}
                       </Button>
                     );
                   })}
@@ -901,9 +836,200 @@ const TakeActivityPage: React.FC = () => {
           onValuesChange={handleFormChange}
           preserve={false}
         >
-          {activity.questions.map((question, index) =>
-            renderQuestion(question, index)
-          )}
+          {/* Render questions grouped by type */}
+          {Object.entries(questionGroups)
+            .sort(([, a], [, b]) => {
+              const typeOrder: Record<string, number> = {
+                '单选题': 1,
+                '多选题': 2,
+                '判断题': 3,
+                '填空题': 4,
+                '主观题': 5,
+                '编程题': 6,
+                '匹配题': 7,
+              };
+              // @ts-ignore - Workaround for TypeScript index access issue
+              const orderA = typeOrder[a[0]] ?? 99;
+              // @ts-ignore
+              const orderB = typeOrder[b[0]] ?? 99;
+              return orderA - orderB;
+            })
+            .map(([typeName, questions], groupIndex) => {
+              const chineseNums = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+              const sectionLabel = chineseNums[groupIndex] || `${groupIndex + 1}`;
+              const typeQuestionCount = questions.length;
+              const typeTotalScore = questions.reduce((sum, { question }) => {
+                const score = (question as any).max_score || question.score || 0;
+                return sum + (typeof score === 'string' ? parseFloat(score) : score);
+              }, 0);
+
+              return (
+                <div key={typeName} style={{ marginBottom: 40 }}>
+                  {/* Type Section Header */}
+                  <div style={{
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    marginBottom: 20,
+                    paddingBottom: 10,
+                    borderBottom: '2px solid #e8e8e8'
+                  }}>
+                    {sectionLabel}、{typeName}（共{typeQuestionCount}题，共{typeTotalScore}分）
+                  </div>
+
+                  {/* Questions in this type */}
+                  {questions.map(({ question, index }, typeIndex) => {
+                    const fieldName = `q_${index}_${question.id}`;
+                    const qType = question.type as string;
+
+                    return (
+                      <div
+                        key={`card-${index}-${question.id}`}
+                        ref={(el: any) => (questionRefs.current[index] = el)}
+                        id={`question-${index}`}
+                        style={{ marginBottom: 24 }}
+                      >
+                        {/* Question Header */}
+                        <div style={{ marginBottom: 12, fontSize: '16px' }}>
+                          <span style={{ fontWeight: 'bold' }}>
+                            {typeIndex + 1}. {question.content}
+                          </span>
+                          <span style={{ marginLeft: 12, color: '#999', fontSize: '14px' }}>
+                            ({typeof (question as any).max_score === 'string' ? (question as any).max_score : (question as any).max_score || question.score}分)
+                          </span>
+                          {answeredQuestions.has(index) && (
+                            <CheckOutlined style={{ color: '#52c41a', marginLeft: 8 }} />
+                          )}
+                        </div>
+
+                        {/* Single choice */}
+                        {qType === 'single' && question.options && (
+                          <Form.Item
+                            key={`single-${index}`}
+                            name={fieldName}
+                            preserve={false}
+                            style={{ marginBottom: 0, fontSize: '16px' }}
+                          >
+                            <Radio.Group style={{ width: '100%' }}>
+                              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                {question.options.map((option, optIndex) => (
+                                  <Radio
+                                    key={`${index}-${optIndex}`}
+                                    value={String.fromCharCode(65 + optIndex)}
+                                    style={{ fontSize: '16px', lineHeight: '1.8' }}
+                                  >
+                                    {String.fromCharCode(65 + optIndex)}. {option}
+                                  </Radio>
+                                ))}
+                              </Space>
+                            </Radio.Group>
+                          </Form.Item>
+                        )}
+
+                        {/* Multiple choice */}
+                        {qType === 'multiple' && question.options && (
+                          <Form.Item
+                            key={`multiple-${index}`}
+                            name={fieldName}
+                            preserve={false}
+                            style={{ marginBottom: 0, fontSize: '16px' }}
+                          >
+                            <Checkbox.Group style={{ width: '100%' }}>
+                              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                {question.options.map((option, optIndex) => (
+                                  <Checkbox
+                                    key={`${index}-${optIndex}`}
+                                    value={String.fromCharCode(65 + optIndex)}
+                                    style={{ fontSize: '16px', lineHeight: '1.8' }}
+                                  >
+                                    {String.fromCharCode(65 + optIndex)}. {option}
+                                  </Checkbox>
+                                ))}
+                              </Space>
+                            </Checkbox.Group>
+                          </Form.Item>
+                        )}
+
+                        {/* True/False */}
+                        {qType === 'true_false' && (
+                          <Form.Item
+                            key={`true_false-${index}`}
+                            name={fieldName}
+                            preserve={false}
+                            style={{ marginBottom: 0, fontSize: '16px' }}
+                          >
+                            <Radio.Group style={{ width: '100%' }}>
+                              <Space size="large">
+                                <Radio value="true" style={{ fontSize: '16px' }}>正确</Radio>
+                                <Radio value="false" style={{ fontSize: '16px' }}>错误</Radio>
+                              </Space>
+                            </Radio.Group>
+                          </Form.Item>
+                        )}
+
+                        {/* Fill in the blank */}
+                        {qType === 'blank' && (
+                          <Form.Item
+                            key={`blank-${index}`}
+                            name={fieldName}
+                            preserve={false}
+                            style={{ marginBottom: 0, fontSize: '16px' }}
+                          >
+                            <TextArea
+                              placeholder="请输入答案"
+                              autoSize={{ minRows: 2, maxRows: 4 }}
+                              style={{ fontSize: '16px' }}
+                            />
+                          </Form.Item>
+                        )}
+
+                        {/* Essay question */}
+                        {qType === 'essay' && (
+                          <Form.Item
+                            key={`essay-${index}`}
+                            name={fieldName}
+                            preserve={false}
+                            style={{ marginBottom: 0, fontSize: '16px' }}
+                          >
+                            <TextArea
+                              placeholder="请输入答案"
+                              autoSize={{ minRows: 4, maxRows: 8 }}
+                              style={{ fontSize: '16px' }}
+                            />
+                          </Form.Item>
+                        )}
+
+                        {/* Code question */}
+                        {qType === 'code' && (
+                          <CodeQuestionWrapper
+                            question={question}
+                            activityId={activityId}
+                            fieldName={fieldName}
+                            form={form}
+                            onAnswerChange={() => handleFormChange()}
+                          />
+                        )}
+
+                        {/* Matching question */}
+                        {qType === 'matching' && (
+                          <Form.Item
+                            key={`matching-${index}`}
+                            name={fieldName}
+                            preserve={false}
+                            style={{ marginBottom: 0, fontSize: '16px' }}
+                          >
+                            <TextArea
+                              placeholder="请输入匹配答案"
+                              autoSize={{ minRows: 3, maxRows: 6 }}
+                              style={{ fontSize: '16px' }}
+                            />
+                          </Form.Item>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
         </Form>
       </div>
     </div>

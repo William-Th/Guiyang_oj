@@ -20,6 +20,8 @@ import {
   Empty,
   Alert,
   Descriptions,
+  Tabs,
+  Badge,
 } from 'antd';
 import {
   PlusOutlined,
@@ -119,6 +121,7 @@ const PaperGenerationPage: React.FC = () => {
   // Modal state
   const [previewQuestionModalVisible, setPreviewQuestionModalVisible] = useState(false);
   const [previewQuestion, setPreviewQuestion] = useState<Question | ActivityQuestion | null>(null);
+  const [paperPreviewModalVisible, setPaperPreviewModalVisible] = useState(false);
 
   // State for batch remove
   const [selectedPaperRowKeys, setSelectedPaperRowKeys] = useState<React.Key[]>([]);
@@ -126,6 +129,12 @@ const PaperGenerationPage: React.FC = () => {
   // State for inline score editing
   const [editingScoreId, setEditingScoreId] = useState<number | null>(null);
   const [editingScoreValue, setEditingScoreValue] = useState<number>(0);
+
+  // State for question type tab
+  const [activeTypeTab, setActiveTypeTab] = useState<string>('all');
+
+  // State for pagination per type
+  const [paginationState, setPaginationState] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (activityId) {
@@ -406,9 +415,11 @@ const PaperGenerationPage: React.FC = () => {
     const typeMap: Record<string, { color: string; text: string }> = {
       single: { color: 'blue', text: '单选题' },
       multiple: { color: 'purple', text: '多选题' },
+      true_false: { color: 'lime', text: '判断题' },
       blank: { color: 'cyan', text: '填空题' },
       essay: { color: 'orange', text: '问答题' },
       code: { color: 'green', text: '编程题' },
+      matching: { color: 'magenta', text: '匹配题' },
     };
     const typeInfo = typeMap[type] || { color: 'default', text: type };
     return <Tag color={typeInfo.color}>{typeInfo.text}</Tag>;
@@ -424,77 +435,6 @@ const PaperGenerationPage: React.FC = () => {
     const difficultyInfo = difficultyMap[difficulty] || { color: 'default', text: difficulty };
     return <Tag color={difficultyInfo.color}>{difficultyInfo.text}</Tag>;
   };
-
-  // Available questions table columns
-  const availableQuestionColumns: ColumnsType<Question> = [
-    {
-      title: '题目编号',
-      dataIndex: 'question_code',
-      key: 'question_code',
-      width: 150,
-    },
-    {
-      title: '题型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 100,
-      render: (type: string) => getTypeTag(type),
-    },
-    {
-      title: '题目内容',
-      dataIndex: 'content',
-      key: 'content',
-      ellipsis: true,
-      render: (text: string) => (
-        <Tooltip title={text}>
-          <span>{text.substring(0, 50)}{text.length > 50 ? '...' : ''}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: '难度',
-      dataIndex: 'difficulty',
-      key: 'difficulty',
-      width: 100,
-      render: (difficulty: string) => getDifficultyTag(difficulty),
-    },
-    {
-      title: '级别',
-      dataIndex: 'level',
-      key: 'level',
-      width: 100,
-    },
-    {
-      title: '建议分值',
-      dataIndex: 'suggested_score',
-      key: 'suggested_score',
-      width: 100,
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 150,
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handlePreviewQuestion(record)}
-          >
-            预览
-          </Button>
-          <Button
-            type="link"
-            icon={<PlusOutlined />}
-            loading={addingQuestion}
-            onClick={() => handleQuickAddQuestion(record)}
-          >
-            添加
-          </Button>
-        </Space>
-      ),
-    },
-  ];
 
   // Selected questions table columns
   const selectedQuestionColumns: ColumnsType<ActivityQuestion> = [
@@ -609,11 +549,6 @@ const PaperGenerationPage: React.FC = () => {
     },
   ];
 
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
-  };
-
   const paperRowSelection = {
     selectedRowKeys: selectedPaperRowKeys,
     onChange: (keys: React.Key[]) => setSelectedPaperRowKeys(keys),
@@ -637,6 +572,68 @@ const PaperGenerationPage: React.FC = () => {
 
   // Check if activity can be edited
   const canEdit = activity.status === 'draft';
+
+  // Group questions by type for Tabs
+  const groupQuestionsByType = (questions: Question[]) => {
+    const typeMap: Record<string, { color: string; text: string; order: number }> = {
+      single: { color: 'blue', text: '单选题', order: 1 },
+      multiple: { color: 'purple', text: '多选题', order: 2 },
+      true_false: { color: 'lime', text: '判断题', order: 3 },
+      blank: { color: 'cyan', text: '填空题', order: 4 },
+      essay: { color: 'orange', text: '问答题', order: 5 },
+      code: { color: 'green', text: '编程题', order: 6 },
+      matching: { color: 'magenta', text: '匹配题', order: 7 },
+    };
+
+    const groups: Record<string, { questions: Question[]; info: any }> = {};
+
+    // Initialize all type groups
+    Object.keys(typeMap).forEach(type => {
+      groups[type] = {
+        questions: [],
+        info: typeMap[type]
+      };
+    });
+
+    // Group questions
+    questions.forEach(question => {
+      const type = question.type;
+      if (!groups[type]) {
+        groups[type] = {
+          questions: [],
+          info: { color: 'default', text: type, order: 99 }
+        };
+      }
+      groups[type].questions.push(question);
+    });
+
+    // Convert to array and sort by order (show all types even if empty)
+    return Object.entries(groups)
+      .sort(([, a], [, b]) => a.info.order - b.info.order)
+      .map(([type, data]) => ({ type, ...data }));
+  };
+
+  const questionGroups = groupQuestionsByType(availableQuestions);
+
+  const getSelectedCountByType = (type: string) => {
+    return selectedQuestions.filter(q => q.type === type).length;
+  };
+
+  const getQuestionsByType = (type: string): Question[] => {
+    if (type === 'all') {
+      return availableQuestions;
+    }
+    const group = questionGroups.find(g => g.type === type);
+    return group ? group.questions : [];
+  };
+
+  const getCurrentQuestions = (): Question[] => {
+    return getQuestionsByType(activeTypeTab);
+  };
+
+  const handlePageChange = (page: number) => {
+    setPaginationState(prev => ({ ...prev, [activeTypeTab]: page }));
+  };
 
   return (
     <div>
@@ -733,40 +730,49 @@ const PaperGenerationPage: React.FC = () => {
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3>已选题目 ({selectedQuestions.length})</h3>
-            {canEdit && (
-              <Space>
-                <Popconfirm
-                  title={`确定要删除选中的 ${selectedPaperRowKeys.length} 道题目吗？`}
-                  onConfirm={handleBatchRemoveQuestions}
-                  okText="确定"
-                  cancelText="取消"
-                  disabled={selectedPaperRowKeys.length === 0}
-                >
-                  <Button
-                    icon={<DeleteOutlined />}
-                    danger
+            <Space>
+              <Button
+                icon={<EyeOutlined />}
+                onClick={() => setPaperPreviewModalVisible(true)}
+                disabled={selectedQuestions.length === 0}
+              >
+                预览试卷
+              </Button>
+              {canEdit && (
+                <>
+                  <Popconfirm
+                    title={`确定要删除选中的 ${selectedPaperRowKeys.length} 道题目吗？`}
+                    onConfirm={handleBatchRemoveQuestions}
+                    okText="确定"
+                    cancelText="取消"
                     disabled={selectedPaperRowKeys.length === 0}
                   >
-                    批量删除 ({selectedPaperRowKeys.length})
-                  </Button>
-                </Popconfirm>
-                <Popconfirm
-                  title="确定要清空试卷吗？这将移除所有已选题目。"
-                  onConfirm={handleClearPaper}
-                  okText="确定"
-                  cancelText="取消"
-                  disabled={selectedQuestions.length === 0}
-                >
-                  <Button
-                    icon={<ClearOutlined />}
-                    danger
+                    <Button
+                      icon={<DeleteOutlined />}
+                      danger
+                      disabled={selectedPaperRowKeys.length === 0}
+                    >
+                      批量删除 ({selectedPaperRowKeys.length})
+                    </Button>
+                  </Popconfirm>
+                  <Popconfirm
+                    title="确定要清空试卷吗？这将移除所有已选题目。"
+                    onConfirm={handleClearPaper}
+                    okText="确定"
+                    cancelText="取消"
                     disabled={selectedQuestions.length === 0}
                   >
-                    清空试卷
-                  </Button>
-                </Popconfirm>
-              </Space>
-            )}
+                    <Button
+                      icon={<ClearOutlined />}
+                      danger
+                      disabled={selectedQuestions.length === 0}
+                    >
+                      清空试卷
+                    </Button>
+                  </Popconfirm>
+                </>
+              )}
+            </Space>
           </div>
 
           <Table
@@ -785,7 +791,7 @@ const PaperGenerationPage: React.FC = () => {
         {/* Available Questions */}
         {canEdit && (
           <div>
-            <h3>可用题目</h3>
+            <h3>按题型选择题目</h3>
 
             {/* Filters */}
             <div style={{ marginBottom: 16 }}>
@@ -801,9 +807,11 @@ const PaperGenerationPage: React.FC = () => {
                   >
                     <Option value="single">单选题</Option>
                     <Option value="multiple">多选题</Option>
+                    <Option value="true_false">判断题</Option>
                     <Option value="blank">填空题</Option>
                     <Option value="essay">问答题</Option>
                     <Option value="code">编程题</Option>
+                    <Option value="matching">匹配题</Option>
                   </Select>
                 </Col>
                 <Col span={4}>
@@ -867,19 +875,191 @@ const PaperGenerationPage: React.FC = () => {
               </Space>
             </div>
 
-            {/* Available questions table */}
-            <Table
-              columns={availableQuestionColumns}
-              dataSource={availableQuestions}
-              rowKey="id"
-              rowSelection={rowSelection}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `共 ${total} 道题目`,
+            {/* Question type Tabs with card styling */}
+            <Tabs
+              activeKey={activeTypeTab}
+              onChange={(key) => {
+                setActiveTypeTab(key);
+                if (!paginationState[key]) {
+                  setPaginationState(prev => ({ ...prev, [key]: 1 }));
+                }
               }}
-              scroll={{ y: 400 }}
-            />
+            >
+              <Tabs.TabPane tab="全部" key="all"></Tabs.TabPane>
+              {questionGroups.map(({ type, info, questions }) => {
+                const selectedCount = getSelectedCountByType(type);
+                const isSelected = activeTypeTab === type;
+                return (
+                  <Tabs.TabPane
+                    key={type}
+                    tab={
+                      <div
+                        style={{
+                          padding: '4px 12px',
+                          border: '1px solid #d9d9d9',
+                          borderRadius: '6px',
+                          background: isSelected ? '#e6f7ff' : '#fff',
+                          borderColor: isSelected ? info.color : '#d9d9d9',
+                        }}
+                      >
+                        <Tag color={info.color} style={{ margin: 0 }}>{info.text}</Tag>
+                        <Badge count={questions.length} showZero style={{ backgroundColor: '#52c41a', marginLeft: 4 }} />
+                        {selectedCount > 0 && (
+                          <Tag color="blue" style={{ marginLeft: 4 }}>已选{selectedCount}</Tag>
+                        )}
+                      </div>
+                    }
+                  >
+                  </Tabs.TabPane>
+                );
+              })}
+            </Tabs>
+
+            {/* Questions display for current tab */}
+            <div style={{ marginTop: 16 }}>
+              {(() => {
+                const currentQuestions = getCurrentQuestions();
+                const currentPage = paginationState[activeTypeTab] || 1;
+                const pageSize = 10;
+                const totalPages = Math.ceil(currentQuestions.length / pageSize);
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+                const displayedQuestions = currentQuestions.slice(startIdx, endIdx);
+
+                const currentTypeInfo = activeTypeTab === 'all'
+                  ? { color: 'default', text: '全部' }
+                  : questionGroups.find(g => g.type === activeTypeTab)?.info || { color: 'default', text: '' };
+
+                return (
+                  <>
+                    {/* Pagination controls */}
+                    <div style={{ marginBottom: 12 }}>
+                      <Space wrap>
+                        {activeTypeTab !== 'all' && (
+                          <>
+                            <Button
+                              size="small"
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={() => {
+                                const allKeys = currentQuestions.map(q => q.id);
+                                setSelectedRowKeys([...new Set([...selectedRowKeys, ...allKeys])]);
+                                message.success(`已全选 ${currentTypeInfo.text}`);
+                              }}
+                            >
+                              全选本题型
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => {
+                                const allKeys = currentQuestions.map(q => q.id);
+                                setSelectedRowKeys(selectedRowKeys.filter(k => !allKeys.includes(k as number)));
+                              }}
+                            >
+                              取消全选
+                            </Button>
+                            <Button
+                              size="small"
+                              type="primary"
+                              ghost
+                              icon={<PlusOutlined />}
+                              onClick={async () => {
+                                const typeSelectedKeys = selectedRowKeys.filter(k =>
+                                  currentQuestions.some(q => q.id === (k as number))
+                                );
+                                if (typeSelectedKeys.length === 0) {
+                                  message.warning('请先勾选题目');
+                                  return;
+                                }
+                                await handleBatchAddQuestions();
+                              }}
+                            >
+                              批量添加本题型 ({selectedRowKeys.filter(k => currentQuestions.some(q => q.id === (k as number))).length})
+                            </Button>
+                            <Divider type="vertical" />
+                          </>
+                        )}
+                        <span style={{ fontSize: 12, color: '#999' }}>
+                          第 {currentPage} / {totalPages} 页 (共 {currentQuestions.length} 题)
+                        </span>
+                        {currentPage > 1 && (
+                          <Button size="small" onClick={() => handlePageChange(currentPage - 1)}>上一页</Button>
+                        )}
+                        {currentPage < totalPages && (
+                          <Button size="small" onClick={() => handlePageChange(currentPage + 1)}>下一页</Button>
+                        )}
+                      </Space>
+                    </div>
+
+                    {/* Questions grid */}
+                    <Row gutter={[12, 12]}>
+                      {displayedQuestions.map((question) => {
+                        const isSelected = selectedRowKeys.includes(question.id);
+                        const questionTypeInfo = questionGroups.find(g => g.type === question.type)?.info || { color: 'default' };
+                        return (
+                          <Col key={question.id} span={12}>
+                            <Card
+                              size="small"
+                              hoverable
+                              style={{
+                                border: isSelected ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                                backgroundColor: isSelected ? '#e6f7ff' : undefined,
+                                cursor: 'pointer',
+                                height: '100%',
+                              }}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedRowKeys(selectedRowKeys.filter(k => k !== question.id));
+                                } else {
+                                  setSelectedRowKeys([...selectedRowKeys, question.id]);
+                                }
+                              }}
+                              bodyStyle={{ padding: 12 }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ marginBottom: 8 }}>
+                                    <Space size={4}>
+                                      <Tag color={questionTypeInfo.color} style={{ margin: 0 }}>
+                                        {question.question_code}
+                                      </Tag>
+                                      {getDifficultyTag(question.difficulty)}
+                                      {isSelected && <Tag color="blue">已选</Tag>}
+                                    </Space>
+                                  </div>
+                                  <div style={{ fontSize: 13, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.5', maxHeight: 39 }} title={question.content}>
+                                    {question.content}
+                                  </div>
+                                  <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+                                    分值: {question.suggested_score} │ 级别: {question.level}
+                                  </div>
+                                </div>
+                                <div style={{ marginLeft: 12 }}>
+                                  <Button
+                                    size="small"
+                                    type={isSelected ? 'primary' : 'default'}
+                                    icon={isSelected ? <CheckCircleOutlined /> : <PlusOutlined />}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleQuickAddQuestion(question);
+                                    }}
+                                  >
+                                    {isSelected ? '已选' : '添加'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </Card>
+                          </Col>
+                        );
+                      })}
+                    </Row>
+                    {currentQuestions.length === 0 && (
+                      <Empty description="该题型暂无可用题目" style={{ padding: '20px 0' }} />
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           </div>
         )}
       </Card>
@@ -956,6 +1136,127 @@ const PaperGenerationPage: React.FC = () => {
             </Descriptions>
           </div>
         )}
+      </Modal>
+
+      {/* Paper Preview Modal */}
+      <Modal
+        title={`试卷预览 - ${activity?.title || ''}`}
+        open={paperPreviewModalVisible}
+        onCancel={() => setPaperPreviewModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setPaperPreviewModalVisible(false)}>
+            关闭
+          </Button>,
+          <Button
+            key="print"
+            type="primary"
+            onClick={() => {
+              window.print();
+            }}
+          >
+            打印
+          </Button>,
+        ]}
+        width={900}
+        style={{ top: 20 }}
+      >
+        <div style={{ padding: '20px', background: '#fff', minHeight: 600 }}>
+          {/* Paper Header */}
+          <div style={{ textAlign: 'center', marginBottom: 30, paddingBottom: 20, borderBottom: '2px solid #000' }}>
+            <h1 style={{ fontSize: 24, marginBottom: 10 }}>{activity?.title || ''}</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#666' }}>
+              <span>科目：{activity?.subject || ''}</span>
+              <span>年级：{activity?.grade || ''}</span>
+              <span>总分：{selectedQuestions.reduce((sum, q) => sum + (q.score || 0), 0)} 分</span>
+            </div>
+          </div>
+
+          {/* Questions by Type */}
+          {selectedQuestions.length === 0 ? (
+            <Empty description="试卷暂无题目" />
+          ) : (
+            <div>
+              {['single', 'multiple', 'true_false', 'blank', 'essay', 'code', 'matching'].map((type) => {
+                const typeQuestions = selectedQuestions.filter(q => q.type === type);
+                if (typeQuestions.length === 0) return null;
+
+                const typeNames: Record<string, string> = {
+                  single: '一、单选题',
+                  multiple: '二、多选题',
+                  true_false: '三、判断题',
+                  blank: '四、填空题',
+                  essay: '五、问答题',
+                  code: '六、编程题',
+                  matching: '七、匹配题',
+                };
+
+                const typeInstructions: Record<string, string> = {
+                  single: '（每题只有一个正确答案，请将正确答案的序号填在括号内）',
+                  multiple: '（每题有多个正确答案，请将所有正确答案的序号填在括号内）',
+                  true_false: '（正确的打"√"，错误的打"×"）',
+                  blank: '（请将答案填在横线上）',
+                  essay: '（请简要回答下列问题）',
+                  code: '（请编写代码解决问题）',
+                  matching: '（请将左右两侧相关的内容连接起来）',
+                };
+
+                const globalQuestionNum = { value: 1 };
+                const getQuestionNum = () => globalQuestionNum.value++;
+
+                return (
+                  <div key={type} style={{ marginBottom: 30 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
+                      {typeNames[type]} {typeInstructions[type] || ''}
+                    </h3>
+                    {typeQuestions.map((question, idx) => (
+                      <div key={question.activity_question_id} style={{ marginBottom: 20 }}>
+                        <div style={{ marginBottom: 8 }}>
+                          <span style={{ fontWeight: 'bold' }}>
+                            {type === 'blank' ? `${idx + 1}.` : `${getQuestionNum()}.`}
+                          </span>
+                          <span style={{ marginLeft: 8 }}>{question.content}</span>
+                          {question.score && (
+                            <span style={{ marginLeft: 8, color: '#999', fontSize: 12 }}>
+                              （{question.score}分）
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Options for single/multiple choice */}
+                        {(question.type === 'single' || question.type === 'multiple') && (question as any).options && (
+                          <div style={{ marginLeft: 30, marginTop: 8 }}>
+                            {Array.isArray((question as any).options)
+                              ? (question as any).options.map((opt: string, optIdx: number) => (
+                                  <div key={optIdx} style={{ marginBottom: 4 }}>
+                                    {String.fromCharCode(65 + optIdx)}. {opt}
+                                  </div>
+                                ))
+                              : null}
+                          </div>
+                        )}
+
+                        {/* Answer space for essay/blank/code */}
+                        {(question.type === 'essay' || question.type === 'code' || question.type === 'blank') && (
+                          <div style={{ marginLeft: 30, marginTop: 8 }}>
+                            <div style={{ borderTop: '1px dashed #ccc', minHeight: question.type === 'code' ? 200 : 60 }}></div>
+                          </div>
+                        )}
+
+                        {/* True/False options */}
+                        {question.type === 'true_false' && (
+                          <div style={{ marginLeft: 30, marginTop: 8 }}>
+                            <span style={{ marginRight: 20 }}>（  ）正确</span>
+                            <span>（  ）错误</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

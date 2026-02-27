@@ -436,55 +436,59 @@ const ActivityResultPage: React.FC = () => {
           )
         }
       >
-        {answers.map((answer, index) => (
-          <Card
-            key={answer.id}
-            type="inner"
-            style={{ marginBottom: 16 }}
-            title={
-              <Space>
-                <Text strong>第 {index + 1} 题</Text>
-                <Text type="secondary">({getQuestionTypeName(answer.question_type)})</Text>
-                <Text type="secondary">{answer.max_score} 分</Text>
-                {data.can_show_answers && (
-                  <>
-                    {renderAnswerStatus(answer)}
-                    {answer.score !== null && (
-                      <Text type="secondary">
-                        得分：{answer.score} / {answer.max_score}
-                      </Text>
-                    )}
-                  </>
-                )}
-              </Space>
-            }
-          >
-            <div style={{ marginBottom: 16 }}>
-              <Paragraph style={{ fontSize: 16, marginBottom: 8 }}>
-                {answer.question_content}
-              </Paragraph>
-            </div>
-
-            <Divider orientation="left" style={{ margin: '12px 0' }}>
-              你的答案
-            </Divider>
-            {renderYourAnswer(answer)}
-
-            {data.can_show_answers && answer.feedback && (
-              <div style={{ marginTop: 12 }}>
-                <Text type="secondary">评语：</Text>
-                <Paragraph style={{ marginTop: 8, padding: 12, background: '#e6f7ff', borderRadius: 4 }}>
-                  {answer.feedback}
+        {!answers || answers.length === 0 ? (
+          <Empty description="暂无答题记录，答案可能正在批改中或未正确保存" />
+        ) : (
+          answers.map((answer, index) => (
+            <Card
+              key={answer.id}
+              type="inner"
+              style={{ marginBottom: 16 }}
+              title={
+                <Space>
+                  <Text strong>第 {index + 1} 题</Text>
+                  <Text type="secondary">({getQuestionTypeName(answer.question_type)})</Text>
+                  <Text type="secondary">{answer.max_score} 分</Text>
+                  {data.can_show_answers && (
+                    <>
+                      {renderAnswerStatus(answer)}
+                      {answer.score !== null && (
+                        <Text type="secondary">
+                          得分：{answer.score} / {answer.max_score}
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </Space>
+              }
+            >
+              <div style={{ marginBottom: 16 }}>
+                <Paragraph style={{ fontSize: 16, marginBottom: 8 }}>
+                  {answer.question_content}
                 </Paragraph>
               </div>
-            )}
 
-            <Divider orientation="left" style={{ margin: '12px 0' }}>
-              {data.can_show_answers ? '正确答案' : '答案公布'}
-            </Divider>
-            {renderCorrectAnswer(answer)}
-          </Card>
-        ))}
+              <Divider orientation="left" style={{ margin: '12px 0' }}>
+                你的答案
+              </Divider>
+              {renderYourAnswer(answer)}
+
+              {data.can_show_answers && answer.feedback && (
+                <div style={{ marginTop: 12 }}>
+                  <Text type="secondary">评语：</Text>
+                  <Paragraph style={{ marginTop: 8, padding: 12, background: '#e6f7ff', borderRadius: 4 }}>
+                    {answer.feedback}
+                  </Paragraph>
+                </div>
+              )}
+
+              <Divider orientation="left" style={{ margin: '12px 0' }}>
+                {data.can_show_answers ? '正确答案' : '答案公布'}
+              </Divider>
+              {renderCorrectAnswer(answer)}
+            </Card>
+          ))
+        )}
       </Card>
     </div>
   );
