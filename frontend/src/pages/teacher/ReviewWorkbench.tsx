@@ -196,6 +196,26 @@ const ReviewWorkbench: React.FC = () => {
 
       setPendingQuestions(questions);
 
+      // 预加载所有scope的中文文本
+      const allScopes = new Set<string>();
+      questions.forEach((q: Question) => {
+        if (q.target_scope) allScopes.add(q.target_scope);
+        if (q.scope) {
+          q.scope.forEach((s: string) => allScopes.add(s));
+        }
+      });
+
+      if (allScopes.size > 0) {
+        try {
+          const scopeRes = await questionBankApi.getScopeTexts(Array.from(allScopes));
+          if (scopeRes.data) {
+            setScopeTextsMap(scopeRes.data);
+          }
+        } catch (error) {
+          console.error('Load scope texts error:', error);
+        }
+      }
+
       // 计算统计信息
       setStats({
         pending_count: questions.length,
@@ -343,8 +363,18 @@ const ReviewWorkbench: React.FC = () => {
 
   const getScopeText = (scope?: string): { text: string; color: string } => {
     if (!scope) return { text: '-', color: 'default' };
-    // 使用从后端API加载的scope文本映射
-    const text = scopeTextsMap[scope] || scope;
+
+    // 常见scope的默认中文映射
+    const defaultScopeTexts: Record<string, string> = {
+      'assessment': '测评题库',
+      'practice_municipal': '市级练习',
+      'practice_district': '区级练习',
+      'practice_school': '校级练习',
+    };
+
+    // 优先使用从后端API加载的scope文本映射，其次使用默认映射，最后使用原始值
+    const text = scopeTextsMap[scope] || defaultScopeTexts[scope] || scope;
+
     // 根据scope类型设置颜色
     let color = 'default';
     if (scope === 'assessment') color = 'orange';

@@ -26,10 +26,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Silently handle 401 errors - these are expected when user is not logged in
+    // Clear expired tokens and redirect to login on 401 errors
     if (error.response?.status === 401) {
-      // You could optionally redirect to login or clear expired tokens
-      // For now, just suppress the error
+      // Clear expired tokens from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Only redirect if we're not already on login page
+      if (window.location.pathname !== '/login' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+
       return Promise.reject({ ...error, silent: true });
     }
     return Promise.reject(error);
@@ -817,6 +824,21 @@ export const activityApi = {
     if (filters?.ability_level) params.append('ability_level', filters.ability_level);
 
     const response = await api.get(`/activities/assessments${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+
+  // Get student completed practices (已完成练习列表)
+  getStudentCompletedPractices: async (filters?: {
+    subject?: string;
+    grade?: string;
+    ability_level?: string;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.grade) params.append('grade', filters.grade);
+    if (filters?.ability_level) params.append('ability_level', filters.ability_level);
+
+    const response = await api.get(`/student/activities/practice/completed${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
 

@@ -590,6 +590,93 @@
 
 ## 近期更新
 
+### 2026-02-27
+- 🐛 **修复练习中心刷新不显示数据问题**
+  - 问题：刷新页面后数据不立即加载
+  - 原因：useEffect只在依赖项变化时触发，初始加载时机不当
+  - 解决：添加初始加载useEffect，同时加载两个列表
+  - 文件：`frontend/src/pages/student/PracticeCenterPage.tsx`
+  - 状态: ✅ 已完成
+- 🎨 **优化练习中心显示**
+  - 移除"可用练习"中的"查看详情"按钮
+  - 添加已完成练习标识：🏆已完成 / 进行中
+  - 文件：`frontend/src/pages/student/PracticeCenterPage.tsx`
+  - 状态: ✅ 已完成
+- ✨ **添加学生已完成的练习查看功能**
+  - 问题：学生答完练习后无法再次查看已完成的练习结果
+  - 解决：
+    1. 后端添加 `/student/activities/practice/completed` API
+    2. 前端练习中心添加选项卡，区分"可用练习"和"已完成"
+    3. 已完成练习显示得分、完成时间、批改状态
+    4. 添加"查看结果"按钮跳转到结果详情页
+  - 文件：
+    - `backend/src/routes/studentActivities.js` - 新增API
+    - `frontend/src/services/api.ts` - 新增API调用
+    - `frontend/src/pages/student/PracticeCenterPage.tsx` - 选项卡UI
+  - 状态: ✅ 已完成
+- 🎨 **优化答题卡滚动跟随功能**
+  - 问题：滚动页面时答题卡选中状态不能跟随变化
+  - 解决：优化滚动监听器初始化时机（延迟200ms），统一保护期为800ms
+  - 效果：滚动页面时，答题卡自动高亮当前可见的题目
+  - 文件：`frontend/src/pages/student/TakeActivityPage.tsx`
+  - 状态: ✅ 已完成
+- 🎨 **修复答题卡点击后选中状态不跟随问题**
+  - 问题：点击答题卡按钮后，选中颜色没有立即变化
+  - 原因：滚动监听器立即覆盖了手动点击设置的状态
+  - 解决：添加 `manualClickRef` 标志，点击后500ms内暂停滚动监听器的自动更新
+  - 文件：`frontend/src/pages/student/TakeActivityPage.tsx`
+  - 状态: ✅ 已完成
+- 🎨 **优化答题卡选中状态颜色显示**
+  - 问题：当前选中题目的颜色不够明显，难以区分
+  - 优化方案：
+    1. 当前 + 已答：蓝色高亮 (#1677ff) + 白色文字 + 阴影效果
+    2. 当前 + 未答：橙色边框 (#fa8c16) + 浅橙背景 + 3px粗边框 + 阴影
+    3. 非当前 + 已答：浅绿色背景 (#f6ffed) + 绿色文字
+    4. 非当前 + 未答：虚线边框
+  - 文件：`frontend/src/pages/student/TakeActivityPage.tsx`
+  - 状态: ✅ 已完成
+- 🎨 **优化学生答题页面布局**
+  - 问题：左右间距过宽，答题卡过于紧凑，题号显示不全
+  - 优化内容：
+    1. 减小左右间距：20px → 16px
+    2. 增加答题卡宽度：150px → 220px
+    3. 优化网格布局：5列 → 4列，按钮更大更易读
+    4. 增大按钮尺寸：28px → 36px，字体 13px → 15px
+    5. 增加右侧最大宽度：1000px → 1200px
+  - 文件：`frontend/src/pages/student/TakeActivityPage.tsx`
+  - 状态: ✅ 已完成
+- 🐛 **修复审核工作台统计信息显示错误**
+  - 问题：待审核、已通过、已拒绝、通过率显示不正确
+  - 原因：统计API使用错误的状态值（`approved`/`rejected`），实际应为 `published`/`inactive`
+  - 解决：修正SQL查询中的状态值，添加 `is_active = true` 过滤
+  - 文件：`backend/src/routes/questionReview.js`
+  - 状态: ✅ 已修复
+- 🐛 **修复审核工作台目标范围显示问题**
+  - 问题：目标范围列显示编码标记（如`practice_municipal`）而非中文名称
+  - 原因：scope文本映射只在点击详情时加载，表格初始加载时为空
+  - 解决：
+    1. 加载列表时预加载所有scope的中文文本
+    2. 添加默认中文映射作为后备（assessment→测评题库等）
+  - 文件：`frontend/src/pages/teacher/ReviewWorkbench.tsx`
+  - 状态: ✅ 已修复
+- 🐛 **修复审核工作台提交人显示问题**
+  - 问题：审核题目时提交人列显示为空
+  - 原因：后端API返回 `creator_name`，前端期望 `submitted_by_name` 字段
+  - 解决：后端添加 `submitted_by_name` 和 `target_scope` 字段
+  - 文件：`backend/src/routes/questionReview.js`
+  - 状态: ✅ 已修复
+- 🐛 **修复登录后401 Unauthorized错误**
+  - 问题：登录成功后API请求返回401，JWT token已过期（过期时间：2026-02-08）
+  - 原因1：前端401错误处理只静默处理，没有清除过期的token
+  - 原因2：登录时没有清除localStorage中旧的token
+  - 解决：
+    1. API拦截器：收到401时清除localStorage并跳转登录页
+    2. 登录页面：登录前先清除旧的token和用户信息
+  - 文件：
+    - `frontend/src/services/api.ts` - 401错误处理
+    - `frontend/src/pages/LoginPage.tsx` - 登录前清理token
+  - 状态: ✅ 已修复
+
 ### 2026-02-26
 - 🐛 **修复学生答题页面答题卡状态同步问题**
   - 问题1: 答题卡按钮与右侧答题状态不同步

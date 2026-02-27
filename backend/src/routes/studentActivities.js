@@ -798,4 +798,74 @@ router.get('/:id/result',
   }
 );
 
+// ============================================================================
+// 10. 获取学生已完成的练习列表
+// ============================================================================
+router.get('/practice/completed', authMiddleware, async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { subject, grade, ability_level } = req.query;
+
+    let queryStr = `
+      SELECT DISTINCT ON (a.id)
+        a.id,
+        a.title,
+        a.subject,
+        a.grade,
+        a.ability_level,
+        a.start_time,
+        a.end_time,
+        a.duration,
+        a.total_score,
+        a.type,
+        sa.id as student_activity_id,
+        sa.status as student_status,
+        sa.score as my_score,
+        sa.submit_time,
+        sa.attempt_number,
+        sa.grading_status
+      FROM activities a
+      INNER JOIN student_activities sa ON a.id = sa.activity_id
+      WHERE sa.student_id = $1
+        AND a.type = 'practice'
+        AND sa.status IN ('submitted', 'graded')
+    `;
+
+    const params = [studentId];
+    let paramCount = 1;
+
+    if (subject) {
+      queryStr += ` AND a.subject = $${++paramCount}`;
+      params.push(subject);
+    }
+
+    if (grade) {
+      queryStr += ` AND a.grade = $${++paramCount}`;
+      params.push(grade);
+    }
+
+    if (ability_level) {
+      queryStr += ` AND a.ability_level = $${++paramCount}`;
+      params.push(ability_level);
+    }
+
+    queryStr += ' ORDER BY a.id DESC, sa.attempt_number DESC';
+
+    const result = await query(queryStr, params);
+
+    res.json({
+      success: true,
+      practices: result.rows,
+      count: result.rows.length
+    });
+
+  } catch (error) {
+    logger.error('Get completed practices error:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取已完成练习列表失败'
+    });
+  }
+});
+
 module.exports = router;

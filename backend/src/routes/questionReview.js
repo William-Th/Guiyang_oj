@@ -302,9 +302,11 @@ router.get('/pending', authMiddleware, async (req, res) => {
       knowledge_points: row.knowledge_points,
       status: row.status,
       scope: [row.scope], // 包装成数组，兼容前端
+      target_scope: row.scope, // 添加 target_scope 字段供筛选使用
       created_by: row.created_by,
       creator_name: row.creator_name,
       creator_username: row.creator_username,
+      submitted_by_name: row.creator_name, // 添加此字段供前端表格显示
       submitted_at: row.submitted_at,
       created_at: row.created_at,
       updated_at: row.updated_at
@@ -329,11 +331,12 @@ router.get('/stats', authMiddleware, async (req, res) => {
     const { query } = require('../database/connection');
 
     // 统计当前用户作为审核人的审核情况
+    // 注意：审核通过后状态变为published，拒绝后状态变为inactive
     const statsResult = await query(
       `SELECT
-        COUNT(*) FILTER (WHERE status = 'pending_review' AND reviewer_id = $1) AS pending_count,
-        COUNT(*) FILTER (WHERE status = 'approved' AND reviewer_id = $1) AS approved_count,
-        COUNT(*) FILTER (WHERE status = 'rejected' AND reviewer_id = $1) AS rejected_count
+        COUNT(*) FILTER (WHERE status = 'pending_review' AND reviewer_id = $1 AND is_active = true) AS pending_count,
+        COUNT(*) FILTER (WHERE status = 'published' AND reviewer_id = $1 AND is_active = true) AS approved_count,
+        COUNT(*) FILTER (WHERE status = 'inactive' AND reviewer_id = $1 AND is_active = true) AS rejected_count
       FROM question_bank`,
       [req.user.id]
     );

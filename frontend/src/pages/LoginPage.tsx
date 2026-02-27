@@ -18,6 +18,10 @@ const LoginPage: React.FC = () => {
   const handleStudentLogin = async (values: any) => {
     dispatch(loginStart());
     try {
+      // Clear any existing tokens before login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
       // Step 1: Login to get token
       const loginResponse = await api.post('/auth/login', {
         username: values.phone,
@@ -46,6 +50,10 @@ const LoginPage: React.FC = () => {
   const handleTeacherLogin = async (values: any) => {
     dispatch(loginStart());
     try {
+      // Clear any existing tokens before login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
       // Step 1: Login to get token
       const loginResponse = await api.post('/auth/login', {
         username: values.username,

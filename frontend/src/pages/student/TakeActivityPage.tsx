@@ -182,6 +182,7 @@ const TakeActivityPage: React.FC = () => {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasStartedRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const manualClickRef = useRef<number | null>(null); // 跟踪手动点击的题目索引
 
   // Calculate deadline for countdown timer
   const getDeadline = (): string | null => {
@@ -233,6 +234,18 @@ const TakeActivityPage: React.FC = () => {
 
     // Find which question is currently most visible in viewport
     const updateCurrentQuestion = () => {
+      // 检查是否在手动点击的保护期内
+      const now = Date.now();
+      const clickTime = manualClickRef.current;
+      if (clickTime !== null && (now - clickTime) < 800) {
+        // 在保护期内，不自动更新
+        return;
+      }
+      // 超过保护期后清除标志
+      if (clickTime !== null) {
+        manualClickRef.current = null;
+      }
+
       const viewportMiddle = window.innerHeight / 2;
       let closestIndex = 0;
       let closestDistance = Infinity;
@@ -255,6 +268,7 @@ const TakeActivityPage: React.FC = () => {
 
     // Use setTimeout to ensure DOM is fully rendered
     const timer = setTimeout(() => {
+      // 初始化当前题目
       updateCurrentQuestion();
 
       // Add scroll listener with throttling
@@ -275,7 +289,7 @@ const TakeActivityPage: React.FC = () => {
       return () => {
         window.removeEventListener('scroll', handleScroll, true);
       };
-    }, 100);
+    }, 200);
 
     return () => {
       clearTimeout(timer);
@@ -433,6 +447,10 @@ const TakeActivityPage: React.FC = () => {
 
   // Scroll to question
   const scrollToQuestion = (index: number) => {
+    // 记录手动点击时间戳，防止滚动监听器立即覆盖
+    // 使用当前时间戳，滚动监听器会在800ms后恢复自动检测
+    manualClickRef.current = Date.now();
+    // 立即更新选中状态，让用户看到即时反馈
     setCurrentQuestionIndex(index);
     const ref = questionRefs.current[index];
     if (ref) {
@@ -674,25 +692,25 @@ const TakeActivityPage: React.FC = () => {
   const questionGroups = groupQuestionsByType();
 
   return (
-    <div style={{ display: 'flex', gap: '20px', padding: '24px', fontSize: '16px', overflowX: 'hidden' }}>
+    <div style={{ display: 'flex', gap: '16px', padding: '24px', fontSize: '16px', overflowX: 'hidden' }}>
       {/* Left Sidebar - Question Navigation */}
       <Affix offsetTop={24}>
         <Card
-          title={<span style={{ fontSize: '14px', fontWeight: 'bold' }}>答题卡</span>}
-          style={{ width: 150, maxHeight: 'calc(100vh - 80px)', overflow: 'visible' }}
+          title={<span style={{ fontSize: '15px', fontWeight: 'bold' }}>答题卡</span>}
+          style={{ width: 220, maxHeight: 'calc(100vh - 80px)', overflow: 'visible' }}
           size="small"
-          bodyStyle={{ padding: '8px' }}
+          bodyStyle={{ padding: '12px' }}
         >
           <div style={{ overflowX: 'hidden' }}>
             {Object.entries(questionGroups).map(([typeName, questions]) => (
-              <div key={typeName} style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px', fontWeight: 500 }}>
+              <div key={typeName} style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 500 }}>
                   {typeName} ({questions.length})
                 </div>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(5, 1fr)',
-                  gap: '4px'
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '6px'
                 }}>
                   {questions.map(({ question, index }) => {
                     const isAnswered = answeredQuestions.has(index);
@@ -701,40 +719,43 @@ const TakeActivityPage: React.FC = () => {
                     // Determine button style based on state
                     // Use type="default" to avoid Ant Design overriding custom styles
                     let buttonStyle: React.CSSProperties = {
-                      padding: '2px 4px',
-                      height: '28px',
+                      padding: '4px 8px',
+                      height: '36px',
                       minWidth: 'unset',
-                      fontSize: '13px',
+                      fontSize: '15px',
                       fontWeight: isAnswered ? 'bold' : 'normal',
                     };
 
                     let buttonType: 'default' | 'dashed' = 'dashed';
 
                     if (isCurrent && isAnswered) {
-                      // Current + Answered: dark green background
+                      // Current + Answered: 蓝色高亮（当前正在看这道题）
                       buttonType = 'default';
                       buttonStyle = {
                         ...buttonStyle,
-                        backgroundColor: '#52c41a',
-                        borderColor: '#52c41a',
-                        color: '#fff',
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                      };
-                    } else if (isCurrent && !isAnswered) {
-                      // Current + Not Answered: blue border
-                      buttonType = 'default';
-                      buttonStyle = {
-                        ...buttonStyle,
-                        backgroundColor: '#e6f4ff',
+                        backgroundColor: '#1677ff',
                         borderColor: '#1677ff',
-                        color: '#1677ff',
+                        color: '#fff',
                         borderWidth: '2px',
                         borderStyle: 'solid',
                         fontWeight: 'bold',
+                        boxShadow: '0 2px 6px rgba(22, 119, 255, 0.4)',
+                      };
+                    } else if (isCurrent && !isAnswered) {
+                      // Current + Not Answered: 橙色边框提示（当前题待作答）
+                      buttonType = 'default';
+                      buttonStyle = {
+                        ...buttonStyle,
+                        backgroundColor: '#fff7e6',
+                        borderColor: '#fa8c16',
+                        color: '#fa8c16',
+                        borderWidth: '3px',
+                        borderStyle: 'solid',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 6px rgba(250, 140, 22, 0.3)',
                       };
                     } else if (!isCurrent && isAnswered) {
-                      // Not Current + Answered: light green background
+                      // Not Current + Answered: 绿色背景（已完成）
                       buttonType = 'default';
                       buttonStyle = {
                         ...buttonStyle,
@@ -764,10 +785,10 @@ const TakeActivityPage: React.FC = () => {
             ))}
           </div>
 
-          <Divider style={{ margin: '8px 0' }} />
+          <Divider style={{ margin: '12px 0' }} />
 
-          <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
-            <div style={{ marginBottom: '4px' }}>
+          <div style={{ fontSize: '13px', color: '#666', textAlign: 'center' }}>
+            <div style={{ marginBottom: '6px' }}>
               <span style={{ color: '#52c41a', fontWeight: 'bold' }}>●</span> 已答 {answeredCount}
             </div>
             <div>
@@ -778,7 +799,7 @@ const TakeActivityPage: React.FC = () => {
       </Affix>
 
       {/* Main Content */}
-      <div style={{ flex: 1, marginLeft: 'auto', maxWidth: 1000, overflowX: 'hidden' }}>
+      <div style={{ flex: 1, marginLeft: 'auto', maxWidth: 1200, overflowX: 'hidden' }}>
         {/* Submit Button - Fixed at top */}
         <Card style={{ marginBottom: 16 }}>
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>
