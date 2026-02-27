@@ -239,6 +239,13 @@
 
 **开发状态**: ✅ **已完成** | API测试100%通过 | E2E测试7/16通过（9个跳过-缺数据）| 参考: `documents/archive/STUDENT_ACTIVITY_GRADING_COMPLETION.md`
 
+**🐛 已知问题** (2026-02-27):
+- **评卷列表不显示已完成自动判题的活动**
+  - 原因: 自动判题后 `grading_status = 'completed'`，但查询条件只包含 `('pending', 'auto_graded', 'partial_graded')`
+  - 影响: 全客观题活动自动判题后不出现在教师评卷列表中，教师无法复查
+  - 文件: `backend/src/services/autoGradingService.js` 第138行
+  - 修复方案: 将无主观题的活动状态设为 `auto_graded` 而非 `completed`
+
 ---
 
 ### 7.4 测评报名管理系统 (NEW - 2025-11-30)
@@ -295,6 +302,109 @@
 | **总计** | - | **11天** | - |
 
 **开发状态**: ❌ **未开始** | 需求设计完成 | 预计工期11天
+
+---
+
+### 7.5 批改判题系统完善计划 (NEW - 2026-02-27)
+
+**背景**: 当前系统已有基础的自动判题服务和人工评卷功能，但存在以下问题：
+- 部分题型未实现自动判题（true_false归为single，matching完全不支持）
+- 学生端结果页面未按题型分组显示
+- 教师端批改界面未按题型分组显示
+
+**设计文档**: `docs/GRADING_SYSTEM_IMPROVEMENT_PLAN.md`
+
+**当前系统状态分析**:
+
+| 题型 | 自动判题支持 | 判题方式 |
+|------|-------------|---------|
+| single (单选题) | ✅ | 精确匹配选项 |
+| multiple (多选题) | ✅ | 数组完全匹配 |
+| blank/fill_blank (填空题) | ✅ | 多答案支持(\|分隔) |
+| true_false (判断题) | ⚠️ | 归类为single处理 |
+| code (编程题) | ✅ | judge-service异步判题 |
+| essay (主观题) | ❌ | 需人工批改 |
+| matching (匹配题) | ❌ | 需人工批改 |
+
+**批改状态流转**:
+```
+pending (待批改)
+    ↓ [自动判题]
+auto_graded (已自动评分)
+    ↓ [发现主观题]
+partial_graded (部分评分)
+    ↓ [教师批改剩余]
+completed (已完成) → status = 'graded'
+```
+
+**功能列表**:
+
+| 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
+|------|--------|---------|---------|------|---------|------|
+| **自动判题服务增强** |  |  |  |  |  |  |
+| 判断题独立支持 | N/A | ❌ | ❌ | N/A | ❌ | 支持true/false/对/错/是/否/1/0 |
+| 匹配题自动判题 | N/A | ❌ | ❌ | N/A | ❌ | JSON格式匹配，按比例给分 |
+| autoGradingService更新 | N/A | ❌ | ❌ | N/A | ❌ | 添加新题型分支 |
+| 单元测试 | N/A | ❌ | ❌ | N/A | ❌ | 覆盖新增判题逻辑 |
+| **学生端结果展示优化** |  |  |  |  |  |  |
+| 按题型分组显示 | N/A | N/A | N/A | ❌ | ❌ | 一、单选题(共X题) |
+| 题型分数统计 | N/A | N/A | N/A | ❌ | ❌ | 各题型得分/满分 |
+| 批改进度显示 | N/A | N/A | N/A | ✅ | ❌ | 已有，保持 |
+| **教师端批改界面优化** |  |  |  |  |  |  |
+| 按题型分组显示 | N/A | N/A | N/A | ❌ | ❌ | 与学生端类似结构 |
+| 题型快速跳转 | N/A | N/A | N/A | ❌ | ❌ | 侧边栏按题型分组 |
+| 题型统计卡片 | N/A | N/A | N/A | ❌ | ❌ | 各题型批改进度 |
+| 批量操作增强 | N/A | N/A | N/A | ❌ | ❌ | 批量给分、复制评语 |
+
+**开发计划**:
+
+| 优先级 | 任务 | 工期 | 状态 |
+|-------|------|------|------|
+| P0 | 判断题独立支持（autoGradingService） | 1h | ❌ 未开始 |
+| P0 | 匹配题自动判题实现 | 2h | ❌ 未开始 |
+| P1 | 更新autoGradeActivity方法支持新题型 | 1h | ❌ 未开始 |
+| P1 | 学生端结果按题型分组显示 | 2h | ❌ 未开始 |
+| P2 | 教师端批改界面按题型分组 | 2h | ❌ 未开始 |
+| P2 | 添加题型快速导航和统计 | 1h | ❌ 未开始 |
+| P3 | API单元测试编写 | 1h | ❌ 未开始 |
+| P3 | E2E测试编写 | 1h | ❌ 未开始 |
+| **总计** | - | **11h** | - |
+
+**实现细节**:
+
+1. **判断题独立支持** (autoGradingService.js)
+```javascript
+static gradeTrueFalse(studentAnswer, correctAnswer, maxScore) {
+  // 支持: true/false, 1/0, 对/错, 是/否, T/F, Y/N
+  const trueValues = ['true', '1', '对', '是', 't', 'y', 'yes'];
+  const falseValues = ['false', '0', '错', '否', 'f', 'n', 'no'];
+  // ... 匹配逻辑
+}
+```
+
+2. **匹配题自动判题** (autoGradingService.js)
+```javascript
+static gradeMatching(studentAnswer, correctAnswer, maxScore) {
+  // 学生答案: [{"A":"1"}, {"B":"2"}, ...]
+  // 正确答案: [{"left":"A","right":"1"}, ...]
+  // 按正确匹配数比例给分
+}
+```
+
+3. **题型顺序定义**
+```javascript
+const typeOrder = {
+  single: 1,      // 一、单选题
+  multiple: 2,    // 二、多选题
+  true_false: 3,  // 三、判断题
+  blank: 4,       // 四、填空题
+  essay: 5,       // 五、主观题
+  code: 6,        // 六、编程题
+  matching: 7,    // 七、匹配题
+};
+```
+
+**开发状态**: ❌ **未开始** | 计划已制定 | 预计工期11小时
 
 ---
 
