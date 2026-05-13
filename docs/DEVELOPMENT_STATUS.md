@@ -1192,4 +1192,42 @@ const typeOrder = {
 
 ---
 
+### 2026-02-20
+- ✅ **权限类型重命名：审核权限 → 管理权限**
+  - 将 `_review` 权限类型全部重命名为 `_manage`，语义从"审核"升级为"管理"（包含审核+撤回）
+  - 数据库迁移: `database/migrations/041_rename_review_to_manage.sql`（37条记录更新）
+  - 后端更新:
+    - `backend/src/models/TeacherPermission.js` - 所有方法中的权限类型更新
+    - `backend/src/routes/permissions.js` - `validPermissionTypes` 和授权规则更新
+    - `backend/src/routes/questionReview.js` - 审核流程权限类型映射更新
+  - 前端更新:
+    - `frontend/src/pages/admin/PermissionManagement.tsx` - 权限类型值和显示文字更新
+  - 状态: ✅ 完成
+
+- ✅ **题库浏览页撤回功能**
+  - 题库浏览页移除编辑和删除按钮，新增撤回功能
+  - 撤回权限：发布者本人 / 系统管理员 / 市级管理员 / 对应区级管理员 / 拥有管理权限的教师
+  - 撤回需填写原因（必填），撤回后题目不再显示但不影响已组卷活动
+  - 数据库迁移: `database/migrations/042_add_withdraw_fields.sql`
+    - 新增字段: `withdrawn_by`, `withdrawn_at`, `withdraw_reason`
+    - 更新 status CHECK 约束包含 `inactive`
+  - 后端:
+    - `backend/src/models/QuestionBank.js` - 新增 `withdraw()` 方法
+    - `backend/src/models/TeacherPermission.js` - 新增 `canWithdrawQuestion()` 方法
+    - `backend/src/routes/questionBank.js` - 新增 `POST /bank/:id/withdraw` 路由
+  - 前端:
+    - `frontend/src/services/api.ts` - 新增 `withdrawQuestion()` API
+    - `frontend/src/pages/teacher/QuestionBankPage.tsx` - 移除编辑/删除按钮，新增撤回按钮和撤回原因Modal
+  - 状态: ✅ 完成
+
+- ✅ **修复活动参与者接口404**
+  - 问题: `GET /api/activities/:id/participants` 返回404
+  - 原因: 缺少后端路由和模型方法
+  - 修复:
+    - `backend/src/models/Activity.js` - 新增 `getParticipants()` 方法
+    - `backend/src/routes/activities.js` - 新增 `GET /:id/participants` 路由
+  - 状态: ✅ 完成
+
+---
+
 *最后更新时间：2026-02-26*

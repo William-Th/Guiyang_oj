@@ -133,13 +133,13 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       // 根据target_scope确定需要的permission_type
       let requiredPermType;
       if (target_scope === 'assessment') {
-        requiredPermType = 'assessment_review';
+        requiredPermType = 'assessment_manage';
       } else if (target_scope === 'practice_municipal') {
-        requiredPermType = 'practice_municipal_review';
+        requiredPermType = 'practice_municipal_manage';
       } else if (target_scope.startsWith('practice_district_')) {
-        requiredPermType = 'practice_district_review';
+        requiredPermType = 'practice_district_manage';
       } else if (target_scope.startsWith('practice_school_')) {
-        requiredPermType = 'practice_school_review';
+        requiredPermType = 'practice_school_manage';
       }
 
       const permCheckResult = await query(permCheckSql, [

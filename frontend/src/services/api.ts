@@ -409,6 +409,12 @@ export const questionBankApi = {
     return response.data;
   },
 
+  // Withdraw a published question (撤回已发布的题目)
+  withdrawQuestion: async (questionId: number, reason: string) => {
+    const response = await api.post(`/question-bank/bank/${questionId}/withdraw`, { reason });
+    return response.data;
+  },
+
   // Export questions to Excel or CSV
   exportQuestions: async (filters?: {
     subject?: string;

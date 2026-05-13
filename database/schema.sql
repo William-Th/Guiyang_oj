@@ -943,9 +943,12 @@ CREATE TABLE public.question_bank (
     judge_mode character varying(20) DEFAULT 'standard'::character varying,
     special_judge_code text,
     supported_languages text[] DEFAULT '{cpp}'::text[],
+    withdrawn_by integer,
+    withdrawn_at timestamp without time zone,
+    withdraw_reason text,
     CONSTRAINT question_bank_difficulty_check CHECK (((difficulty)::text = ANY ((ARRAY['easy'::character varying, 'medium'::character varying, 'hard'::character varying])::text[]))),
     CONSTRAINT question_bank_level_check CHECK (((level)::text = ANY ((ARRAY['L1'::character varying, 'L2'::character varying, 'L3'::character varying, 'L4'::character varying, 'L5'::character varying, 'L6'::character varying, 'L7'::character varying, 'L8'::character varying, 'L9'::character varying])::text[]))),
-    CONSTRAINT question_bank_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'approved'::character varying, 'rejected'::character varying, 'published'::character varying])::text[]))),
+    CONSTRAINT question_bank_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'approved'::character varying, 'rejected'::character varying, 'published'::character varying, 'inactive'::character varying])::text[]))),
     CONSTRAINT question_bank_type_check CHECK (((type)::text = ANY ((ARRAY['single'::character varying, 'multiple'::character varying, 'blank'::character varying, 'true_false'::character varying, 'essay'::character varying, 'code'::character varying, 'matching'::character varying])::text[]))),
     CONSTRAINT question_bank_judge_mode_check CHECK ((judge_mode IS NULL OR (judge_mode)::text = ANY ((ARRAY['standard'::character varying, 'special'::character varying])::text[])))
 );

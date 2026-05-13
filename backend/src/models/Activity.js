@@ -679,6 +679,29 @@ class Activity {
   }
 
   /**
+   * Get activity participants list
+   * @param {number} activityId - Activity ID
+   * @returns {Promise<Array>} Participants list
+   */
+  static async getParticipants(activityId) {
+    const result = await query(`
+      SELECT
+        sa.id,
+        sa.student_id,
+        u.real_name as student_name,
+        sa.status,
+        sa.score,
+        sa.submit_time as submitted_at,
+        sa.attempt_number
+      FROM student_activities sa
+      JOIN users u ON sa.student_id = u.id
+      WHERE sa.activity_id = $1
+      ORDER BY sa.submit_time DESC NULLS LAST, sa.id ASC
+    `, [activityId]);
+    return result.rows;
+  }
+
+  /**
    * Delete activity (hard delete - will cascade delete related data)
    * @param {number} id - Activity ID
    * @returns {Promise<Object>} Deleted activity info

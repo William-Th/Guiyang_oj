@@ -848,9 +848,9 @@ const TakeActivityPage: React.FC = () => {
                 '编程题': 6,
                 '匹配题': 7,
               };
-              // @ts-ignore - Workaround for TypeScript index access issue
+              // @ts-expect-error - Workaround for TypeScript index access issue
               const orderA = typeOrder[a[0]] ?? 99;
-              // @ts-ignore
+              // @ts-expect-error - Workaround for TypeScript index access issue
               const orderB = typeOrder[b[0]] ?? 99;
               return orderA - orderB;
             })

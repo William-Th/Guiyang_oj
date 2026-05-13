@@ -370,6 +370,52 @@ router.get('/:id/statistics', [
   }
 });
 
+// Get activity participants
+router.get('/:id/participants', [
+  param('id').isInt().withMessage('活动ID无效'),
+  authMiddleware,
+  requireRole(['teacher', 'system_admin', 'school_admin', 'district_admin',
+    'base_school_admin', 'municipal_school_admin', 'municipal_admin'])
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array()
+    });
+  }
+
+  try {
+    const activityId = parseInt(req.params.id);
+
+    const activity = await Activity.findById(activityId);
+    if (!activity) {
+      return res.status(404).json({
+        success: false,
+        message: '活动不存在'
+      });
+    }
+
+    const participants = await Activity.getParticipants(activityId);
+
+    res.json({
+      success: true,
+      participants
+    });
+  } catch (error) {
+    logger.error('Get activity participants error:', {
+      error: error.message,
+      stack: error.stack,
+      activityId: req.params.id
+    });
+
+    res.status(500).json({
+      success: false,
+      message: '获取参与者列表失败'
+    });
+  }
+});
+
 // Get activity with questions (for taking activity)
 router.get('/:id/questions', [
   param('id').isInt().withMessage('Invalid activity ID'),

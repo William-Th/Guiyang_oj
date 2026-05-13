@@ -300,11 +300,11 @@ const uniqueContent = `【QBC101-${timestamp}】测试题目`;
 
 ### 权限类型定义（来自数据库迁移文件）
 
-**审核权限**：
-- `assessment_review` - 测评题库审核
-- `practice_municipal_review` - 市级练习题库审核
-- `practice_district_review` - 区级练习题库审核
-- `competition_review` - 竞赛审核
+**管理权限**（包含审核和撤回）：
+- `assessment_manage` - 测评题库管理
+- `practice_municipal_manage` - 市级练习题库管理
+- `practice_district_manage` - 区级练习题库管理
+- `competition_manage` - 竞赛管理
 
 **发布权限**：
 - `practice_publish_municipal` - 市级练习发布
@@ -386,4 +386,4 @@ outputDir: './tests/test-results/html'
 
 ---
 
-**最后更新**: 2025-01-21
+**最后更新**: 2026-02-20

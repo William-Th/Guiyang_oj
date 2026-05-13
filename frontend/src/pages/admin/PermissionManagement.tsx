@@ -209,8 +209,8 @@ const PermissionManagement: React.FC = () => {
     if (currentUserRole === 'district_admin') {
       return [
         {
-          value: 'practice_district_review',
-          label: <><Tag color="cyan">区级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+          value: 'practice_district_manage',
+          label: <><Tag color="cyan">区级练习题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
         },
         {
           value: 'practice_publish_district',
@@ -236,22 +236,22 @@ const PermissionManagement: React.FC = () => {
     // 市级/系统管理员可以授予所有权限
     if (currentUserRole === 'municipal_admin' || currentUserRole === 'system_admin') {
       return [
-        // 审核权限
+        // 管理权限（包含审核 + 撤回）
         {
-          value: 'assessment_review',
-          label: <><Tag color="orange">测评题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
+          value: 'assessment_manage',
+          label: <><Tag color="orange">测评题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
         },
         {
-          value: 'practice_municipal_review',
-          label: <><Tag color="blue">市级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
+          value: 'practice_municipal_manage',
+          label: <><Tag color="blue">市级练习题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
         },
         {
-          value: 'practice_district_review',
-          label: <><Tag color="cyan">区级练习题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+          value: 'practice_district_manage',
+          label: <><Tag color="cyan">区级练习题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
         },
         {
-          value: 'competition_review',
-          label: <><Tag color="red">竞赛题库审核</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 竞赛专用</span></>
+          value: 'competition_manage',
+          label: <><Tag color="red">竞赛题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 竞赛专用</span></>
         },
         // 练习发布权限
         {
@@ -283,12 +283,17 @@ const PermissionManagement: React.FC = () => {
 
   const getPermissionTypeText = (type: string) => {
     const types: Record<string, { text: string; color: string }> = {
-      // 审核权限
+      // 管理权限（包含审核 + 撤回）
       question_bank_review: { text: '练习题库审核（旧）', color: 'default' },
-      assessment_review: { text: '测评题库审核', color: 'orange' },
-      practice_municipal_review: { text: '市级练习题库审核', color: 'blue' },
-      practice_district_review: { text: '区级练习题库审核', color: 'cyan' },
-      competition_review: { text: '竞赛审核', color: 'red' },
+      assessment_manage: { text: '测评题库管理', color: 'orange' },
+      practice_municipal_manage: { text: '市级练习题库管理', color: 'blue' },
+      practice_district_manage: { text: '区级练习题库管理', color: 'cyan' },
+      competition_manage: { text: '竞赛题库管理', color: 'red' },
+      // 兼容旧数据显示
+      assessment_review: { text: '测评题库审核（旧）', color: 'default' },
+      practice_municipal_review: { text: '市级练习题库审核（旧）', color: 'default' },
+      practice_district_review: { text: '区级练习题库审核（旧）', color: 'default' },
+      competition_review: { text: '竞赛审核（旧）', color: 'default' },
       // 练习发布权限
       practice_publish_municipal: { text: '市级练习发布', color: 'purple' },
       practice_publish_district: { text: '区级练习发布', color: 'green' },
@@ -666,11 +671,11 @@ const PermissionManagement: React.FC = () => {
         }}>
           <strong>权限说明：</strong>
           <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
-            <li><strong>题库审核权限</strong>：</li>
+            <li><strong>题库管理权限</strong>（包含审核和撤回）：</li>
             <ul style={{ paddingLeft: 20, marginTop: 4 }}>
-              <li>测评题库审核：可审核测评题库的题目，市级/系统管理员可授予</li>
-              <li>市级练习题库审核：可审核市级练习题库，市级/系统管理员可授予</li>
-              <li>区级练习题库审核：可审核本区练习题库，区级管理员可授予本区教师</li>
+              <li>测评题库管理：可审核和撤回测评题库的题目，市级/系统管理员可授予</li>
+              <li>市级练习题库管理：可审核和撤回市级练习题库，市级/系统管理员可授予</li>
+              <li>区级练习题库管理：可审核和撤回本区练习题库，区级管理员可授予本区教师</li>
             </ul>
             <li><strong>练习发布权限</strong>：</li>
             <ul style={{ paddingLeft: 20, marginTop: 4 }}>

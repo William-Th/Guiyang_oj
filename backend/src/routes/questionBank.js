@@ -372,6 +372,62 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Withdraw a published question (撤回已发布的题目)
+router.post('/bank/:id/withdraw', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '撤回原因不能为空'
+      });
+    }
+
+    // 获取发布记录
+    const record = await QuestionBank.findById(id);
+    if (!record) {
+      return res.status(404).json({ success: false, error: '发布记录不存在' });
+    }
+
+    if (record.status !== 'published') {
+      return res.status(400).json({
+        success: false,
+        error: '只能撤回已发布的题目'
+      });
+    }
+
+    // 检查撤回权限
+    const TeacherPermission = require('../models/TeacherPermission');
+    const canWithdraw = await TeacherPermission.canWithdrawQuestion(req.user.id, record);
+    if (!canWithdraw) {
+      return res.status(403).json({
+        success: false,
+        error: '您没有权限撤回此题目'
+      });
+    }
+
+    // 执行撤回
+    const withdrawnRecord = await QuestionBank.withdraw(id, req.user.id, reason.trim());
+    if (!withdrawnRecord) {
+      return res.status(400).json({
+        success: false,
+        error: '撤回失败，题目可能已被撤回'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: withdrawnRecord,
+      message: '题目已成功撤回'
+    });
+  } catch (error) {
+    console.error('Error withdrawing question:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Delete a question (system_admin can delete all, others can only delete their own)
 router.delete('/bank/:id', authMiddleware, async (req, res) => {
   try {

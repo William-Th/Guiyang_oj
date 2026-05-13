@@ -383,6 +383,28 @@ class QuestionBank {
     return this.findAll(filters, userInfo);
   }
 
+  /**
+   * 撤回已发布的题目
+   * @param {number} id - 发布记录ID
+   * @param {number} withdrawnBy - 撤回操作人ID
+   * @param {string} reason - 撤回原因
+   * @returns {Promise<Object>} 撤回后的记录
+   */
+  static async withdraw(id, withdrawnBy, reason) {
+    const sql = `
+      UPDATE question_bank
+      SET status = 'inactive',
+          withdrawn_by = $1,
+          withdrawn_at = CURRENT_TIMESTAMP,
+          withdraw_reason = $2
+      WHERE id = $3 AND status = 'published'
+      RETURNING *
+    `;
+
+    const result = await query(sql, [withdrawnBy, reason, id]);
+    return result.rows[0];
+  }
+
   // ==================== 兼容性方法（保留旧代码兼容） ====================
 
   /**

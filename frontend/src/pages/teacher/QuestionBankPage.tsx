@@ -12,18 +12,16 @@ import {
   Upload,
   Spin,
   Tooltip,
-  Popconfirm,
 } from 'antd';
 import {
   PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
   UploadOutlined,
   DownloadOutlined,
   EyeOutlined,
   FileExcelOutlined,
   FileTextOutlined,
+  RollbackOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -84,6 +82,10 @@ const QuestionBankPage: React.FC = () => {
   const [exportModalVisible, setExportModalVisible] = useState(false);  // 🆕 导出弹窗
   const [exportFormat, setExportFormat] = useState<'excel' | 'csv'>('excel');  // 🆕 导出格式
   const [exportLoading, setExportLoading] = useState(false);  // 🆕 导出加载状态
+  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);  // 撤回弹窗
+  const [withdrawQuestionId, setWithdrawQuestionId] = useState<number | null>(null);  // 撤回题目ID
+  const [withdrawReason, setWithdrawReason] = useState('');  // 撤回原因
+  const [withdrawLoading, setWithdrawLoading] = useState(false);  // 撤回加载状态
 
   // 🆕 权限判断：是否可以使用区县筛选
   const canSelectDistrict = user?.role === 'system_admin' || user?.role === 'municipal_admin';
@@ -178,16 +180,6 @@ const QuestionBankPage: React.FC = () => {
       message.error('搜索失败');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await questionBankApi.deleteQuestion(id);
-      message.success('删除成功');
-      loadQuestions();
-    } catch (error: any) {
-      message.error(error.response?.data?.error || '删除失败');
     }
   };
 
@@ -310,6 +302,26 @@ const QuestionBankPage: React.FC = () => {
     updateFiltersWithReset({ scopes });
     // 保存到 localStorage
     localStorage.setItem('selectedScopes', JSON.stringify(scopes));
+  };
+
+  const handleWithdraw = async () => {
+    if (!withdrawQuestionId || !withdrawReason.trim()) {
+      message.warning('请填写撤回原因');
+      return;
+    }
+    try {
+      setWithdrawLoading(true);
+      await questionBankApi.withdrawQuestion(withdrawQuestionId, withdrawReason.trim());
+      message.success('题目已成功撤回');
+      setWithdrawModalVisible(false);
+      setWithdrawQuestionId(null);
+      setWithdrawReason('');
+      loadQuestions();
+    } catch (error: any) {
+      message.error(error.response?.data?.error || '撤回失败');
+    } finally {
+      setWithdrawLoading(false);
+    }
   };
 
   const getScopeText = (scope: string): { text: string; color: string } => {
@@ -521,7 +533,7 @@ const QuestionBankPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 140,
       render: (_: any, record: Question) => (
         <Space size="small">
           <Tooltip title="查看">
@@ -535,29 +547,19 @@ const QuestionBankPage: React.FC = () => {
               }}
             />
           </Tooltip>
-          <Tooltip title="编辑">
+          <Tooltip title="撤回">
             <Button
               type="link"
               size="small"
-              icon={<EditOutlined />}
-              onClick={() => navigate(`/teacher/question-bank/edit/${record.id}`)}
+              danger
+              icon={<RollbackOutlined />}
+              onClick={() => {
+                setWithdrawQuestionId(record.id);
+                setWithdrawReason('');
+                setWithdrawModalVisible(true);
+              }}
             />
           </Tooltip>
-          <Popconfirm
-            title="确定要删除这道题目吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Tooltip title="删除">
-              <Button
-                type="link"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-              />
-            </Tooltip>
-          </Popconfirm>
         </Space>
       ),
     },
@@ -956,6 +958,37 @@ const QuestionBankPage: React.FC = () => {
             <div>• <strong>导出当前筛选结果</strong>：仅导出符合当前筛选条件的题目</div>
           </div>
         </Space>
+      </Modal>
+
+      {/* Withdraw Modal */}
+      <Modal
+        title="撤回题目"
+        open={withdrawModalVisible}
+        onOk={handleWithdraw}
+        onCancel={() => {
+          setWithdrawModalVisible(false);
+          setWithdrawQuestionId(null);
+          setWithdrawReason('');
+        }}
+        confirmLoading={withdrawLoading}
+        okText="确认撤回"
+        cancelText="取消"
+        okButtonProps={{ danger: true, disabled: !withdrawReason.trim() }}
+      >
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ color: '#666' }}>撤回后题目将不再显示在题库浏览列表中，但不会影响已组卷的活动。</p>
+        </div>
+        <div>
+          <div style={{ marginBottom: 8, fontWeight: 500 }}>撤回原因（必填）：</div>
+          <Input.TextArea
+            rows={4}
+            placeholder="请填写撤回原因，如：题目内容有误、需要修改后重新发布等"
+            value={withdrawReason}
+            onChange={(e) => setWithdrawReason(e.target.value)}
+            maxLength={500}
+            showCount
+          />
+        </div>
       </Modal>
     </div>
   );

@@ -85,6 +85,10 @@ backup/
 /playwright/.cache/
 /screenshots/
 
+# 本地Docker覆盖配置
+docker-compose.override.yml
+docker-compose.local.yml
+
 # Playwright MCP
 .playwright-mcp/
 documents/status/

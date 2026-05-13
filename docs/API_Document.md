@@ -2,7 +2,7 @@
 
 贵阳市小学生测评服务平台 - 后端API接口文档
 
-**最后更新**: 2025-01-20
+**最后更新**: 2026-02-20
 **API 版本**: v1.0
 **Base URL**: `http://localhost:3001/api`
 
@@ -778,6 +778,48 @@ Authorization: Bearer <token>
 
 ---
 
+### 撤回已发布题目
+
+**POST** `/api/question-bank/bank/:id/withdraw`
+
+撤回已发布的题目，将状态从 `published` 改为 `inactive`。
+
+**权限**: 发布者本人 / 系统管理员 / 市级管理员 / 对应区级管理员 / 拥有管理权限的教师
+
+**请求头**:
+```
+Authorization: Bearer <token>
+```
+
+**请求体**:
+```json
+{
+  "reason": "撤回原因说明（必填）"
+}
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "message": "题目已成功撤回",
+  "data": {
+    "id": 1,
+    "status": "inactive",
+    "withdrawn_by": 5,
+    "withdrawn_at": "2026-02-20T10:00:00.000Z",
+    "withdraw_reason": "题目内容需要修订"
+  }
+}
+```
+
+**错误响应**:
+- `400` - 撤回原因不能为空
+- `403` - 您没有权限撤回此题目
+- `404` - 发布记录不存在或已被撤回
+
+---
+
 ## ✅ 题库审核 API
 
 ### 提交题目审核
@@ -1115,6 +1157,39 @@ Authorization: Bearer <token>
     "issued_date": "2024-06-15",
     "is_valid": true
   }
+}
+```
+
+---
+
+## 👥 活动参与者 API
+
+### 获取活动参与者列表
+
+**GET** `/api/activities/:id/participants`
+
+获取指定活动的参与者列表（教师/管理员权限）。
+
+**请求头**:
+```
+Authorization: Bearer <token>
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "participants": [
+    {
+      "id": 1,
+      "student_id": 10,
+      "student_name": "张三",
+      "status": "completed",
+      "score": 85,
+      "submitted_at": "2026-02-20T10:30:00.000Z",
+      "attempt_number": 1
+    }
+  ]
 }
 ```
 

@@ -1,7 +1,7 @@
 # 题库权限管理系统规范文档
 
-**版本**: 2.0
-**日期**: 2025-11-03
+**版本**: 3.0
+**日期**: 2026-02-20
 **状态**: 设计规范
 
 ---
@@ -135,13 +135,13 @@
 
 ### 权限类型 (Permission Types)
 
-系统定义三种审核权限类型：
+系统定义三种管理权限类型（包含审核和撤回功能）：
 
 | 权限类型 | 代码 | 说明 | 适用范围 |
 |---------|------|------|---------|
-| **测评题库审核权限** | `assessment_review` | 审核测评题库题目 | 全市 |
-| **市级练习题库审核权限** | `practice_municipal_review` | 审核市级公开练习题目 | 全市 |
-| **区级练习题库审核权限** | `practice_district_review` | 审核区级练习题目 | 特定区 |
+| **测评题库管理权限** | `assessment_manage` | 管理测评题库题目（审核+撤回） | 全市 |
+| **市级练习题库管理权限** | `practice_municipal_manage` | 管理市级公开练习题目（审核+撤回） | 全市 |
+| **区级练习题库管理权限** | `practice_district_manage` | 管理区级练习题目（审核+撤回） | 特定区 |
 
 ### 授权规则
 
@@ -205,7 +205,7 @@
 CREATE TABLE teacher_permissions (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  permission_type VARCHAR(50) NOT NULL, -- assessment_review, practice_municipal_review, practice_district_review
+  permission_type VARCHAR(50) NOT NULL, -- assessment_manage, practice_municipal_manage, practice_district_manage
   subjects TEXT[] NOT NULL, -- 可审核的科目列表 ['数学', '语文']
   scope_level VARCHAR(20), -- 'municipal', 'district', 'school'
   district_id INTEGER REFERENCES districts(id), -- 区级权限时必填
@@ -240,7 +240,7 @@ CREATE TABLE teacher_permissions (
        ↓
 [提交审核] → 选择审核人 (status: pending_review)
        ↓                   ↑ 系统检查：
-       ↓                   | - 审核人是否有 assessment_review 权限
+       ↓                   | - 审核人是否有 assessment_manage 权限
        ↓                   | - 审核人的 subjects 是否包含该科目
        ↓                   └─ 如不满足，拒绝提交
 [审核人审核]
@@ -268,7 +268,7 @@ CREATE TABLE teacher_permissions (
        ↓
 [提交审核] → 选择市级审核人 (status: pending_review)
        ↓                     ↑ 系统检查：
-       ↓                     | - 审核人是否有 practice_municipal_review 权限
+       ↓                     | - 审核人是否有 practice_municipal_manage 权限
        ↓                     | - 审核人的 subjects 是否包含该科目
        ↓                     └─ 如不满足，拒绝提交
 [审核人审核]
@@ -295,7 +295,7 @@ CREATE TABLE teacher_permissions (
        ↓
 [提交审核] → 选择区级审核人 (status: pending_review)
        ↓                     ↑ 系统检查：
-       ↓                     | - 审核人是否有 practice_district_review 权限
+       ↓                     | - 审核人是否有 practice_district_manage 权限
        ↓                     | - 审核人的 district_id 是否与题目创建者同区
        ↓                     | - 审核人的 subjects 是否包含该科目
        ↓                     └─ 如不满足，拒绝提交
@@ -525,7 +525,7 @@ WHERE qb.status = 'pending_review'
     SELECT unnest(subjects)
     FROM teacher_permissions
     WHERE user_id = :reviewer_id
-      AND permission_type IN ('assessment_review', 'practice_municipal_review')
+      AND permission_type IN ('assessment_manage', 'practice_municipal_manage')
       AND is_active = true
   );
 
@@ -541,7 +541,7 @@ WHERE qb.status = 'pending_review'
     SELECT district_id
     FROM teacher_permissions
     WHERE user_id = :reviewer_id
-      AND permission_type = 'practice_district_review'
+      AND permission_type = 'practice_district_manage'
       AND is_active = true
     LIMIT 1
   )
@@ -549,7 +549,7 @@ WHERE qb.status = 'pending_review'
     SELECT unnest(subjects)
     FROM teacher_permissions
     WHERE user_id = :reviewer_id
-      AND permission_type = 'practice_district_review'
+      AND permission_type = 'practice_district_manage'
       AND is_active = true
   );
 ```
@@ -613,7 +613,7 @@ ORDER BY u.real_name;
 目标题库类型？
     ├─ 测评题库 (Assessment)
     │      ↓
-    │  必须审核 → 提交给有 assessment_review 权限的审核人
+    │  必须审核 → 提交给有 assessment_manage 权限的审核人
     │      ↓
     │  [审核流程]
     │      ↓
@@ -623,7 +623,7 @@ ORDER BY u.real_name;
     │
     ├─ 市级练习题库 (Practice Municipal)
     │      ↓
-    │  必须审核 → 提交给有 practice_municipal_review 权限的审核人
+    │  必须审核 → 提交给有 practice_municipal_manage 权限的审核人
     │      ↓
     │  [审核流程]
     │      ↓
@@ -633,7 +633,7 @@ ORDER BY u.real_name;
     │
     ├─ 区级练习题库 (Practice District)
     │      ↓
-    │  必须审核 → 提交给本区有 practice_district_review 权限的审核人
+    │  必须审核 → 提交给本区有 practice_district_manage 权限的审核人
     │      ↓
     │  [审核流程]
     │      ↓
@@ -661,9 +661,9 @@ ORDER BY u.real_name;
     ├─ 系统总管理员 / 市级管理员
     │      ↓
     │  可授予的权限类型：
-    │    ├─ 测评题库审核权限 (assessment_review)
-    │    ├─ 市级练习题库审核权限 (practice_municipal_review)
-    │    └─ 区级练习题库审核权限 (practice_district_review)
+    │    ├─ 测评题库审核权限 (assessment_manage)
+    │    ├─ 市级练习题库审核权限 (practice_municipal_manage)
+    │    └─ 区级练习题库审核权限 (practice_district_manage)
     │      ↓
     │  可选择的教师范围：全市任何教师
     │      ↓
@@ -676,7 +676,7 @@ ORDER BY u.real_name;
     └─ 区级管理员
            ↓
        可授予的权限类型：
-         └─ 区级练习题库审核权限 (practice_district_review)
+         └─ 区级练习题库审核权限 (practice_district_manage)
            ↓
        可选择的教师范围：**仅限本区教师**（系统自动过滤）
            ↓
@@ -716,9 +716,9 @@ ORDER BY u.real_name;
 
 - [ ] **1.4 更新权限类型**
   - 将 `question_bank_review` 拆分为：
-    - `assessment_review`
-    - `practice_municipal_review`
-    - `practice_district_review`
+    - `assessment_manage`
+    - `practice_municipal_manage`
+    - `practice_district_manage`
 
 **输出**:
 - ✅ 数据库迁移脚本
@@ -883,15 +883,72 @@ ORDER BY u.real_name;
 
 ---
 
+## 题目撤回功能
+
+### 撤回说明
+
+已发布的题目可以被撤回（状态从 `published` 变为 `inactive`），撤回后题目不再出现在题库浏览列表中，但不影响已组卷的活动和已提交的答案。
+
+### 撤回权限规则
+
+以下角色可以撤回已发布的题目：
+
+1. **题目发布者本人** - 可以撤回自己发布的题目
+2. **系统管理员 / 市级管理员** - 可以撤回任何题目
+3. **区级管理员** - 可以撤回本区范围内的题目
+4. **拥有对应范围管理权限的教师** - 可以撤回对应范围的题目
+
+### 撤回流程
+
+```
+[已发布题目] (status: published)
+       ↓
+[点击撤回] → 填写撤回原因（必填）
+       ↓
+[权限检查]
+       ↓
+    ┌──┴──┐
+[有权限]  [无权限]
+    │      │
+    │   返回403错误
+    │
+(status: inactive)
+    ↓
+[题目从浏览列表中消失]
+[已组卷活动不受影响]
+```
+
+### 撤回数据字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `withdrawn_by` | INTEGER | 撤回操作人ID |
+| `withdrawn_at` | TIMESTAMP | 撤回时间 |
+| `withdraw_reason` | TEXT | 撤回原因 |
+
+### 撤回API
+
+**POST** `/api/question-bank/bank/:id/withdraw`
+
+**请求体**:
+```json
+{
+  "reason": "撤回原因说明"
+}
+```
+
+---
+
 ## 总结
 
 ### 核心改进点
 
 1. ✅ **题库分级管理**: 练习题库分为市级、区级、校级三个层次
-2. ✅ **权限精细化控制**: 不同层级的管理员和审核人有明确的权限边界
+2. ✅ **权限精细化控制**: 不同层级的管理员和管理人有明确的权限边界
 3. ✅ **区域自动关联**: 区级管理员授权时自动关联所在区，避免误操作
 4. ✅ **灵活的审核流程**: 校级题库无需审核，快速发布；测评和高级练习题库严格审核
 5. ✅ **清晰的可见性规则**: 每个层级的题库都有明确的可见范围
+6. ✅ **题目撤回机制**: 支持发布者和管理员撤回已发布题目，撤回不影响已组卷活动
 
 ### 预期收益
 
@@ -903,6 +960,6 @@ ORDER BY u.real_name;
 
 ---
 
-**📅 文档最后更新**: 2025-11-03
+**📅 文档最后更新**: 2026-02-20
 **👤 文档维护人**: 开发团队
 **📧 联系方式**: 如有疑问请联系系统管理员

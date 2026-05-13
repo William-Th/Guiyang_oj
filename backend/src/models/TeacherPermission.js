@@ -163,7 +163,7 @@ class TeacherPermission {
       params.push(filters.permission_type);
     }
 
-    // 区级管理员只能看到该区域内的教师权限，且只能看到区级练习审核权限
+    // 区级管理员只能看到该区域内的教师权限，且只能看到区级练习管理权限
     if (filters.managementScope && filters.managementScope.role === 'district_admin') {
       const districtId = filters.managementScope.districtId;
       if (districtId) {
@@ -175,8 +175,8 @@ class TeacherPermission {
         )`);
         params.push(districtId);
 
-        // 区级管理员只能看到区级练习审核权限，不能看到测评和市级练习审核权限
-        whereClauses.push('tp.permission_type = \'practice_district_review\'');
+        // 区级管理员只能看到区级练习管理权限，不能看到测评和市级练习管理权限
+        whereClauses.push('tp.permission_type = \'practice_district_manage\'');
       }
     }
 
@@ -208,13 +208,13 @@ class TeacherPermission {
   static async grantDistrictPermission(userId, subjects, grantedBy, districtId, expiresAt = null, notes = null) {
     return await this.create({
       user_id: userId,
-      permission_type: 'practice_district_review',
+      permission_type: 'practice_district_manage',
       subjects,
       scope_level: 'district',
       district_id: districtId,
       granted_by: grantedBy,
       expires_at: expiresAt,
-      notes: notes || '区级练习题库审核权限'
+      notes: notes || '区级练习题库管理权限'
     });
   }
 
@@ -230,11 +230,11 @@ class TeacherPermission {
 
     // 根据 targetScope 确定权限类型
     if (targetScope === 'assessment') {
-      permissionType = 'assessment_review';
+      permissionType = 'assessment_manage';
     } else if (targetScope === 'practice_municipal') {
-      permissionType = 'practice_municipal_review';
+      permissionType = 'practice_municipal_manage';
     } else if (targetScope.startsWith('practice_district_')) {
-      permissionType = 'practice_district_review';
+      permissionType = 'practice_district_manage';
       districtCode = targetScope.replace('practice_district_', '');
     } else if (targetScope.startsWith('practice_school_')) {
       // 校级题库不需要审核
@@ -375,7 +375,7 @@ class TeacherPermission {
       UPDATE teacher_permissions
       SET is_active = false, updated_at = CURRENT_TIMESTAMP
       WHERE user_id = $1
-        AND permission_type = 'practice_district_review'
+        AND permission_type = 'practice_district_manage'
         AND district_id = $2
       RETURNING *
     `;
@@ -420,6 +420,71 @@ class TeacherPermission {
 
     const result = await query(sql, [permissionId]);
     return result.rows[0];
+  }
+
+  /**
+   * 检查用户是否有权限撤回某个题库发布记录
+   * 撤回权限规则：
+   * 1. 题目发布者本人 → 允许
+   * 2. 系统管理员 / 市级管理员 → 允许
+   * 3. 区级管理员 + 题目scope为本区 → 允许
+   * 4. 拥有对应scope管理权限（_manage）的教师 → 允许
+   * 5. 其他 → 拒绝
+   * @param {number} userId - 当前用户ID
+   * @param {Object} questionBankRecord - 题库发布记录（含 published_by, scope, subject 等）
+   * @returns {Promise<boolean>}
+   */
+  static async canWithdrawQuestion(userId, questionBankRecord) {
+    // 规则1：发布者本人
+    if (questionBankRecord.published_by === userId) {
+      return true;
+    }
+
+    // 获取用户角色
+    const userSql = 'SELECT role FROM users WHERE id = $1';
+    const userResult = await query(userSql, [userId]);
+    if (userResult.rows.length === 0) return false;
+    const userRole = userResult.rows[0].role;
+
+    // 规则2：系统管理员 / 市级管理员
+    if (userRole === 'system_admin' || userRole === 'municipal_admin') {
+      return true;
+    }
+
+    // 规则3：区级管理员 + 题目scope为本区
+    if (userRole === 'district_admin') {
+      const scope = questionBankRecord.scope;
+      if (scope && scope.startsWith('practice_district_')) {
+        const managementScope = await this.getUserManagementScope(userId);
+        if (managementScope && managementScope.district_id) {
+          // 比较题目的 district_id 和管理员的 district_id
+          if (questionBankRecord.district_id === managementScope.district_id) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // 规则4：拥有对应scope管理权限的教师
+    const scope = questionBankRecord.scope;
+    let permissionType = null;
+    if (scope === 'assessment') {
+      permissionType = 'assessment_manage';
+    } else if (scope === 'practice_municipal') {
+      permissionType = 'practice_municipal_manage';
+    } else if (scope && scope.startsWith('practice_district_')) {
+      permissionType = 'practice_district_manage';
+    } else if (scope === 'competition') {
+      permissionType = 'competition_manage';
+    }
+
+    if (permissionType) {
+      const hasManagePerm = await this.hasPermission(userId, permissionType, questionBankRecord.subject);
+      if (hasManagePerm) return true;
+    }
+
+    // 规则5：其他 → 拒绝
+    return false;
   }
 
   // ========================================

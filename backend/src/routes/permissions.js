@@ -110,11 +110,11 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
 
     // 验证权限类型
     const validPermissionTypes = [
-      // 审核权限
-      'assessment_review',           // 测评题库审核
-      'practice_municipal_review',   // 市级练习题库审核
-      'practice_district_review',    // 区级练习题库审核
-      'competition_review',          // 竞赛审核
+      // 管理权限（包含审核 + 撤回）
+      'assessment_manage',              // 测评题库管理（原 assessment_review）
+      'practice_municipal_manage',      // 市级练习题库管理（原 practice_municipal_review）
+      'practice_district_manage',       // 区级练习题库管理（原 practice_district_review）
+      'competition_manage',             // 竞赛管理（原 competition_review）
       // 练习发布权限
       'practice_publish_municipal',       // 市级练习发布
       'practice_publish_district',        // 区级练习发布
@@ -123,13 +123,19 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
       'practice_publish_municipal_school' // 市直学校练习发布
     ];
 
-    // 明确拒绝废弃的权限类型 (2025-11-05 migration 012)
-    const deprecatedPermissionTypes = ['question_bank_review'];
+    // 明确拒绝废弃的权限类型
+    const deprecatedPermissionTypes = [
+      'question_bank_review',
+      'assessment_review',              // 已迁移为 _manage
+      'practice_municipal_review',
+      'practice_district_review',
+      'competition_review'
+    ];
 
     if (deprecatedPermissionTypes.includes(permission_type)) {
       return res.status(400).json({
         success: false,
-        error: `Permission type "${permission_type}" has been deprecated. Please use the new granular permission types: assessment_review, practice_municipal_review, or practice_district_review`
+        error: `Permission type "${permission_type}" has been deprecated. Please use the new permission types: assessment_manage, practice_municipal_manage, or practice_district_manage`
       });
     }
 
@@ -141,28 +147,28 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
     }
 
     // 授权规则验证
-    // 1. 只有市级/系统管理员可以授予测评审核权限
-    if (permission_type === 'assessment_review') {
+    // 1. 只有市级/系统管理员可以授予测评管理权限
+    if (permission_type === 'assessment_manage') {
       if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
         return res.status(403).json({
           success: false,
-          error: '只有市级管理员或系统管理员可以授予测评审核权限'
+          error: '只有市级管理员或系统管理员可以授予测评管理权限'
         });
       }
     }
 
-    // 2. 只有市级/系统管理员可以授予市级练习审核权限
-    if (permission_type === 'practice_municipal_review') {
+    // 2. 只有市级/系统管理员可以授予市级练习管理权限
+    if (permission_type === 'practice_municipal_manage') {
       if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
         return res.status(403).json({
           success: false,
-          error: '只有市级管理员或系统管理员可以授予市级练习审核权限'
+          error: '只有市级管理员或系统管理员可以授予市级练习管理权限'
         });
       }
     }
 
-    // 3. 区级管理员只能授予本区的区级练习审核权限
-    if (permission_type === 'practice_district_review') {
+    // 3. 区级管理员只能授予本区的区级练习管理权限
+    if (permission_type === 'practice_district_manage') {
       if (req.user.role === 'district_admin') {
         // 区级管理员必须自动关联自己的 district_id
         const managementScope = await TeacherPermission.getUserManagementScope(req.user.id);
@@ -195,7 +201,7 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
       } else {
         return res.status(403).json({
           success: false,
-          error: '只有区级、市级或系统管理员可以授予区级审核权限'
+          error: '只有区级、市级或系统管理员可以授予区级管理权限'
         });
       }
     }
