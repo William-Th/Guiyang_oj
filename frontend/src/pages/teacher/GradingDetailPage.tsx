@@ -382,14 +382,52 @@ const GradingDetailPage: React.FC = () => {
       single: '单选题',
       multiple: '多选题',
       fill_blank: '填空题',
+      blank: '填空题',
       short_answer: '简答题',
       essay: '论述题',
       coding: '编程题',
       programming: '编程题',
+      code: '编程题',
       true_false: '判断题',
-      blank: '填空题',
+      matching: '匹配题',
     };
     return typeMap[type] || type;
+  };
+
+  // 题型显示顺序
+  const TYPE_ORDER = ['single', 'multiple', 'true_false', 'blank', 'fill_blank', 'matching', 'short_answer', 'essay', 'coding', 'programming', 'code'];
+  const CN_NUMS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+  // 按题型分组题目，组内每个项保留全局 index（用于上下题导航和 scroll）
+  const computeGroupedQuestions = () => {
+    if (!detail) return [];
+    type Item = {
+      question: typeof detail.questions[0];
+      answer: typeof detail.answers[0];
+      globalIndex: number;
+    };
+    const groups = new Map<string, Item[]>();
+    detail.questions.forEach((q, i) => {
+      const a = detail.answers.find(x => x.question_id === q.id);
+      if (!a) return;
+      const t = q.type || 'unknown';
+      if (!groups.has(t)) groups.set(t, []);
+      groups.get(t)!.push({ question: q, answer: a, globalIndex: i });
+    });
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => {
+        const ia = TYPE_ORDER.indexOf(a);
+        const ib = TYPE_ORDER.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      })
+      .map(([type, items]) => ({
+        type,
+        typeName: getQuestionTypeLabel(type),
+        items,
+        totalScore: items.reduce((s, it) => s + (Number(it.question.score) || 0), 0),
+        earnedScore: items.reduce((s, it) => s + (Number(it.answer.score) || 0), 0),
+        gradedCount: items.filter(it => it.answer.grading_status !== 'pending').length
+      }));
   };
 
   if (loading) {
@@ -486,139 +524,156 @@ const GradingDetailPage: React.FC = () => {
       </Card>
 
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-        {detail.questions.map((question, index) => {
-          const answer = detail.answers.find(a => a.question_id === question.id);
-          if (!answer) return null;
-
-          const isSubjective = ['short_answer', 'essay', 'coding', 'programming'].includes(question.type);
-          const needsManualGrading = answer.grading_status === 'pending' || isSubjective;
-
+        {computeGroupedQuestions().map((group, groupIndex) => {
+          const cnNum = CN_NUMS[groupIndex] || String(groupIndex + 1);
           return (
-            <Card
-              key={question.id}
-              id={`question-${question.id}`}
-              ref={(el) => (questionRefs.current[question.id] = el)}
-              style={{ marginBottom: 16 }}
-              title={
-                <Space size="large">
-                  <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1890ff' }}>
-                    第 {index + 1} 题
-                  </div>
-                  <Tag color="cyan" style={{ fontSize: 14 }}>
-                    {getQuestionTypeLabel(question.type)}
-                  </Tag>
-                  <Tag color="green" style={{ fontSize: 14 }}>
-                    满分: {question.score} 分
-                  </Tag>
-                  {answer.grading_status === 'auto_graded' && (
-                    <Tag color="blue">已自动评分</Tag>
-                  )}
-                  {answer.grading_status === 'manual_graded' && (
-                    <Tag color="purple">已人工评分</Tag>
-                  )}
-                  {answer.grading_status === 'pending' && (
-                    <Tag color="orange">待评分</Tag>
-                  )}
-                </Space>
-              }
-              extra={
-                <Space>
-                  <Button
-                    size="small"
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => scrollToQuestion(index - 1)}
-                    disabled={index === 0}
-                  >
-                    上一题 (P)
-                  </Button>
-                  <Button
-                    size="small"
-                    icon={<ArrowRightOutlined />}
-                    onClick={() => scrollToQuestion(index + 1)}
-                    disabled={index === detail.questions.length - 1}
-                  >
-                    下一题 (N)
-                  </Button>
-                </Space>
-              }
-            >
-              <Divider style={{ marginTop: 0 }} />
+            <div key={group.type} style={{ marginBottom: 24 }}>
+              <div style={{
+                padding: '10px 14px',
+                background: '#fafafa',
+                borderLeft: '3px solid #1890ff',
+                marginBottom: 12,
+                borderRadius: 4
+              }}>
+                <Title level={5} style={{ margin: 0 }}>
+                  {cnNum}、{group.typeName}
+                  <Text type="secondary" style={{ fontSize: 14, marginLeft: 12, fontWeight: 'normal' }}>
+                    （{group.items.length} 题 · {group.totalScore} 分 ·
+                    已评 {group.gradedCount}/{group.items.length}
+                    {group.earnedScore > 0 ? ` · 得 ${group.earnedScore} 分` : ''}）
+                  </Text>
+                </Title>
+              </div>
+              {group.items.map(({ question, answer, globalIndex }, idx) => {
+                const isSubjective = ['short_answer', 'essay', 'coding', 'programming'].includes(question.type);
+                const needsManualGrading = answer.grading_status === 'pending' || isSubjective;
 
-              <div style={{ marginBottom: 16 }}>
-                <Title level={5}>题目</Title>
-                <Paragraph>{question.content}</Paragraph>
+                return (
+                  <Card
+                    key={question.id}
+                    id={`question-${question.id}`}
+                    ref={(el) => (questionRefs.current[question.id] = el)}
+                    style={{ marginBottom: 16 }}
+                    title={
+                      <Space size="large">
+                        <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1890ff' }}>
+                          {idx + 1}.
+                        </div>
+                        <Tag color="green" style={{ fontSize: 14 }}>
+                          满分: {question.score} 分
+                        </Tag>
+                        {answer.grading_status === 'auto_graded' && (
+                          <Tag color="blue">已自动评分</Tag>
+                        )}
+                        {answer.grading_status === 'manual_graded' && (
+                          <Tag color="purple">已人工评分</Tag>
+                        )}
+                        {answer.grading_status === 'pending' && (
+                          <Tag color="orange">待评分</Tag>
+                        )}
+                      </Space>
+                    }
+                    extra={
+                      <Space>
+                        <Button
+                          size="small"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => scrollToQuestion(globalIndex - 1)}
+                          disabled={globalIndex === 0}
+                        >
+                          上一题 (P)
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<ArrowRightOutlined />}
+                          onClick={() => scrollToQuestion(globalIndex + 1)}
+                          disabled={globalIndex === detail.questions.length - 1}
+                        >
+                          下一题 (N)
+                        </Button>
+                      </Space>
+                    }
+                  >
+                    <Divider style={{ marginTop: 0 }} />
 
-                {question.options && (
-                  <div>
-                    {Object.entries(question.options).map(([key, value]) => (
-                      <div key={key}>
-                        {key}. {value}
+                    <div style={{ marginBottom: 16 }}>
+                      <Title level={5}>题目</Title>
+                      <Paragraph>{question.content}</Paragraph>
+
+                      {question.options && (
+                        <div>
+                          {Object.entries(question.options).map(([key, value]) => (
+                            <div key={key}>
+                              {key}. {value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginBottom: 16 }}>
+                      <Title level={5}>学生答案</Title>
+                      <div style={{
+                        padding: '12px',
+                        background: '#f5f5f5',
+                        borderRadius: '4px',
+                      }}>
+                        {renderAnswer(answer)}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <Title level={5}>学生答案</Title>
-                <div style={{
-                  padding: '12px',
-                  background: '#f5f5f5',
-                  borderRadius: '4px',
-                }}>
-                  {renderAnswer(answer)}
-                </div>
-              </div>
+                    {!needsManualGrading && answer.is_correct !== null && (
+                      <Alert
+                        message={answer.is_correct ? '回答正确' : '回答错误'}
+                        type={answer.is_correct ? 'success' : 'error'}
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                    )}
 
-              {!needsManualGrading && answer.is_correct !== null && (
-                <Alert
-                  message={answer.is_correct ? '回答正确' : '回答错误'}
-                  type={answer.is_correct ? 'success' : 'error'}
-                  showIcon
-                  style={{ marginBottom: 16 }}
-                />
-              )}
+                    <Row gutter={16}>
+                      <Col span={6}>
+                        <Form.Item
+                          label="得分"
+                          name={`score_${answer.id}`}
+                          rules={[
+                            { required: true, message: '请输入得分' },
+                            { type: 'number', min: 0, max: question.score, message: `得分范围: 0-${question.score}` },
+                          ]}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={question.score}
+                            precision={1}
+                            style={{ width: '100%' }}
+                            disabled={!needsManualGrading}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={18}>
+                        <Form.Item label="评语" name={`feedback_${answer.id}`}>
+                          <TextArea
+                            rows={2}
+                            placeholder="请输入评语（选填）"
+                            disabled={!needsManualGrading}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
 
-              <Row gutter={16}>
-                <Col span={6}>
-                  <Form.Item
-                    label="得分"
-                    name={`score_${answer.id}`}
-                    rules={[
-                      { required: true, message: '请输入得分' },
-                      { type: 'number', min: 0, max: question.score, message: `得分范围: 0-${question.score}` },
-                    ]}
-                  >
-                    <InputNumber
-                      min={0}
-                      max={question.score}
-                      precision={1}
-                      style={{ width: '100%' }}
-                      disabled={!needsManualGrading}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={18}>
-                  <Form.Item label="评语" name={`feedback_${answer.id}`}>
-                    <TextArea
-                      rows={2}
-                      placeholder="请输入评语（选填）"
-                      disabled={!needsManualGrading}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              {needsManualGrading && (
-                <Button
-                  type="link"
-                  icon={<SaveOutlined />}
-                  onClick={() => handleSaveGrade(answer.id)}
-                >
-                  保存本题评分
-                </Button>
-              )}
-            </Card>
+                    {needsManualGrading && (
+                      <Button
+                        type="link"
+                        icon={<SaveOutlined />}
+                        onClick={() => handleSaveGrade(answer.id)}
+                      >
+                        保存本题评分
+                      </Button>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
           );
         })}
       </Form>
@@ -632,30 +687,43 @@ const GradingDetailPage: React.FC = () => {
           style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}
         >
           <Space direction="vertical" style={{ width: '100%' }} size="small">
-            {detail.questions.map((question, index) => {
-              const answer = detail.answers.find(a => a.question_id === question.id);
-              const isGraded = answer?.grading_status !== 'pending';
-
-              return (
-                <Button
-                  key={question.id}
-                  size="small"
-                  type={currentQuestionIndex === index ? 'primary' : 'default'}
-                  block
-                  onClick={() => scrollToQuestion(index)}
-                  style={{
-                    textAlign: 'left',
-                    justifyContent: 'flex-start',
-                  }}
-                  icon={isGraded ? <CheckCircleOutlined /> : null}
-                >
-                  第 {index + 1} 题
-                  <span style={{ marginLeft: 'auto', fontSize: 12 }}>
-                    {question.score}分
-                  </span>
-                </Button>
-              );
-            })}
+            {computeGroupedQuestions().map((group) => (
+              <div key={group.type} style={{ width: '100%' }}>
+                <div style={{
+                  fontSize: 12,
+                  color: '#666',
+                  padding: '4px 0',
+                  borderBottom: '1px solid #f0f0f0',
+                  marginBottom: 4,
+                  fontWeight: 500
+                }}>
+                  {group.typeName}（{group.gradedCount}/{group.items.length}）
+                </div>
+                {group.items.map(({ question, answer, globalIndex }, idx) => {
+                  const isGraded = answer?.grading_status !== 'pending';
+                  return (
+                    <Button
+                      key={question.id}
+                      size="small"
+                      type={currentQuestionIndex === globalIndex ? 'primary' : 'default'}
+                      block
+                      onClick={() => scrollToQuestion(globalIndex)}
+                      style={{
+                        textAlign: 'left',
+                        justifyContent: 'flex-start',
+                        marginBottom: 4
+                      }}
+                      icon={isGraded ? <CheckCircleOutlined /> : null}
+                    >
+                      {idx + 1}.
+                      <span style={{ marginLeft: 'auto', fontSize: 12 }}>
+                        {question.score}分
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+            ))}
           </Space>
 
           <Divider style={{ margin: '12px 0' }} />

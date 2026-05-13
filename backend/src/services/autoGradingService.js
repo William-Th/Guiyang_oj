@@ -66,7 +66,7 @@ class AutoGradingService {
         // Normalize question types: blank → fill_blank
         const normalizedType = question_type === 'blank' ? 'fill_blank' : question_type;
 
-        if (['single', 'multiple', 'fill_blank', 'true_false'].includes(normalizedType)) {
+        if (['single', 'multiple', 'fill_blank', 'true_false', 'matching'].includes(normalizedType)) {
           const gradingResult = await this.gradeQuestion(
             normalizedType,
             student_answer,
@@ -271,6 +271,9 @@ class AutoGradingService {
       case 'true_false':
         return this.gradeTrueFalse(studentAnswer, parsedCorrectAnswer, maxScore);
 
+      case 'matching':
+        return this.gradeMatching(studentAnswer, parsedCorrectAnswer, maxScore);
+
       default:
         return {
           isCorrect: false,
@@ -336,6 +339,106 @@ class AutoGradingService {
       isCorrect,
       score: isCorrect ? parseFloat(maxScore) : 0
     };
+  }
+
+  /**
+   * Grade matching question
+   * 匹配题判题：按正确匹配的比例给分。
+   * 接受格式：
+   *   - 数组：[{ left, right }, ...]
+   *   - JSON 字符串：'[{"left":"A","right":"1"}, ...]'
+   *   - 对象包装：{ pairs: [...] } 或 { answer: [...] }
+   *   - 单 key 对：[{ "A": "1" }, ...]（左为 key，右为 value）
+   * 比对时左右都按字符串严格匹配，trim 后 case-sensitive。
+   * @param {string|Array|Object} studentAnswer - 学生答案
+   * @param {string|Array|Object} correctAnswer - 正确答案
+   * @param {number} maxScore - 满分
+   * @returns {Object} Grading result
+   */
+  static gradeMatching(studentAnswer, correctAnswer, maxScore) {
+    const parsePairs = (raw) => {
+      if (raw === null || raw === undefined) return [];
+      let value = raw;
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+        try {
+          value = JSON.parse(trimmed);
+        } catch {
+          return [];
+        }
+      }
+      // 解包对象包装 { pairs: [...] } 或 { answer: [...] }
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        if (Array.isArray(value.pairs)) value = value.pairs;
+        else if (Array.isArray(value.answer)) value = value.answer;
+        else return [];
+      }
+      if (!Array.isArray(value)) return [];
+      return value.map(item => {
+        if (!item || typeof item !== 'object') return null;
+        if ('left' in item && 'right' in item) {
+          return { left: String(item.left).trim(), right: String(item.right).trim() };
+        }
+        // 单 key 对：取第一个非 'left'/'right' 的键作为 left，值为 right
+        const keys = Object.keys(item);
+        if (keys.length === 0) return null;
+        const k = keys[0];
+        return { left: String(k).trim(), right: String(item[k]).trim() };
+      }).filter(Boolean);
+    };
+
+    try {
+      const correctPairs = parsePairs(correctAnswer);
+      const studentPairs = parsePairs(studentAnswer);
+
+      const totalCount = correctPairs.length;
+      if (totalCount === 0) {
+        return {
+          isCorrect: false,
+          score: 0,
+          correctCount: 0,
+          totalCount: 0,
+          correctRate: 0,
+          message: '匹配题正确答案为空'
+        };
+      }
+
+      // 学生答案查找表（同 left 取第一条匹配）
+      const studentMap = new Map();
+      studentPairs.forEach(p => {
+        if (!studentMap.has(p.left)) studentMap.set(p.left, p.right);
+      });
+
+      let correctCount = 0;
+      correctPairs.forEach(c => {
+        const s = studentMap.get(c.left);
+        if (s !== undefined && s === c.right) correctCount++;
+      });
+
+      const max = parseFloat(maxScore) || 0;
+      const score = totalCount > 0 ? (max * correctCount) / totalCount : 0;
+      // 保留两位小数，避免浮点尾差
+      const roundedScore = Math.round(score * 100) / 100;
+
+      return {
+        isCorrect: correctCount === totalCount,
+        score: roundedScore,
+        correctCount,
+        totalCount,
+        correctRate: correctCount / totalCount
+      };
+    } catch (error) {
+      logger.error('Grade matching error:', error);
+      return {
+        isCorrect: false,
+        score: 0,
+        correctCount: 0,
+        totalCount: 0,
+        correctRate: 0,
+        message: '匹配题判题异常'
+      };
+    }
   }
 
   /**

@@ -114,11 +114,33 @@ const ActivityResultPage: React.FC = () => {
       single: '单选题',
       multiple: '多选题',
       blank: '填空题',
+      fill_blank: '填空题',
       essay: '主观题',
       code: '编程题',
       true_false: '判断题',
+      matching: '匹配题',
     };
     return typeMap[type] || type;
+  };
+
+  // 题型显示顺序（约定）
+  const TYPE_ORDER = ['single', 'multiple', 'true_false', 'blank', 'fill_blank', 'matching', 'essay', 'code'];
+  const CN_NUMS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+  // 按题型分组答案，保持原始顺序作为组内排序
+  const groupAnswersByType = (list: AnswerResult[]) => {
+    const groups = new Map<string, AnswerResult[]>();
+    list.forEach(a => {
+      const t = a.question_type || 'unknown';
+      if (!groups.has(t)) groups.set(t, []);
+      groups.get(t)!.push(a);
+    });
+    // 按预定义顺序排序
+    return Array.from(groups.entries()).sort(([a], [b]) => {
+      const ia = TYPE_ORDER.indexOf(a);
+      const ib = TYPE_ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
   };
 
   const renderAnswerStatus = (answer: AnswerResult) => {
@@ -439,55 +461,72 @@ const ActivityResultPage: React.FC = () => {
         {!answers || answers.length === 0 ? (
           <Empty description="暂无答题记录，答案可能正在批改中或未正确保存" />
         ) : (
-          answers.map((answer, index) => (
-            <Card
-              key={answer.id}
-              type="inner"
-              style={{ marginBottom: 16 }}
-              title={
-                <Space>
-                  <Text strong>第 {index + 1} 题</Text>
-                  <Text type="secondary">({getQuestionTypeName(answer.question_type)})</Text>
-                  <Text type="secondary">{answer.max_score} 分</Text>
-                  {data.can_show_answers && (
-                    <>
-                      {renderAnswerStatus(answer)}
-                      {answer.score !== null && (
-                        <Text type="secondary">
-                          得分：{answer.score} / {answer.max_score}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                </Space>
-              }
-            >
-              <div style={{ marginBottom: 16 }}>
-                <Paragraph style={{ fontSize: 16, marginBottom: 8 }}>
-                  {answer.question_content}
-                </Paragraph>
+          groupAnswersByType(answers).map(([type, list], groupIndex) => {
+            const typeName = getQuestionTypeName(type);
+            const groupMaxScore = list.reduce((sum, a) => sum + (Number(a.max_score) || 0), 0);
+            const groupEarnedScore = list.reduce((sum, a) => sum + (Number(a.score) || 0), 0);
+            const cnNum = CN_NUMS[groupIndex] || String(groupIndex + 1);
+
+            return (
+              <div key={type} style={{ marginBottom: 24 }}>
+                <Title level={5} style={{ marginBottom: 12 }}>
+                  {cnNum}、{typeName}
+                  <Text type="secondary" style={{ fontSize: 14, marginLeft: 12 }}>
+                    （共 {list.length} 题，{groupMaxScore} 分
+                    {data.can_show_answers ? `，得 ${groupEarnedScore} 分` : ''}）
+                  </Text>
+                </Title>
+                {list.map((answer, idx) => (
+                  <Card
+                    key={answer.id}
+                    type="inner"
+                    style={{ marginBottom: 12 }}
+                    title={
+                      <Space>
+                        <Text strong>{idx + 1}.</Text>
+                        <Text type="secondary">{answer.max_score} 分</Text>
+                        {data.can_show_answers && (
+                          <>
+                            {renderAnswerStatus(answer)}
+                            {answer.score !== null && (
+                              <Text type="secondary">
+                                得分：{answer.score} / {answer.max_score}
+                              </Text>
+                            )}
+                          </>
+                        )}
+                      </Space>
+                    }
+                  >
+                    <div style={{ marginBottom: 16 }}>
+                      <Paragraph style={{ fontSize: 16, marginBottom: 8 }}>
+                        {answer.question_content}
+                      </Paragraph>
+                    </div>
+
+                    <Divider orientation="left" style={{ margin: '12px 0' }}>
+                      你的答案
+                    </Divider>
+                    {renderYourAnswer(answer)}
+
+                    {data.can_show_answers && answer.feedback && (
+                      <div style={{ marginTop: 12 }}>
+                        <Text type="secondary">评语：</Text>
+                        <Paragraph style={{ marginTop: 8, padding: 12, background: '#e6f7ff', borderRadius: 4 }}>
+                          {answer.feedback}
+                        </Paragraph>
+                      </div>
+                    )}
+
+                    <Divider orientation="left" style={{ margin: '12px 0' }}>
+                      {data.can_show_answers ? '正确答案' : '答案公布'}
+                    </Divider>
+                    {renderCorrectAnswer(answer)}
+                  </Card>
+                ))}
               </div>
-
-              <Divider orientation="left" style={{ margin: '12px 0' }}>
-                你的答案
-              </Divider>
-              {renderYourAnswer(answer)}
-
-              {data.can_show_answers && answer.feedback && (
-                <div style={{ marginTop: 12 }}>
-                  <Text type="secondary">评语：</Text>
-                  <Paragraph style={{ marginTop: 8, padding: 12, background: '#e6f7ff', borderRadius: 4 }}>
-                    {answer.feedback}
-                  </Paragraph>
-                </div>
-              )}
-
-              <Divider orientation="left" style={{ margin: '12px 0' }}>
-                {data.can_show_answers ? '正确答案' : '答案公布'}
-              </Divider>
-              {renderCorrectAnswer(answer)}
-            </Card>
-          ))
+            );
+          })
         )}
       </Card>
     </div>

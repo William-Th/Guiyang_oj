@@ -239,12 +239,13 @@
 
 **开发状态**: ✅ **已完成** | API测试100%通过 | E2E测试7/16通过（9个跳过-缺数据）| 参考: `documents/archive/STUDENT_ACTIVITY_GRADING_COMPLETION.md`
 
-**🐛 已知问题** (2026-02-27):
-- **评卷列表不显示已完成自动判题的活动**
-  - 原因: 自动判题后 `grading_status = 'completed'`，但查询条件只包含 `('pending', 'auto_graded', 'partial_graded')`
-  - 影响: 全客观题活动自动判题后不出现在教师评卷列表中，教师无法复查
-  - 文件: `backend/src/services/autoGradingService.js` 第138行
-  - 修复方案: 将无主观题的活动状态设为 `auto_graded` 而非 `completed`
+**已修复**:
+- ~~评卷列表不显示已完成自动判题的活动~~ ✅ 已修复 (2026-05-13, commit 50ad874)
+  - 修复: `autoGradingService.js` 全客观题状态由 `completed` 改为 `auto_graded`，留在评卷列表
+- ~~判断题归类到 single~~ ✅ 已修复 (2026-05-13, commit 50ad874)
+  - 修复: 新增 `gradeTrueFalse` 方法独立判题，兼容 true/false、对/错、是/否、T/F、Y/N 等
+- ~~匹配题不支持自动判题~~ ✅ 已修复 (2026-05-14)
+  - 修复: 新增 `gradeMatching` 方法，按正确匹配比例给分
 
 ---
 
@@ -258,35 +259,36 @@
 
 **功能列表**:
 
+**状态**: ✅ **已完成** (commit 49e4dfd, 2025-12-01)，后续可补 E2E 测试
+
 | 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
 |------|--------|---------|---------|------|---------|------|
 | **数据库设计** |  |  |  |  |  |  |
-| assessment_locations表 | ❌ | N/A | N/A | N/A | N/A | 测评点管理（L4+使用） |
-| assessment_registrations表 | ❌ | N/A | N/A | N/A | N/A | 报名记录管理 |
-| activities表报名字段 | ❌ | N/A | N/A | N/A | N/A | 报名开始/截止时间等 |
-| 报名计数触发器 | ❌ | N/A | N/A | N/A | N/A | 自动维护测评点已报名人数 |
+| assessment_locations表 | ✅ | N/A | N/A | N/A | N/A | 测评点管理（L4+使用） |
+| assessment_registrations表 | ✅ | N/A | N/A | N/A | N/A | 报名记录管理 |
+| activities表报名字段 | ✅ | N/A | N/A | N/A | N/A | 报名开始/截止时间等 |
+| 报名计数触发器 | ✅ | N/A | N/A | N/A | N/A | 自动维护测评点已报名人数 |
 | **测评点管理** |  |  |  |  |  |  |
-| 创建测评点 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/locations |
-| 测评点列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/activities/:id/locations |
-| 编辑测评点 | ❌ | ❌ | ❌ | ❌ | ❌ | PUT /api/.../locations/:id |
-| 删除测评点 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/.../locations/:id |
+| 创建测评点 | ✅ | ✅ | ⏸️ | ✅ | ❌ | POST /api/activities/:id/locations |
+| 测评点列表 | ✅ | ✅ | ⏸️ | ✅ | ❌ | GET /api/activities/:id/locations |
+| 编辑测评点 | ✅ | ✅ | ⏸️ | ✅ | ❌ | PUT /api/.../locations/:id |
+| 删除测评点 | ✅ | ✅ | ⏸️ | ✅ | ❌ | DELETE /api/.../locations/:id |
 | **学生报名** |  |  |  |  |  |  |
-| 检查报名资格 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/activities/:id/registration/eligibility |
-| L1-L3报名 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/register (无测评点) |
-| L4+报名 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/register (含测评点) |
-| 取消报名 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/activities/:id/register/cancel |
-| 我的报名列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/assessments/my-registrations |
+| 检查报名资格 | ✅ | ✅ | ⏸️ | ✅ | ❌ | GET /api/activities/:id/registration/eligibility |
+| L1-L3报名 | ✅ | ✅ | ⏸️ | ✅ | ❌ | POST /api/activities/:id/register (无测评点) |
+| L4+报名 | ✅ | ✅ | ⏸️ | ✅ | ❌ | POST /api/activities/:id/register (含测评点) |
+| 取消报名 | ✅ | ✅ | ⏸️ | ✅ | ❌ | POST /api/activities/:id/register/cancel |
+| 我的报名列表 | ✅ | ✅ | ⏸️ | ✅ | ❌ | GET /api/assessments/my-registrations，MyRegistrationsPage.tsx |
 | **管理员功能** |  |  |  |  |  |  |
-| 报名列表查询 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/activities/:id/registrations |
-| 报名统计 | ❌ | ❌ | ❌ | ❌ | ❌ | 按测评点/学校/年级统计 |
-| 导出报名名单 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/.../registrations/export |
-| 取消发布限制 | ❌ | ❌ | ❌ | ❌ | ❌ | 有报名后不可取消发布 |
+| 报名列表查询 | ✅ | ✅ | ⏸️ | ✅ | ❌ | GET /api/activities/:id/registrations |
+| 报名统计 | ✅ | ✅ | ⏸️ | ✅ | ❌ | 按测评点/学校/年级统计 |
+| 导出报名名单 | ✅ | ✅ | ⏸️ | ✅ | ❌ | GET /api/.../registrations/export |
+| 取消发布限制 | ✅ | ✅ | ⏸️ | ✅ | ❌ | 有报名后不可取消发布 |
 | **前端页面** |  |  |  |  |  |  |
-| 学生-测评报名列表 | N/A | N/A | N/A | ❌ | ❌ | /student/assessments |
-| 学生-测评详情报名 | N/A | N/A | N/A | ❌ | ❌ | /student/assessments/:id |
-| 学生-我的报名 | N/A | N/A | N/A | ❌ | ❌ | /student/my-registrations |
-| 管理员-测评点管理 | N/A | N/A | N/A | ❌ | ❌ | /admin/activities/:id/locations |
-| 管理员-报名管理 | N/A | N/A | N/A | ❌ | ❌ | /admin/activities/:id/registrations |
+| 学生-测评中心（含报名）| N/A | N/A | N/A | ✅ | ❌ | AssessmentCenterPage.tsx |
+| 学生-我的报名 | N/A | N/A | N/A | ✅ | ❌ | MyRegistrationsPage.tsx |
+| 管理员-测评点管理 | N/A | N/A | N/A | ✅ | ❌ | LocationManagement.tsx 组件 |
+| 管理员-报名管理 | N/A | N/A | N/A | ✅ | ❌ | RegistrationManagement.tsx 组件 |
 
 **开发计划**:
 
