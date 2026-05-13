@@ -148,10 +148,10 @@ const AchievementPage: React.FC = () => {
   // 获取稀有度显示信息
   const getRarityInfo = (rarity: string) => {
     const rarityMap: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
-      common: { color: '#8c8c8c', label: '普通', icon: <StarOutlined /> },
-      rare: { color: '#1890ff', label: '稀有', icon: <StarOutlined /> },
-      epic: { color: '#722ed1', label: '史诗', icon: <FireOutlined /> },
-      legendary: { color: '#fa8c16', label: '传说', icon: <TrophyOutlined /> },
+      common: { color: '#6b7280', label: '普通', icon: <StarOutlined /> },
+      rare: { color: '#16a34a', label: '稀有', icon: <StarOutlined /> },
+      epic: { color: '#16a34a', label: '史诗', icon: <FireOutlined /> },
+      legendary: { color: '#f59e0b', label: '传说', icon: <TrophyOutlined /> },
     };
     return rarityMap[rarity] || rarityMap.common;
   };
@@ -213,7 +213,7 @@ const AchievementPage: React.FC = () => {
         hoverable
         style={{
           opacity: earned ? 1 : 0.6,
-          borderColor: earned ? rarityInfo.color : '#d9d9d9',
+          borderColor: earned ? rarityInfo.color : '#e5e7eb',
         }}
         onClick={() => {
           setSelectedAchievement(achievement);
@@ -226,7 +226,7 @@ const AchievementPage: React.FC = () => {
           </div>
           {earned && (
             <Badge
-              count={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+              count={<CheckCircleOutlined style={{ color: '#22c55e' }} />}
               style={{ position: 'absolute', top: 10, right: 10 }}
             />
           )}
@@ -240,7 +240,7 @@ const AchievementPage: React.FC = () => {
 
             <Paragraph
               ellipsis={{ rows: 2 }}
-              style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c' }}
+              style={{ marginBottom: 8, fontSize: 12, color: '#6b7280' }}
             >
               {achievement.achievement_desc}
             </Paragraph>
@@ -257,8 +257,8 @@ const AchievementPage: React.FC = () => {
             {!earned && progress && (
               <div style={{ marginTop: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={{ fontSize: 12, color: '#8c8c8c' }}>进度</Text>
-                  <Text style={{ fontSize: 12, color: '#1890ff' }}>
+                  <Text style={{ fontSize: 12, color: '#6b7280' }}>进度</Text>
+                  <Text style={{ fontSize: 12, color: '#16a34a' }}>
                     {progress.current_value}/{progress.target_value}
                   </Text>
                 </div>
@@ -267,8 +267,8 @@ const AchievementPage: React.FC = () => {
                   size="small"
                   status="active"
                   strokeColor={{
-                    '0%': '#108ee9',
-                    '100%': '#87d068',
+                    '0%': '#16a34a',
+                    '100%': '#22c55e',
                   }}
                 />
               </div>
@@ -276,7 +276,7 @@ const AchievementPage: React.FC = () => {
 
             <div style={{ marginTop: 8 }}>
               <Space>
-                <Text strong style={{ color: '#fa8c16' }}>
+                <Text strong style={{ color: '#f59e0b' }}>
                   +{achievement.points_reward} 积分
                 </Text>
                 {earned && count > 0 && achievement.max_times && achievement.max_times > 1 && (
@@ -331,7 +331,7 @@ const AchievementPage: React.FC = () => {
               value={stats.totalEarned}
               suffix={`/ ${stats.totalAvailable}`}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: '#22c55e' }}
             />
           </Card>
         </Col>
@@ -341,7 +341,7 @@ const AchievementPage: React.FC = () => {
               title="成就积分"
               value={stats.totalPoints}
               prefix={<StarOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>
@@ -351,7 +351,7 @@ const AchievementPage: React.FC = () => {
               title="当前积分"
               value={pointsAccount?.current_balance || 0}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -361,7 +361,7 @@ const AchievementPage: React.FC = () => {
               title="累计积分"
               value={pointsAccount?.total_earned || 0}
               prefix={<FireOutlined />}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -505,15 +505,15 @@ const AchievementPage: React.FC = () => {
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Text>当前进度</Text>
-                        <Text strong style={{ color: '#1890ff' }}>
+                        <Text strong style={{ color: '#16a34a' }}>
                           {progress.current_value} / {progress.target_value}
                         </Text>
                       </div>
                       <Progress
                         percent={progress.progress_percentage}
                         strokeColor={{
-                          '0%': '#108ee9',
-                          '100%': '#87d068',
+                          '0%': '#16a34a',
+                          '100%': '#22c55e',
                         }}
                       />
                       <Text type="secondary" style={{ fontSize: 12 }}>
@@ -529,7 +529,7 @@ const AchievementPage: React.FC = () => {
                     value={selectedAchievement.points_reward}
                     prefix={<StarOutlined />}
                     suffix="积分"
-                    valueStyle={{ color: '#fa8c16' }}
+                    valueStyle={{ color: '#f59e0b' }}
                   />
                 </Card>
 

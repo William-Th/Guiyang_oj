@@ -210,15 +210,15 @@ const PermissionManagement: React.FC = () => {
       return [
         {
           value: 'practice_district_manage',
-          label: <><Tag color="cyan">区级练习题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+          label: <><Tag color="cyan">区级练习题库管理</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 区级管理员可授予</span></>
         },
         {
           value: 'practice_publish_district',
-          label: <><Tag color="green">区级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布区级练习活动</span></>
+          label: <><Tag color="green">区级练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布区级练习活动</span></>
         },
         {
           value: 'practice_publish_school',
-          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
+          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
         }
       ];
     }
@@ -228,7 +228,7 @@ const PermissionManagement: React.FC = () => {
       return [
         {
           value: 'practice_publish_school',
-          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
+          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
         }
       ];
     }
@@ -239,40 +239,40 @@ const PermissionManagement: React.FC = () => {
         // 管理权限（包含审核 + 撤回）
         {
           value: 'assessment_manage',
-          label: <><Tag color="orange">测评题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
+          label: <><Tag color="orange">测评题库管理</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
         },
         {
           value: 'practice_municipal_manage',
-          label: <><Tag color="blue">市级练习题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
+          label: <><Tag color="blue">市级练习题库管理</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 市级/系统管理员专用</span></>
         },
         {
           value: 'practice_district_manage',
-          label: <><Tag color="cyan">区级练习题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 区级管理员可授予</span></>
+          label: <><Tag color="cyan">区级练习题库管理</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 区级管理员可授予</span></>
         },
         {
           value: 'competition_manage',
-          label: <><Tag color="red">竞赛题库管理</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 竞赛专用</span></>
+          label: <><Tag color="red">竞赛题库管理</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 竞赛专用</span></>
         },
         // 练习发布权限
         {
           value: 'practice_publish_municipal',
-          label: <><Tag color="purple">市级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布市级练习活动</span></>
+          label: <><Tag color="purple">市级练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布市级练习活动</span></>
         },
         {
           value: 'practice_publish_district',
-          label: <><Tag color="green">区级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布区级练习活动</span></>
+          label: <><Tag color="green">区级练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布区级练习活动</span></>
         },
         {
           value: 'practice_publish_school',
-          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
+          label: <><Tag color="green">校级练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布校级练习活动</span></>
         },
         {
           value: 'practice_publish_base_school',
-          label: <><Tag color="green">基地学校练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布基地学校练习活动</span></>
+          label: <><Tag color="green">基地学校练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布基地学校练习活动</span></>
         },
         {
           value: 'practice_publish_municipal_school',
-          label: <><Tag color="green">市直学校练习发布</Tag><span style={{ color: '#999', marginLeft: 8 }}>- 允许发布市直学校练习活动</span></>
+          label: <><Tag color="green">市直学校练习发布</Tag><span style={{ color: '#6b7280', marginLeft: 8 }}>- 允许发布市直学校练习活动</span></>
         }
       ];
     }
@@ -321,7 +321,7 @@ const PermissionManagement: React.FC = () => {
       render: (_: any, record: Permission) => (
         <div>
           <div><strong>{record.real_name}</strong></div>
-          <div style={{ fontSize: 12, color: '#999' }}>@{record.username}</div>
+          <div style={{ fontSize: 12, color: '#6b7280' }}>@{record.username}</div>
         </div>
       ),
     },
@@ -369,7 +369,7 @@ const PermissionManagement: React.FC = () => {
         if (text) {
           return <Tag color="geekblue">{text}</Tag>;
         }
-        return <span style={{ color: '#999' }}>全市</span>;
+        return <span style={{ color: '#6b7280' }}>全市</span>;
       },
     },
     {
@@ -381,7 +381,7 @@ const PermissionManagement: React.FC = () => {
         if (text) {
           return <Tag color="green">{text}</Tag>;
         }
-        return <span style={{ color: '#999' }}>-</span>;
+        return <span style={{ color: '#6b7280' }}>-</span>;
       },
     },
     {
@@ -428,7 +428,7 @@ const PermissionManagement: React.FC = () => {
         const now = new Date();
         const isExpired = expiryDate < now;
         return (
-          <span style={{ color: isExpired ? '#ff4d4f' : '#000' }}>
+          <span style={{ color: isExpired ? '#ef4444' : '#000' }}>
             {expiryDate.toLocaleString('zh-CN')}
             {isExpired && <Tag color="error" style={{ marginLeft: 8 }}>已过期</Tag>}
           </span>

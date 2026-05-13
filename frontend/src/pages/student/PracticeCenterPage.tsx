@@ -337,7 +337,7 @@ const PracticeCenterPage: React.FC = () => {
         key: 'score',
         width: 120,
         render: (_: any, record: CompletedPractice) => (
-          <span style={{ fontSize: '16px', fontWeight: 'bold', color: record.my_score >= record.total_score * 0.6 ? '#52c41a' : '#ff4d4f' }}>
+          <span style={{ fontSize: '16px', fontWeight: 'bold', color: record.my_score >= record.total_score * 0.6 ? '#22c55e' : '#ef4444' }}>
             {record.my_score} / {record.total_score}
           </span>
         ),

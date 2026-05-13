@@ -358,7 +358,7 @@ const ActivityDetailPage: React.FC = () => {
                   <Statistic
                     title="最高分"
                     value={statistics.highest_score}
-                    valueStyle={{ color: '#3f8600' }}
+                    valueStyle={{ color: '#22c55e' }}
                   />
                 </Card>
               </Col>
@@ -367,7 +367,7 @@ const ActivityDetailPage: React.FC = () => {
                   <Statistic
                     title="最低分"
                     value={statistics.lowest_score}
-                    valueStyle={{ color: '#cf1322' }}
+                    valueStyle={{ color: '#ef4444' }}
                   />
                 </Card>
               </Col>

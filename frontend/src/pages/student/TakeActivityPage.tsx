@@ -639,7 +639,7 @@ const TakeActivityPage: React.FC = () => {
           <div style={{ overflowX: 'hidden' }}>
             {Object.entries(questionGroups).map(([typeName, questions]) => (
               <div key={typeName} style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 500 }}>
+                <div style={{ fontSize: '13px', color: '#4b5563', marginBottom: '8px', fontWeight: 500 }}>
                   {typeName} ({questions.length})
                 </div>
                 <div style={{
@@ -668,8 +668,8 @@ const TakeActivityPage: React.FC = () => {
                       buttonType = 'default';
                       buttonStyle = {
                         ...buttonStyle,
-                        backgroundColor: '#1677ff',
-                        borderColor: '#1677ff',
+                        backgroundColor: '#16a34a',
+                        borderColor: '#16a34a',
                         color: '#fff',
                         borderWidth: '2px',
                         borderStyle: 'solid',
@@ -681,9 +681,9 @@ const TakeActivityPage: React.FC = () => {
                       buttonType = 'default';
                       buttonStyle = {
                         ...buttonStyle,
-                        backgroundColor: '#fff7e6',
-                        borderColor: '#fa8c16',
-                        color: '#fa8c16',
+                        backgroundColor: '#fef3c7',
+                        borderColor: '#f59e0b',
+                        color: '#f59e0b',
                         borderWidth: '3px',
                         borderStyle: 'solid',
                         fontWeight: 'bold',
@@ -694,9 +694,9 @@ const TakeActivityPage: React.FC = () => {
                       buttonType = 'default';
                       buttonStyle = {
                         ...buttonStyle,
-                        backgroundColor: '#f6ffed',
+                        backgroundColor: '#f0fdf4',
                         borderColor: '#b7eb8f',
-                        color: '#52c41a',
+                        color: '#22c55e',
                         borderWidth: '1px',
                         borderStyle: 'solid',
                       };
@@ -722,12 +722,12 @@ const TakeActivityPage: React.FC = () => {
 
           <Divider style={{ margin: '12px 0' }} />
 
-          <div style={{ fontSize: '13px', color: '#666', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: '#4b5563', textAlign: 'center' }}>
             <div style={{ marginBottom: '6px' }}>
-              <span style={{ color: '#52c41a', fontWeight: 'bold' }}>●</span> 已答 {answeredCount}
+              <span style={{ color: '#22c55e', fontWeight: 'bold' }}>●</span> 已答 {answeredCount}
             </div>
             <div>
-              <span style={{ color: '#d9d9d9' }}>○</span> 未答 {activity.questions.length - answeredCount}
+              <span style={{ color: '#e5e7eb' }}>○</span> 未答 {activity.questions.length - answeredCount}
             </div>
           </div>
         </Card>
@@ -893,11 +893,11 @@ const TakeActivityPage: React.FC = () => {
                           <span style={{ fontWeight: 'bold' }}>
                             {typeIndex + 1}. {question.content}
                           </span>
-                          <span style={{ marginLeft: 12, color: '#999', fontSize: '14px' }}>
+                          <span style={{ marginLeft: 12, color: '#6b7280', fontSize: '14px' }}>
                             ({typeof (question as any).max_score === 'string' ? (question as any).max_score : (question as any).max_score || question.score}分)
                           </span>
                           {answeredQuestions.has(index) && (
-                            <CheckOutlined style={{ color: '#52c41a', marginLeft: 8 }} />
+                            <CheckOutlined style={{ color: '#22c55e', marginLeft: 8 }} />
                           )}
                         </div>
 

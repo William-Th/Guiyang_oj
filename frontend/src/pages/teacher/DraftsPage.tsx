@@ -435,24 +435,24 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
               >
                 <Select.Option value="assessment">
                   <Tag color="orange">测评题库</Tag>
-                  <span style={{ color: '#666', marginLeft: 8 }}>
+                  <span style={{ color: '#4b5563', marginLeft: 8 }}>
                     - 市级/系统管理员审核（最高标准）
                   </span>
                 </Select.Option>
                 <Select.Option value="practice_municipal">
                   <Tag color="blue">市级练习题库</Tag>
-                  <span style={{ color: '#666', marginLeft: 8 }}>
+                  <span style={{ color: '#4b5563', marginLeft: 8 }}>
                     - 市级审核人审核
                   </span>
                 </Select.Option>
                 <Select.Option value="practice_district">
                   <Tag color="cyan">区级练习题库</Tag>
-                  <span style={{ color: '#666', marginLeft: 8 }}>
+                  <span style={{ color: '#4b5563', marginLeft: 8 }}>
                     - 区级审核人审核
                   </span>
                 </Select.Option>
               </Select>
-              <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+              <div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>
                 提示：选择目标题库后，系统会根据题目科目筛选对应的审核人。校级题库无需审核，可在创建时直接发布。
               </div>
             </div>
@@ -465,19 +465,19 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
                 </label>
                 <div style={{
                   padding: '8px 12px',
-                  background: '#f0f2f5',
+                  background: '#f9fafb',
                   borderRadius: 4,
-                  border: '1px solid #d9d9d9'
+                  border: '1px solid #e5e7eb'
                 }}>
                   <Tag color="cyan">{selectedDistrictCode}</Tag>
                   <span style={{ marginLeft: 8 }}>
                     {user?.districtId ? getDistrictById(user.districtId)?.name || '未知区域' : '未知区域'}
                   </span>
-                  <span style={{ marginLeft: 8, color: '#999', fontSize: 12 }}>
+                  <span style={{ marginLeft: 8, color: '#6b7280', fontSize: 12 }}>
                     (根据您的账号自动匹配)
                   </span>
                 </div>
-                <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                <div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>
                   提示：系统已自动根据您的账号信息匹配所属区域，并加载该区域的审核人列表。
                 </div>
               </div>
@@ -507,7 +507,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
                 {availableReviewers.map((reviewer) => (
                   <Select.Option key={reviewer.id} value={reviewer.id}>
                     {reviewer.real_name} ({reviewer.username})
-                    <span style={{ color: '#999', marginLeft: 8 }}>
+                    <span style={{ color: '#6b7280', marginLeft: 8 }}>
                       [{reviewer.subjects.join(', ')}]
                     </span>
                   </Select.Option>
@@ -516,7 +516,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
             </div>
 
             {availableReviewers.length === 0 && (
-              <div style={{ marginTop: 16, padding: 12, background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 4 }}>
+              <div style={{ marginTop: 16, padding: 12, background: '#fef3c7', border: '1px solid #ffd591', borderRadius: 4 }}>
                 <strong>提示：</strong>当前没有可用的审核人。请联系管理员为教师授予相应的审核权限。
               </div>
             )}

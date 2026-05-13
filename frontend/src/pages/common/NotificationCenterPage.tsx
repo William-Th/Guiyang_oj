@@ -268,15 +268,15 @@ const NotificationCenterPage: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'activity':
-        return <ClockCircleOutlined style={{ color: '#1890ff', fontSize: 24 }} />;
+        return <ClockCircleOutlined style={{ color: '#16a34a', fontSize: 24 }} />;
       case 'achievement':
-        return <TrophyOutlined style={{ color: '#faad14', fontSize: 24 }} />;
+        return <TrophyOutlined style={{ color: '#f59e0b', fontSize: 24 }} />;
       case 'reminder':
-        return <ClockCircleOutlined style={{ color: '#ff4d4f', fontSize: 24 }} />;
+        return <ClockCircleOutlined style={{ color: '#ef4444', fontSize: 24 }} />;
       case 'announcement':
-        return <SoundOutlined style={{ color: '#52c41a', fontSize: 24 }} />;
+        return <SoundOutlined style={{ color: '#22c55e', fontSize: 24 }} />;
       default:
-        return <NotificationOutlined style={{ color: '#722ed1', fontSize: 24 }} />;
+        return <NotificationOutlined style={{ color: '#16a34a', fontSize: 24 }} />;
     }
   };
 
@@ -316,7 +316,7 @@ const NotificationCenterPage: React.FC = () => {
         <List.Item
           key={item.id}
           style={{
-            background: item.is_read ? '#fff' : '#f6ffed',
+            background: item.is_read ? '#fff' : '#f0fdf4',
             marginBottom: 8,
             borderRadius: 8,
             padding: '16px 20px'
@@ -368,7 +368,7 @@ const NotificationCenterPage: React.FC = () => {
                 {item.priority >= 4 && <Tag color="red">重要</Tag>}
               </div>
               {item.content && (
-                <Paragraph style={{ marginBottom: 8, color: '#666' }}>
+                <Paragraph style={{ marginBottom: 8, color: '#4b5563' }}>
                   {item.content}
                 </Paragraph>
               )}
@@ -401,7 +401,7 @@ const NotificationCenterPage: React.FC = () => {
           key={item.id}
           onClick={() => handleAnnouncementClick(item)}
           style={{
-            background: item.is_read ? '#fff' : '#fff7e6',
+            background: item.is_read ? '#fff' : '#fef3c7',
             marginBottom: 8,
             borderRadius: 8,
             padding: '16px 20px',
@@ -410,7 +410,7 @@ const NotificationCenterPage: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
             <div style={{ marginRight: 16 }}>
-              <SoundOutlined style={{ color: item.is_pinned ? '#ff4d4f' : '#52c41a', fontSize: 24 }} />
+              <SoundOutlined style={{ color: item.is_pinned ? '#ef4444' : '#22c55e', fontSize: 24 }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ marginBottom: 8 }}>
@@ -421,7 +421,7 @@ const NotificationCenterPage: React.FC = () => {
                 <Tag>{item.type === 'notice' ? '公告' : item.type === 'update' ? '更新' : item.type === 'maintenance' ? '维护' : '活动'}</Tag>
               </div>
               {item.summary && (
-                <Paragraph ellipsis={{ rows: 2 }} style={{ marginBottom: 8, color: '#666' }}>
+                <Paragraph ellipsis={{ rows: 2 }} style={{ marginBottom: 8, color: '#4b5563' }}>
                   {item.summary}
                 </Paragraph>
               )}
@@ -487,7 +487,7 @@ const NotificationCenterPage: React.FC = () => {
               children: (
                 <div>
                   {selectedIds.length > 0 && (
-                    <div style={{ marginBottom: 16, padding: '8px 16px', background: '#f0f5ff', borderRadius: 4 }}>
+                    <div style={{ marginBottom: 16, padding: '8px 16px', background: '#f0fdf4', borderRadius: 4 }}>
                       <Space>
                         <Text>已选择 {selectedIds.length} 条</Text>
                         <Button size="small" icon={<CheckOutlined />} onClick={handleBatchMarkAsRead}>
@@ -569,7 +569,7 @@ const NotificationCenterPage: React.FC = () => {
             <div
               style={{
                 padding: 16,
-                background: '#fafafa',
+                background: '#f9fafb',
                 borderRadius: 8,
                 minHeight: 200
               }}

@@ -182,15 +182,15 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'activity':
-        return <ClockCircleOutlined style={{ color: '#1890ff' }} />;
+        return <ClockCircleOutlined style={{ color: '#16a34a' }} />;
       case 'achievement':
-        return <TrophyOutlined style={{ color: '#faad14' }} />;
+        return <TrophyOutlined style={{ color: '#f59e0b' }} />;
       case 'reminder':
-        return <ClockCircleOutlined style={{ color: '#ff4d4f' }} />;
+        return <ClockCircleOutlined style={{ color: '#ef4444' }} />;
       case 'announcement':
-        return <SoundOutlined style={{ color: '#52c41a' }} />;
+        return <SoundOutlined style={{ color: '#22c55e' }} />;
       default:
-        return <NotificationOutlined style={{ color: '#722ed1' }} />;
+        return <NotificationOutlined style={{ color: '#16a34a' }} />;
     }
   };
 
@@ -232,7 +232,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
           onClick={() => handleNotificationClick(item)}
           style={{
             cursor: 'pointer',
-            background: item.is_read ? 'transparent' : '#f6ffed',
+            background: item.is_read ? 'transparent' : '#f0fdf4',
             padding: '12px 16px'
           }}
         >
@@ -249,7 +249,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
                 {item.content && (
                   <Paragraph
                     ellipsis={{ rows: 2 }}
-                    style={{ marginBottom: 4, color: '#666' }}
+                    style={{ marginBottom: 4, color: '#4b5563' }}
                   >
                     {item.content}
                   </Paragraph>
@@ -277,12 +277,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
           onClick={() => handleAnnouncementClick(item)}
           style={{
             cursor: 'pointer',
-            background: item.is_read ? 'transparent' : '#fff7e6',
+            background: item.is_read ? 'transparent' : '#fef3c7',
             padding: '12px 16px'
           }}
         >
           <List.Item.Meta
-            avatar={<SoundOutlined style={{ color: item.is_pinned ? '#ff4d4f' : '#52c41a', fontSize: 20 }} />}
+            avatar={<SoundOutlined style={{ color: item.is_pinned ? '#ef4444' : '#22c55e', fontSize: 20 }} />}
             title={
               <Space>
                 <Text strong={!item.is_read}>{item.title}</Text>
@@ -294,7 +294,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
                 {item.summary && (
                   <Paragraph
                     ellipsis={{ rows: 2 }}
-                    style={{ marginBottom: 4, color: '#666' }}
+                    style={{ marginBottom: 4, color: '#4b5563' }}
                   >
                     {item.summary}
                   </Paragraph>

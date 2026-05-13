@@ -176,7 +176,7 @@ const GradingListPage: React.FC = () => {
       render: (name: string, record: PendingSubmission) => (
         <div>
           <div>{name}</div>
-          <div style={{ fontSize: '12px', color: '#999' }}>{record.student_username}</div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>{record.student_username}</div>
         </div>
       ),
     },
@@ -273,7 +273,7 @@ const GradingListPage: React.FC = () => {
             <Statistic
               title="待评卷"
               value={stats.pending}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>
@@ -291,7 +291,7 @@ const GradingListPage: React.FC = () => {
             <Statistic
               title="已完成"
               value={stats.completed}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#22c55e' }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>

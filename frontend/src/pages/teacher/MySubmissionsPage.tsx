@@ -488,7 +488,7 @@ const MySubmissionsPage: React.FC = () => {
             <div>
               <div style={{
                 padding: 12,
-                background: '#f5f5f5',
+                background: '#f3f4f6',
                 borderRadius: 4,
                 marginBottom: 24
               }}>
@@ -529,7 +529,7 @@ const MySubmissionsPage: React.FC = () => {
                             <Tag color={isPending ? 'processing' : (isApproved ? 'success' : 'error')}>
                               {isPending ? '待审核' : (isApproved ? '已通过' : '已拒绝')}
                             </Tag>
-                            <span style={{ color: '#666', marginLeft: 8 }}>
+                            <span style={{ color: '#4b5563', marginLeft: 8 }}>
                               {history.reviewed_at
                                 ? new Date(history.reviewed_at).toLocaleString('zh-CN')
                                 : new Date(history.created_at).toLocaleString('zh-CN')}
@@ -542,7 +542,7 @@ const MySubmissionsPage: React.FC = () => {
                           {history.comment && (
                             <div style={{
                               padding: 12,
-                              background: isApproved ? '#f6ffed' : '#fff2f0',
+                              background: isApproved ? '#f0fdf4' : '#fff2f0',
                               border: `1px solid ${isApproved ? '#b7eb8f' : '#ffccc7'}`,
                               borderRadius: 4,
                               whiteSpace: 'pre-wrap'
@@ -630,19 +630,19 @@ const MySubmissionsPage: React.FC = () => {
               >
                 <Select.Option value="assessment">
                   <Tag color="orange">测评题库</Tag>
-                  <span style={{ color: '#666', marginLeft: 8 }}>
+                  <span style={{ color: '#4b5563', marginLeft: 8 }}>
                     - 市级/系统管理员审核（最高标准）
                   </span>
                 </Select.Option>
                 <Select.Option value="practice_municipal">
                   <Tag color="blue">市级练习题库</Tag>
-                  <span style={{ color: '#666', marginLeft: 8 }}>
+                  <span style={{ color: '#4b5563', marginLeft: 8 }}>
                     - 市级审核人审核
                   </span>
                 </Select.Option>
                 <Select.Option value="practice_district">
                   <Tag color="cyan">区级练习题库</Tag>
-                  <span style={{ color: '#666', marginLeft: 8 }}>
+                  <span style={{ color: '#4b5563', marginLeft: 8 }}>
                     - 区级审核人审核
                   </span>
                 </Select.Option>
@@ -657,9 +657,9 @@ const MySubmissionsPage: React.FC = () => {
                 </label>
                 <div style={{
                   padding: '8px 12px',
-                  background: '#f0f2f5',
+                  background: '#f9fafb',
                   borderRadius: 4,
-                  border: '1px solid #d9d9d9'
+                  border: '1px solid #e5e7eb'
                 }}>
                   <Tag color="cyan">{selectedDistrictCode}</Tag>
                   <span style={{ marginLeft: 8 }}>
@@ -693,7 +693,7 @@ const MySubmissionsPage: React.FC = () => {
                 {availableReviewers.map((reviewer) => (
                   <Select.Option key={reviewer.id} value={reviewer.id}>
                     {reviewer.real_name} ({reviewer.username})
-                    <span style={{ color: '#999', marginLeft: 8 }}>
+                    <span style={{ color: '#6b7280', marginLeft: 8 }}>
                       [{reviewer.subjects.join(', ')}]
                     </span>
                   </Select.Option>
@@ -702,7 +702,7 @@ const MySubmissionsPage: React.FC = () => {
             </div>
 
             {availableReviewers.length === 0 && selectedScope && (
-              <div style={{ marginTop: 16, padding: 12, background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 4 }}>
+              <div style={{ marginTop: 16, padding: 12, background: '#fef3c7', border: '1px solid #ffd591', borderRadius: 4 }}>
                 <strong>提示：</strong>当前没有可用的审核人。请联系管理员为教师授予相应的审核权限。
               </div>
             )}

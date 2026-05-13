@@ -294,7 +294,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
                     <Col span={12}>
                       <Text strong>Input:</Text>
                       <pre style={{
-                        background: '#f5f5f5',
+                        background: '#f3f4f6',
                         padding: 8,
                         borderRadius: 4,
                         whiteSpace: 'pre-wrap',
@@ -419,7 +419,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
                         <Text type="secondary"> ({runResult.executionTime}ms)</Text>
                       )}
                       <pre style={{
-                        background: '#f5f5f5',
+                        background: '#f3f4f6',
                         padding: 8,
                         borderRadius: 4,
                         marginTop: 8,
@@ -442,11 +442,11 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
                     </div>
                   ) : (
                     <div style={{
-                      background: '#f5f5f5',
+                      background: '#f3f4f6',
                       padding: 20,
                       borderRadius: 4,
                       textAlign: 'center',
-                      color: '#999',
+                      color: '#6b7280',
                     }}>
                       Click &quot;Run&quot; to test your code
                     </div>

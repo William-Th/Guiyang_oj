@@ -295,7 +295,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
       key: 'content',
       ellipsis: true,
       render: (content: string, record: ImportQuestion) => (
-        <span style={{ color: record.status === 'error' ? '#ff4d4f' : undefined }}>
+        <span style={{ color: record.status === 'error' ? '#ef4444' : undefined }}>
           {content || '(空)'}
         </span>
       )
@@ -334,7 +334,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
       render: (errors: string[]) => errors && errors.length > 0 ? (
         <div>
           {errors.map((error, index) => (
-            <div key={index} style={{ color: '#ff4d4f', fontSize: '12px' }}>
+            <div key={index} style={{ color: '#ef4444', fontSize: '12px' }}>
               {error}
             </div>
           ))}
@@ -388,7 +388,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
 
             <Dragger {...uploadProps} style={{ padding: '40px' }}>
               <p className="ant-upload-drag-icon">
-                <InboxOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
+                <InboxOutlined style={{ fontSize: '48px', color: '#16a34a' }} />
               </p>
               <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
               <p className="ant-upload-hint">
@@ -423,21 +423,21 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
                     <Statistic 
                       title="总题目数" 
                       value={totalCount} 
-                      valueStyle={{ color: '#1890ff' }}
+                      valueStyle={{ color: '#16a34a' }}
                     />
                   </Col>
                   <Col span={6}>
                     <Statistic 
                       title="成功" 
                       value={successCount} 
-                      valueStyle={{ color: '#52c41a' }}
+                      valueStyle={{ color: '#22c55e' }}
                     />
                   </Col>
                   <Col span={6}>
                     <Statistic 
                       title="错误" 
                       value={errorCount} 
-                      valueStyle={{ color: '#ff4d4f' }}
+                      valueStyle={{ color: '#ef4444' }}
                     />
                   </Col>
                   <Col span={6}>
@@ -445,7 +445,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
                       title="成功率" 
                       value={totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0} 
                       suffix="%"
-                      valueStyle={{ color: successCount === totalCount ? '#52c41a' : '#faad14' }}
+                      valueStyle={{ color: successCount === totalCount ? '#22c55e' : '#f59e0b' }}
                     />
                   </Col>
                 </Row>
@@ -476,7 +476,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
       case 2:
         return (
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            <CheckCircleOutlined style={{ fontSize: '72px', color: '#52c41a', marginBottom: '24px' }} />
+            <CheckCircleOutlined style={{ fontSize: '72px', color: '#22c55e', marginBottom: '24px' }} />
             <h2>导入完成！</h2>
             <Descriptions column={1} style={{ marginTop: '32px' }}>
               <Descriptions.Item label="成功导入">{successCount} 道题目</Descriptions.Item>

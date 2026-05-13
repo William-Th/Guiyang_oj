@@ -44,14 +44,14 @@ const AchievementCard: React.FC<AchievementCardProps> = ({ achievement, unlocked
       hoverable
       style={{
         opacity: unlocked ? 1 : 0.6,
-        border: unlocked ? '2px solid #1890ff' : '1px solid #d9d9d9'
+        border: unlocked ? '2px solid #16a34a' : '1px solid #e5e7eb'
       }}
     >
       <div style={{ textAlign: 'center' }}>
         <TrophyOutlined
           style={{
             fontSize: 48,
-            color: unlocked ? '#1890ff' : '#d9d9d9',
+            color: unlocked ? '#16a34a' : '#e5e7eb',
             marginBottom: 12
           }}
         />

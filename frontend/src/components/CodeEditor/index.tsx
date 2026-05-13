@@ -96,7 +96,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden' }}>
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
       <Editor
         height={height}
         language={MONACO_LANGUAGE_MAP[language] || 'cpp'}
@@ -111,7 +111,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             height: '100%',
-            color: '#999'
+            color: '#6b7280'
           }}>
             Loading editor...
           </div>

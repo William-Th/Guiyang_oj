@@ -370,7 +370,7 @@ const TeacherDashboard: React.FC = () => {
               title="创建题目总数"
               value={stats.totalQuestions}
               prefix={<BookOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: '#22c55e' }}
             />
           </Card>
         </Col>
@@ -380,7 +380,7 @@ const TeacherDashboard: React.FC = () => {
               title="创建活动总数"
               value={stats.totalActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -390,7 +390,7 @@ const TeacherDashboard: React.FC = () => {
               title="进行中的活动"
               value={stats.activeActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: '#ef4444' }}
             />
           </Card>
         </Col>
@@ -400,7 +400,7 @@ const TeacherDashboard: React.FC = () => {
               title="已完成的活动"
               value={stats.completedActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>

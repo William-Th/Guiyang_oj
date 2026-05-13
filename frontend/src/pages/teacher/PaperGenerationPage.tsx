@@ -515,7 +515,7 @@ const PaperGenerationPage: React.FC = () => {
             onClick={() => canEdit && handleStartEditScore(record)}
           >
             {score}
-            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#1890ff' }} />}
+            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#16a34a' }} />}
           </span>
         );
       },
@@ -686,7 +686,7 @@ const PaperGenerationPage: React.FC = () => {
                 <Statistic
                   title="活动设置总分"
                   value={activity.total_score}
-                  valueStyle={{ color: '#1890ff' }}
+                  valueStyle={{ color: '#16a34a' }}
                 />
               </Col>
               <Col span={4}>
@@ -695,8 +695,8 @@ const PaperGenerationPage: React.FC = () => {
                   value={Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100}
                   valueStyle={{
                     color: Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100 === Math.round(Number(activity.total_score) * 100) / 100
-                      ? '#52c41a'
-                      : '#ff4d4f'
+                      ? '#22c55e'
+                      : '#ef4444'
                   }}
                 />
               </Col>
@@ -896,14 +896,14 @@ const PaperGenerationPage: React.FC = () => {
                       <div
                         style={{
                           padding: '4px 12px',
-                          border: '1px solid #d9d9d9',
+                          border: '1px solid #e5e7eb',
                           borderRadius: '6px',
                           background: isSelected ? '#e6f7ff' : '#fff',
-                          borderColor: isSelected ? info.color : '#d9d9d9',
+                          borderColor: isSelected ? info.color : '#e5e7eb',
                         }}
                       >
                         <Tag color={info.color} style={{ margin: 0 }}>{info.text}</Tag>
-                        <Badge count={questions.length} showZero style={{ backgroundColor: '#52c41a', marginLeft: 4 }} />
+                        <Badge count={questions.length} showZero style={{ backgroundColor: '#22c55e', marginLeft: 4 }} />
                         {selectedCount > 0 && (
                           <Tag color="blue" style={{ marginLeft: 4 }}>已选{selectedCount}</Tag>
                         )}
@@ -979,7 +979,7 @@ const PaperGenerationPage: React.FC = () => {
                             <Divider type="vertical" />
                           </>
                         )}
-                        <span style={{ fontSize: 12, color: '#999' }}>
+                        <span style={{ fontSize: 12, color: '#6b7280' }}>
                           第 {currentPage} / {totalPages} 页 (共 {currentQuestions.length} 题)
                         </span>
                         {currentPage > 1 && (
@@ -1002,7 +1002,7 @@ const PaperGenerationPage: React.FC = () => {
                               size="small"
                               hoverable
                               style={{
-                                border: isSelected ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                                border: isSelected ? '2px solid #16a34a' : '1px solid #e5e7eb',
                                 backgroundColor: isSelected ? '#e6f7ff' : undefined,
                                 cursor: 'pointer',
                                 height: '100%',
@@ -1030,7 +1030,7 @@ const PaperGenerationPage: React.FC = () => {
                                   <div style={{ fontSize: 13, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.5', maxHeight: 39 }} title={question.content}>
                                     {question.content}
                                   </div>
-                                  <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+                                  <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>
                                     分值: {question.suggested_score} │ 级别: {question.level}
                                   </div>
                                 </div>
@@ -1164,7 +1164,7 @@ const PaperGenerationPage: React.FC = () => {
           {/* Paper Header */}
           <div style={{ textAlign: 'center', marginBottom: 30, paddingBottom: 20, borderBottom: '2px solid #000' }}>
             <h1 style={{ fontSize: 24, marginBottom: 10 }}>{activity?.title || ''}</h1>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#666' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#4b5563' }}>
               <span>科目：{activity?.subject || ''}</span>
               <span>年级：{activity?.grade || ''}</span>
               <span>总分：{selectedQuestions.reduce((sum, q) => sum + (q.score || 0), 0)} 分</span>
@@ -1216,7 +1216,7 @@ const PaperGenerationPage: React.FC = () => {
                           </span>
                           <span style={{ marginLeft: 8 }}>{question.content}</span>
                           {question.score && (
-                            <span style={{ marginLeft: 8, color: '#999', fontSize: 12 }}>
+                            <span style={{ marginLeft: 8, color: '#6b7280', fontSize: 12 }}>
                               （{question.score}分）
                             </span>
                           )}

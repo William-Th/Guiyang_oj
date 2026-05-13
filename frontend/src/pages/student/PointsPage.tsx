@@ -199,7 +199,7 @@ const PointsPage: React.FC = () => {
           <Text
             strong
             style={{
-              color: isEarn ? '#52c41a' : '#ff4d4f',
+              color: isEarn ? '#22c55e' : '#ef4444',
               fontSize: 16,
             }}
           >
@@ -247,7 +247,7 @@ const PointsPage: React.FC = () => {
       width: 120,
       align: 'right',
       render: (points: number) => (
-        <Text strong style={{ color: '#fa8c16', fontSize: 16 }}>
+        <Text strong style={{ color: '#f59e0b', fontSize: 16 }}>
           {points}
         </Text>
       ),
@@ -276,7 +276,7 @@ const PointsPage: React.FC = () => {
               title="当前积分"
               value={pointsAccount?.current_balance || 0}
               prefix={<StarOutlined />}
-              valueStyle={{ color: '#1890ff', fontSize: 32 }}
+              valueStyle={{ color: '#16a34a', fontSize: 32 }}
             />
           </Card>
         </Col>
@@ -286,7 +286,7 @@ const PointsPage: React.FC = () => {
               title="累计获得"
               value={pointsAccount?.total_earned || 0}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#52c41a', fontSize: 32 }}
+              valueStyle={{ color: '#22c55e', fontSize: 32 }}
             />
           </Card>
         </Col>
@@ -296,7 +296,7 @@ const PointsPage: React.FC = () => {
               title="累计消费"
               value={pointsAccount?.total_spent || 0}
               prefix={<FallOutlined />}
-              valueStyle={{ color: '#ff4d4f', fontSize: 32 }}
+              valueStyle={{ color: '#ef4444', fontSize: 32 }}
             />
           </Card>
         </Col>

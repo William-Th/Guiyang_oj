@@ -604,7 +604,7 @@ const QuestionBankPage: React.FC = () => {
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           {/* Search Bar */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span style={{ fontWeight: 500, color: '#666' }}>搜索：</span>
+            <span style={{ fontWeight: 500, color: '#4b5563' }}>搜索：</span>
             <Input.Search
               placeholder="输入题目内容或题目编码进行搜索"
               allowClear
@@ -618,7 +618,7 @@ const QuestionBankPage: React.FC = () => {
 
           {/* Filters */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 500, color: '#666' }}>筛选：</span>
+            <span style={{ fontWeight: 500, color: '#4b5563' }}>筛选：</span>
             <Select
               mode="multiple"
               placeholder="选择题库范围"
@@ -746,9 +746,9 @@ const QuestionBankPage: React.FC = () => {
 
           {/* Selected Scopes Display */}
           {(selectedScopes || []).length > 0 && (
-            <div style={{ padding: '8px 12px', background: '#f0f2f5', borderRadius: 4 }}>
+            <div style={{ padding: '8px 12px', background: '#f9fafb', borderRadius: 4 }}>
               <Space size="small">
-                <span style={{ color: '#666', fontWeight: 500 }}>当前筛选范围：</span>
+                <span style={{ color: '#4b5563', fontWeight: 500 }}>当前筛选范围：</span>
                 {(selectedScopes || []).map((scope) => {
                   const config = getScopeText(scope);
                   return (
@@ -849,7 +849,7 @@ const QuestionBankPage: React.FC = () => {
                 <p>
                   <strong>解析：</strong>
                 </p>
-                <p style={{ marginLeft: 20, color: '#666' }}>
+                <p style={{ marginLeft: 20, color: '#4b5563' }}>
                   {previewQuestion.explanation}
                 </p>
               </>
@@ -905,7 +905,7 @@ const QuestionBankPage: React.FC = () => {
                 Excel (.xlsx)
               </Select.Option>
               <Select.Option value="csv">
-                <FileTextOutlined style={{ color: '#666', marginRight: 8 }} />
+                <FileTextOutlined style={{ color: '#4b5563', marginRight: 8 }} />
                 CSV (.csv)
               </Select.Option>
             </Select>
@@ -914,7 +914,7 @@ const QuestionBankPage: React.FC = () => {
           {/* 当前筛选条件显示 */}
           <div>
             <div style={{ marginBottom: 8, fontWeight: 500 }}>当前筛选条件：</div>
-            <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: 4 }}>
+            <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: 4 }}>
               {selectedScopes && selectedScopes.length > 0 ? (
                 <Space size="small" wrap style={{ marginBottom: 8 }}>
                   <span>题库范围：</span>
@@ -947,13 +947,13 @@ const QuestionBankPage: React.FC = () => {
                 </div>
               )}
               {!selectedScopes?.length && !filters.subject && !filters.grade && !filters.difficulty && !filters.type && (
-                <span style={{ color: '#999' }}>无筛选条件</span>
+                <span style={{ color: '#6b7280' }}>无筛选条件</span>
               )}
             </div>
           </div>
 
           {/* 说明 */}
-          <div style={{ color: '#666', fontSize: 13 }}>
+          <div style={{ color: '#4b5563', fontSize: 13 }}>
             <div>• <strong>导出全部题目</strong>：导出您有权限查看的所有题目</div>
             <div>• <strong>导出当前筛选结果</strong>：仅导出符合当前筛选条件的题目</div>
           </div>
@@ -976,7 +976,7 @@ const QuestionBankPage: React.FC = () => {
         okButtonProps={{ danger: true, disabled: !withdrawReason.trim() }}
       >
         <div style={{ marginBottom: 12 }}>
-          <p style={{ color: '#666' }}>撤回后题目将不再显示在题库浏览列表中，但不会影响已组卷的活动。</p>
+          <p style={{ color: '#4b5563' }}>撤回后题目将不再显示在题库浏览列表中，但不会影响已组卷的活动。</p>
         </div>
         <div>
           <div style={{ marginBottom: 8, fontWeight: 500 }}>撤回原因（必填）：</div>

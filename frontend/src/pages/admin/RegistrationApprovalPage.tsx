@@ -254,7 +254,7 @@ const RegistrationApprovalPage: React.FC = () => {
                   setSelectedRequest(record);
                   setApproveModalVisible(true);
                 }}
-                style={{ color: '#52c41a' }}
+                style={{ color: '#22c55e' }}
               >
                 批准
               </Button>
@@ -467,8 +467,8 @@ const RegistrationApprovalPage: React.FC = () => {
                     children: (
                       <div>
                         <div><strong>{getActionName(entry.action)}</strong></div>
-                        {entry.comment && <div style={{ color: '#666' }}>{entry.comment}</div>}
-                        <div style={{ color: '#999', fontSize: '12px' }}>
+                        {entry.comment && <div style={{ color: '#4b5563' }}>{entry.comment}</div>}
+                        <div style={{ color: '#6b7280', fontSize: '12px' }}>
                           {dayjs(entry.created_at).format('YYYY-MM-DD HH:mm:ss')}
                         </div>
                       </div>
@@ -476,7 +476,7 @@ const RegistrationApprovalPage: React.FC = () => {
                   }))}
                 />
               ) : (
-                <div style={{ textAlign: 'center', color: '#999', padding: '20px 0' }}>
+                <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px 0' }}>
                   暂无审核历史
                 </div>
               )}

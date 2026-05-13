@@ -3,10 +3,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* 薄荷 logo 渐变（来自 colors.brand.logo）替换原 #667eea → #764ba2 紫色 */
+  background: linear-gradient(135deg, var(--bohe-logo-from) 0%, var(--bohe-logo-to) 100%);
 }
 
 .login-card {
   width: 450px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.15);
 }

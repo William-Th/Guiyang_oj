@@ -28,7 +28,7 @@ const ResultsPage: React.FC = () => {
                 <li>🏆 优秀成绩证书下载</li>
                 <li>📉 个人成绩趋势分析</li>
               </ul>
-              <p style={{ marginTop: '12px', color: '#666' }}>
+              <p style={{ marginTop: '12px', color: '#4b5563' }}>
                 敬请期待！
               </p>
             </div>
@@ -42,7 +42,7 @@ const ResultsPage: React.FC = () => {
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
-            <span style={{ color: '#999' }}>
+            <span style={{ color: '#6b7280' }}>
               成绩查询功能即将开放
             </span>
           }

@@ -75,7 +75,7 @@ const TeachingClassApprovals: React.FC = () => {
   const handleApprove = async (classItem: PendingTeachingClass) => {
     Modal.confirm({
       title: '批准教学班',
-      icon: <CheckOutlined style={{ color: '#52c41a' }} />,
+      icon: <CheckOutlined style={{ color: '#22c55e' }} />,
       content: (
         <div>
           <p>确定要批准教学班 &quot;{classItem.name}&quot; 吗？</p>
@@ -267,7 +267,7 @@ const TeachingClassApprovals: React.FC = () => {
               type="link"
               size="small"
               icon={<CheckOutlined />}
-              style={{ color: '#52c41a' }}
+              style={{ color: '#22c55e' }}
               onClick={() => handleApprove(record)}
             />
           </Tooltip>
@@ -368,7 +368,7 @@ const TeachingClassApprovals: React.FC = () => {
       <Modal
         title={
           <span>
-            <ExclamationCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+            <ExclamationCircleOutlined style={{ color: '#ef4444', marginRight: 8 }} />
             拒绝教学班
           </span>
         }

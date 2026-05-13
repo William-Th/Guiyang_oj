@@ -411,7 +411,7 @@ const ReviewPage: React.FC = () => {
               <div style={{
                 marginTop: 8,
                 padding: 12,
-                background: '#f5f5f5',
+                background: '#f3f4f6',
                 borderRadius: 4,
                 whiteSpace: 'pre-wrap'
               }}>
@@ -450,7 +450,7 @@ const ReviewPage: React.FC = () => {
                 <div style={{
                   marginTop: 8,
                   padding: 12,
-                  background: '#f5f5f5',
+                  background: '#f3f4f6',
                   borderRadius: 4,
                   whiteSpace: 'pre-wrap'
                 }}>
@@ -496,10 +496,10 @@ const ReviewPage: React.FC = () => {
                   onChange={(e) => setReviewStatus(e.target.value)}
                 >
                   <Radio.Button value="approved">
-                    <CheckCircleOutlined style={{ color: '#52c41a' }} /> 批准通过
+                    <CheckCircleOutlined style={{ color: '#22c55e' }} /> 批准通过
                   </Radio.Button>
                   <Radio.Button value="rejected">
-                    <CloseCircleOutlined style={{ color: '#ff4d4f' }} /> 拒绝
+                    <CloseCircleOutlined style={{ color: '#ef4444' }} /> 拒绝
                   </Radio.Button>
                 </Radio.Group>
               </div>

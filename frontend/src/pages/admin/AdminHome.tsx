@@ -151,10 +151,10 @@ const AdminHome: React.FC = () => {
   // 获取工作流类型图标
   const getWorkflowIcon = (type: WorkflowItem['type']) => {
     const iconMap = {
-      'user_approval': <TeamOutlined style={{ fontSize: 24, color: '#1677ff' }} />,
-      'question_review': <BookOutlined style={{ fontSize: 24, color: '#52c41a' }} />,
-      'exam_approval': <FileTextOutlined style={{ fontSize: 24, color: '#fa8c16' }} />,
-      'certificate_issue': <TrophyOutlined style={{ fontSize: 24, color: '#722ed1' }} />,
+      'user_approval': <TeamOutlined style={{ fontSize: 24, color: '#16a34a' }} />,
+      'question_review': <BookOutlined style={{ fontSize: 24, color: '#22c55e' }} />,
+      'exam_approval': <FileTextOutlined style={{ fontSize: 24, color: '#f59e0b' }} />,
+      'certificate_issue': <TrophyOutlined style={{ fontSize: 24, color: '#16a34a' }} />,
     };
     return iconMap[type];
   };
@@ -194,7 +194,7 @@ const AdminHome: React.FC = () => {
               <h2 style={{ margin: 0, fontSize: 24, fontWeight: 500 }}>
                 欢迎回来，{user?.realName || user?.username}
               </h2>
-              <p style={{ margin: '8px 0 0 0', color: '#8c8c8c', fontSize: 14 }}>
+              <p style={{ margin: '8px 0 0 0', color: '#6b7280', fontSize: 14 }}>
                 <Badge status="success" text={getAdminLevelName()} />
                 <span style={{ margin: '0 8px' }}>|</span>
                 管理范围：{getAdminScope()}
@@ -260,7 +260,7 @@ const AdminHome: React.FC = () => {
                       description={
                         <div>
                           <div>{item.description}</div>
-                          <div style={{ marginTop: 4, fontSize: 12, color: '#8c8c8c' }}>
+                          <div style={{ marginTop: 4, fontSize: 12, color: '#6b7280' }}>
                             <ClockCircleOutlined style={{ marginRight: 4 }} />
                             {item.createdAt}
                           </div>
@@ -289,45 +289,45 @@ const AdminHome: React.FC = () => {
               <div>
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
-                    <Card bordered={false} style={{ background: '#f0f5ff' }}>
+                    <Card bordered={false} style={{ background: '#f0fdf4' }}>
                       <Statistic
                         title="学校总数"
                         value={regionStats.totalSchools}
                         prefix={<TeamOutlined />}
-                        valueStyle={{ color: '#1677ff' }}
+                        valueStyle={{ color: '#16a34a' }}
                         suffix="所"
                       />
                     </Card>
                   </Col>
                   <Col span={12}>
-                    <Card bordered={false} style={{ background: '#f6ffed' }}>
+                    <Card bordered={false} style={{ background: '#f0fdf4' }}>
                       <Statistic
                         title="教师总数"
                         value={regionStats.totalTeachers}
                         prefix={<TeamOutlined />}
-                        valueStyle={{ color: '#52c41a' }}
+                        valueStyle={{ color: '#22c55e' }}
                         suffix="人"
                       />
                     </Card>
                   </Col>
                   <Col span={12}>
-                    <Card bordered={false} style={{ background: '#fff7e6' }}>
+                    <Card bordered={false} style={{ background: '#fef3c7' }}>
                       <Statistic
                         title="学生总数"
                         value={regionStats.totalStudents}
                         prefix={<TeamOutlined />}
-                        valueStyle={{ color: '#fa8c16' }}
+                        valueStyle={{ color: '#f59e0b' }}
                         suffix="人"
                       />
                     </Card>
                   </Col>
                   <Col span={12}>
-                    <Card bordered={false} style={{ background: '#fff0f6' }}>
+                    <Card bordered={false} style={{ background: '#f0fdf4' }}>
                       <Statistic
                         title="进行中考试"
                         value={regionStats.activeExams}
                         prefix={<FileTextOutlined />}
-                        valueStyle={{ color: '#eb2f96' }}
+                        valueStyle={{ color: '#16a34a' }}
                         suffix="场"
                       />
                     </Card>
@@ -337,7 +337,7 @@ const AdminHome: React.FC = () => {
                 {/* 审批处理进度 */}
                 <Card
                   bordered={false}
-                  style={{ marginTop: 16, background: '#fafafa' }}
+                  style={{ marginTop: 16, background: '#f9fafb' }}
                   bodyStyle={{ padding: 16 }}
                 >
                   <div style={{ marginBottom: 8 }}>
@@ -346,12 +346,12 @@ const AdminHome: React.FC = () => {
                   <Progress
                     percent={75}
                     strokeColor={{
-                      '0%': '#108ee9',
-                      '100%': '#87d068',
+                      '0%': '#16a34a',
+                      '100%': '#22c55e',
                     }}
                     status="active"
                   />
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>
                     已处理 60 项，剩余 {regionStats.pendingApprovals} 项待处理
                   </div>
                 </Card>

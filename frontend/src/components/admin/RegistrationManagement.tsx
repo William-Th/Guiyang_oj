@@ -255,7 +255,7 @@ const RegistrationManagement: React.FC<RegistrationManagementProps> = ({
               <Statistic
                 title="已确认"
                 value={statistics.confirmed}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: '#22c55e' }}
                 prefix={<CheckCircleOutlined />}
               />
             </Col>
@@ -263,7 +263,7 @@ const RegistrationManagement: React.FC<RegistrationManagementProps> = ({
               <Statistic
                 title="待确认"
                 value={statistics.pending}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: '#16a34a' }}
                 prefix={<ClockCircleOutlined />}
               />
             </Col>
@@ -278,14 +278,14 @@ const RegistrationManagement: React.FC<RegistrationManagementProps> = ({
               <Statistic
                 title="已完成"
                 value={statistics.completed}
-                valueStyle={{ color: '#722ed1' }}
+                valueStyle={{ color: '#16a34a' }}
               />
             </Col>
             <Col span={4}>
               <Statistic
                 title="缺考"
                 value={statistics.absent}
-                valueStyle={{ color: '#faad14' }}
+                valueStyle={{ color: '#f59e0b' }}
               />
             </Col>
           </Row>
@@ -330,7 +330,7 @@ const RegistrationManagement: React.FC<RegistrationManagementProps> = ({
         }
       >
         {selectedRowKeys.length > 0 && (
-          <div style={{ marginBottom: 16, padding: '8px 16px', background: '#f0f5ff', borderRadius: 4 }}>
+          <div style={{ marginBottom: 16, padding: '8px 16px', background: '#f0fdf4', borderRadius: 4 }}>
             <Space>
               <Text>已选择 {selectedRowKeys.length} 条记录</Text>
               <Button

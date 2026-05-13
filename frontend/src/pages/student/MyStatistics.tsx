@@ -156,8 +156,8 @@ const MyStatistics: React.FC = () => {
 
   // Color scale for bars
   const getBarColor = (accuracy: number) => {
-    if (accuracy >= 80) return '#52c41a'; // Green
-    if (accuracy >= 60) return '#faad14'; // Orange
+    if (accuracy >= 80) return '#22c55e'; // Green
+    if (accuracy >= 60) return '#f59e0b'; // Orange
     return '#f5222d'; // Red
   };
 
@@ -197,7 +197,7 @@ const MyStatistics: React.FC = () => {
                   prefix={<TrophyOutlined />}
                   suffix="分"
                   precision={1}
-                  valueStyle={{ color: (overview.avg_score || 0) >= 60 ? '#3f8600' : '#cf1322' }}
+                  valueStyle={{ color: (overview.avg_score || 0) >= 60 ? '#22c55e' : '#ef4444' }}
                 />
               </Card>
             </Col>
@@ -250,8 +250,8 @@ const MyStatistics: React.FC = () => {
                       <Radar
                         name="正确率 (%)"
                         dataKey="accuracy"
-                        stroke="#1890ff"
-                        fill="#1890ff"
+                        stroke="#16a34a"
+                        fill="#16a34a"
                         fillOpacity={0.6}
                       />
                       <Tooltip />
@@ -265,13 +265,13 @@ const MyStatistics: React.FC = () => {
                         <Col key={index} xs={24} sm={12} md={8}>
                           <Card size="small">
                             <div><strong>{item.ability}</strong></div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               答题数：{item.total_questions} 题
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               正确率：{item.accuracy_rate.toFixed(1)}%
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               平均分：{item.avg_score.toFixed(1)} 分
                             </div>
                           </Card>
@@ -340,13 +340,13 @@ const MyStatistics: React.FC = () => {
                         <Col key={index} xs={24} sm={12} md={8}>
                           <Card size="small">
                             <div><strong>{item.knowledge_point}</strong></div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               答题数：{item.total_questions} 题
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               正确率：{item.accuracy_rate.toFixed(1)}%
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               平均分：{item.avg_score.toFixed(1)} 分
                             </div>
                           </Card>

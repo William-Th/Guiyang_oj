@@ -18,7 +18,7 @@ const StudentHomePage: React.FC = () => {
               title="可参加考试"
               value={5}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: '#22c55e' }}
             />
           </Card>
         </Col>
@@ -28,7 +28,7 @@ const StudentHomePage: React.FC = () => {
               title="已完成考试"
               value={12}
               prefix={<BookOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -38,7 +38,7 @@ const StudentHomePage: React.FC = () => {
               title="下次考试"
               value="3天后"
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>

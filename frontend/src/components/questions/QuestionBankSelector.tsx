@@ -391,7 +391,7 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
 
         {/* 选择统计 */}
         {selectedRows.length > 0 && (
-          <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f6ffed' }}>
+          <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f0fdf4' }}>
             <Row gutter={16}>
               <Col>
                 <Statistic title="已选题目" value={selectedRows.length} suffix="道" />

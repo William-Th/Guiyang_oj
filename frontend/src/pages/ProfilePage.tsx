@@ -141,7 +141,7 @@ const ProfilePage: React.FC = () => {
             <div style={{ textAlign: 'center' }}>
               <Avatar size={120} icon={<UserOutlined />} style={{ marginBottom: '16px' }} />
               <h2>{user?.realName || user?.username}</h2>
-              <p style={{ color: '#666' }}>{getUserRole(user?.role || '')}</p>
+              <p style={{ color: '#4b5563' }}>{getUserRole(user?.role || '')}</p>
               {!isEditing && (
                 <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
                   编辑个人信息

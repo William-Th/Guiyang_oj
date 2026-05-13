@@ -131,7 +131,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
 
   if (!result) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+      <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
         Submit your code to see results
       </div>
     );
@@ -179,7 +179,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
         <div style={{ marginBottom: 16 }}>
           <Text strong>Compile Error:</Text>
           <pre style={{
-            background: '#f5f5f5',
+            background: '#f3f4f6',
             padding: 12,
             borderRadius: 4,
             overflow: 'auto',
@@ -229,7 +229,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
                   {tc.output !== undefined && (
                     <Descriptions.Item label="Your Output">
                       <pre style={{
-                        background: '#f5f5f5',
+                        background: '#f3f4f6',
                         padding: 8,
                         borderRadius: 4,
                         margin: 0,

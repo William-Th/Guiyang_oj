@@ -269,7 +269,7 @@ const MyRegistrationsPage: React.FC = () => {
       <Modal
         title={
           <Space>
-            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+            <ExclamationCircleOutlined style={{ color: '#f59e0b' }} />
             <span>取消报名</span>
           </Space>
         }

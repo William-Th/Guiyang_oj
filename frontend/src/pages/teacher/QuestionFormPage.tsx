@@ -378,7 +378,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           <Form.List name="correct_answer">
             {(fields, { add, remove }) => (
               <>
-                <p style={{ color: '#666', marginBottom: 10 }}>
+                <p style={{ color: '#4b5563', marginBottom: 10 }}>
                   填空题可以有多个空，每个空可以有多个正确答案（用逗号分隔）
                 </p>
                 {fields.map(({ key, name, ...restField }, index) => (
@@ -498,7 +498,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
                   <Tag color="cyan" style={{ fontFamily: 'monospace', marginLeft: 8 }}>
                     {questionCode}
                   </Tag>
-                  <span style={{ color: '#999', marginLeft: 8, fontSize: 12 }}>
+                  <span style={{ color: '#6b7280', marginLeft: 8, fontSize: 12 }}>
                     （系统自动分配，不可更改）
                   </span>
                 </div>
@@ -613,7 +613,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
               {knowledgePoints.map((kp) => (
                 <Option key={kp.id} value={kp.id}>
                   <span>{kp.name}</span>
-                  <span style={{ color: '#999', marginLeft: 8, fontSize: 12 }}>
+                  <span style={{ color: '#6b7280', marginLeft: 8, fontSize: 12 }}>
                     ({kp.category})
                   </span>
                 </Option>
@@ -695,19 +695,19 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
             <Select placeholder="保存为草稿（不选择）或选择发布范围" allowClear>
               <Option value="practice_school">
                 <Tag color="green">校级题库</Tag>
-                <span style={{ color: '#666', marginLeft: 8 }}>- 直接发布到本校题库，无需审核</span>
+                <span style={{ color: '#4b5563', marginLeft: 8 }}>- 直接发布到本校题库，无需审核</span>
               </Option>
               <Option value="practice_district">
                 <Tag color="cyan">区级练习题库</Tag>
-                <span style={{ color: '#666', marginLeft: 8 }}>- 需要区级审核人审核</span>
+                <span style={{ color: '#4b5563', marginLeft: 8 }}>- 需要区级审核人审核</span>
               </Option>
               <Option value="practice_municipal">
                 <Tag color="blue">市级练习题库</Tag>
-                <span style={{ color: '#666', marginLeft: 8 }}>- 需要市级审核人审核</span>
+                <span style={{ color: '#4b5563', marginLeft: 8 }}>- 需要市级审核人审核</span>
               </Option>
               <Option value="assessment">
                 <Tag color="orange">测评题库</Tag>
-                <span style={{ color: '#666', marginLeft: 8 }}>- 需要测评审核人审核（更高标准）</span>
+                <span style={{ color: '#4b5563', marginLeft: 8 }}>- 需要测评审核人审核（更高标准）</span>
               </Option>
             </Select>
           </Form.Item>

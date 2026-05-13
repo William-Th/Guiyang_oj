@@ -538,7 +538,7 @@ const AchievementManagementPage: React.FC = () => {
       dataIndex: 'points_reward',
       key: 'points_reward',
       width: 80,
-      render: (points: number) => <Badge count={points} showZero style={{ backgroundColor: '#52c41a' }} />,
+      render: (points: number) => <Badge count={points} showZero style={{ backgroundColor: '#22c55e' }} />,
     },
     {
       title: '触发事件',

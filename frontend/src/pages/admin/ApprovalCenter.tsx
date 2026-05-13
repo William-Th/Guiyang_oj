@@ -294,7 +294,7 @@ const RegistrationApproval: React.FC<{ onCountChange: (count: number) => void }>
                   setSelectedRequest(record);
                   setApproveModalVisible(true);
                 }}
-                style={{ color: '#52c41a' }}
+                style={{ color: '#22c55e' }}
               >
                 批准
               </Button>
@@ -493,8 +493,8 @@ const RegistrationApproval: React.FC<{ onCountChange: (count: number) => void }>
                     children: (
                       <div>
                         <div><strong>{getActionName(entry.action)}</strong></div>
-                        {entry.comment && <div style={{ color: '#666' }}>{entry.comment}</div>}
-                        <div style={{ color: '#999', fontSize: '12px' }}>
+                        {entry.comment && <div style={{ color: '#4b5563' }}>{entry.comment}</div>}
+                        <div style={{ color: '#6b7280', fontSize: '12px' }}>
                           {dayjs(entry.created_at).format('YYYY-MM-DD HH:mm:ss')}
                         </div>
                       </div>
@@ -502,7 +502,7 @@ const RegistrationApproval: React.FC<{ onCountChange: (count: number) => void }>
                   }))}
                 />
               ) : (
-                <div style={{ textAlign: 'center', color: '#999', padding: '20px 0' }}>
+                <div style={{ textAlign: 'center', color: '#6b7280', padding: '20px 0' }}>
                   暂无审核历史
                 </div>
               )}
@@ -552,7 +552,7 @@ const TeachingClassApproval: React.FC<{ onCountChange: (count: number) => void }
   const handleApprove = async (classItem: PendingTeachingClass) => {
     Modal.confirm({
       title: '批准教学班',
-      icon: <CheckOutlined style={{ color: '#52c41a' }} />,
+      icon: <CheckOutlined style={{ color: '#22c55e' }} />,
       content: (
         <div>
           <p>确定要批准教学班 &quot;{classItem.name}&quot; 吗？</p>
@@ -744,7 +744,7 @@ const TeachingClassApproval: React.FC<{ onCountChange: (count: number) => void }
               type="link"
               size="small"
               icon={<CheckOutlined />}
-              style={{ color: '#52c41a' }}
+              style={{ color: '#22c55e' }}
               onClick={() => handleApprove(record)}
             />
           </Tooltip>
@@ -851,7 +851,7 @@ const TeachingClassApproval: React.FC<{ onCountChange: (count: number) => void }
       <Modal
         title={
           <span>
-            <ExclamationCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+            <ExclamationCircleOutlined style={{ color: '#ef4444', marginRight: 8 }} />
             拒绝教学班
           </span>
         }

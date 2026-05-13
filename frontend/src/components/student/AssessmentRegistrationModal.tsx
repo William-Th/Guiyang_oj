@@ -133,7 +133,7 @@ const AssessmentRegistrationModal: React.FC<AssessmentRegistrationModalProps> = 
         hoverable={!isFull}
         style={{
           marginBottom: 12,
-          border: isSelected ? '2px solid #1890ff' : '1px solid #d9d9d9',
+          border: isSelected ? '2px solid #16a34a' : '1px solid #e5e7eb',
           opacity: isFull ? 0.6 : 1,
           cursor: isFull ? 'not-allowed' : 'pointer'
         }}
@@ -156,7 +156,7 @@ const AssessmentRegistrationModal: React.FC<AssessmentRegistrationModalProps> = 
             </Space>
           )}
 
-          <Space split={<span style={{ color: '#d9d9d9' }}>|</span>}>
+          <Space split={<span style={{ color: '#e5e7eb' }}>|</span>}>
             {location.exam_date && (
               <Space>
                 <ClockCircleOutlined />

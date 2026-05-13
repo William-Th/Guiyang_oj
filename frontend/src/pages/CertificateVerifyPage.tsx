@@ -194,7 +194,7 @@ const CertificateVerifyPage: React.FC = () => {
             status="error"
             title="证书验证失败"
             subTitle={verifyResult.message}
-            icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+            icon={<CloseCircleOutlined style={{ color: '#ef4444' }} />}
             extra={[
               <Button key="retry" onClick={() => handleVerify()}>
                 重新验证
@@ -214,7 +214,7 @@ const CertificateVerifyPage: React.FC = () => {
           status="success"
           title="证书验证成功"
           subTitle="该证书真实有效"
-          icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+          icon={<CheckCircleOutlined style={{ color: '#22c55e' }} />}
         />
         
         <Row gutter={24} style={{ marginTop: 24 }}>
@@ -293,13 +293,13 @@ const CertificateVerifyPage: React.FC = () => {
 
   return (
     <div style={{ 
-      background: '#f0f2f5',
+      background: '#f9fafb',
       minHeight: '100vh'
     }}>
       {/* Navigation Header */}
       <Card style={{ 
         borderRadius: 0, 
-        borderBottom: '1px solid #d9d9d9',
+        borderBottom: '1px solid #e5e7eb',
         marginBottom: 0
       }}>
         <div style={{ 
@@ -309,7 +309,7 @@ const CertificateVerifyPage: React.FC = () => {
           maxWidth: 1200,
           margin: '0 auto'
         }}>
-          <Title level={3} style={{ margin: 0, color: '#1677ff', cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <Title level={3} style={{ margin: 0, color: '#16a34a', cursor: 'pointer' }} onClick={() => navigate('/')}>
             <HomeOutlined style={{ marginRight: 8 }} />
             贵阳市小学生测评平台
           </Title>

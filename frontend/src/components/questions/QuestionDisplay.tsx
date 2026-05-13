@@ -44,7 +44,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                   value={option} 
                   style={{ 
                     fontSize: '16px',
-                    color: showAnswer && correctAnswer === option ? '#52c41a' : undefined
+                    color: showAnswer && correctAnswer === option ? '#22c55e' : undefined
                   }}
                 >
                   {option}
@@ -68,7 +68,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                   value={option} 
                   style={{ 
                     fontSize: '16px',
-                    color: showAnswer && correctAnswer?.includes(option) ? '#52c41a' : undefined
+                    color: showAnswer && correctAnswer?.includes(option) ? '#22c55e' : undefined
                   }}
                 >
                   {option}
@@ -90,7 +90,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                 value={true} 
                 style={{ 
                   fontSize: '16px',
-                  color: showAnswer && correctAnswer === true ? '#52c41a' : undefined
+                  color: showAnswer && correctAnswer === true ? '#22c55e' : undefined
                 }}
               >
                 正确
@@ -99,7 +99,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                 value={false} 
                 style={{ 
                   fontSize: '16px',
-                  color: showAnswer && correctAnswer === false ? '#52c41a' : undefined
+                  color: showAnswer && correctAnswer === false ? '#22c55e' : undefined
                 }}
               >
                 错误
@@ -128,11 +128,11 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                   disabled={readonly}
                   style={{ 
                     width: '200px',
-                    borderColor: showAnswer && correctAnswer?.[index] === blankValues[index] ? '#52c41a' : undefined
+                    borderColor: showAnswer && correctAnswer?.[index] === blankValues[index] ? '#22c55e' : undefined
                   }}
                 />
                 {showAnswer && (
-                  <span style={{ marginLeft: '8px', color: '#52c41a' }}>
+                  <span style={{ marginLeft: '8px', color: '#22c55e' }}>
                     答案: {correctAnswer?.[index]}
                   </span>
                 )}
@@ -153,7 +153,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               disabled={readonly}
             />
             {showAnswer && question.explanation && (
-              <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
+              <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f0fdf4', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
                 <strong>参考答案/评分标准:</strong>
                 <div style={{ marginTop: '8px' }}>{question.explanation}</div>
               </div>
@@ -164,7 +164,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
       case 'code':
         return (
           <div>
-            <div style={{ marginBottom: '12px', color: '#666' }}>
+            <div style={{ marginBottom: '12px', color: '#4b5563' }}>
               请在下方代码框中输入您的代码:
             </div>
             <Input.TextArea
@@ -176,9 +176,9 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               style={{ fontFamily: 'Monaco, Menlo, Consolas, monospace' }}
             />
             {showAnswer && question.explanation && (
-              <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
+              <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f0fdf4', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
                 <strong>参考代码:</strong>
-                <pre style={{ marginTop: '8px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
+                <pre style={{ marginTop: '8px', backgroundColor: '#f3f4f6', padding: '8px', borderRadius: '4px' }}>
                   {question.explanation}
                 </pre>
               </div>
@@ -189,14 +189,14 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
       case 'matching':
         return (
           <div>
-            <div style={{ marginBottom: '12px', color: '#666' }}>
+            <div style={{ marginBottom: '12px', color: '#4b5563' }}>
               请将左侧选项与右侧选项进行匹配:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
                 <strong>左侧选项:</strong>
                 {question.options?.slice(0, Math.ceil(question.options.length / 2)).map((option, index) => (
-                  <div key={index} style={{ padding: '8px', border: '1px solid #d9d9d9', margin: '4px 0', borderRadius: '4px' }}>
+                  <div key={index} style={{ padding: '8px', border: '1px solid #e5e7eb', margin: '4px 0', borderRadius: '4px' }}>
                     {option}
                   </div>
                 ))}
@@ -204,7 +204,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
               <div>
                 <strong>右侧选项:</strong>
                 {question.options?.slice(Math.ceil(question.options.length / 2)).map((option, index) => (
-                  <div key={index} style={{ padding: '8px', border: '1px solid #d9d9d9', margin: '4px 0', borderRadius: '4px' }}>
+                  <div key={index} style={{ padding: '8px', border: '1px solid #e5e7eb', margin: '4px 0', borderRadius: '4px' }}>
                     {option}
                   </div>
                 ))}
@@ -233,7 +233,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
       </div>
       {renderQuestionContent()}
       {showAnswer && question.explanation && question.type !== 'essay' && question.type !== 'code' && (
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
+        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0fdf4', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
           <strong>解析:</strong>
           <div style={{ marginTop: '8px' }}>{question.explanation}</div>
         </div>

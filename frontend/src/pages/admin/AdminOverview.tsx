@@ -72,7 +72,7 @@ const AdminOverview: React.FC = () => {
               title="总学生数"
               value={stats.totalStudents}
               prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: '#22c55e' }}
             />
           </Card>
         </Col>
@@ -82,7 +82,7 @@ const AdminOverview: React.FC = () => {
               title="总考试数"
               value={stats.totalExams}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -92,7 +92,7 @@ const AdminOverview: React.FC = () => {
               title="本月考试"
               value={stats.thisMonthExams}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: '#ef4444' }}
             />
           </Card>
         </Col>
@@ -102,7 +102,7 @@ const AdminOverview: React.FC = () => {
               title="在线教师"
               value={stats.onlineTeachers}
               prefix={<TeamOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>

@@ -352,7 +352,7 @@ const TeachingClassDetailPage: React.FC = () => {
           )}
           {detail.rejection_reason && (
             <Descriptions.Item label="拒绝原因" span={2}>
-              <span style={{ color: '#ff4d4f' }}>{detail.rejection_reason}</span>
+              <span style={{ color: '#ef4444' }}>{detail.rejection_reason}</span>
             </Descriptions.Item>
           )}
           <Descriptions.Item label="描述" span={2}>
@@ -440,13 +440,13 @@ const TeachingClassDetailPage: React.FC = () => {
                 <div>
                   {getActionTag(record.action)}
                   <span style={{ marginLeft: 8 }}>{record.reviewer_name}</span>
-                  <span style={{ marginLeft: 8, color: '#999' }}>
+                  <span style={{ marginLeft: 8, color: '#6b7280' }}>
                     ({record.reviewer_level === 'school' ? '校级' :
                       record.reviewer_level === 'district' ? '区级' : '市级'})
                   </span>
                 </div>
-                {record.comment && <div style={{ color: '#666', marginTop: 4 }}>{record.comment}</div>}
-                <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>
+                {record.comment && <div style={{ color: '#4b5563', marginTop: 4 }}>{record.comment}</div>}
+                <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>
                   {formatDateTime(record.created_at)}
                 </div>
               </div>

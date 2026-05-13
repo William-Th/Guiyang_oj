@@ -1,6 +1,6 @@
 .achievement-page {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background-color: #f9fafb;
 }
 
 .achievement-card {
@@ -16,7 +16,7 @@
 }
 
 .achievement-card.locked {
-  background-color: #fafafa;
+  background-color: #f9fafb;
   filter: grayscale(50%);
 }
 

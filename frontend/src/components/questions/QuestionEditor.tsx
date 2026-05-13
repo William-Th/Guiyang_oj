@@ -199,7 +199,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
       case 'matching':
         return (
           <Form.Item label="匹配项设置" required>
-            <div style={{ marginBottom: '8px', color: '#666' }}>
+            <div style={{ marginBottom: '8px', color: '#4b5563' }}>
               前一半选项为左侧项，后一半为右侧项
             </div>
             <Space direction="vertical" style={{ width: '100%' }}>

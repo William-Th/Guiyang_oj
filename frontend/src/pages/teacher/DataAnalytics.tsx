@@ -228,8 +228,8 @@ const DataAnalytics: React.FC = () => {
       : 0;
 
   const getBarColor = (accuracy: number) => {
-    if (accuracy >= 80) return '#52c41a';
-    if (accuracy >= 60) return '#faad14';
+    if (accuracy >= 80) return '#22c55e';
+    if (accuracy >= 60) return '#f59e0b';
     return '#f5222d';
   };
 
@@ -298,7 +298,7 @@ const DataAnalytics: React.FC = () => {
                 prefix={<TrophyOutlined />}
                 suffix="%"
                 precision={1}
-                valueStyle={{ color: avgAccuracy >= 60 ? '#3f8600' : '#cf1322' }}
+                valueStyle={{ color: avgAccuracy >= 60 ? '#22c55e' : '#ef4444' }}
               />
             </Card>
           </Col>
@@ -422,24 +422,24 @@ const DataAnalytics: React.FC = () => {
                                 {item.grade}
                               </Tag>
                             </div>
-                            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                            <div style={{ fontSize: 12, color: '#4b5563', marginTop: 4 }}>
                               科目：{item.subject}
                             </div>
                             {viewLevel === 'district' && (
-                              <div style={{ fontSize: 12, color: '#666' }}>
+                              <div style={{ fontSize: 12, color: '#4b5563' }}>
                                 学校数：{(item as DistrictAbilityStats).school_count} 所
                               </div>
                             )}
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               学生数：{item.student_count} 人
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               答题次数：{item.total_attempts} 次
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               正确率：{item.accuracy_rate.toFixed(1)}%
                             </div>
-                            <div style={{ fontSize: 12, color: '#666' }}>
+                            <div style={{ fontSize: 12, color: '#4b5563' }}>
                               平均分：{item.avg_score.toFixed(1)} 分
                             </div>
                           </Card>
@@ -469,8 +469,8 @@ const DataAnalytics: React.FC = () => {
                       <Radar
                         name="平均正确率 (%)"
                         dataKey="accuracy"
-                        stroke="#1890ff"
-                        fill="#1890ff"
+                        stroke="#16a34a"
+                        fill="#16a34a"
                         fillOpacity={0.6}
                       />
                       <Tooltip />

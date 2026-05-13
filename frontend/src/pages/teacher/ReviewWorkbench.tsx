@@ -494,7 +494,7 @@ const ReviewWorkbench: React.FC = () => {
               title="待审核"
               value={stats.pending_count}
               suffix="题"
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Col>
           <Col span={6}>
@@ -502,7 +502,7 @@ const ReviewWorkbench: React.FC = () => {
               title="已通过"
               value={stats.approved_count}
               suffix="题"
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#22c55e' }}
             />
           </Col>
           <Col span={6}>
@@ -510,7 +510,7 @@ const ReviewWorkbench: React.FC = () => {
               title="已拒绝"
               value={stats.rejected_count}
               suffix="题"
-              valueStyle={{ color: '#ff4d4f' }}
+              valueStyle={{ color: '#ef4444' }}
             />
           </Col>
           <Col span={6}>
@@ -519,7 +519,7 @@ const ReviewWorkbench: React.FC = () => {
               value={stats.approval_rate}
               suffix="%"
               precision={1}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Col>
         </Row>
@@ -665,7 +665,7 @@ const ReviewWorkbench: React.FC = () => {
 
             <div style={{ marginBottom: 16 }}>
               <strong>题目内容：</strong>
-              <div style={{ marginTop: 8, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+              <div style={{ marginTop: 8, padding: 12, background: '#f3f4f6', borderRadius: 4 }}>
                 {selectedQuestion.content}
               </div>
             </div>
@@ -749,7 +749,7 @@ const ReviewWorkbench: React.FC = () => {
               <div style={{
                 marginTop: 8,
                 padding: 12,
-                background: '#f5f5f5',
+                background: '#f3f4f6',
                 borderRadius: 4,
                 whiteSpace: 'pre-wrap'
               }}>
@@ -788,7 +788,7 @@ const ReviewWorkbench: React.FC = () => {
                 <div style={{
                   marginTop: 8,
                   padding: 12,
-                  background: '#f5f5f5',
+                  background: '#f3f4f6',
                   borderRadius: 4,
                   whiteSpace: 'pre-wrap'
                 }}>
@@ -834,10 +834,10 @@ const ReviewWorkbench: React.FC = () => {
                   onChange={(e) => setReviewStatus(e.target.value)}
                 >
                   <Radio.Button value="approved">
-                    <CheckCircleOutlined style={{ color: '#52c41a' }} /> 批准通过
+                    <CheckCircleOutlined style={{ color: '#22c55e' }} /> 批准通过
                   </Radio.Button>
                   <Radio.Button value="rejected">
-                    <CloseCircleOutlined style={{ color: '#ff4d4f' }} /> 拒绝
+                    <CloseCircleOutlined style={{ color: '#ef4444' }} /> 拒绝
                   </Radio.Button>
                 </Radio.Group>
               </div>

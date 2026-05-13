@@ -196,7 +196,7 @@ const ActivityResultPage: React.FC = () => {
       return (
         <div style={{ marginTop: 12 }}>
           <Text type="secondary">正确答案：</Text>
-          <Text strong style={{ marginLeft: 8, color: '#52c41a' }}>
+          <Text strong style={{ marginLeft: 8, color: '#22c55e' }}>
             {correctOptions}
           </Text>
         </div>
@@ -212,7 +212,7 @@ const ActivityResultPage: React.FC = () => {
             marginLeft: 8,
             marginTop: 8,
             padding: 12,
-            background: '#f6ffed',
+            background: '#f0fdf4',
             borderRadius: 4,
           }}
         >
@@ -238,7 +238,7 @@ const ActivityResultPage: React.FC = () => {
         <Paragraph
           style={{
             padding: 12,
-            background: '#f5f5f5',
+            background: '#f3f4f6',
             borderRadius: 4,
             minHeight: 60,
           }}
@@ -253,7 +253,7 @@ const ActivityResultPage: React.FC = () => {
         <pre
           style={{
             padding: 12,
-            background: '#f5f5f5',
+            background: '#f3f4f6',
             borderRadius: 4,
             overflow: 'auto',
           }}
@@ -367,7 +367,7 @@ const ActivityResultPage: React.FC = () => {
               title="总分"
               value={student_activity.score}
               suffix={`/ ${student_activity.activity_total_score}`}
-              valueStyle={{ color: isPassed ? '#52c41a' : '#ff4d4f', fontSize: 28 }}
+              valueStyle={{ color: isPassed ? '#22c55e' : '#ef4444', fontSize: 28 }}
               prefix={<TrophyOutlined />}
             />
             <Progress
@@ -384,7 +384,7 @@ const ActivityResultPage: React.FC = () => {
               title="正确率"
               value={correctRate}
               suffix="%"
-              valueStyle={{ color: correctRate >= 60 ? '#52c41a' : '#ff4d4f' }}
+              valueStyle={{ color: correctRate >= 60 ? '#22c55e' : '#ef4444' }}
             />
           </Card>
         </Col>
@@ -407,7 +407,7 @@ const ActivityResultPage: React.FC = () => {
                   : `${statistics.auto_graded_questions + statistics.manual_graded_questions}/${statistics.total_questions}`
               }
               valueStyle={{
-                color: statistics.pending_questions === 0 ? '#52c41a' : '#faad14',
+                color: statistics.pending_questions === 0 ? '#22c55e' : '#f59e0b',
                 fontSize: 20
               }}
             />
