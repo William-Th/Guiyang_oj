@@ -1,3 +1,51 @@
+/**
+ * 全局样式 + 薄荷设计系统 CSS 变量
+ * 与 src/styles/tokens/*.json 保持一致；
+ * 修改 tokens 时请同步此文件的 CSS 变量。
+ */
+
+:root {
+  /* === 品牌色 === */
+  --bohe-mint-50: #f0fdf4;
+  --bohe-mint-100: #dcfce7;
+  --bohe-mint-200: #bbf7d0;
+  --bohe-mint-300: #86efac;
+  --bohe-mint-400: #4ade80;
+  --bohe-mint-500: #22c55e;
+  --bohe-mint-600: #16a34a;
+  --bohe-mint-700: #15803d;
+  --bohe-mint-800: #166534;
+  --bohe-mint-900: #14532d;
+  --bohe-logo-from: #4d9899;
+  --bohe-logo-to: #7ac99c;
+  --bohe-primary: var(--bohe-mint-600);
+  --bohe-primary-dark: var(--bohe-mint-700);
+  --bohe-primary-light: var(--bohe-mint-100);
+
+  /* === 中性色 === */
+  --bohe-neutral-50: #f9fafb;
+  --bohe-neutral-100: #f3f4f6;
+  --bohe-neutral-200: #e5e7eb;
+  --bohe-neutral-300: #d1d5db;
+  --bohe-neutral-400: #9ca3af;
+  --bohe-neutral-500: #6b7280;
+  --bohe-neutral-600: #4b5563;
+  --bohe-neutral-700: #374151;
+  --bohe-neutral-800: #1f2937;
+  --bohe-neutral-900: #111827;
+  --bohe-body-text: #1a1a1a;
+
+  /* === 状态色 === */
+  --bohe-success: #22c55e;
+  --bohe-warning: #f59e0b;
+  --bohe-error: #ef4444;
+  --bohe-info: #3b82f6;
+
+  /* === 字体 === */
+  --bohe-font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC",
+    "Helvetica Neue", Arial, sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,8 +53,9 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--bohe-font-sans);
+  color: var(--bohe-body-text);
+  background: var(--bohe-neutral-50);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

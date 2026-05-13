@@ -1,0 +1,61 @@
+{
+  "baseUnit": "4px",
+  "scale": {
+    "1": { "value": "4px", "tailwind": "1" },
+    "2": { "value": "8px", "tailwind": "2" },
+    "3": { "value": "12px", "tailwind": "3" },
+    "4": { "value": "16px", "tailwind": "4" },
+    "6": { "value": "24px", "tailwind": "6" },
+    "8": { "value": "32px", "tailwind": "8" },
+    "12": { "value": "48px", "tailwind": "12" },
+    "16": { "value": "64px", "tailwind": "16" },
+    "20": { "value": "80px", "tailwind": "20" },
+    "24": { "value": "96px", "tailwind": "24" }
+  },
+  "container": {
+    "maxWidth": "1280px",
+    "padding": {
+      "mobile": "16px",
+      "tablet": "24px",
+      "desktop": "32px"
+    }
+  },
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px"
+  },
+  "components": {
+    "button": {
+      "paddingX": "16px",
+      "paddingY": "8px",
+      "minHeight": "44px"
+    },
+    "buttonLarge": {
+      "paddingX": "32px",
+      "paddingY": "12px",
+      "minHeight": "48px"
+    },
+    "card": {
+      "padding": "24px",
+      "paddingCompact": "16px",
+      "borderRadius": "16px",
+      "gap": "24px"
+    }
+  },
+  "pptx": {
+    "slideSize": { "width": "1920px", "height": "1080px" },
+    "margin": { "top": "80px", "bottom": "100px", "left": "120px", "right": "120px" },
+    "titleArea": { "top": "80px", "bottom": "200px" },
+    "contentArea": { "top": "200px", "bottom": "980px" },
+    "columnGap2": "60px",
+    "columnGap3": "40px"
+  },
+  "document": {
+    "pageSize": "A4",
+    "margin": { "top": "25mm", "bottom": "25mm", "left": "30mm", "right": "25mm" },
+    "lineSpacing": 1.5,
+    "paragraphSpacing": "12pt"
+  }
+}

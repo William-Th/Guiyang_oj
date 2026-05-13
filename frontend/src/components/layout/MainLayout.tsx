@@ -262,7 +262,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', background: '#1677ff', padding: '0 24px' }}>
+      <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px' }}>
         <div style={{ color: 'white', fontSize: '20px', marginRight: '48px', whiteSpace: 'nowrap' }}>
           贵阳市小学生测评平台
         </div>
@@ -338,12 +338,12 @@ const MainLayout: React.FC = () => {
           </Dropdown>
         </Space>
       </Header>
-      <Content style={{ padding: '24px', background: '#f0f2f5' }}>
+      <Content style={{ padding: '24px' }}>
         <div style={{ background: 'white', padding: '24px', borderRadius: '8px', minHeight: '100%' }}>
           <Outlet />
         </div>
       </Content>
-      <Footer style={{ textAlign: 'center', background: '#f0f2f5' }}>
+      <Footer style={{ textAlign: 'center' }}>
         贵阳市教育局 ©2024 小学生测评服务平台
       </Footer>
     </Layout>

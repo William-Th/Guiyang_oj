@@ -1,0 +1,45 @@
+{
+  "fontFamily": {
+    "sans": "\"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", \"Helvetica Neue\", Arial, sans-serif"
+  },
+  "fontSize": {
+    "xs": { "value": "12px", "tailwind": "text-xs" },
+    "sm": { "value": "14px", "tailwind": "text-sm" },
+    "base": { "value": "16px", "tailwind": "text-base" },
+    "lg": { "value": "18px", "tailwind": "text-lg" },
+    "xl": { "value": "20px", "tailwind": "text-xl" },
+    "2xl": { "value": "24px", "tailwind": "text-2xl" },
+    "3xl": { "value": "30px", "tailwind": "text-3xl" },
+    "4xl": { "value": "36px", "tailwind": "text-4xl" }
+  },
+  "fontWeight": {
+    "regular": { "value": 400, "tailwind": "font-normal" },
+    "medium": { "value": 500, "tailwind": "font-medium" },
+    "semibold": { "value": 600, "tailwind": "font-semibold" },
+    "bold": { "value": 700, "tailwind": "font-bold" }
+  },
+  "lineHeight": {
+    "tight": { "value": 1.25, "tailwind": "leading-tight" },
+    "normal": { "value": 1.5, "tailwind": "leading-normal" },
+    "relaxed": { "value": 1.625, "tailwind": "leading-relaxed" }
+  },
+  "headings": {
+    "h1": { "size": "36px", "weight": 700, "lineHeight": 1.25 },
+    "h2": { "size": "30px", "weight": 700, "lineHeight": 1.25 },
+    "h3": { "size": "20px", "weight": 600, "lineHeight": 1.25 },
+    "h4": { "size": "18px", "weight": 600, "lineHeight": 1.5 }
+  },
+  "pptx": {
+    "slideTitle": { "size": "36pt", "weight": 700 },
+    "subtitle": { "size": "24pt", "weight": 600 },
+    "body": { "size": "18pt", "weight": 400 },
+    "caption": { "size": "14pt", "weight": 400 }
+  },
+  "document": {
+    "title": { "size": "24pt", "weight": 700 },
+    "heading1": { "size": "18pt", "weight": 700 },
+    "heading2": { "size": "14pt", "weight": 600 },
+    "body": { "size": "11pt", "weight": 400 },
+    "footnote": { "size": "9pt", "weight": 400 }
+  }
+}
