@@ -63,11 +63,10 @@ class AutoGradingService {
         const { answer_id, question_type, student_answer, correct_answer, max_score } = answer;
 
         // Check if this is an objective question
-        // Normalize question types: blank = fill_blank, true_false = single
-        const normalizedType = question_type === 'blank' ? 'fill_blank' :
-          question_type === 'true_false' ? 'single' : question_type;
+        // Normalize question types: blank → fill_blank
+        const normalizedType = question_type === 'blank' ? 'fill_blank' : question_type;
 
-        if (['single', 'multiple', 'fill_blank'].includes(normalizedType)) {
+        if (['single', 'multiple', 'fill_blank', 'true_false'].includes(normalizedType)) {
           const gradingResult = await this.gradeQuestion(
             normalizedType,
             student_answer,
@@ -131,29 +130,25 @@ class AutoGradingService {
       }
 
       // Update student_activities with total score and grading status
-      let gradingStatus = 'auto_graded';
-      if (hasSubjectiveQuestions) {
-        gradingStatus = 'partial_graded';
-      } else {
-        gradingStatus = 'completed';
-      }
+      // 全客观题 → auto_graded（仍出现在教师评卷列表供复核与确认完成）
+      // 含主观题 → partial_graded（等待教师人工批改）
+      // 最终 completed 状态由教师手动点击"完成评卷"触发，此处不直接置为 completed
+      const gradingStatus = hasSubjectiveQuestions ? 'partial_graded' : 'auto_graded';
 
       await query(`
         UPDATE student_activities
         SET
           score = $1,
-          grading_status = $2::VARCHAR,
-          status = CASE
-            WHEN $2::VARCHAR = 'completed' THEN 'graded'
-            ELSE status
-          END
+          grading_status = $2::VARCHAR
         WHERE id = $3
       `, [totalScore, gradingStatus, studentActivityId]);
 
       logger.info(`Auto-grading completed for student_activity ${studentActivityId}: ${gradedCount} questions graded, total score: ${totalScore}, status: ${gradingStatus}`);
 
       // Emit completion event if grading is complete (no subjective questions)
-      if (gradingStatus === 'completed') {
+      // 注：grading_status 此处为 auto_graded（仍需老师在评卷列表确认），
+      // 但语义上判分已完成，应触发成就/积分等下游事件
+      if (!hasSubjectiveQuestions) {
         try {
           // Fetch additional context for the event
           const contextResult = await query(`
@@ -273,6 +268,9 @@ class AutoGradingService {
       case 'fill_blank':
         return this.gradeFillBlank(studentAnswer, parsedCorrectAnswer, maxScore);
 
+      case 'true_false':
+        return this.gradeTrueFalse(studentAnswer, parsedCorrectAnswer, maxScore);
+
       default:
         return {
           isCorrect: false,
@@ -288,6 +286,56 @@ class AutoGradingService {
         message: 'Grading error'
       };
     }
+  }
+
+  /**
+   * Grade true/false question
+   * 判断题判题，兼容多种表达形式：
+   *   true/false, 1/0, 对/错, 是/否, 正确/错误, T/F, Y/N
+   * @param {string|boolean|number} studentAnswer - 学生答案
+   * @param {string|boolean|number|Object} correctAnswer - 正确答案
+   * @param {number} maxScore - 满分
+   * @returns {Object} Grading result
+   */
+  static gradeTrueFalse(studentAnswer, correctAnswer, maxScore) {
+    const TRUE_VALUES = new Set(['true', '1', '对', '是', '正确', 't', 'y', 'yes']);
+    const FALSE_VALUES = new Set(['false', '0', '错', '否', '错误', 'f', 'n', 'no']);
+
+    const normalize = (value) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'number') return value !== 0;
+      // 处理对象形式 { answer: ... }
+      if (typeof value === 'object' && value.answer !== undefined) {
+        return normalize(value.answer);
+      }
+      // 数组形式（如 ["true"]）取第一个
+      if (Array.isArray(value)) {
+        return value.length > 0 ? normalize(value[0]) : null;
+      }
+      const s = String(value).trim().toLowerCase();
+      if (TRUE_VALUES.has(s)) return true;
+      if (FALSE_VALUES.has(s)) return false;
+      return null;
+    };
+
+    const studentBool = normalize(studentAnswer);
+    const correctBool = normalize(correctAnswer);
+
+    // 任一无法识别 → 判为错（避免误判）
+    if (studentBool === null || correctBool === null) {
+      return {
+        isCorrect: false,
+        score: 0,
+        message: '判断题答案格式无法识别'
+      };
+    }
+
+    const isCorrect = studentBool === correctBool;
+    return {
+      isCorrect,
+      score: isCorrect ? parseFloat(maxScore) : 0
+    };
   }
 
   /**

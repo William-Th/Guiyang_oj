@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Layout, Avatar, Dropdown, Space, Menu } from 'antd';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import {
   UserOutlined,
   LogoutOutlined,
@@ -30,13 +30,11 @@ const MainLayout: React.FC = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // 身份验证检查：如果未登录，重定向到登录页面
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || !user) {
-      navigate('/login', { replace: true });
-    }
-  }, [user, navigate]);
+  // 身份验证守卫：同步判断，未登录直接重定向，避免首次渲染闪现内容（修复 BUG-001）
+  const token = localStorage.getItem('token');
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   // 检查是否为管理员角色
   const isAdmin = () => {
