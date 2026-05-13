@@ -24,14 +24,20 @@ jest.mock('../../src/middleware/auth', () => ({
   }
 }));
 
+// multer mock：每次调用时把 git tracked 的 fixture 复制到临时路径，
+// 让 production 代码删除的是临时副本而非 fixture 本身
 jest.mock('multer', () => {
   return () => ({
     single: () => (req, res, next) => {
       const path = require('path');
+      const fs = require('fs');
+      const fixturePath = path.join(__dirname, 'fixtures/test_questions.csv');
+      const tmpPath = path.join(__dirname, 'fixtures', `tmp_upload_${Date.now()}_${Math.random().toString(36).slice(2)}.csv`);
+      fs.copyFileSync(fixturePath, tmpPath);
       req.file = {
         originalname: 'test_questions.csv',
         mimetype: 'text/csv',
-        path: path.join(__dirname, 'fixtures/test_questions.csv')
+        path: tmpPath
       };
       next();
     }
@@ -132,14 +138,8 @@ describe('Question Import API Tests', () => {
   // QBIMP102 - 导入CSV文件解析
   describe('QBIMP102 - 导入CSV文件解析', () => {
     test('应该成功解析CSV文件中的题目', async () => {
-      const csvContent = `type,subject,grade,content,difficulty,score
-single,数学,一年级,1+1=?,easy,5
-multiple,数学,二年级,2+2=?,medium,10`;
-
-      // 写入测试文件
-      const testCsvPath = path.join(fixturesDir, 'test_questions.csv');
-      fs.writeFileSync(testCsvPath, csvContent);
-
+      // multer mock 始终读取 fixtures/test_questions.csv（在 jest.mock 中固定路径）
+      // 该 fixture 是 git tracked 的，无需在测试中写入或清理
       QuestionBank.create.mockResolvedValue({ id: 1 });
       ImportLog.create.mockResolvedValue({ id: 1 });
 
@@ -149,15 +149,6 @@ multiple,数学,二年级,2+2=?,medium,10`;
 
       if (response.status === 200) {
         expect(response.body.success).toBe(true);
-      }
-
-      // 清理测试文件
-      try {
-        if (fs.existsSync(testCsvPath)) {
-          fs.unlinkSync(testCsvPath);
-        }
-      } catch (err) {
-        // 忽略清理错误
       }
     });
 
