@@ -26,7 +26,7 @@ const EventEmitter = require('../services/EventEmitter');
 router.get('/pending', authMiddleware, async (req, res) => {
   try {
     // Only teacher and admin can access
-    if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+    if (!['teacher', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: '权限不足'
@@ -139,7 +139,7 @@ router.get('/student-activity/:id',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!['teacher', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -315,7 +315,7 @@ router.put('/answers/:id',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!['teacher', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -422,7 +422,7 @@ router.put('/batch',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!['teacher', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -563,7 +563,7 @@ router.post('/student-activity/:id/complete',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!['teacher', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -716,7 +716,7 @@ router.get('/stats/:activityId',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!['teacher', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin', 'system_admin'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
