@@ -70,13 +70,118 @@ const CATEGORY_MAP: Record<string, string> = {
   special_event: '特殊事件',
 };
 
-// 稀有度映射
-const RARITY_MAP: Record<string, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-  mythic: '神话',
+// 稀有度完整配置（图标、颜色、样式）
+
+// 稀有度完整配置（图标、颜色、样式）
+const RARITY_CONFIG: Record<string, { icon: string; label: string; tagColor: string; textColor: string; bgGradient: string }> = {
+  common: {
+    icon: '⚪',
+    label: '普通',
+    tagColor: 'default',
+    textColor: '#8c8c8c',
+    bgGradient: 'linear-gradient(135deg, #f0f0f0 0%, #d9d9d9 100%)',
+  },
+  rare: {
+    icon: '💎',
+    label: '稀有',
+    tagColor: 'blue',
+    textColor: '#1677ff',
+    bgGradient: 'linear-gradient(135deg, #e6f4ff 0%, #91caff 100%)',
+  },
+  epic: {
+    icon: '💜',
+    label: '史诗',
+    tagColor: 'purple',
+    textColor: '#722ed1',
+    bgGradient: 'linear-gradient(135deg, #f9f0ff 0%, #d3adf7 100%)',
+  },
+  legendary: {
+    icon: '🌟',
+    label: '传说',
+    tagColor: 'gold',
+    textColor: '#d48806',
+    bgGradient: 'linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%)',
+  },
+  mythic: {
+    icon: '🔥',
+    label: '神话',
+    tagColor: 'red',
+    textColor: '#cf1322',
+    bgGradient: 'linear-gradient(135deg, #fff1f0 0%, #ffa39e 100%)',
+  },
+};
+
+// 子分类映射
+const SUBCATEGORY_MAP: Record<string, string> = {
+  first_breakthrough: '首次突破',
+  learning_duration: '学习时长',
+  learning_frequency: '学习频率',
+  consecutive_success: '连续成功',
+  interaction: '互动交流',
+  help: '帮助他人',
+  recognition: '获得认可',
+  sharing: '知识分享',
+  holiday: '节日活动',
+  seasonal: '季节活动',
+  habit: '学习习惯',
+  improvement: '能力提升',
+  progression: '等级进阶',
+  cross_subject: '跨学科',
+  练习进度: '练习进度',
+};
+
+// 按分类分组的子分类选项（用于编辑表单下拉）
+const SUBCATEGORY_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  exam_certification: [
+    { value: 'first_breakthrough', label: '首次突破' },
+    { value: 'progression', label: '等级进阶' },
+    { value: 'cross_subject', label: '跨学科' },
+  ],
+  learning_growth: [
+    { value: 'first_breakthrough', label: '首次突破' },
+    { value: 'learning_duration', label: '学习时长' },
+    { value: 'learning_frequency', label: '学习频率' },
+    { value: 'consecutive_success', label: '连续成功' },
+    { value: 'habit', label: '学习习惯' },
+    { value: 'improvement', label: '能力提升' },
+    { value: '练习进度', label: '练习进度' },
+  ],
+  social_collaboration: [
+    { value: 'interaction', label: '互动交流' },
+    { value: 'help', label: '帮助他人' },
+    { value: 'recognition', label: '获得认可' },
+    { value: 'sharing', label: '知识分享' },
+  ],
+  special_event: [
+    { value: 'holiday', label: '节日活动' },
+    { value: 'seasonal', label: '季节活动' },
+  ],
+};
+
+// 触发模式映射
+const TRIGGER_MODE_MAP: Record<string, string> = {
+  real_time: '实时触发',
+  realtime: '实时触发',
+  scheduled: '定时触发',
+};
+
+// 触发频率映射
+const TRIGGER_FREQUENCY_MAP: Record<string, string> = {
+  real_time: '实时',
+  realtime: '实时',
+  daily: '每日',
+  weekly: '每周',
+  monthly: '每月',
+};
+
+// 条件类型映射
+const CONDITION_TYPE_MAP: Record<string, string> = {
+  count: '计数条件',
+  threshold: '阈值条件',
+  state: '状态条件',
+  consecutive: '连续条件',
+  time_window: '时间窗口',
+  and: '组合条件',
 };
 
 // 事件类型配置（基于后端EventTypes.js和数据库实际数据）
@@ -199,6 +304,7 @@ const AchievementManagementPage: React.FC = () => {
   const [viewingAchievement, setViewingAchievement] = useState<Achievement | null>(null);
   const [form] = Form.useForm();
   const [conditionType, setConditionType] = useState<string>('count');
+  const [selectedCategory, setSelectedCategory] = useState<string>('learning_growth');
   const [uploadedIcon, setUploadedIcon] = useState<string>('');
   const [iconFileList, setIconFileList] = useState<UploadFile[]>([]);
 
@@ -231,6 +337,7 @@ const AchievementManagementPage: React.FC = () => {
     setEditingAchievement(null);
     form.resetFields();
     setConditionType('count');
+    setSelectedCategory('learning_growth');
     setUploadedIcon('');
     setIconFileList([]);
     setIsModalVisible(true);
@@ -238,6 +345,7 @@ const AchievementManagementPage: React.FC = () => {
 
   const handleEdit = (record: Achievement) => {
     setEditingAchievement(record);
+    setSelectedCategory(record.category);
     const tc = record.trigger_condition;
 
     // 解析trigger_condition
@@ -425,15 +533,125 @@ const AchievementManagementPage: React.FC = () => {
     return colors[category] || 'default';
   };
 
-  const getRarityColor = (rarity: string) => {
-    const colors: Record<string, string> = {
-      common: 'default',
-      rare: 'blue',
-      epic: 'purple',
-      legendary: 'gold',
-      mythic: 'red',
-    };
-    return colors[rarity] || 'default';
+  // 将触发条件格式化为中文可读列表（用于详情弹窗）
+  const formatTriggerConditionDetail = (tc: any) => {
+    if (!tc) return [];
+
+    const lines: { label: string; value: string }[] = [];
+
+    // 触发模式
+    if (tc.trigger_mode) {
+      const normalizedMode = tc.trigger_mode.replace('realtime', 'real_time');
+      lines.push({ label: '触发模式', value: TRIGGER_MODE_MAP[normalizedMode] || tc.trigger_mode });
+    }
+
+    // 触发频率
+    if (tc.trigger_frequency) {
+      lines.push({ label: '触发频率', value: TRIGGER_FREQUENCY_MAP[tc.trigger_frequency] || tc.trigger_frequency });
+    }
+
+    // 条件类型
+    if (tc.condition_type) {
+      lines.push({ label: '条件类型', value: CONDITION_TYPE_MAP[tc.condition_type] || tc.condition_type });
+    }
+
+    // 触发事件
+    if (tc.event_name) {
+      lines.push({ label: '触发事件', value: EVENT_TYPE_MAP[tc.event_name] || tc.event_name });
+    }
+
+    // 计数条件
+    if (tc.target_count !== undefined) {
+      lines.push({ label: '目标次数', value: `${tc.target_count} 次` });
+    }
+    if (tc.threshold !== undefined && tc.condition_type === 'count') {
+      lines.push({ label: '目标次数', value: `${tc.threshold} 次` });
+    }
+
+    // 阈值条件
+    if (tc.threshold_value !== undefined) {
+      const field = FIELD_NAME_MAP[tc.threshold_field] || tc.threshold_field || '值';
+      lines.push({ label: `阈值（${field}）`, value: `≥ ${tc.threshold_value}` });
+    }
+    if (tc.threshold !== undefined && tc.condition_type === 'threshold') {
+      const field = FIELD_NAME_MAP[tc.threshold_field] || tc.threshold_field || '值';
+      lines.push({ label: `阈值（${field}）`, value: `≥ ${tc.threshold}` });
+    }
+
+    // 连续条件
+    if (tc.consecutive_days) {
+      lines.push({ label: '连续天数', value: `${tc.consecutive_days} 天` });
+    }
+    if (tc.consecutive_weeks) {
+      lines.push({ label: '连续周数', value: `${tc.consecutive_weeks} 周` });
+    }
+    if (tc.consecutive === true) {
+      lines.push({ label: '连续要求', value: '需要连续完成' });
+    }
+
+    // 状态条件
+    if (tc.first_time) {
+      lines.push({ label: '首次触发', value: '仅首次' });
+    }
+    if (tc.min_learning_days) {
+      lines.push({ label: '最少学习天数', value: `${tc.min_learning_days} 天/周` });
+    }
+
+    // 过滤条件
+    if (tc.filter) {
+      const filterParts: string[] = [];
+      if (tc.filter.type) filterParts.push(`类型: ${tc.filter.type === 'practice' ? '练习' : tc.filter.type === 'certification' ? '认证' : tc.filter.type}`);
+      if (tc.filter.status) filterParts.push(`状态: ${tc.filter.status === 'passed' ? '通过' : tc.filter.status === 'submitted' ? '已提交' : tc.filter.status}`);
+      if (tc.filter.activity_type) filterParts.push(`活动类型: ${tc.filter.activity_type === 'practice' ? '练习' : tc.filter.activity_type === 'assessment' ? '测评' : tc.filter.activity_type}`);
+      if (tc.filter.from_level !== undefined) filterParts.push(`从等级 ${tc.filter.from_level}`);
+      if (tc.filter.to_level !== undefined) filterParts.push(`到等级 ${tc.filter.to_level}`);
+      if (filterParts.length > 0) {
+        lines.push({ label: '过滤条件', value: filterParts.join('，') });
+      }
+    }
+
+    // 时间窗口
+    if (tc.time_window) {
+      const tw = tc.time_window;
+
+      // 格式化日期表达式：将 CURRENT_YEAR-MM-DD 转为 "当年M月D日"
+      const format_date_expr = (expr: string): string => {
+        if (!expr) return expr;
+        // 模板变量
+        const templateMap: Record<string, string> = {
+          '${LUNAR_NEW_YEAR}': '农历新年初一',
+          '${LUNAR_NEW_YEAR_END}': '农历正月十五',
+        };
+        if (templateMap[expr]) return templateMap[expr];
+        // CURRENT_YEAR-MM-DD 格式
+        const cyMatch = expr.match(/^CURRENT_YEAR-(\d{2})-(\d{2})$/);
+        if (cyMatch) {
+          const month = parseInt(cyMatch[1], 10);
+          const day = parseInt(cyMatch[2], 10);
+          return `当年${month}月${day}日`;
+        }
+        return expr;
+      };
+
+      if (tw.start && tw.end) {
+        lines.push({ label: '时间范围', value: `${format_date_expr(tw.start)} ~ ${format_date_expr(tw.end)}` });
+      }
+      if (tw.type) {
+        lines.push({ label: '窗口类型', value: tw.type === 'date_range' ? '日期范围' : tw.type });
+      }
+    }
+
+    // 定时触发时间
+    if (tc.trigger_time) {
+      lines.push({ label: '触发时间', value: tc.trigger_time });
+    }
+
+    // 冷却标记
+    if (tc.cooldown_days) {
+      lines.push({ label: '冷却天数', value: `${tc.cooldown_days} 天` });
+    }
+
+    return lines;
   };
 
   const formatTriggerCondition = (tc: any) => {
@@ -527,11 +745,25 @@ const AchievementManagementPage: React.FC = () => {
       dataIndex: 'rarity',
       key: 'rarity',
       width: 80,
-      render: (rarity: string) => (
-        <Tag color={getRarityColor(rarity)}>
-          {RARITY_MAP[rarity] || rarity}
-        </Tag>
-      ),
+      render: (rarity: string) => {
+        const cfg = RARITY_CONFIG[rarity];
+        return cfg ? (
+          <Tag
+            color={cfg.tagColor}
+            style={{
+              fontWeight: 600,
+              fontSize: 12,
+              padding: '2px 8px',
+              borderRadius: 4,
+              background: cfg.bgGradient,
+              borderColor: cfg.textColor,
+              borderWidth: 1,
+            }}
+          >
+            {cfg.icon} {cfg.label}
+          </Tag>
+        ) : <Tag>{rarity}</Tag>;
+      },
     },
     {
       title: '积分',
@@ -733,7 +965,10 @@ const AchievementManagementPage: React.FC = () => {
               rules={[{ required: true, message: '请选择分类' }]}
               style={{ width: '200px' }}
             >
-              <Select>
+              <Select onChange={(v) => {
+                setSelectedCategory(v);
+                form.setFieldValue('subcategory', undefined);
+              }}>
                 <Option value="exam_certification">测评认证</Option>
                 <Option value="learning_growth">学习成长</Option>
                 <Option value="social_collaboration">社交协作</Option>
@@ -745,8 +980,13 @@ const AchievementManagementPage: React.FC = () => {
               label="子分类"
               name="subcategory"
               style={{ width: '200px' }}
+              extra="在分类下的进一步细分"
             >
-              <Input placeholder="可选" />
+              <Select allowClear placeholder="选择子分类">
+                {(SUBCATEGORY_OPTIONS[selectedCategory] || []).map(opt => (
+                  <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                ))}
+              </Select>
             </Form.Item>
 
             <Form.Item
@@ -756,11 +996,11 @@ const AchievementManagementPage: React.FC = () => {
               style={{ width: '200px' }}
             >
               <Select>
-                <Option value="common">普通</Option>
-                <Option value="rare">稀有</Option>
-                <Option value="epic">史诗</Option>
-                <Option value="legendary">传说</Option>
-                <Option value="mythic">神话</Option>
+                {Object.entries(RARITY_CONFIG).map(([key, cfg]) => (
+                  <Option key={key} value={key}>
+                    <span style={{ color: cfg.textColor, fontWeight: 600 }}>{cfg.icon} {cfg.label}</span>
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
           </Space>
@@ -980,20 +1220,46 @@ const AchievementManagementPage: React.FC = () => {
             </Descriptions.Item>
             <Descriptions.Item label="成就描述" span={2}>{viewingAchievement.achievement_desc}</Descriptions.Item>
             <Descriptions.Item label="分类">{CATEGORY_MAP[viewingAchievement.category]}</Descriptions.Item>
-            <Descriptions.Item label="子分类">{viewingAchievement.subcategory || '-'}</Descriptions.Item>
+            <Descriptions.Item label="子分类">{(viewingAchievement.subcategory && SUBCATEGORY_MAP[viewingAchievement.subcategory]) || viewingAchievement.subcategory || '-'}</Descriptions.Item>
             <Descriptions.Item label="稀有度">
-              <Tag color={getRarityColor(viewingAchievement.rarity)}>
-                {RARITY_MAP[viewingAchievement.rarity]}
-              </Tag>
+              {(() => {
+                const cfg = RARITY_CONFIG[viewingAchievement.rarity];
+                return cfg ? (
+                  <Tag
+                    color={cfg.tagColor}
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 13,
+                      padding: '2px 10px',
+                      background: cfg.bgGradient,
+                      borderColor: cfg.textColor,
+                      borderWidth: 1,
+                    }}
+                  >
+                    {cfg.icon} {cfg.label}
+                  </Tag>
+                ) : <Tag>{viewingAchievement.rarity}</Tag>;
+              })()}
             </Descriptions.Item>
             <Descriptions.Item label="积分奖励">{viewingAchievement.points_reward}分</Descriptions.Item>
             <Descriptions.Item label="触发事件" span={2}>
               {EVENT_TYPE_MAP[viewingAchievement.trigger_condition?.event_name]}
             </Descriptions.Item>
             <Descriptions.Item label="触发条件" span={2}>
-              <pre style={{ margin: 0, fontSize: '12px' }}>
-                {JSON.stringify(viewingAchievement.trigger_condition, null, 2)}
-              </pre>
+              {(() => {
+                const lines = formatTriggerConditionDetail(viewingAchievement.trigger_condition);
+                if (lines.length === 0) return '-';
+                return (
+                  <div style={{ fontSize: 13 }}>
+                    {lines.map((line, i) => (
+                      <div key={i} style={{ marginBottom: 4 }}>
+                        <Text type="secondary">{line.label}：</Text>
+                        <Text>{line.value}</Text>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </Descriptions.Item>
             <Descriptions.Item label="状态">
               <Tag color={viewingAchievement.is_active ? 'success' : 'default'}>
