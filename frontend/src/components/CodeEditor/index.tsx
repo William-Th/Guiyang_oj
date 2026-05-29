@@ -113,7 +113,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             height: '100%',
             color: '#999'
           }}>
-            Loading editor...
+            编辑器加载中...
           </div>
         }
       />

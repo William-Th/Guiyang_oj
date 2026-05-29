@@ -58,64 +58,64 @@ const STATUS_CONFIG: Record<JudgeStatus, {
   description: string;
 }> = {
   pending: {
-    label: 'Pending',
+    label: '等待中',
     color: 'default',
     icon: <ClockCircleOutlined />,
-    description: 'Waiting in queue',
+    description: '排队等待中',
   },
   judging: {
-    label: 'Judging',
+    label: '判题中',
     color: 'processing',
     icon: <LoadingOutlined spin />,
-    description: 'Running tests',
+    description: '正在运行测试',
   },
   AC: {
-    label: 'Accepted',
+    label: '通过',
     color: 'success',
     icon: <CheckCircleOutlined />,
-    description: 'All test cases passed',
+    description: '所有测试用例通过',
   },
   WA: {
-    label: 'Wrong Answer',
+    label: '答案错误',
     color: 'error',
     icon: <CloseCircleOutlined />,
-    description: 'Output does not match expected',
+    description: '输出与期望不符',
   },
   CE: {
-    label: 'Compile Error',
+    label: '编译错误',
     color: 'warning',
     icon: <WarningOutlined />,
-    description: 'Code failed to compile',
+    description: '代码编译失败',
   },
   RE: {
-    label: 'Runtime Error',
+    label: '运行错误',
     color: 'error',
     icon: <ExclamationCircleOutlined />,
-    description: 'Program crashed during execution',
+    description: '程序运行时崩溃',
   },
   TLE: {
-    label: 'Time Limit Exceeded',
+    label: '超时',
     color: 'orange',
     icon: <ClockCircleOutlined />,
-    description: 'Program took too long to execute',
+    description: '程序执行时间超限',
   },
   MLE: {
-    label: 'Memory Limit Exceeded',
+    label: '内存超限',
     color: 'orange',
     icon: <ExclamationCircleOutlined />,
-    description: 'Program used too much memory',
+    description: '程序内存使用超限',
   },
   OLE: {
-    label: 'Output Limit Exceeded',
+    label: '输出超限',
     color: 'orange',
     icon: <ExclamationCircleOutlined />,
-    description: 'Program output too much data',
+    description: '程序输出数据过多',
   },
   SE: {
-    label: 'System Error',
+    label: '系统错误',
     color: 'default',
     icon: <ExclamationCircleOutlined />,
-    description: 'Internal system error',
+    description: '系统内部错误',
   },
 };
 
@@ -124,7 +124,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
     return (
       <div style={{ textAlign: 'center', padding: '20px' }}>
         <LoadingOutlined style={{ fontSize: 24 }} spin />
-        <div style={{ marginTop: 8 }}>Judging...</div>
+        <div style={{ marginTop: 8 }}>判题中...</div>
       </div>
     );
   }
@@ -132,7 +132,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
   if (!result) {
     return (
       <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-        Submit your code to see results
+        提交代码后查看结果
       </div>
     );
   }
@@ -154,12 +154,12 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
           </Tag>
           {result.maxScore !== undefined && (
             <Text strong>
-              Score: {result.score || 0} / {result.maxScore}
+              得分: {result.score || 0} / {result.maxScore}
             </Text>
           )}
           {result.executionTime !== undefined && (
             <Text type="secondary">
-              Time: {result.executionTime}ms
+              用时: {result.executionTime}ms
             </Text>
           )}
         </Space>
@@ -177,7 +177,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
       {/* Compile error output */}
       {result.status === 'CE' && result.compileOutput && (
         <div style={{ marginBottom: 16 }}>
-          <Text strong>Compile Error:</Text>
+          <Text strong>编译错误:</Text>
           <pre style={{
             background: '#f5f5f5',
             padding: 12,
@@ -212,14 +212,14 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
                     <Tag color={tcStatus.color} icon={tcStatus.icon}>
                       {tcStatus.label}
                     </Tag>
-                    <span>Test Case #{tc.caseNumber}</span>
-                    {tc.isSample && <Tag>Sample</Tag>}
+                    <span>测试用例 #{tc.caseNumber}</span>
+                    {tc.isSample && <Tag>样例</Tag>}
                     {tc.executionTime !== undefined && (
                       <Text type="secondary">{tc.executionTime}ms</Text>
                     )}
                     {tc.score !== undefined && (
                       <Text type="secondary">
-                        {tc.earned || 0}/{tc.score} pts
+                        {tc.earned || 0}/{tc.score} 分
                       </Text>
                     )}
                   </Space>
@@ -227,7 +227,7 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
               >
                 <Descriptions column={1} size="small">
                   {tc.output !== undefined && (
-                    <Descriptions.Item label="Your Output">
+                    <Descriptions.Item label="你的输出">
                       <pre style={{
                         background: '#f5f5f5',
                         padding: 8,
@@ -236,12 +236,12 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
                       }}>
-                        {tc.output || '(empty)'}
+                        {tc.output || '(空)'}
                       </pre>
                     </Descriptions.Item>
                   )}
                   {tc.expected !== undefined && (
-                    <Descriptions.Item label="Expected Output">
+                    <Descriptions.Item label="期望输出">
                       <pre style={{
                         background: '#f0fff0',
                         padding: 8,
@@ -250,12 +250,12 @@ const JudgeResult: React.FC<JudgeResultProps> = ({ result, loading }) => {
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
                       }}>
-                        {tc.expected || '(empty)'}
+                        {tc.expected || '(空)'}
                       </pre>
                     </Descriptions.Item>
                   )}
                   {tc.stderr && (
-                    <Descriptions.Item label="Error Output">
+                    <Descriptions.Item label="错误输出">
                       <pre style={{
                         background: '#fff0f0',
                         padding: 8,

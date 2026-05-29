@@ -52,9 +52,9 @@ interface StudentAchievement extends Achievement {
 }
 
 interface PointsAccount {
-  current_balance: number;
-  total_earned: number;
-  total_spent: number;
+  current_points: number;
+  total_points: number;
+  spent_points: number;
 }
 
 interface AchievementProgress {
@@ -167,6 +167,28 @@ const AchievementPage: React.FC = () => {
     return categoryMap[category] || { color: 'default', label: category };
   };
 
+  // 获取子分类中文显示
+  const getSubcategoryLabel = (subcategory: string) => {
+    const subcategoryMap: Record<string, string> = {
+      first_breakthrough: '首次突破',
+      progression: '等级进阶',
+      consecutive_success: '连续通过',
+      cross_subject: '跨学科',
+      learning_duration: '学习时长',
+      learning_frequency: '学习频率',
+      habit: '学习习惯',
+      improvement: '进步提升',
+      interaction: '互动交流',
+      help: '乐于助人',
+      recognition: '获得认可',
+      sharing: '知识分享',
+      holiday: '节日活动',
+      seasonal: '季节活动',
+      personal_practice: '个人练习',
+    };
+    return subcategoryMap[subcategory] || subcategory;
+  };
+
   // 检查成就是否已获得
   const isAchievementEarned = (achievementId: number) => {
     return studentAchievements.some(a => a.achievement_id === achievementId);
@@ -249,10 +271,9 @@ const AchievementPage: React.FC = () => {
               <Tag color={categoryInfo.color}>{categoryInfo.label}</Tag>
               <Tag color={rarityInfo.color}>{rarityInfo.label}</Tag>
               {achievement.subcategory && (
-                <Tag>{achievement.subcategory}</Tag>
+                <Tag>{getSubcategoryLabel(achievement.subcategory)}</Tag>
               )}
             </Space>
-
             {/* 进度条显示（未获得的成就） */}
             {!earned && progress && (
               <div style={{ marginTop: 8 }}>
@@ -349,7 +370,7 @@ const AchievementPage: React.FC = () => {
           <Card>
             <Statistic
               title="当前积分"
-              value={pointsAccount?.current_balance || 0}
+              value={pointsAccount?.current_points || 0}
               prefix={<RiseOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -359,7 +380,7 @@ const AchievementPage: React.FC = () => {
           <Card>
             <Statistic
               title="累计积分"
-              value={pointsAccount?.total_earned || 0}
+              value={pointsAccount?.total_points || 0}
               prefix={<FireOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
@@ -487,7 +508,7 @@ const AchievementPage: React.FC = () => {
                     <Tag color={categoryInfo.color}>{categoryInfo.label}</Tag>
                     <Tag color={rarityInfo.color}>{rarityInfo.label}</Tag>
                     {selectedAchievement.subcategory && (
-                      <Tag>{selectedAchievement.subcategory}</Tag>
+                      <Tag>{getSubcategoryLabel(selectedAchievement.subcategory)}</Tag>
                     )}
                   </Space>
                 </div>

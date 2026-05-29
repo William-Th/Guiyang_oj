@@ -60,6 +60,20 @@ class User {
       params.push(filters.status);
     }
 
+    if (filters.district_id) {
+      const connector = whereClause ? ' AND' : ' WHERE';
+      paramCount++;
+      whereClause += `${connector} d.id = $${paramCount}`;
+      params.push(filters.district_id);
+    }
+
+    if (filters.school_id) {
+      const connector = whereClause ? ' AND' : ' WHERE';
+      paramCount++;
+      whereClause += `${connector} sc.id = $${paramCount}`;
+      params.push(filters.school_id);
+    }
+
     const result = await query(
       `SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at, u.updated_at,
               sc.name as school_name, sc.id as school_id,

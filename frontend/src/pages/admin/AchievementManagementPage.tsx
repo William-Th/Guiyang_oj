@@ -499,8 +499,8 @@ const AchievementManagementPage: React.FC = () => {
       key: 'achievement_icon',
       width: 80,
       render: (icon: string) => {
-        if (icon && icon.startsWith('/uploads/')) {
-          return <Image src={`http://localhost:3001${icon}`} width={40} height={40} style={{ objectFit: 'cover' }} />;
+        if (icon && (icon.startsWith('/uploads/') || icon.startsWith('/images/'))) {
+          return <Image src={icon} width={40} height={40} style={{ objectFit: 'cover' }} />;
         }
         return <span style={{ fontSize: '24px' }}>{icon || '🏆'}</span>;
       },
@@ -973,7 +973,10 @@ const AchievementManagementPage: React.FC = () => {
             <Descriptions.Item label="成就ID" span={1}>{viewingAchievement.achievement_id}</Descriptions.Item>
             <Descriptions.Item label="成就编码" span={1}>{viewingAchievement.achievement_code}</Descriptions.Item>
             <Descriptions.Item label="成就名称" span={2}>
-              {viewingAchievement.achievement_icon} {viewingAchievement.achievement_name}
+              {viewingAchievement.achievement_icon && (viewingAchievement.achievement_icon.startsWith('/uploads/') || viewingAchievement.achievement_icon.startsWith('/images/'))
+                ? <Image src={viewingAchievement.achievement_icon} width={24} height={24} style={{ marginRight: 8, verticalAlign: 'middle', objectFit: 'cover' }} />
+                : <span style={{ fontSize: 18, marginRight: 8 }}>{viewingAchievement.achievement_icon || '🏆'}</span>}
+              {viewingAchievement.achievement_name}
             </Descriptions.Item>
             <Descriptions.Item label="成就描述" span={2}>{viewingAchievement.achievement_desc}</Descriptions.Item>
             <Descriptions.Item label="分类">{CATEGORY_MAP[viewingAchievement.category]}</Descriptions.Item>

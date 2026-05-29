@@ -128,7 +128,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
   // Run code with custom input
   const handleRun = async () => {
     if (!code.trim()) {
-      message.warning('Please enter your code first');
+      message.warning('请先输入代码');
       return;
     }
 
@@ -146,10 +146,10 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
         setRunResult(response.data);
         setActiveTab('run');
       } else {
-        message.error(response.message || 'Run failed');
+        message.error(response.message || '运行失败');
       }
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Network error');
+      message.error(error.response?.data?.message || '网络错误');
     } finally {
       setRunning(false);
     }
@@ -158,7 +158,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
   // Submit code for judging
   const handleSubmit = async () => {
     if (!code.trim()) {
-      message.warning('Please enter your code first');
+      message.warning('请先输入代码');
       return;
     }
 
@@ -175,16 +175,16 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
 
       if (response.success) {
         const submissionId = response.data.submissionId;
-        message.success('Code submitted, judging...');
+        message.success('代码已提交，正在判题...');
 
         // Poll for result
         pollSubmissionResult(submissionId);
       } else {
-        message.error(response.message || 'Submit failed');
+        message.error(response.message || '提交失败');
         setSubmitting(false);
       }
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Network error');
+      message.error(error.response?.data?.message || '网络错误');
       setSubmitting(false);
     }
   };
@@ -207,7 +207,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
             if (attempts < maxAttempts) {
               setTimeout(poll, 1000);
             } else {
-              message.warning('Judging timeout, please check later');
+              message.warning('判题超时，请稍后查看');
               setSubmitting(false);
             }
           } else {
@@ -217,7 +217,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
             setSubmitting(false);
 
             if (result.status === 'AC') {
-              message.success('Accepted! All test cases passed!');
+              message.success('通过！所有测试用例通过！');
             }
 
             if (onSubmitSuccess) {
@@ -249,7 +249,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
       {/* Question content */}
       <Card style={{ marginBottom: 16 }}>
         <Title level={5}>
-          <FileTextOutlined /> Problem Description
+          <FileTextOutlined /> 题目描述
         </Title>
         <div
           style={{ fontSize: 14 }}
@@ -260,10 +260,10 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
         <Divider />
         <Space>
           {question.timeLimit && (
-            <Tag>Time Limit: {question.timeLimit}ms</Tag>
+            <Tag>时间限制: {question.timeLimit}ms</Tag>
           )}
           {question.memoryLimit && (
-            <Tag>Memory Limit: {question.memoryLimit}MB</Tag>
+            <Tag>内存限制: {question.memoryLimit}MB</Tag>
           )}
         </Space>
 
@@ -271,12 +271,12 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
         {sampleCases.length > 0 && (
           <>
             <Divider />
-            <Title level={5}>Sample Test Cases</Title>
+            <Title level={5}>样例测试用例</Title>
             <Collapse>
               {sampleCases.map((sample, index) => (
                 <Panel
                   key={index}
-                  header={`Sample ${index + 1}`}
+                  header={`样例 ${index + 1}`}
                   extra={
                     <Button
                       type="link"
@@ -286,24 +286,24 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
                         loadSampleInput(sample);
                       }}
                     >
-                      Use as input
+                      用作输入
                     </Button>
                   }
                 >
                   <Row gutter={16}>
                     <Col span={12}>
-                      <Text strong>Input:</Text>
+                      <Text strong>输入:</Text>
                       <pre style={{
                         background: '#f5f5f5',
                         padding: 8,
                         borderRadius: 4,
                         whiteSpace: 'pre-wrap',
                       }}>
-                        {sample.input || '(empty)'}
+                        {sample.input || '(空)'}
                       </pre>
                     </Col>
                     <Col span={12}>
-                      <Text strong>Expected Output:</Text>
+                      <Text strong>期望输出:</Text>
                       <pre style={{
                         background: '#f0fff0',
                         padding: 8,
@@ -329,7 +329,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col>
             <Space>
-              <Text strong>Language:</Text>
+              <Text strong>语言:</Text>
               <Select
                 value={language}
                 onChange={handleLanguageChange}
@@ -393,22 +393,22 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
           >
             <Row gutter={16}>
               <Col span={12}>
-                <Text strong>Custom Input:</Text>
+                <Text strong>自定义输入:</Text>
                 <TextArea
                   value={customInput}
                   onChange={(e) => setCustomInput(e.target.value)}
-                  placeholder="Enter test input here..."
+                  placeholder="在此输入测试数据..."
                   rows={6}
                   style={{ marginTop: 8, fontFamily: 'monospace' }}
                   disabled={readOnly}
                 />
               </Col>
               <Col span={12}>
-                <Text strong>Output:</Text>
+                <Text strong>输出:</Text>
                 <div style={{ marginTop: 8 }}>
                   {running ? (
                     <div style={{ textAlign: 'center', padding: 20 }}>
-                      <Spin tip="Running..." />
+                      <Spin tip="运行中..." />
                     </div>
                   ) : runResult ? (
                     <div>
@@ -426,7 +426,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
                         whiteSpace: 'pre-wrap',
                         minHeight: 100,
                       }}>
-                        {runResult.output || runResult.error || '(no output)'}
+                        {runResult.output || runResult.error || '(无输出)'}
                       </pre>
                       {runResult.stderr && (
                         <pre style={{
@@ -448,7 +448,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
                       textAlign: 'center',
                       color: '#999',
                     }}>
-                      Click &quot;Run&quot; to test your code
+                      点击&ldquo;运行&rdquo;按钮测试代码
                     </div>
                   )}
                 </div>

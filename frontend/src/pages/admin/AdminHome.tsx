@@ -388,9 +388,9 @@ const AdminHome: React.FC = () => {
               block
               size="large"
               icon={<FileTextOutlined />}
-              onClick={() => navigate('/admin/exams')}
+              onClick={() => navigate('/admin/assessments')}
             >
-              考试管理
+              测评管理
             </Button>
           </Col>
           <Col xs={12} sm={6} md={4}>
@@ -428,7 +428,7 @@ const AdminHome: React.FC = () => {
               block
               size="large"
               icon={<TrophyOutlined />}
-              onClick={() => navigate('/admin/exams?tab=certificates')}
+              onClick={() => navigate('/admin/assessments?tab=certificates')}
             >
               证书管理
             </Button>

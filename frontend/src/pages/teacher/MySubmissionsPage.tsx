@@ -226,6 +226,8 @@ const MySubmissionsPage: React.FC = () => {
   const getScopeDisplayText = (scope: string) => {
     if (scope === 'assessment') return '测评题库';
     if (scope === 'practice_municipal') return '市级练习题库';
+    if (scope === 'practice_district') return '区级练习题库';
+    if (scope === 'practice_school') return '校级题库';
     if (scope.startsWith('practice_district_')) {
       const districtCode = scope.replace('practice_district_', '');
       const district = getDistrictById(parseInt(districtCode));

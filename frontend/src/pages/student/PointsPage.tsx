@@ -31,10 +31,10 @@ const { TabPane } = Tabs;
 
 interface PointsAccount {
   student_id: number;
-  current_balance: number;
-  total_earned: number;
-  total_spent: number;
-  updated_at: string;
+  current_points: number;
+  total_points: number;
+  spent_points: number;
+  last_updated: string;
 }
 
 interface PointsTransaction {
@@ -69,7 +69,9 @@ const PointsPage: React.FC = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
   // 从localStorage获取当前登录用户的ID
-  const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const currentUserId = currentUser?.id || 0;
 
   useEffect(() => {
     if (currentUserId) {
@@ -274,7 +276,7 @@ const PointsPage: React.FC = () => {
           <Card>
             <Statistic
               title="当前积分"
-              value={pointsAccount?.current_balance || 0}
+              value={pointsAccount?.current_points || 0}
               prefix={<StarOutlined />}
               valueStyle={{ color: '#1890ff', fontSize: 32 }}
             />
@@ -284,7 +286,7 @@ const PointsPage: React.FC = () => {
           <Card>
             <Statistic
               title="累计获得"
-              value={pointsAccount?.total_earned || 0}
+              value={pointsAccount?.total_points || 0}
               prefix={<RiseOutlined />}
               valueStyle={{ color: '#52c41a', fontSize: 32 }}
             />
@@ -294,7 +296,7 @@ const PointsPage: React.FC = () => {
           <Card>
             <Statistic
               title="累计消费"
-              value={pointsAccount?.total_spent || 0}
+              value={pointsAccount?.spent_points || 0}
               prefix={<FallOutlined />}
               valueStyle={{ color: '#ff4d4f', fontSize: 32 }}
             />
@@ -362,7 +364,7 @@ const PointsPage: React.FC = () => {
       {pointsAccount && (
         <Card style={{ marginTop: 16 }} size="small">
           <Text type="secondary" style={{ fontSize: 12 }}>
-            最后更新时间: {new Date(pointsAccount.updated_at).toLocaleString()}
+            最后更新时间: {new Date(pointsAccount.last_updated).toLocaleString()}
           </Text>
         </Card>
       )}

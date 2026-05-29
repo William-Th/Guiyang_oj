@@ -157,13 +157,13 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
 
   const handleDeleteTestCase = (index: number) => {
     Modal.confirm({
-      title: 'Delete Test Case',
-      content: 'Are you sure you want to delete this test case?',
+      title: '删除测试用例',
+      content: '确定要删除这个测试用例吗？',
       onOk: () => {
         const newTestCases = [...testCases];
         newTestCases.splice(index, 1);
         setTestCases(newTestCases);
-        message.success('Test case deleted');
+        message.success('测试用例已删除');
       },
     });
   };
@@ -173,10 +173,10 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
       ...testCase,
       id: undefined,
       is_sample: false,
-      description: testCase.description ? `${testCase.description} (copy)` : undefined,
+      description: testCase.description ? `${testCase.description} (副本)` : undefined,
     };
     setTestCases([...testCases, newTestCase]);
-    message.success('Test case duplicated');
+    message.success('测试用例已复制');
   };
 
   const handleSaveTestCase = async () => {
@@ -201,7 +201,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
 
       setEditModalVisible(false);
       form.resetFields();
-      message.success(editingIndex >= 0 ? 'Test case updated' : 'Test case added');
+      message.success(editingIndex >= 0 ? '测试用例已更新' : '测试用例已添加');
     } catch (error) {
       console.error('Validation failed:', error);
     }
@@ -209,7 +209,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
 
   const handleSaveAllTestCases = async () => {
     if (!questionId) {
-      message.warning('Please save the question first before adding test cases');
+      message.warning('请先保存题目，然后再添加测试用例');
       return;
     }
 
@@ -220,10 +220,10 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
       } else {
         await testCaseAPI.bulkCreate(questionId, testCases, true);
       }
-      message.success('Test cases saved successfully');
+      message.success('测试用例保存成功');
       await loadTestCases();
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Failed to save test cases');
+      message.error(error.response?.data?.message || '保存测试用例失败');
     } finally {
       setLoading(false);
     }
@@ -237,55 +237,55 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
-      title: 'Input',
+      title: '输入',
       dataIndex: 'input_data',
       key: 'input_data',
       ellipsis: true,
       width: 200,
       render: (text: string) => (
         <Text code style={{ maxWidth: 180 }}>
-          {text ? (text.length > 30 ? text.substring(0, 30) + '...' : text) : '(empty)'}
+          {text ? (text.length > 30 ? text.substring(0, 30) + '...' : text) : '(空)'}
         </Text>
       ),
     },
     {
-      title: 'Expected Output',
+      title: '期望输出',
       dataIndex: 'expected_output',
       key: 'expected_output',
       ellipsis: true,
       width: 200,
       render: (text: string) => (
         <Text code style={{ maxWidth: 180 }}>
-          {text ? (text.length > 30 ? text.substring(0, 30) + '...' : text) : '(empty)'}
+          {text ? (text.length > 30 ? text.substring(0, 30) + '...' : text) : '(空)'}
         </Text>
       ),
     },
     {
-      title: 'Score',
+      title: '分值',
       dataIndex: 'score',
       key: 'score',
       width: 70,
     },
     {
-      title: 'Time(ms)',
+      title: '时限(ms)',
       dataIndex: 'time_limit',
       key: 'time_limit',
       width: 80,
     },
     {
-      title: 'Sample',
+      title: '样例',
       dataIndex: 'is_sample',
       key: 'is_sample',
       width: 70,
-      render: (isSample: boolean) => (isSample ? 'Yes' : 'No'),
+      render: (isSample: boolean) => (isSample ? '是' : '否'),
     },
     {
-      title: 'Actions',
+      title: '操作',
       key: 'actions',
       width: 120,
       render: (_: any, record: TestCase, index: number) => (
         <Space size="small">
-          <Tooltip title="Edit">
+          <Tooltip title="编辑">
             <Button
               type="text"
               size="small"
@@ -294,7 +294,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
               disabled={readOnly}
             />
           </Tooltip>
-          <Tooltip title="Duplicate">
+          <Tooltip title="复制">
             <Button
               type="text"
               size="small"
@@ -303,7 +303,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
               disabled={readOnly}
             />
           </Tooltip>
-          <Tooltip title="Delete">
+          <Tooltip title="删除">
             <Button
               type="text"
               size="small"
@@ -323,14 +323,14 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
 
   return (
     <div className="code-question-form">
-      <Card title="Programming Question Configuration" style={{ marginBottom: 16 }}>
+      <Card title="编程题配置" style={{ marginBottom: 16 }}>
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
               label={
                 <span>
-                  Time Limit (ms)
-                  <Tooltip title="Maximum execution time for each test case">
+                  时间限制 (ms)
+                  <Tooltip title="每个测试用例的最大执行时间">
                     <QuestionCircleOutlined style={{ marginLeft: 4 }} />
                   </Tooltip>
                 </span>
@@ -351,8 +351,8 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
             <Form.Item
               label={
                 <span>
-                  Memory Limit (MB)
-                  <Tooltip title="Maximum memory usage allowed">
+                  内存限制 (MB)
+                  <Tooltip title="允许的最大内存使用量">
                     <QuestionCircleOutlined style={{ marginLeft: 4 }} />
                   </Tooltip>
                 </span>
@@ -373,8 +373,8 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
             <Form.Item
               label={
                 <span>
-                  Judge Mode
-                  <Tooltip title="Standard: exact output match; Special: custom judge logic">
+                  判题模式
+                  <Tooltip title="标准模式：精确匹配输出；特殊判题：自定义判题逻辑">
                     <QuestionCircleOutlined style={{ marginLeft: 4 }} />
                   </Tooltip>
                 </span>
@@ -385,14 +385,14 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
                 onChange={(v) => handleConfigChange('judge_mode', v)}
                 disabled={readOnly}
               >
-                <Option value="standard">Standard</Option>
-                <Option value="special">Special Judge</Option>
+                <Option value="standard">标准判题</Option>
+                <Option value="special">特殊判题</Option>
               </Select>
             </Form.Item>
           </Col>
         </Row>
 
-        <Form.Item label="Supported Languages">
+        <Form.Item label="支持语言">
           <Select
             mode="multiple"
             value={config.supported_languages}
@@ -411,8 +411,8 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
         <Form.Item
           label={
             <span>
-              Code Template
-              <Tooltip title="Initial code shown to students. Use comments to guide them.">
+              代码模板
+              <Tooltip title="展示给学生的初始代码，可用注释引导他们">
                 <QuestionCircleOutlined style={{ marginLeft: 4 }} />
               </Tooltip>
             </span>
@@ -422,12 +422,12 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
             rows={6}
             value={config.code_template}
             onChange={(e) => handleConfigChange('code_template', e.target.value)}
-            placeholder={`// Your code template here
+            placeholder={`// 在此输入代码模板
 #include <iostream>
 using namespace std;
 
 int main() {
-    // Write your solution here
+    // 在此编写解决方案
     return 0;
 }`}
             style={{ fontFamily: 'monospace' }}
@@ -439,8 +439,8 @@ int main() {
           <Form.Item
             label={
               <span>
-                Special Judge Code
-                <Tooltip title="Custom judge code to compare output. Must return 0 for correct answer.">
+                特殊判题代码
+                <Tooltip title="自定义判题代码，用于比较输出结果。正确答案必须返回 0。">
                   <QuestionCircleOutlined style={{ marginLeft: 4 }} />
                 </Tooltip>
               </span>
@@ -450,7 +450,7 @@ int main() {
               rows={8}
               value={config.special_judge_code}
               onChange={(e) => handleConfigChange('special_judge_code', e.target.value)}
-              placeholder="// Special judge code (C++)"
+              placeholder="// 特殊判题代码 (C++)"
               style={{ fontFamily: 'monospace' }}
               disabled={readOnly}
             />
@@ -459,11 +459,11 @@ int main() {
       </Card>
 
       <Card
-        title="Test Cases"
+        title="测试用例"
         extra={
           <Space>
             <Text type="secondary">
-              Total: {testCases.length} | Samples: {sampleCount} | Total Score: {totalScore}
+              共 {testCases.length} 个 | 样例: {sampleCount} | 总分: {totalScore}
             </Text>
             {questionId && !readOnly && (
               <Button
@@ -471,7 +471,7 @@ int main() {
                 onClick={handleSaveAllTestCases}
                 loading={loading}
               >
-                Save Test Cases
+                保存测试用例
               </Button>
             )}
           </Space>
@@ -479,8 +479,8 @@ int main() {
       >
         {testCases.length === 0 && (
           <Alert
-            message="No test cases yet"
-            description="Add at least one test case. Mark some as 'Sample' to show them to students."
+            message="暂无测试用例"
+            description="请添加至少一个测试用例。标记为样例的测试用例会展示给学生。"
             type="info"
             showIcon
             style={{ marginBottom: 16 }}
@@ -504,14 +504,14 @@ int main() {
             icon={<PlusOutlined />}
             style={{ marginTop: 16 }}
           >
-            Add Test Case
+            添加测试用例
           </Button>
         )}
       </Card>
 
       {/* Test Case Edit Modal */}
       <Modal
-        title={editingIndex >= 0 ? 'Edit Test Case' : 'Add Test Case'}
+        title={editingIndex >= 0 ? '编辑测试用例' : '添加测试用例'}
         open={editModalVisible}
         onOk={handleSaveTestCase}
         onCancel={() => setEditModalVisible(false)}
@@ -523,12 +523,12 @@ int main() {
             <Col span={12}>
               <Form.Item
                 name="input_data"
-                label="Input Data"
-                help="The input that will be provided to the program via stdin"
+                label="输入数据"
+                help="程序通过标准输入接收的数据"
               >
                 <TextArea
                   rows={6}
-                  placeholder="Enter input data (can be empty)"
+                  placeholder="输入数据（可以为空）"
                   style={{ fontFamily: 'monospace' }}
                 />
               </Form.Item>
@@ -536,13 +536,13 @@ int main() {
             <Col span={12}>
               <Form.Item
                 name="expected_output"
-                label="Expected Output"
-                rules={[{ required: true, message: 'Expected output is required' }]}
-                help="The exact output expected from the program"
+                label="期望输出"
+                rules={[{ required: true, message: '期望输出不能为空' }]}
+                help="程序期望的精确输出"
               >
                 <TextArea
                   rows={6}
-                  placeholder="Enter expected output"
+                  placeholder="请输入期望输出"
                   style={{ fontFamily: 'monospace' }}
                 />
               </Form.Item>
@@ -553,9 +553,9 @@ int main() {
             <Col span={8}>
               <Form.Item
                 name="score"
-                label="Score"
+                label="分值"
                 initialValue={10}
-                rules={[{ required: true, message: 'Score is required' }]}
+                rules={[{ required: true, message: '分值不能为空' }]}
               >
                 <InputNumber min={1} max={100} style={{ width: '100%' }} />
               </Form.Item>
@@ -563,7 +563,7 @@ int main() {
             <Col span={8}>
               <Form.Item
                 name="time_limit"
-                label="Time Limit (ms)"
+                label="时间限制 (ms)"
                 initialValue={config.time_limit}
               >
                 <InputNumber min={100} max={10000} step={100} style={{ width: '100%' }} />
@@ -572,7 +572,7 @@ int main() {
             <Col span={8}>
               <Form.Item
                 name="memory_limit"
-                label="Memory Limit (MB)"
+                label="内存限制 (MB)"
                 initialValue={config.memory_limit}
               >
                 <InputNumber min={16} max={512} step={16} style={{ width: '100%' }} />
@@ -584,16 +584,16 @@ int main() {
             <Col span={12}>
               <Form.Item name="is_sample" valuePropName="checked" initialValue={false}>
                 <Checkbox>
-                  Show as sample test case
-                  <Tooltip title="Sample test cases are visible to students before they submit">
+                  显示为样例测试用例
+                  <Tooltip title="样例测试用例会在学生提交前展示给他们">
                     <QuestionCircleOutlined style={{ marginLeft: 4 }} />
                   </Tooltip>
                 </Checkbox>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="description" label="Description (optional)">
-                <Input placeholder="e.g., Edge case with negative numbers" />
+              <Form.Item name="description" label="描述（可选）">
+                <Input placeholder="例如：负数边界情况" />
               </Form.Item>
             </Col>
           </Row>

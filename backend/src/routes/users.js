@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const School = require('../models/School');
 const { authMiddleware, requireRole, requireAdmin } = require('../middleware/auth');
-const { getClient } = require('../database/connection');
+const { getClient, query } = require('../database/connection');
 const logger = require('../utils/logger');
 
 // Get current user profile (with role-specific details)
@@ -538,7 +538,36 @@ router.get('/students', [
   requireRole(['system_admin', 'municipal_admin', 'district_admin', 'school_admin', 'teacher'])
 ], async (req, res) => {
   try {
-    const students = await User.findAll({ role: 'student' });
+    const filters = { role: 'student' };
+
+    // 区级管理员和校级管理员只能看到本区/本校学生
+    if (req.user.role === 'district_admin' || req.user.role === 'school_admin') {
+      const permResult = await query(
+        'SELECT district_id, school_id FROM admin_permissions WHERE user_id = $1',
+        [req.user.id]
+      );
+      if (permResult.rows.length > 0) {
+        const perm = permResult.rows[0];
+        if (perm.district_id) {
+          filters.district_id = perm.district_id;
+        }
+        if (perm.school_id) {
+          filters.school_id = perm.school_id;
+        }
+      }
+    }
+    // 教师只能看到本校学生
+    if (req.user.role === 'teacher') {
+      const teacherResult = await query(
+        'SELECT school_id FROM teachers WHERE user_id = $1',
+        [req.user.id]
+      );
+      if (teacherResult.rows.length > 0) {
+        filters.school_id = teacherResult.rows[0].school_id;
+      }
+    }
+
+    const students = await User.findAll(filters);
     res.json({ students });
   } catch (error) {
     logger.error('Get students error:', error);
