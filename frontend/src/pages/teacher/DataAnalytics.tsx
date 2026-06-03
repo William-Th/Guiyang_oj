@@ -109,14 +109,23 @@ const DataAnalytics: React.FC = () => {
 
     const response = await statisticsApi.getSchoolAbilities(filters);
     if (response.success) {
-      setSchoolStats(response.data);
+      // PostgreSQL numeric 类型返回字符串，统一转为数字
+      const data = (response.data || []).map((item: any) => ({
+        ...item,
+        accuracy_rate: parseFloat(item.accuracy_rate) || 0,
+        avg_score: parseFloat(item.avg_score) || 0,
+        student_count: parseInt(item.student_count) || 0,
+        total_attempts: parseInt(item.total_attempts) || 0,
+        correct_count: parseInt(item.correct_count) || 0,
+      }));
+      setSchoolStats(data);
 
       // Extract unique subjects and grades
       const uniqueSubjects = Array.from(
-        new Set<string>(response.data.map((item: SchoolAbilityStats) => item.subject))
+        new Set<string>(data.map((item: SchoolAbilityStats) => item.subject))
       );
       const uniqueGrades = Array.from(
-        new Set<string>(response.data.map((item: SchoolAbilityStats) => item.grade))
+        new Set<string>(data.map((item: SchoolAbilityStats) => item.grade))
       );
       setSubjects(uniqueSubjects);
       setGrades(uniqueGrades);
@@ -130,7 +139,17 @@ const DataAnalytics: React.FC = () => {
 
     const response = await statisticsApi.getDistrictAbilities(filters);
     if (response.success) {
-      setDistrictStats(response.data);
+      // PostgreSQL numeric 类型返回字符串，统一转为数字
+      const data = (response.data || []).map((item: any) => ({
+        ...item,
+        accuracy_rate: parseFloat(item.accuracy_rate) || 0,
+        avg_score: parseFloat(item.avg_score) || 0,
+        school_count: parseInt(item.school_count) || 0,
+        student_count: parseInt(item.student_count) || 0,
+        total_attempts: parseInt(item.total_attempts) || 0,
+        correct_count: parseInt(item.correct_count) || 0,
+      }));
+      setDistrictStats(data);
     }
   };
 

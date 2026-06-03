@@ -3,8 +3,7 @@ const StudentExam = require('../models/StudentExam');
 const Activity = require('../models/Activity');
 const User = require('../models/User');
 const certificateService = require('../services/certificateService_basic');
-const path = require('path');
-const fs = require('fs').promises;
+
 
 // 生成证书
 const generateCertificate = async (req, res) => {
@@ -94,32 +93,47 @@ const generateCertificate = async (req, res) => {
   }
 };
 
-// 下载证书 (HTML格式)
+// 下载证书 (HTML格式，动态生成)
 const downloadCertificate = async (req, res) => {
   try {
     const { certNumber } = req.params;
-    
+
     // 验证证书编号格式 - 防止路径遍历攻击
-    if (!/^GY-\d{4}-[A-Z0-9]{8}$/.test(certNumber)) {
+    if (!/^[A-Z0-9_-]+$/.test(certNumber)) {
       return res.status(400).json({ message: '无效的证书编号格式' });
     }
-        
+
     const certificate = await Certificate.findByCertNumber(certNumber);
     if (!certificate) {
       return res.status(404).json({ message: '证书不存在' });
     }
 
-    const filePath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.html`);
-        
-    try {
-      await fs.access(filePath);
-    } catch {
-      return res.status(404).json({ message: '证书文件不存在' });
-    }
+    // 获取详情
+    const { pool } = require('../database/connection');
+    const detailResult = await pool.query(`
+      SELECT u.real_name AS student_name, a.title AS exam_name, sa.score
+      FROM certificates c
+      LEFT JOIN students s ON c.student_id = s.id
+      LEFT JOIN users u ON s.user_id = u.id
+      LEFT JOIN activities a ON c.exam_id = a.id
+      LEFT JOIN student_activities sa ON sa.student_id = c.student_id AND sa.activity_id = c.exam_id
+      WHERE c.cert_no = $1
+    `, [certNumber]);
+
+    const detail = detailResult.rows[0] || {};
+
+    const pdfService = require('../services/pdfCertificateService');
+    const htmlContent = pdfService.generateCertificateHTML({
+      certNumber: certNumber,
+      studentName: detail.student_name || '学生',
+      examName: detail.exam_name || '测评活动',
+      score: detail.score || 0,
+      issueDate: certificate.issue_date || new Date()
+    });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.html"`);
-    res.sendFile(filePath);
+    res.send(htmlContent);
 
   } catch (error) {
     console.error('下载证书失败:', error);
@@ -127,33 +141,53 @@ const downloadCertificate = async (req, res) => {
   }
 };
 
-// 下载证书 (优先PDF，回退到HTML)
+// 下载证书 (PDF格式，动态生成)
 const downloadCertificatePDF = async (req, res) => {
   try {
     const { certNumber } = req.params;
-    
+
     // 验证证书编号格式 - 防止路径遍历攻击
-    if (!/^GY-\d{4}-[A-Z0-9]{8}$/.test(certNumber)) {
+    if (!/^[A-Z0-9_-]+$/.test(certNumber)) {
       return res.status(400).json({ message: '无效的证书编号格式' });
     }
-        
+
     const certificate = await Certificate.findByCertNumber(certNumber);
     if (!certificate) {
       return res.status(404).json({ message: '证书不存在' });
     }
 
-    // For now, fall back to HTML which browsers can print as PDF
-    const htmlPath = path.join(__dirname, '../../uploads/certificates', `certificate_${certNumber}.html`);
-        
-    try {
-      await fs.access(htmlPath);
-      // Send HTML with appropriate headers for download
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.html"`);
-      res.sendFile(htmlPath);
-    } catch {
-      return res.status(404).json({ message: '证书文件不存在' });
-    }
+    // 获取学生和活动信息
+    const { pool } = require('../database/connection');
+    const detailResult = await pool.query(`
+      SELECT
+        u.real_name AS student_name,
+        a.title AS exam_name,
+        c.level,
+        sa.score
+      FROM certificates c
+      LEFT JOIN students s ON c.student_id = s.id
+      LEFT JOIN users u ON s.user_id = u.id
+      LEFT JOIN activities a ON c.exam_id = a.id
+      LEFT JOIN student_activities sa ON sa.student_id = c.student_id AND sa.activity_id = c.exam_id
+      WHERE c.cert_no = $1
+    `, [certNumber]);
+
+    const detail = detailResult.rows[0] || {};
+
+    // 使用 PDFKit 动态生成 PDF
+    const pdfService = require('../services/pdfCertificateService');
+    const pdfBuffer = await pdfService.generatePDFBuffer({
+      certNumber: certNumber,
+      studentName: detail.student_name || '学生',
+      examName: detail.exam_name || '测评活动',
+      score: detail.score || 0,
+      issueDate: certificate.issue_date || new Date()
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
 
   } catch (error) {
     console.error('下载证书失败:', error);

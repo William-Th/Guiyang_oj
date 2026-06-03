@@ -79,18 +79,21 @@ class Achievement {
     const result = await pool.query(
       `
       SELECT
-        sa.id,
+        sa.id AS student_achievement_id,
         sa.achievement_id,
-        sa.achieved_at,
+        sa.achieved_at AS awarded_at,
         sa.points_awarded,
         sa.is_displayed,
-        sa.times_achieved,
+        sa.times_achieved AS awarded_count,
         a.achievement_code,
         a.achievement_name,
         a.achievement_desc,
         a.achievement_icon,
         a.category,
-        a.rarity
+        a.subcategory,
+        a.rarity,
+        a.points_reward,
+        a.max_times
       FROM student_achievements sa
       JOIN achievements a ON sa.achievement_id = a.achievement_id
       WHERE sa.student_id = $1
@@ -155,7 +158,9 @@ class Achievement {
         a.achievement_desc,
         a.achievement_icon,
         a.category,
-        a.rarity
+        a.subcategory,
+        a.rarity,
+        a.points_reward
       FROM achievement_progress ap
       JOIN achievements a ON ap.achievement_id = a.achievement_id
       WHERE ap.student_id = $1 AND ap.progress_percentage < 100

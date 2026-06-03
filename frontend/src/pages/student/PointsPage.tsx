@@ -40,12 +40,13 @@ interface PointsAccount {
 interface PointsTransaction {
   transaction_id: number;
   student_id: number;
-  transaction_type: 'earn' | 'spend';
-  points_amount: number;
-  source_type: string;
+  transaction_type: string; // achievement, daily_task, activity, redemption, manual
+  points_change: number;
+  points_amount?: number; // alias for points_change
+  source_type: string | null;
   source_id?: number;
   description: string;
-  transaction_date: string;
+  transaction_date?: string;
   created_at: string;
 }
 
@@ -125,13 +126,6 @@ const PointsPage: React.FC = () => {
     }
   };
 
-  // 获取交易类型显示信息
-  const getTransactionTypeInfo = (type: string) => {
-    return type === 'earn'
-      ? { color: 'success', icon: <RiseOutlined />, label: '获得' }
-      : { color: 'error', icon: <FallOutlined />, label: '消费' };
-  };
-
   // 获取来源类型显示信息
   const getSourceTypeInfo = (sourceType: string) => {
     const sourceMap: Record<string, { color: string; label: string }> = {
@@ -149,13 +143,13 @@ const PointsPage: React.FC = () => {
   const transactionColumns: ColumnsType<PointsTransaction> = [
     {
       title: '时间',
-      dataIndex: 'transaction_date',
-      key: 'transaction_date',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: 180,
       render: (date: string) => (
         <Space>
           <ClockCircleOutlined />
-          <Text>{new Date(date).toLocaleString()}</Text>
+          <Text>{date ? new Date(date).toLocaleString('zh-CN') : '-'}</Text>
         </Space>
       ),
     },
@@ -165,12 +159,16 @@ const PointsPage: React.FC = () => {
       key: 'transaction_type',
       width: 100,
       render: (type: string) => {
-        const info = getTransactionTypeInfo(type);
-        return (
-          <Tag color={info.color} icon={info.icon}>
-            {info.label}
-          </Tag>
-        );
+        const config: Record<string, { color: string; label: string }> = {
+          achievement: { color: 'gold', label: '成就' },
+          daily_task: { color: 'green', label: '任务' },
+          activity: { color: 'blue', label: '活动' },
+          redemption: { color: 'red', label: '兑换' },
+          manual: { color: 'purple', label: '调整' },
+          teacher_reward: { color: 'cyan', label: '奖励' },
+        };
+        const info = config[type] || { color: 'default', label: type };
+        return <Tag color={info.color}>{info.label}</Tag>;
       },
     },
     {
@@ -178,7 +176,8 @@ const PointsPage: React.FC = () => {
       dataIndex: 'source_type',
       key: 'source_type',
       width: 120,
-      render: (sourceType: string) => {
+      render: (sourceType: string | null) => {
+        if (!sourceType) return <Text type="secondary">—</Text>;
         const info = getSourceTypeInfo(sourceType);
         return <Tag color={info.color}>{info.label}</Tag>;
       },
@@ -191,12 +190,12 @@ const PointsPage: React.FC = () => {
     },
     {
       title: '积分变动',
-      dataIndex: 'points_amount',
-      key: 'points_amount',
+      dataIndex: 'points_change',
+      key: 'points_change',
       width: 120,
       align: 'right',
-      render: (amount: number, record: PointsTransaction) => {
-        const isEarn = record.transaction_type === 'earn';
+      render: (change: number) => {
+        const isEarn = change > 0;
         return (
           <Text
             strong
@@ -205,8 +204,7 @@ const PointsPage: React.FC = () => {
               fontSize: 16,
             }}
           >
-            {isEarn ? '+' : '-'}
-            {amount}
+            {isEarn ? '+' : ''}{change}
           </Text>
         );
       },

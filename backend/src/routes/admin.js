@@ -443,4 +443,123 @@ router.get('/dashboard/stats', [
   }
 });
 
+// Get pending workflows (work items requiring admin action)
+router.get('/dashboard/workflows', [
+  authMiddleware,
+  requireAdmin
+], async (req, res) => {
+  try {
+    // 查询各模块的待处理数量
+    const [
+      registrationPending,
+      questionSubmitted,
+      activitiesOngoing,
+      certificatesPending
+    ] = await Promise.all([
+      // 待审核的学生注册
+      query('SELECT COUNT(*) as count FROM student_registration_requests WHERE status = \'pending\''),
+      // 待审核的题目
+      query('SELECT COUNT(*) as count FROM question_drafts WHERE status = \'submitted\''),
+      // 进行中的活动
+      query('SELECT COUNT(*) as count FROM activities WHERE status IN (\'published\', \'ongoing\')'),
+      // 待颁发的证书
+      query('SELECT COUNT(*) as count FROM certificates WHERE status = \'pending\'')
+    ]);
+
+    const workflows = [];
+
+    const regCount = parseInt(registrationPending.rows[0].count);
+    if (regCount > 0) {
+      workflows.push({
+        id: 'user_approval',
+        type: 'user_approval',
+        title: '学生注册审核',
+        description: `${regCount}个学生注册申请待审核`,
+        status: regCount >= 5 ? 'urgent' : 'pending',
+        priority: regCount >= 5 ? 'high' : 'medium'
+      });
+    }
+
+    const qCount = parseInt(questionSubmitted.rows[0].count);
+    if (qCount > 0) {
+      workflows.push({
+        id: 'question_review',
+        type: 'question_review',
+        title: '题目审核',
+        description: `${qCount}道题目提交待审核`,
+        status: 'pending',
+        priority: 'medium'
+      });
+    }
+
+    const aCount = parseInt(activitiesOngoing.rows[0].count);
+    if (aCount > 0) {
+      workflows.push({
+        id: 'exam_approval',
+        type: 'exam_approval',
+        title: '活动管理',
+        description: `${aCount}场活动进行中或待开始`,
+        status: 'pending',
+        priority: 'medium'
+      });
+    }
+
+    const cCount = parseInt(certificatesPending.rows[0].count);
+    if (cCount > 0) {
+      workflows.push({
+        id: 'certificate_issue',
+        type: 'certificate_issue',
+        title: '证书颁发',
+        description: `${cCount}份证书待颁发`,
+        status: 'processing',
+        priority: 'low'
+      });
+    }
+
+    res.json({
+      success: true,
+      workflows
+    });
+  } catch (error) {
+    logger.error('Get workflows error:', error);
+    res.status(500).json({ message: '获取工作流数据失败' });
+  }
+});
+
+// Get region statistics (schools, teachers, students counts)
+router.get('/dashboard/region-stats', [
+  authMiddleware,
+  requireAdmin
+], async (req, res) => {
+  try {
+    const [
+      schoolCount,
+      teacherCount,
+      studentCount,
+      activeExams,
+      pendingApprovals
+    ] = await Promise.all([
+      query('SELECT COUNT(*) as count FROM schools'),
+      query('SELECT COUNT(*) as count FROM users WHERE role IN (\'teacher\', \'school_admin\', \'district_admin\', \'municipal_school_admin\', \'base_school_admin\', \'municipal_admin\', \'system_admin\')'),
+      query('SELECT COUNT(*) as count FROM users WHERE role = \'student\' AND status = \'active\''),
+      query('SELECT COUNT(*) as count FROM activities WHERE status IN (\'published\', \'ongoing\')'),
+      query('SELECT COUNT(*) as count FROM student_registration_requests WHERE status = \'pending\'')
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalSchools: parseInt(schoolCount.rows[0].count),
+        totalTeachers: parseInt(teacherCount.rows[0].count),
+        totalStudents: parseInt(studentCount.rows[0].count),
+        activeExams: parseInt(activeExams.rows[0].count),
+        pendingApprovals: parseInt(pendingApprovals.rows[0].count)
+      }
+    });
+  } catch (error) {
+    logger.error('Get region stats error:', error);
+    res.status(500).json({ message: '获取区域统计失败' });
+  }
+});
+
 module.exports = router;

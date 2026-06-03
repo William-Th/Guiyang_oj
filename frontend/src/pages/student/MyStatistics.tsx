@@ -95,8 +95,16 @@ const MyStatistics: React.FC = () => {
 
   const loadOverview = async () => {
     const response = await statisticsApi.getStudentOverview();
-    if (response.success) {
-      setOverview(response.data);
+    if (response.success && response.data) {
+      // PostgreSQL numeric 类型返回字符串，统一转为数字
+      const data = {
+        ...response.data,
+        total_activities: parseInt(response.data.total_activities) || 0,
+        completed_activities: parseInt(response.data.completed_activities) || 0,
+        avg_score: parseFloat(response.data.avg_score) || 0,
+        total_study_seconds: parseInt(response.data.total_study_seconds) || 0,
+      };
+      setOverview(data);
     }
   };
 
@@ -105,11 +113,19 @@ const MyStatistics: React.FC = () => {
       subject && subject !== 'all' ? { subject } : undefined
     );
     if (response.success) {
-      setAbilities(response.data);
+      // PostgreSQL numeric 类型返回字符串，统一转为数字
+      const data = (response.data || []).map((item: any) => ({
+        ...item,
+        accuracy_rate: parseFloat(item.accuracy_rate) || 0,
+        avg_score: parseFloat(item.avg_score) || 0,
+        total_questions: parseInt(item.total_questions) || 0,
+        correct_count: parseInt(item.correct_count) || 0,
+      }));
+      setAbilities(data);
 
       // Extract unique subjects
       const uniqueSubjects = Array.from(
-        new Set<string>(response.data.map((item: AbilityStats) => item.subject))
+        new Set<string>(data.map((item: AbilityStats) => item.subject))
       );
       setSubjects(uniqueSubjects);
     }
@@ -120,7 +136,15 @@ const MyStatistics: React.FC = () => {
       subject && subject !== 'all' ? { subject } : undefined
     );
     if (response.success) {
-      setKnowledgePoints(response.data);
+      // PostgreSQL numeric 类型返回字符串，统一转为数字
+      const data = (response.data || []).map((item: any) => ({
+        ...item,
+        accuracy_rate: parseFloat(item.accuracy_rate) || 0,
+        avg_score: parseFloat(item.avg_score) || 0,
+        total_questions: parseInt(item.total_questions) || 0,
+        correct_count: parseInt(item.correct_count) || 0,
+      }));
+      setKnowledgePoints(data);
     }
   };
 

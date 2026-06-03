@@ -1,34 +1,25 @@
 const express = require('express');
 const router = express.Router();
 
-// Get questions for an exam
-router.get('/exam/:examId', (req, res) => {
-  // TODO: Implement get exam questions
-  res.json({ message: 'Get exam questions endpoint', examId: req.params.examId });
-});
+/**
+ * 废弃路由 - 题目功能已迁移到 questionBank.js 和 questionDrafts.js
+ * 保留此文件仅为了向后兼容，所有端点返回 410 Gone
+ */
 
-// Create new question (admin/teacher only)
-router.post('/', (req, res) => {
-  // TODO: Implement create question
-  res.json({ message: 'Create question endpoint' });
-});
-
-// Update question (admin/teacher only)
-router.put('/:id', (req, res) => {
-  // TODO: Implement update question
-  res.json({ message: 'Update question endpoint', questionId: req.params.id });
-});
-
-// Delete question (admin/teacher only)
-router.delete('/:id', (req, res) => {
-  // TODO: Implement delete question
-  res.json({ message: 'Delete question endpoint', questionId: req.params.id });
-});
-
-// Batch import questions
-router.post('/import', (req, res) => {
-  // TODO: Implement batch import questions
-  res.json({ message: 'Import questions endpoint' });
+// 所有题目相关功能请使用：
+// - /api/question-bank - 题库管理
+// - /api/question-drafts - 题目草稿管理
+// - /api/question-review - 题目审核
+router.all('*', (req, res) => {
+  res.status(410).json({
+    message: '此接口已废弃，请使用 /api/question-bank 或 /api/question-drafts',
+    deprecated: true,
+    alternatives: {
+      questionBank: '/api/question-bank',
+      questionDrafts: '/api/question-drafts',
+      questionReview: '/api/question-review'
+    }
+  });
 });
 
 module.exports = router;

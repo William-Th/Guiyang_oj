@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(bohe-skills-upgrade:bohe-skills-upgrade)",
+      "Skill(bohe-skills-upgrade:bohe-skills-upgrade:*)",
+      "Bash(cat .env)",
+      "Bash(cat .env.example)",
+      "Bash(cat .env.development)",
+      "Bash(awk '{print $1, $4}')",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(sort -k2)"
+    ]
+  }
+}
