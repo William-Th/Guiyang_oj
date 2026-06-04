@@ -133,7 +133,7 @@ const AssessmentRegistrationModal: React.FC<AssessmentRegistrationModalProps> = 
         hoverable={!isFull}
         style={{
           marginBottom: 12,
-          border: isSelected ? '2px solid #1890ff' : '1px solid #d9d9d9',
+          border: isSelected ? '2px solid #16a34a' : '1px solid #d9d9d9',
           opacity: isFull ? 0.6 : 1,
           cursor: isFull ? 'not-allowed' : 'pointer'
         }}

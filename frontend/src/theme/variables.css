@@ -1,0 +1,107 @@
+/**
+ * 薄荷编程品牌设计规范 — CSS 自定义属性
+ *
+ * 供 inline style 和自定义 CSS 引用，
+ * 与 Ant Design token 配合使用。
+ */
+
+:root {
+  /* ===== 品牌色 ===== */
+  --bohe-primary: #16a34a;
+  --bohe-primary-hover: #22c55e;
+  --bohe-primary-active: #15803d;
+  --bohe-primary-bg: #f0fdf4;
+  --bohe-primary-bg-hover: #dcfce7;
+  --bohe-primary-border: #bbf7d0;
+
+  /* 薄荷绿色板 */
+  --bohe-mint-50: #f0fdf4;
+  --bohe-mint-100: #dcfce7;
+  --bohe-mint-200: #bbf7d0;
+  --bohe-mint-300: #86efac;
+  --bohe-mint-400: #4ade80;
+  --bohe-mint-500: #22c55e;
+  --bohe-mint-600: #16a34a;
+  --bohe-mint-700: #15803d;
+  --bohe-mint-800: #166534;
+  --bohe-mint-900: #14532d;
+
+  /* 品牌渐变 */
+  --bohe-gradient: linear-gradient(135deg, #4D9899 0%, #7AC99C 100%);
+  --bohe-gradient-start: #4D9899;
+  --bohe-gradient-end: #7AC99C;
+
+  /* ===== 功能色 ===== */
+  --bohe-success: #16a34a;
+  --bohe-success-bg: #f0fdf4;
+  --bohe-warning: #fa8c16;
+  --bohe-warning-bg: #fff7e6;
+  --bohe-error: #f5222d;
+  --bohe-error-bg: #fff1f0;
+  --bohe-info: #16a34a;
+  --bohe-info-bg: #f0fdf4;
+
+  /* ===== 中性色 ===== */
+  --bohe-text-primary: #1f2937;
+  --bohe-text-secondary: #6b7280;
+  --bohe-text-tertiary: #9ca3af;
+  --bohe-text-disabled: #d1d5db;
+
+  --bohe-bg-primary: #ffffff;
+  --bohe-bg-secondary: #f9fafb;
+  --bohe-bg-tertiary: #f3f4f6;
+  --bohe-bg-layout: #f0f2f5;
+
+  --bohe-border-primary: #e5e7eb;
+  --bohe-border-secondary: #d1d5db;
+
+  /* ===== 间距（4px 网格）===== */
+  --bohe-space-1: 4px;
+  --bohe-space-2: 8px;
+  --bohe-space-3: 12px;
+  --bohe-space-4: 16px;
+  --bohe-space-5: 20px;
+  --bohe-space-6: 24px;
+  --bohe-space-8: 32px;
+  --bohe-space-10: 40px;
+  --bohe-space-12: 48px;
+  --bohe-space-16: 64px;
+  --bohe-space-20: 80px;
+  --bohe-space-24: 96px;
+
+  /* ===== 圆角 ===== */
+  --bohe-radius-sm: 4px;
+  --bohe-radius-base: 8px;
+  --bohe-radius-lg: 12px;
+  --bohe-radius-xl: 16px;
+  --bohe-radius-full: 9999px;
+
+  /* ===== 阴影 ===== */
+  --bohe-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --bohe-shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --bohe-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --bohe-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --bohe-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* ===== 字体 ===== */
+  --bohe-font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+  --bohe-font-size-xs: 12px;
+  --bohe-font-size-sm: 14px;
+  --bohe-font-size-base: 16px;
+  --bohe-font-size-lg: 18px;
+  --bohe-font-size-xl: 20px;
+  --bohe-font-size-2xl: 24px;
+  --bohe-font-size-3xl: 30px;
+  --bohe-font-size-4xl: 36px;
+
+  /* ===== 过渡 ===== */
+  --bohe-transition-fast: 150ms ease;
+  --bohe-transition-base: 200ms ease;
+  --bohe-transition-slow: 300ms ease;
+
+  /* ===== 响应式断点 ===== */
+  --bohe-breakpoint-sm: 640px;
+  --bohe-breakpoint-md: 768px;
+  --bohe-breakpoint-lg: 1024px;
+  --bohe-breakpoint-xl: 1280px;
+}

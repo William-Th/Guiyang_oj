@@ -268,7 +268,7 @@ const NotificationCenterPage: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'activity':
-        return <ClockCircleOutlined style={{ color: '#1890ff', fontSize: 24 }} />;
+        return <ClockCircleOutlined style={{ color: '#16a34a', fontSize: 24 }} />;
       case 'achievement':
         return <TrophyOutlined style={{ color: '#faad14', fontSize: 24 }} />;
       case 'reminder':

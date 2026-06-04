@@ -668,8 +668,8 @@ const TakeActivityPage: React.FC = () => {
                       buttonType = 'default';
                       buttonStyle = {
                         ...buttonStyle,
-                        backgroundColor: '#1677ff',
-                        borderColor: '#1677ff',
+                        backgroundColor: '#16a34a',
+                        borderColor: '#16a34a',
                         color: '#fff',
                         borderWidth: '2px',
                         borderStyle: 'solid',

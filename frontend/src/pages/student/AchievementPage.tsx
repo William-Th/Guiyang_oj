@@ -149,7 +149,7 @@ const AchievementPage: React.FC = () => {
   const getRarityInfo = (rarity: string) => {
     const rarityMap: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
       common: { color: '#8c8c8c', label: '普通', icon: <StarOutlined /> },
-      rare: { color: '#1890ff', label: '稀有', icon: <StarOutlined /> },
+      rare: { color: '#16a34a', label: '稀有', icon: <StarOutlined /> },
       epic: { color: '#722ed1', label: '史诗', icon: <FireOutlined /> },
       legendary: { color: '#fa8c16', label: '传说', icon: <TrophyOutlined /> },
     };
@@ -279,7 +279,7 @@ const AchievementPage: React.FC = () => {
               <div style={{ marginTop: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <Text style={{ fontSize: 12, color: '#8c8c8c' }}>进度</Text>
-                  <Text style={{ fontSize: 12, color: '#1890ff' }}>
+                  <Text style={{ fontSize: 12, color: '#16a34a' }}>
                     {progress.current_value}/{progress.target_value}
                   </Text>
                 </div>
@@ -372,7 +372,7 @@ const AchievementPage: React.FC = () => {
               title="当前积分"
               value={pointsAccount?.current_points || 0}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -526,7 +526,7 @@ const AchievementPage: React.FC = () => {
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Text>当前进度</Text>
-                        <Text strong style={{ color: '#1890ff' }}>
+                        <Text strong style={{ color: '#16a34a' }}>
                           {progress.current_value} / {progress.target_value}
                         </Text>
                       </div>

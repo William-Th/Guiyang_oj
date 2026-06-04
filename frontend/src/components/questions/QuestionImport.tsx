@@ -388,7 +388,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
 
             <Dragger {...uploadProps} style={{ padding: '40px' }}>
               <p className="ant-upload-drag-icon">
-                <InboxOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
+                <InboxOutlined style={{ fontSize: '48px', color: '#16a34a' }} />
               </p>
               <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
               <p className="ant-upload-hint">
@@ -423,7 +423,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
                     <Statistic 
                       title="总题目数" 
                       value={totalCount} 
-                      valueStyle={{ color: '#1890ff' }}
+                      valueStyle={{ color: '#16a34a' }}
                     />
                   </Col>
                   <Col span={6}>

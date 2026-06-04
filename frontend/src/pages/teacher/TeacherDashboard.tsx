@@ -380,7 +380,7 @@ const TeacherDashboard: React.FC = () => {
               title="创建活动总数"
               value={stats.totalActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>

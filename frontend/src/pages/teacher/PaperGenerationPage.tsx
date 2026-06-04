@@ -515,7 +515,7 @@ const PaperGenerationPage: React.FC = () => {
             onClick={() => canEdit && handleStartEditScore(record)}
           >
             {score}
-            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#1890ff' }} />}
+            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#16a34a' }} />}
           </span>
         );
       },
@@ -686,7 +686,7 @@ const PaperGenerationPage: React.FC = () => {
                 <Statistic
                   title="活动设置总分"
                   value={activity.total_score}
-                  valueStyle={{ color: '#1890ff' }}
+                  valueStyle={{ color: '#16a34a' }}
                 />
               </Col>
               <Col span={4}>
@@ -898,7 +898,7 @@ const PaperGenerationPage: React.FC = () => {
                           padding: '4px 12px',
                           border: '1px solid #d9d9d9',
                           borderRadius: '6px',
-                          background: isSelected ? '#e6f7ff' : '#fff',
+                          background: isSelected ? '#f0fdf4' : '#fff',
                           borderColor: isSelected ? info.color : '#d9d9d9',
                         }}
                       >
@@ -1002,8 +1002,8 @@ const PaperGenerationPage: React.FC = () => {
                               size="small"
                               hoverable
                               style={{
-                                border: isSelected ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                                backgroundColor: isSelected ? '#e6f7ff' : undefined,
+                                border: isSelected ? '2px solid #16a34a' : '1px solid #d9d9d9',
+                                backgroundColor: isSelected ? '#f0fdf4' : undefined,
                                 cursor: 'pointer',
                                 height: '100%',
                               }}

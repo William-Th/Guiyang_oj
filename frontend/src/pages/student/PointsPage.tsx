@@ -276,7 +276,7 @@ const PointsPage: React.FC = () => {
               title="当前积分"
               value={pointsAccount?.current_points || 0}
               prefix={<StarOutlined />}
-              valueStyle={{ color: '#1890ff', fontSize: 32 }}
+              valueStyle={{ color: '#16a34a', fontSize: 32 }}
             />
           </Card>
         </Col>

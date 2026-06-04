@@ -512,7 +512,7 @@ const ActivityResultPage: React.FC = () => {
                     {data.can_show_answers && answer.feedback && (
                       <div style={{ marginTop: 12 }}>
                         <Text type="secondary">评语：</Text>
-                        <Paragraph style={{ marginTop: 8, padding: 12, background: '#e6f7ff', borderRadius: 4 }}>
+                        <Paragraph style={{ marginTop: 8, padding: 12, background: '#f0fdf4', borderRadius: 4 }}>
                           {answer.feedback}
                         </Paragraph>
                       </div>

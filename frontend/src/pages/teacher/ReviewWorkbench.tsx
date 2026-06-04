@@ -494,7 +494,7 @@ const ReviewWorkbench: React.FC = () => {
               title="待审核"
               value={stats.pending_count}
               suffix="题"
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Col>
           <Col span={6}>
@@ -685,7 +685,7 @@ const ReviewWorkbench: React.FC = () => {
 
             <div style={{ marginBottom: 16 }}>
               <strong>正确答案：</strong>
-              <div style={{ marginTop: 8, padding: 12, background: '#e6f7ff', borderRadius: 4 }}>
+              <div style={{ marginTop: 8, padding: 12, background: '#f0fdf4', borderRadius: 4 }}>
                 {Array.isArray(selectedQuestion.correct_answer)
                   ? selectedQuestion.correct_answer.join(', ')
                   : String(selectedQuestion.correct_answer)}
@@ -775,7 +775,7 @@ const ReviewWorkbench: React.FC = () => {
               <div style={{
                 marginTop: 8,
                 padding: 12,
-                background: '#e6f7ff',
+                background: '#f0fdf4',
                 borderRadius: 4
               }}>
                 {renderAnswer(selectedQuestion)}

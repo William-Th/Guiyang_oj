@@ -262,8 +262,21 @@ const MainLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', background: '#1677ff', padding: '0 24px' }}>
-        <div style={{ color: 'white', fontSize: '20px', marginRight: '48px', whiteSpace: 'nowrap' }}>
+      <Header style={{
+        display: 'flex',
+        alignItems: 'center',
+        background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
+        padding: '0 24px',
+        boxShadow: '0 2px 8px rgba(77, 152, 153, 0.3)',
+      }}>
+        <div style={{
+          color: 'white',
+          fontSize: '20px',
+          fontWeight: 600,
+          marginRight: '48px',
+          whiteSpace: 'nowrap',
+          letterSpacing: '1px',
+        }}>
           贵阳市小学生测评平台
         </div>
 
@@ -339,11 +352,11 @@ const MainLayout: React.FC = () => {
         </Space>
       </Header>
       <Content style={{ padding: '24px', background: '#f0f2f5' }}>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '8px', minHeight: '100%' }}>
+        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', minHeight: '100%' }}>
           <Outlet />
         </div>
       </Content>
-      <Footer style={{ textAlign: 'center', background: '#f0f2f5' }}>
+      <Footer style={{ textAlign: 'center', background: '#f0f2f5', color: '#6b7280' }}>
         贵阳市教育局 ©2024 小学生测评服务平台
       </Footer>
     </Layout>

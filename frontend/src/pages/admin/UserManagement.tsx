@@ -564,7 +564,7 @@ const UserManagement: React.FC = () => {
               title="总用户数"
               value={statistics.totalUsers}
               prefix={<UserOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
@@ -587,7 +587,7 @@ const UserManagement: React.FC = () => {
                 title="教师"
                 value={statistics.teachers}
                 prefix={<TeamOutlined />}
-                valueStyle={{ color: '#1677ff' }}
+                valueStyle={{ color: '#16a34a' }}
               />
             </Card>
           </Col>

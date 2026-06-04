@@ -665,8 +665,8 @@ const PermissionManagement: React.FC = () => {
         <div style={{
           marginTop: 16,
           padding: 12,
-          background: '#e6f7ff',
-          border: '1px solid #91d5ff',
+          background: '#f0fdf4',
+          border: '1px solid #bbf7d0',
           borderRadius: 4
         }}>
           <strong>权限说明：</strong>

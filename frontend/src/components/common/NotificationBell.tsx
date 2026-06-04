@@ -182,7 +182,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'activity':
-        return <ClockCircleOutlined style={{ color: '#1890ff' }} />;
+        return <ClockCircleOutlined style={{ color: '#16a34a' }} />;
       case 'achievement':
         return <TrophyOutlined style={{ color: '#faad14' }} />;
       case 'reminder':

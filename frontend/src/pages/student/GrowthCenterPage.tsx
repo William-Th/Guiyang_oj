@@ -148,7 +148,7 @@ const GrowthCenterPage: React.FC = () => {
                 value={Math.floor((overview?.total_study_seconds || 0) / 3600)}
                 suffix="小时"
                 prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#1677ff' }}
+                valueStyle={{ color: '#16a34a' }}
               />
             </Card>
           </Col>
@@ -180,7 +180,7 @@ const GrowthCenterPage: React.FC = () => {
               <Row gutter={16}>
                 <Col span={12}>
                   <div style={{ textAlign: 'center', padding: '12px', background: '#f0f5ff', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1677ff' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>
                       {overview?.completed_activities || 0}
                     </div>
                     <div style={{ color: '#666', marginTop: '4px' }}>已完成</div>
@@ -226,7 +226,7 @@ const GrowthCenterPage: React.FC = () => {
                         title="当前积分"
                         value={pointsAccount?.current_points || 0}
                         prefix={<StarOutlined />}
-                        valueStyle={{ color: '#1677ff' }}
+                        valueStyle={{ color: '#16a34a' }}
                       />
                     </Col>
                     <Col span={8}>

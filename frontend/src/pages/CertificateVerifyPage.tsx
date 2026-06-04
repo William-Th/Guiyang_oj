@@ -309,7 +309,7 @@ const CertificateVerifyPage: React.FC = () => {
           maxWidth: 1200,
           margin: '0 auto'
         }}>
-          <Title level={3} style={{ margin: 0, color: '#1677ff', cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <Title level={3} style={{ margin: 0, color: '#16a34a', cursor: 'pointer' }} onClick={() => navigate('/')}>
             <HomeOutlined style={{ marginRight: 8 }} />
             贵阳市小学生测评平台
           </Title>

@@ -120,7 +120,7 @@ const StudentHomePage: React.FC = () => {
                 title="已完成考试"
                 value={stats.completed}
                 prefix={<BookOutlined />}
-                valueStyle={{ color: '#1677ff' }}
+                valueStyle={{ color: '#16a34a' }}
               />
             </Card>
           </Col>

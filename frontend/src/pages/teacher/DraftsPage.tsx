@@ -382,8 +382,8 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
             <div style={{
               marginBottom: 16,
               padding: 12,
-              background: '#e6f7ff',
-              border: '1px solid #91d5ff',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
               borderRadius: 4
             }}>
               <strong>发布说明：</strong>题目发布需要经过审核流程。请选择审核人和发布的题库范围，审核通过后题目将自动发布到对应的题库中。

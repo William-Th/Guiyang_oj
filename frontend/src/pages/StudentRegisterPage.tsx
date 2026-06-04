@@ -119,7 +119,7 @@ const StudentRegisterPage: React.FC = () => {
     <ConfigProvider locale={locale}>
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

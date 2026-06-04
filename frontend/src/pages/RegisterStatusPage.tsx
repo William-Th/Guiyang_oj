@@ -111,7 +111,7 @@ const RegisterStatusPage: React.FC = () => {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -141,7 +141,7 @@ const RegisterStatusPage: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
       padding: '40px 20px'
     }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -227,12 +227,12 @@ const RegisterStatusPage: React.FC = () => {
                 <div style={{ marginTop: '12px' }}>
                   <Space direction="vertical" size="small" style={{ width: '100%' }}>
                     <div>
-                      <UserOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                      <UserOutlined style={{ marginRight: '8px', color: '#16a34a' }} />
                       <Text strong>审核人：</Text>
                       <Text>{getReviewerContact(status.current_reviewer_level, status.school_name).name}</Text>
                     </div>
                     <div>
-                      <PhoneOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                      <PhoneOutlined style={{ marginRight: '8px', color: '#16a34a' }} />
                       <Text strong>联系方式：</Text>
                       <Text>{getReviewerContact(status.current_reviewer_level, status.school_name).phone}</Text>
                     </div>

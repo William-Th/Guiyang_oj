@@ -142,7 +142,7 @@ const ResultsPage: React.FC = () => {
       sorter: (a: CompletedActivity, b: CompletedActivity) => (a.my_score || 0) - (b.my_score || 0),
       render: (_: any, record: CompletedActivity) => {
         const percentage = record.total_score > 0 ? (record.my_score / record.total_score) : 0;
-        const color = percentage >= 0.9 ? '#52c41a' : percentage >= 0.6 ? '#1677ff' : '#ff4d4f';
+        const color = percentage >= 0.9 ? '#52c41a' : percentage >= 0.6 ? '#16a34a' : '#ff4d4f';
         return (
           <span style={{ fontSize: 16, fontWeight: 'bold', color }}>
             {record.my_score != null ? record.my_score : '-'} / {record.total_score}
@@ -195,7 +195,7 @@ const ResultsPage: React.FC = () => {
               title="已完成考试"
               value={stats.total}
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
               suffix="次"
             />
           </Card>

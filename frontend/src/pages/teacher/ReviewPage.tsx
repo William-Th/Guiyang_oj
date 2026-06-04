@@ -437,7 +437,7 @@ const ReviewPage: React.FC = () => {
               <div style={{
                 marginTop: 8,
                 padding: 12,
-                background: '#e6f7ff',
+                background: '#f0fdf4',
                 borderRadius: 4
               }}>
                 {renderAnswer(selectedQuestion)}

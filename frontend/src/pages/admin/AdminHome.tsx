@@ -88,10 +88,10 @@ const AdminHome: React.FC = () => {
 
   const getWorkflowIcon = (type: WorkflowItem['type']) => {
     const iconMap = {
-      'user_approval': <TeamOutlined style={{ fontSize: 24, color: '#1677ff' }} />,
+      'user_approval': <TeamOutlined style={{ fontSize: 24, color: '#16a34a' }} />,
       'question_review': <BookOutlined style={{ fontSize: 24, color: '#52c41a' }} />,
       'exam_approval': <FileTextOutlined style={{ fontSize: 24, color: '#fa8c16' }} />,
-      'certificate_issue': <TrophyOutlined style={{ fontSize: 24, color: '#722ed1' }} />,
+      'certificate_issue': <TrophyOutlined style={{ fontSize: 24, color: '#16a34a' }} />,
     };
     return iconMap[type];
   };
@@ -225,7 +225,7 @@ const AdminHome: React.FC = () => {
                         title="学校总数"
                         value={regionStats.totalSchools}
                         prefix={<TeamOutlined />}
-                        valueStyle={{ color: '#1677ff' }}
+                        valueStyle={{ color: '#16a34a' }}
                         suffix="所"
                       />
                     </Card>
@@ -258,7 +258,7 @@ const AdminHome: React.FC = () => {
                         title="进行中活动"
                         value={regionStats.activeExams}
                         prefix={<FileTextOutlined />}
-                        valueStyle={{ color: '#eb2f96' }}
+                        valueStyle={{ color: '#16a34a' }}
                         suffix="场"
                       />
                     </Card>
@@ -277,7 +277,7 @@ const AdminHome: React.FC = () => {
                   <Progress
                     percent={regionStats.pendingApprovals > 0 ? Math.max(20, 100 - regionStats.pendingApprovals * 5) : 100}
                     strokeColor={{
-                      '0%': '#108ee9',
+                      '0%': '#16a34a',
                       '100%': '#87d068',
                     }}
                     status={regionStats.pendingApprovals > 0 ? 'active' : 'success'}

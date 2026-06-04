@@ -582,8 +582,8 @@ const MySubmissionsPage: React.FC = () => {
             <div style={{
               marginBottom: 16,
               padding: 12,
-              background: '#e6f7ff',
-              border: '1px solid #91d5ff',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
               borderRadius: 4
             }}>
               <strong>重新提交说明：</strong>题目修改后可以重新提交审核。请选择新的审核人，审核通过后题目将发布到对应的题库中。

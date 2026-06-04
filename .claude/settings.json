@@ -8,7 +8,12 @@
       "Bash(cat .env.development)",
       "Bash(awk '{print $1, $4}')",
       "Bash(awk '{print $5, $9}')",
-      "Bash(sort -k2)"
+      "Bash(sort -k2)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\mint\\.claude"
     ]
   }
 }

@@ -82,7 +82,7 @@ const AdminOverview: React.FC = () => {
               title="总考试数"
               value={stats.totalExams}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#16a34a' }}
             />
           </Card>
         </Col>
