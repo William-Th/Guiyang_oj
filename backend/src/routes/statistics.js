@@ -131,23 +131,8 @@ router.get('/student/knowledge-points', authMiddleware, async (req, res) => {
  */
 router.get('/student/overview', authMiddleware, async (req, res) => {
   try {
-    // 通过 user_id 查找 student_id
-    const studentResult = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
-    if (studentResult.rows.length === 0) {
-      return res.json({
-        success: true,
-        data: {
-          total_activities: 0,
-          completed_activities: 0,
-          avg_score: 0,
-          total_study_seconds: 0,
-          last_activity_time: null,
-          first_activity_time: null
-        }
-      });
-    }
-    const studentId = studentResult.rows[0].id;
-
+    // v_student_learning_overview 中的 student_id 是 users.id（即 student_activities.student_id），
+    // 而非 students.id，因此直接使用 req.user.id 查询
     const sql = `
       SELECT
         total_activities,
@@ -160,7 +145,7 @@ router.get('/student/overview', authMiddleware, async (req, res) => {
       WHERE student_id = $1
     `;
 
-    const result = await query(sql, [studentId]);
+    const result = await query(sql, [req.user.id]);
 
     if (result.rows.length === 0) {
       return res.json({

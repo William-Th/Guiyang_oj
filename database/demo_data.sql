@@ -357,6 +357,31 @@ BEGIN
   RAISE NOTICE '答题记录已创建';
 
   -- ============================================
+  -- 5.5 同步分数：让 student_activities.score = SUM(answers.score)
+  --     确保页面展示的数据与实际答题记录完全一致
+  -- ============================================
+  UPDATE student_activities sa
+  SET score = COALESCE(sub.actual_score, 0)
+  FROM (
+    SELECT ans.student_exam_id, SUM(ans.score) as actual_score
+    FROM answers ans
+    GROUP BY ans.student_exam_id
+  ) sub
+  WHERE sa.id = sub.student_exam_id;
+
+  -- 同步 activities.total_score = SUM(activity_questions.score)
+  UPDATE activities a
+  SET total_score = COALESCE(sub.qt, 0)
+  FROM (
+    SELECT aq.activity_id, SUM(aq.score) as qt
+    FROM activity_questions aq
+    GROUP BY aq.activity_id
+  ) sub
+  WHERE a.id = sub.activity_id;
+
+  RAISE NOTICE '分数已同步：student_activities.score 与 answers 一致';
+
+  -- ============================================
   -- 6. 创建日常任务
   -- ============================================
   INSERT INTO daily_tasks (task_code, task_name, task_desc, task_icon, points_reward, task_type, trigger_condition, target_value, category, display_order, bonus_points, progress_type, reset_period)

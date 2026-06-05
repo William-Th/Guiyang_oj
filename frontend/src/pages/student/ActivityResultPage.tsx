@@ -13,6 +13,7 @@ import {
   Progress,
   Space,
   Empty,
+  Image,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -37,7 +38,11 @@ interface AnswerResult {
   question_code?: string;
   question_type: string;
   question_content: string;
+  question_options?: string[] | null;
   correct_answer?: string;
+  question_explanation?: string | null;
+  question_image_url?: string | null;
+  question_difficulty?: string | null;
   max_score: number;
 }
 
@@ -81,6 +86,7 @@ interface ApiResponse {
  * - 练习活动: 立即显示答案和解析
  * - 测评活动: 仅在result_publish_time之后显示答案
  * - 显示得分、排名、答题统计等
+ * - 按题型分组展示完整题目（含选项）
  */
 const ActivityResultPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,6 +115,40 @@ const ActivityResultPage: React.FC = () => {
     }
   };
 
+  // 解析 my_answer 字段（可能是 JSON 字符串如 "\"B\"" 或普通文本）
+  const parseAnswer = (raw: string | null | undefined): string => {
+    if (!raw) return '未作答';
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'string' ? parsed : raw;
+    } catch {
+      return raw;
+    }
+  };
+
+  // 解析 correct_answer 字段（可能是 JSON 字符串）
+  const parseCorrectAnswer = (raw: string | null | undefined): string => {
+    if (!raw) return '';
+    try {
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'string' ? parsed : raw;
+    } catch {
+      return raw;
+    }
+  };
+
+  // 解析选项列表
+  const parseOptions = (raw: any): string[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
   const getQuestionTypeName = (type: string): string => {
     const typeMap: Record<string, string> = {
       single: '单选题',
@@ -123,11 +163,11 @@ const ActivityResultPage: React.FC = () => {
     return typeMap[type] || type;
   };
 
-  // 题型显示顺序（约定）
+  // 题型显示顺序
   const TYPE_ORDER = ['single', 'multiple', 'true_false', 'blank', 'fill_blank', 'matching', 'essay', 'code'];
   const CN_NUMS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
-  // 按题型分组答案，保持原始顺序作为组内排序
+  // 按题型分组答案
   const groupAnswersByType = (list: AnswerResult[]) => {
     const groups = new Map<string, AnswerResult[]>();
     list.forEach(a => {
@@ -135,7 +175,6 @@ const ActivityResultPage: React.FC = () => {
       if (!groups.has(t)) groups.set(t, []);
       groups.get(t)!.push(a);
     });
-    // 按预定义顺序排序
     return Array.from(groups.entries()).sort(([a], [b]) => {
       const ia = TYPE_ORDER.indexOf(a);
       const ib = TYPE_ORDER.indexOf(b);
@@ -147,26 +186,133 @@ const ActivityResultPage: React.FC = () => {
     if (!data?.can_show_answers) {
       return null;
     }
-
     if (answer.is_correct === true) {
-      return (
-        <Tag color="success" icon={<CheckCircleOutlined />}>
-          正确
-        </Tag>
-      );
+      return <Tag color="success" icon={<CheckCircleOutlined />}>正确</Tag>;
     } else if (answer.is_correct === false) {
-      return (
-        <Tag color="error" icon={<CloseCircleOutlined />}>
-          错误
-        </Tag>
-      );
+      return <Tag color="error" icon={<CloseCircleOutlined />}>错误</Tag>;
     } else {
+      return <Tag color="default">待批改</Tag>;
+    }
+  };
+
+  // 渲染选项列表（选择题）
+  const renderOptions = (answer: AnswerResult) => {
+    const options = parseOptions(answer.question_options);
+    if (options.length === 0) return null;
+
+    const myAns = parseAnswer(answer.my_answer);
+    const correctAns = data?.can_show_answers ? parseCorrectAnswer(answer.correct_answer) : '';
+    // 支持多选答案如 "A,B" 或 "AB"
+    const myAnsLetters = myAns.replace(/[,，\s]/g, '').split('');
+    const correctAnsLetters = correctAns.replace(/[,，\s]/g, '').split('');
+
+    return (
+      <div style={{ marginTop: 8 }}>
+        {options.map((opt: string, idx: number) => {
+          // 提取选项字母（如 "A. xxx" → "A"）
+          const letterMatch = opt.match(/^([A-Za-z])[.、．)\s]/);
+          const letter = letterMatch ? letterMatch[1].toUpperCase() : String.fromCharCode(65 + idx);
+
+          const isMyAnswer = myAnsLetters.includes(letter);
+          const isCorrect = correctAnsLetters.includes(letter);
+          const isWrong = isMyAnswer && !isCorrect && data?.can_show_answers;
+
+          let bg = '#fff';
+          let border = '1px solid #e5e7eb';
+          let fontWeight = 'normal';
+
+          if (data?.can_show_answers && isCorrect) {
+            bg = '#f0fdf4';
+            border = '1px solid #86efac';
+            fontWeight = 'bold';
+          }
+          if (isWrong) {
+            bg = '#fef2f2';
+            border = '1px solid #fca5a5';
+          }
+          if (!data?.can_show_answers && isMyAnswer) {
+            bg = '#f0fdf4';
+            border = '1px solid #86efac';
+            fontWeight = 'bold';
+          }
+
+          return (
+            <div
+              key={idx}
+              style={{
+                padding: '8px 12px',
+                marginBottom: 4,
+                background: bg,
+                border,
+                borderRadius: 6,
+                fontWeight,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span style={{ minWidth: 20, textAlign: 'center' }}>{letter}.</span>
+              <span>{opt.replace(/^[A-Za-z][.、．)\s]+/, '')}</span>
+              {isMyAnswer && (
+                <Tag color={data?.can_show_answers ? (isCorrect ? 'success' : 'error') : 'blue'} style={{ marginLeft: 'auto' }}>
+                  你的选择
+                </Tag>
+              )}
+              {data?.can_show_answers && isCorrect && !isMyAnswer && (
+                <Tag color="success" style={{ marginLeft: 'auto' }}>正确答案</Tag>
+              )}
+              {data?.can_show_answers && isCorrect && isMyAnswer && (
+                <Tag color="success" style={{ marginLeft: 'auto' }}>✓</Tag>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderYourAnswer = (answer: AnswerResult) => {
+    const myAns = parseAnswer(answer.my_answer);
+    const isChoiceType = ['single', 'multiple', 'true_false'].includes(answer.question_type);
+
+    // 选择题：直接显示在选项中标记，不需要额外文本
+    if (isChoiceType) {
+      return <Text type="secondary">已选择：{myAns}</Text>;
+    }
+
+    if (answer.question_type === 'essay' || answer.question_type === 'blank' || answer.question_type === 'fill_blank') {
       return (
-        <Tag color="default">
-          待批改
-        </Tag>
+        <Paragraph
+          style={{
+            padding: 12,
+            background: '#f9fafb',
+            borderRadius: 4,
+            minHeight: 40,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {myAns}
+        </Paragraph>
       );
     }
+
+    if (answer.question_type === 'code') {
+      return (
+        <pre
+          style={{
+            padding: 12,
+            background: '#f9fafb',
+            borderRadius: 4,
+            overflow: 'auto',
+            fontSize: 13,
+          }}
+        >
+          {myAns}
+        </pre>
+      );
+    }
+
+    return <Text>{myAns}</Text>;
   };
 
   const renderCorrectAnswer = (answer: AnswerResult) => {
@@ -190,80 +336,34 @@ const ActivityResultPage: React.FC = () => {
       );
     }
 
-    // For single/multiple choice, show options
-    if (answer.question_type === 'single' || answer.question_type === 'multiple') {
-      const correctOptions = answer.correct_answer || '';
-      return (
-        <div style={{ marginTop: 12 }}>
-          <Text type="secondary">正确答案：</Text>
-          <Text strong style={{ marginLeft: 8, color: '#52c41a' }}>
-            {correctOptions}
-          </Text>
-        </div>
-      );
+    const correctAns = parseCorrectAnswer(answer.correct_answer);
+    const isChoiceType = ['single', 'multiple', 'true_false'].includes(answer.question_type);
+
+    // 选择题的正确答案已在选项中标注
+    if (isChoiceType) {
+      if (correctAns) {
+        return <Text type="secondary">正确答案：<Text strong style={{ color: '#16a34a' }}>{correctAns}</Text></Text>;
+      }
+      return null;
     }
 
-    // For other question types
+    // 填空/主观题
     return (
-      <div style={{ marginTop: 12 }}>
+      <div style={{ marginTop: 4 }}>
         <Text type="secondary">参考答案：</Text>
         <Paragraph
           style={{
-            marginLeft: 8,
             marginTop: 8,
             padding: 12,
-            background: '#f6ffed',
+            background: '#f0fdf4',
             borderRadius: 4,
+            whiteSpace: 'pre-wrap',
           }}
         >
-          {answer.correct_answer || '暂无参考答案'}
+          {correctAns || '暂无参考答案'}
         </Paragraph>
       </div>
     );
-  };
-
-  const renderYourAnswer = (answer: AnswerResult) => {
-    const myAnswer = answer.my_answer;
-
-    if (answer.question_type === 'single' || answer.question_type === 'multiple') {
-      return (
-        <Text strong style={{ fontSize: 16 }}>
-          {myAnswer || '未作答'}
-        </Text>
-      );
-    }
-
-    if (answer.question_type === 'essay' || answer.question_type === 'blank') {
-      return (
-        <Paragraph
-          style={{
-            padding: 12,
-            background: '#f5f5f5',
-            borderRadius: 4,
-            minHeight: 60,
-          }}
-        >
-          {myAnswer || '未作答'}
-        </Paragraph>
-      );
-    }
-
-    if (answer.question_type === 'code') {
-      return (
-        <pre
-          style={{
-            padding: 12,
-            background: '#f5f5f5',
-            borderRadius: 4,
-            overflow: 'auto',
-          }}
-        >
-          {myAnswer || '未作答'}
-        </pre>
-      );
-    }
-
-    return <Text>{myAnswer || '未作答'}</Text>;
   };
 
   if (loading) {
@@ -302,12 +402,10 @@ const ActivityResultPage: React.FC = () => {
 
   const { student_activity, statistics, answers } = data;
 
-  // Calculate percentage
   const scorePercentage = student_activity.activity_total_score > 0
     ? Math.round((student_activity.score / student_activity.activity_total_score) * 100)
     : 0;
 
-  const isPassed = student_activity.score >= (data as any).pass_score;
   const correctRate = statistics.total_questions > 0
     ? Math.round((statistics.correct_questions / statistics.total_questions) * 100)
     : 0;
@@ -365,14 +463,14 @@ const ActivityResultPage: React.FC = () => {
           <Card>
             <Statistic
               title="总分"
-              value={student_activity.score}
+              value={Number(student_activity.score)}
               suffix={`/ ${student_activity.activity_total_score}`}
-              valueStyle={{ color: isPassed ? '#52c41a' : '#ff4d4f', fontSize: 28 }}
+              valueStyle={{ color: Number(student_activity.score) >= 60 ? '#52c41a' : '#ff4d4f', fontSize: 28 }}
               prefix={<TrophyOutlined />}
             />
             <Progress
               percent={scorePercentage}
-              status={isPassed ? 'success' : 'exception'}
+              status={Number(student_activity.score) >= 60 ? 'success' : 'exception'}
               showInfo={false}
               style={{ marginTop: 8 }}
             />
@@ -408,7 +506,7 @@ const ActivityResultPage: React.FC = () => {
               }
               valueStyle={{
                 color: statistics.pending_questions === 0 ? '#52c41a' : '#faad14',
-                fontSize: 20
+                fontSize: 20,
               }}
             />
           </Card>
@@ -421,7 +519,7 @@ const ActivityResultPage: React.FC = () => {
           <Col span={8}>
             <Text type="secondary">开始时间：</Text>
             <br />
-            <Text>{new Date(student_activity.started_at).toLocaleString('zh-CN')}</Text>
+            <Text>{student_activity.started_at ? new Date(student_activity.started_at).toLocaleString('zh-CN') : '-'}</Text>
           </Col>
           <Col span={8}>
             <Text type="secondary">提交时间：</Text>
@@ -432,12 +530,13 @@ const ActivityResultPage: React.FC = () => {
             <Text type="secondary">用时：</Text>
             <br />
             <Text>
-              {Math.round(
-                (new Date(student_activity.submit_time).getTime() -
-                  new Date(student_activity.started_at).getTime()) /
-                  1000 / 60
-              )}{' '}
-              分钟
+              {student_activity.started_at && student_activity.submit_time
+                ? `${Math.round(
+                    (new Date(student_activity.submit_time).getTime() -
+                      new Date(student_activity.started_at).getTime()) /
+                      1000 / 60
+                  )} 分钟`
+                : '-'}
             </Text>
           </Col>
         </Row>
@@ -484,13 +583,14 @@ const ActivityResultPage: React.FC = () => {
                     title={
                       <Space>
                         <Text strong>{idx + 1}.</Text>
+                        <Tag>{getQuestionTypeName(answer.question_type)}</Tag>
                         <Text type="secondary">{answer.max_score} 分</Text>
                         {data.can_show_answers && (
                           <>
                             {renderAnswerStatus(answer)}
                             {answer.score !== null && (
                               <Text type="secondary">
-                                得分：{answer.score} / {answer.max_score}
+                                得分：{Number(answer.score).toFixed(1)} / {answer.max_score}
                               </Text>
                             )}
                           </>
@@ -498,11 +598,26 @@ const ActivityResultPage: React.FC = () => {
                       </Space>
                     }
                   >
-                    <div style={{ marginBottom: 16 }}>
-                      <Paragraph style={{ fontSize: 16, marginBottom: 8 }}>
+                    {/* 题目图片 */}
+                    {answer.question_image_url && (
+                      <div style={{ marginBottom: 8 }}>
+                        <Image
+                          src={answer.question_image_url}
+                          alt="题目图片"
+                          style={{ maxWidth: '100%', maxHeight: 300 }}
+                        />
+                      </div>
+                    )}
+
+                    {/* 题干 */}
+                    <div style={{ marginBottom: 12 }}>
+                      <Paragraph style={{ fontSize: 16, marginBottom: 0 }}>
                         {answer.question_content}
                       </Paragraph>
                     </div>
+
+                    {/* 选项（选择题/判断题） */}
+                    {renderOptions(answer)}
 
                     <Divider orientation="left" style={{ margin: '12px 0' }}>
                       你的答案
@@ -519,9 +634,19 @@ const ActivityResultPage: React.FC = () => {
                     )}
 
                     <Divider orientation="left" style={{ margin: '12px 0' }}>
-                      {data.can_show_answers ? '正确答案' : '答案公布'}
+                      {data.can_show_answers ? '正确答案与解析' : '答案公布'}
                     </Divider>
                     {renderCorrectAnswer(answer)}
+
+                    {/* 解析 */}
+                    {data.can_show_answers && answer.question_explanation && (
+                      <div style={{ marginTop: 12, padding: 12, background: '#fffbeb', borderRadius: 4 }}>
+                        <Text type="secondary" strong>解析：</Text>
+                        <Paragraph style={{ marginTop: 4, marginBottom: 0 }}>
+                          {answer.question_explanation}
+                        </Paragraph>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>

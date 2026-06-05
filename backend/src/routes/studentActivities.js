@@ -737,7 +737,11 @@ router.get('/:id/result',
           qb.question_code,
           qb.type as question_type,
           qb.content as question_content,
+          qb.options as question_options,
           qb.correct_answer,
+          qb.explanation as question_explanation,
+          qb.image_url as question_image_url,
+          qb.difficulty as question_difficulty,
           aq.score as max_score
         FROM answers a
         JOIN question_bank_with_draft qb ON a.question_id = qb.id
@@ -746,7 +750,15 @@ router.get('/:id/result',
         ORDER BY qb.id ASC
       `, [studentActivityId, activityId]);
 
-      // Calculate statistics
+      // Calculate statistics from actual answers data
+      // 有 answers 时从 answers 合计，否则回退到 student_activities.score（历史记录）
+      const computedScore = answersResult.rows.length > 0
+        ? answersResult.rows.reduce((sum, a) => sum + (parseFloat(a.score) || 0), 0)
+        : parseFloat(studentActivity.score) || 0;
+      const computedMaxScore = answersResult.rows.length > 0
+        ? answersResult.rows.reduce((sum, a) => sum + (parseFloat(a.max_score) || 0), 0)
+        : parseFloat(studentActivity.activity_total_score) || 0;
+
       const stats = {
         total_questions: answersResult.rows.length,
         answered_questions: answersResult.rows.filter(a => a.my_answer).length,
@@ -775,14 +787,16 @@ router.get('/:id/result',
           id: studentActivity.id,
           status: studentActivity.status,
           grading_status: studentActivity.grading_status,
-          score: studentActivity.score,
+          score: computedScore,
+          original_score: studentActivity.score,
           rank: studentActivity.rank,
           started_at: studentActivity.started_at,
           submit_time: studentActivity.submit_time,
           attempt_number: studentActivity.attempt_number,
           activity_title: studentActivity.activity_title,
           activity_type: studentActivity.activity_type,
-          activity_total_score: studentActivity.activity_total_score
+          activity_total_score: computedMaxScore,
+          original_activity_total_score: studentActivity.activity_total_score
         },
         statistics: stats,
         answers: processedAnswers

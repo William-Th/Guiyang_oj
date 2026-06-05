@@ -29,6 +29,7 @@ class AutoGradingService {
       logger.info(`Starting auto-grading for student_activity: ${studentActivityId}`);
 
       // Get all answers for this activity
+      // 注意：aq 必须按 sa.activity_id 过滤，因为同一题目可能出现在多个活动中，分值不同
       const answersResult = await query(`
         SELECT
           a.id as answer_id,
@@ -42,6 +43,7 @@ class AutoGradingService {
         JOIN activity_questions aq ON aq.question_id = a.question_id
         JOIN student_activities sa ON a.student_exam_id = sa.id
         WHERE a.student_exam_id = $1
+          AND aq.activity_id = sa.activity_id
           AND a.grading_status = 'pending'
       `, [studentActivityId]);
 
@@ -294,51 +296,74 @@ class AutoGradingService {
   /**
    * Grade true/false question
    * 判断题判题，兼容多种表达形式：
-   *   true/false, 1/0, 对/错, 是/否, 正确/错误, T/F, Y/N
+   *   前端提交格式: "true"/"false" (Radio value)
+   *   选项字母格式: "A"/"B" (A=正确, B=错误)
+   *   中文文本格式: "正确"/"错误", "对"/"错"
+   *   布尔/数字格式: true/false, 1/0, T/F, Y/N
+   *
+   * 核心逻辑：将所有答案归一化为选项字母（A/B）后比较，
+   * 因为 correct_answer 在数据库中存储的是选项字母。
+   *
    * @param {string|boolean|number} studentAnswer - 学生答案
-   * @param {string|boolean|number|Object} correctAnswer - 正确答案
+   * @param {string|boolean|number|Object} correctAnswer - 正确答案（通常为 "A" 或 "B"）
    * @param {number} maxScore - 满分
    * @returns {Object} Grading result
    */
   static gradeTrueFalse(studentAnswer, correctAnswer, maxScore) {
-    const TRUE_VALUES = new Set(['true', '1', '对', '是', '正确', 't', 'y', 'yes']);
-    const FALSE_VALUES = new Set(['false', '0', '错', '否', '错误', 'f', 'n', 'no']);
+    const TRUE_STRINGS = new Set(['true', '1', '对', '是', '正确', 't', 'y', 'yes']);
+    const FALSE_STRINGS = new Set(['false', '0', '错', '否', '错误', 'f', 'n', 'no']);
 
-    const normalize = (value) => {
+    // 辅助：去掉 JSON 引号包裹（如 '"A"' → 'A'）
+    const stripQuotes = (v) => {
+      if (typeof v === 'string') {
+        const s = v.trim();
+        if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1);
+      }
+      return v;
+    };
+
+    // 辅助：将任意格式的答案归一化为选项字母（A 或 B）
+    // A = 正确(true), B = 错误(false)
+    const normalizeToLetter = (value) => {
       if (value === null || value === undefined) return null;
-      if (typeof value === 'boolean') return value;
-      if (typeof value === 'number') return value !== 0;
-      // 处理对象形式 { answer: ... }
-      if (typeof value === 'object' && value.answer !== undefined) {
-        return normalize(value.answer);
+
+      // 布尔值
+      if (typeof value === 'boolean') return value ? 'A' : 'B';
+      // 数字
+      if (typeof value === 'number') return value !== 0 ? 'A' : 'B';
+      // 对象 { answer: ... }
+      if (typeof value === 'object' && !Array.isArray(value) && value.answer !== undefined) {
+        return normalizeToLetter(value.answer);
       }
-      // 数组形式（如 ["true"]）取第一个
+      // 数组取第一个
       if (Array.isArray(value)) {
-        return value.length > 0 ? normalize(value[0]) : null;
+        return value.length > 0 ? normalizeToLetter(value[0]) : null;
       }
-      const s = String(value).trim().toLowerCase();
-      if (TRUE_VALUES.has(s)) return true;
-      if (FALSE_VALUES.has(s)) return false;
+
+      // 字符串处理
+      const s = stripQuotes(String(value)).trim();
+      const upper = s.toUpperCase();
+
+      // 选项字母
+      if (/^[A-Z]$/.test(upper)) return upper;
+
+      // 布尔字符串 / 中文
+      const lower = s.toLowerCase();
+      if (TRUE_STRINGS.has(lower)) return 'A';
+      if (FALSE_STRINGS.has(lower)) return 'B';
+
       return null;
     };
 
-    const studentBool = normalize(studentAnswer);
-    const correctBool = normalize(correctAnswer);
+    const studentLetter = normalizeToLetter(studentAnswer);
+    const correctLetter = normalizeToLetter(correctAnswer);
 
-    // 任一无法识别 → 判为错（避免误判）
-    if (studentBool === null || correctBool === null) {
-      return {
-        isCorrect: false,
-        score: 0,
-        message: '判断题答案格式无法识别'
-      };
+    if (studentLetter === null || correctLetter === null) {
+      return { isCorrect: false, score: 0, message: '判断题答案格式无法识别' };
     }
 
-    const isCorrect = studentBool === correctBool;
-    return {
-      isCorrect,
-      score: isCorrect ? parseFloat(maxScore) : 0
-    };
+    const isCorrect = studentLetter === correctLetter;
+    return { isCorrect, score: isCorrect ? parseFloat(maxScore) : 0 };
   }
 
   /**
@@ -449,14 +474,20 @@ class AutoGradingService {
    * @returns {Object} Grading result
    */
   static gradeSingleChoice(studentAnswer, correctAnswer, maxScore) {
-    // Normalize answers (trim and uppercase)
-    const normalizedStudent = (studentAnswer || '').trim().toUpperCase();
+    // 去掉 JSON 引号包裹（如 '"A"' → 'A'），再统一为大写比较
+    const stripQuotes = (v) => {
+      const s = (v || '').trim();
+      if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1);
+      return s;
+    };
+
+    const normalizedStudent = stripQuotes(studentAnswer).toUpperCase();
     let normalizedCorrect;
 
     if (typeof correctAnswer === 'object' && correctAnswer.answer) {
-      normalizedCorrect = correctAnswer.answer.trim().toUpperCase();
+      normalizedCorrect = stripQuotes(correctAnswer.answer).toUpperCase();
     } else {
-      normalizedCorrect = (correctAnswer || '').trim().toUpperCase();
+      normalizedCorrect = stripQuotes(correctAnswer).toUpperCase();
     }
 
     const isCorrect = normalizedStudent === normalizedCorrect;
@@ -596,7 +627,9 @@ class AutoGradingService {
         FROM answers a
         JOIN question_bank_with_draft qb ON a.question_id = qb.id
         JOIN activity_questions aq ON aq.question_id = a.question_id
+        JOIN student_activities sa ON a.student_exam_id = sa.id
         WHERE a.id = $1
+          AND aq.activity_id = sa.activity_id
       `, [answerId]);
 
       if (answerResult.rows.length === 0) {

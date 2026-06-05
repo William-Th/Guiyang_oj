@@ -32,6 +32,7 @@ import AchievementPage from './pages/student/AchievementPage';
 import PointsPage from './pages/student/PointsPage';
 import MyStatistics from './pages/student/MyStatistics';
 import MyRegistrationsPage from './pages/student/MyRegistrationsPage';
+import GrowthCenterPage from './pages/student/GrowthCenterPage';
 import ActivityResultPage from './pages/student/ActivityResultPage';
 import DataAnalytics from './pages/teacher/DataAnalytics';
 import TeachingClassList from './pages/teacher/TeachingClassList';
@@ -89,6 +90,7 @@ const App: React.FC = () => {
               <Route path="points" element={<PointsPage />} />
               <Route path="statistics" element={<MyStatistics />} />
               <Route path="registrations" element={<MyRegistrationsPage />} />
+              <Route path="growth" element={<GrowthCenterPage />} />
             </Route>
 
             {/* 教师路由 - 题库管理 */}

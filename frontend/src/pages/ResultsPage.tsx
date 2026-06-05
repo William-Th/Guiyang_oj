@@ -26,20 +26,21 @@ interface CompletedActivity {
   id: number;
   title: string;
   subject: string;
-  grade: string;
+  grade?: string;
   ability_level?: string;
-  total_score: number;
-  my_score: number;
-  student_status: string;
+  total_score?: number;
+  type: string;
+  score: number | null;
+  status: string;
   submit_time: string;
   attempt_number: number;
-  grading_status: string;
-  type?: string;
+  grading_status?: string;
+  is_official?: boolean;
 }
 
 /**
  * 成绩查询页面
- * 展示学生已完成的所有活动/练习成绩
+ * 展示学生已完成的所有活动（练习+测评）成绩，数据全部从后端 API 获取
  */
 const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -57,9 +58,14 @@ const ResultsPage: React.FC = () => {
       const filters: any = {};
       if (subjectFilter) filters.subject = subjectFilter;
 
-      const response = await activityApi.getStudentCompletedPractices(filters);
-      const practices = response.practices || [];
-      setResults(practices);
+      // 使用 history API 获取全部已完成的活动（练习+测评）
+      const response = await activityApi.getStudentHistory(filters);
+      const allHistory = response.history || [];
+      // 只显示已完成/已批改的活动
+      const completed = allHistory.filter(
+        (h: any) => h.status === 'graded' || h.status === 'submitted'
+      );
+      setResults(completed);
     } catch (error: any) {
       console.error('Load results error:', error);
       message.error(error.response?.data?.message || '加载成绩列表失败');
@@ -92,24 +98,30 @@ const ResultsPage: React.FC = () => {
     return <Tag color={colors[subject] || 'default'}>{subject}</Tag>;
   };
 
+  const getTypeTag = (type: string) => {
+    if (type === 'assessment') return <Tag color="purple">测评</Tag>;
+    return <Tag color="blue">练习</Tag>;
+  };
+
   const getGradingStatusTag = (status: string) => {
     const statusMap: Record<string, { text: string; color: string }> = {
       'pending': { text: '待批改', color: 'default' },
-      'in_progress': { text: '批改中', color: 'processing' },
+      'partial_graded': { text: '部分批改', color: 'processing' },
+      'auto_graded': { text: '已批改', color: 'success' },
       'completed': { text: '已完成', color: 'success' },
     };
     const s = statusMap[status] || { text: status, color: 'default' };
     return <Tag color={s.color}>{s.text}</Tag>;
   };
 
-  // 计算统计数据
+  // 计算统计数据 — 全部从真实数据计算
   const stats = {
     total: results.length,
     avgScore: results.length > 0
-      ? Math.round(results.reduce((sum, r) => sum + (r.my_score || 0), 0) / results.length * 10) / 10
+      ? Math.round(results.reduce((sum, r) => sum + (Number(r.score) || 0), 0) / results.length * 10) / 10
       : 0,
-    excellent: results.filter(r => r.my_score >= r.total_score * 0.9).length,
-    passed: results.filter(r => r.my_score >= r.total_score * 0.6).length,
+    excellent: results.filter(r => r.total_score && Number(r.score) >= Number(r.total_score) * 0.9).length,
+    passed: results.filter(r => r.total_score && Number(r.score) >= Number(r.total_score) * 0.6).length,
   };
 
   const columns = [
@@ -123,6 +135,13 @@ const ResultsPage: React.FC = () => {
       ),
     },
     {
+      title: '类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 80,
+      render: (type: string) => getTypeTag(type),
+    },
+    {
       title: '科目',
       dataIndex: 'subject',
       key: 'subject',
@@ -130,22 +149,18 @@ const ResultsPage: React.FC = () => {
       render: (subject: string) => getSubjectTag(subject),
     },
     {
-      title: '年级',
-      dataIndex: 'grade',
-      key: 'grade',
-      width: 80,
-    },
-    {
       title: '得分',
       key: 'score',
       width: 120,
-      sorter: (a: CompletedActivity, b: CompletedActivity) => (a.my_score || 0) - (b.my_score || 0),
+      sorter: (a: CompletedActivity, b: CompletedActivity) => (Number(a.score) || 0) - (Number(b.score) || 0),
       render: (_: any, record: CompletedActivity) => {
-        const percentage = record.total_score > 0 ? (record.my_score / record.total_score) : 0;
+        const myScore = Number(record.score) || 0;
+        const totalScore = Number(record.total_score) || 0;
+        const percentage = totalScore > 0 ? myScore / totalScore : 0;
         const color = percentage >= 0.9 ? '#52c41a' : percentage >= 0.6 ? '#16a34a' : '#ff4d4f';
         return (
           <span style={{ fontSize: 16, fontWeight: 'bold', color }}>
-            {record.my_score != null ? record.my_score : '-'} / {record.total_score}
+            {record.score != null ? Number(record.score).toFixed(1) : '-'}{totalScore > 0 ? ` / ${totalScore}` : ''}
           </span>
         );
       },
@@ -187,7 +202,7 @@ const ResultsPage: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <h2><TrophyOutlined style={{ marginRight: 8 }} />成绩查询</h2>
 
-      {/* 统计概览 */}
+      {/* 统计概览 — 数据全部来自 API */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <Card size="small">
@@ -228,7 +243,7 @@ const ResultsPage: React.FC = () => {
               title="通过率"
               value={stats.total > 0 ? Math.round(stats.passed / stats.total * 100) : 0}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: '#16a34a' }}
               suffix="%"
             />
           </Card>

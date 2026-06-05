@@ -343,19 +343,31 @@ class Activity {
       params.push(filters.type);
     }
 
+    if (filters.subject) {
+      additionalWhere += ` AND a.subject = $${++paramCount}`;
+      params.push(filters.subject);
+    }
+
+    if (filters.grade) {
+      additionalWhere += ` AND a.grade = $${++paramCount}`;
+      params.push(filters.grade);
+    }
+
     if (filters.ability_level) {
       additionalWhere += ` AND a.ability_level = $${++paramCount}`;
       params.push(filters.ability_level);
     }
 
     const result = await query(`
-      SELECT a.id, a.title, a.subject, a.type, a.ability_level, a.is_official,
-             sa.status, sa.score, sa.submitted_at, sa.attempt_number, sa.is_retake
+      SELECT a.id, a.title, a.subject, a.grade, a.type, a.ability_level, a.is_official,
+             a.total_score,
+             sa.status, sa.score, sa.submit_time, sa.attempt_number, sa.is_retake,
+             sa.grading_status
       FROM student_activities sa
       JOIN activities a ON sa.activity_id = a.id
       WHERE sa.student_id = $1
         ${additionalWhere}
-      ORDER BY sa.submitted_at DESC
+      ORDER BY sa.submit_time DESC NULLS LAST
     `, params);
 
     return result.rows;

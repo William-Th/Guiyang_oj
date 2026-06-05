@@ -760,13 +760,17 @@ export const activityApi = {
   // Get student's activity history
   getStudentHistory: async (filters?: {
     type?: 'practice' | 'assessment';
+    subject?: string;
+    grade?: string;
     ability_level?: string;
   }) => {
     const params = new URLSearchParams();
     if (filters?.type) params.append('type', filters.type);
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.grade) params.append('grade', filters.grade);
     if (filters?.ability_level) params.append('ability_level', filters.ability_level);
 
-    const response = await api.get(`/activities/history${params.toString() ? '?' + params.toString() : ''}`);
+    const response = await api.get(`/activities/student/history${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
 

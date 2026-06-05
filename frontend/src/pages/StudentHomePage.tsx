@@ -8,7 +8,7 @@ import {
   BellOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { activityApi } from '../services/api';
+import { activityApi, statisticsApi } from '../services/api';
 
 const { Text, Title } = Typography;
 
@@ -30,17 +30,31 @@ const StudentHomePage: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      // 获取可用测评和练习
-      const [assessRes, practiceRes] = await Promise.all([
+      // 并行获取：可用测评、可用练习、已完成活动历史、学习概览
+      const [assessRes, practiceRes, historyRes, overviewRes] = await Promise.all([
         activityApi.getStudentAssessments({}).catch(() => ({ activities: [] })),
         activityApi.getStudentPractices({}).catch(() => ({ practices: [] })),
+        activityApi.getStudentHistory({}).catch(() => ({ history: [] })),
+        statisticsApi.getStudentOverview().catch(() => ({ success: false, data: null })),
       ]);
 
       const assessments = assessRes.activities || assessRes.assessments || [];
       const practices = practiceRes.practices || [];
+      const history = historyRes.history || [];
 
-      // 统计可参加的活动数量
-      const availableCount = assessments.length + practices.filter((p: any) => !p.my_status || p.my_status === 'registered').length;
+      // 统计可参加的活动数量（排除已完成的）
+      const availableCount = assessments.filter(
+        (a: any) => !a.student_status || a.student_status === 'registered'
+      ).length + practices.filter(
+        (p: any) => !p.my_status || p.my_status === 'registered'
+      ).length;
+
+      // 已完成数：从 overview API 获取真实数据
+      const completedFromOverview = overviewRes.success ? (overviewRes.data?.completed_activities || 0) : 0;
+      // 如果 overview 不可用，则从历史记录中计数
+      const completedCount = completedFromOverview || history.filter(
+        (h: any) => h.status === 'graded' || h.status === 'submitted'
+      ).length;
 
       // 计算下一个考试时间
       const now = new Date();
@@ -57,29 +71,50 @@ const StudentHomePage: React.FC = () => {
 
       setStats({
         available: availableCount,
-        completed: practices.filter((p: any) => p.my_status === 'graded' || p.my_status === 'submitted').length + 12, // 12 from history
+        completed: completedCount,
         nextExam: nextExamText,
       });
 
-      // 构建最近活动列表
+      // 构建最近活动列表：合并可用活动和已完成活动
       const recent = [
-        ...assessments.slice(0, 3).map((a: any) => ({
-          id: a.id,
-          title: a.title,
-          type: 'assessment' as const,
-          status: a.status,
-          subject: a.subject,
+        // 已完成/已提交的活动（从历史记录）
+        ...history.slice(0, 5).map((h: any) => ({
+          id: h.id,
+          title: h.title,
+          type: h.type,
+          status: h.status,
+          subject: h.subject,
+          score: h.score,
+          time: h.submit_time,
         })),
-        ...practices.slice(0, 2).map((p: any) => ({
-          id: p.id,
-          title: p.title,
-          type: 'practice' as const,
-          status: p.my_status || 'available',
-          subject: p.subject,
-          score: p.my_score,
-        })),
+        // 可参加的测评（排除已在历史中的）
+        ...assessments
+          .filter((a: any) => !a.student_status || a.student_status === 'registered')
+          .slice(0, 2)
+          .map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            type: a.type,
+            status: a.status,
+            subject: a.subject,
+            score: null,
+            time: null,
+          })),
+        // 可参加的练习（排除已在历史中的）
+        ...practices
+          .filter((p: any) => !p.my_status || p.my_status === 'registered')
+          .slice(0, 2)
+          .map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            type: p.type,
+            status: p.my_status || p.status,
+            subject: p.subject,
+            score: null,
+            time: null,
+          })),
       ];
-      setRecentActivities(recent);
+      setRecentActivities(recent.slice(0, 8));
     } catch (error) {
       console.error('Load dashboard error:', error);
     } finally {
@@ -92,8 +127,10 @@ const StudentHomePage: React.FC = () => {
       published: { color: 'blue', label: '未开始' },
       ongoing: { color: 'green', label: '进行中' },
       graded: { color: 'default', label: '已完成' },
-      available: { color: 'blue', label: '可参加' },
       submitted: { color: 'orange', label: '待批改' },
+      available: { color: 'blue', label: '可参加' },
+      registered: { color: 'blue', label: '已报名' },
+      in_progress: { color: 'green', label: '进行中' },
     };
     const info = map[status] || { color: 'default', label: status };
     return <Tag color={info.color}>{info.label}</Tag>;
@@ -115,7 +152,7 @@ const StudentHomePage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={8}>
-            <Card hoverable>
+            <Card hoverable onClick={() => navigate('/student/growth')} style={{ cursor: 'pointer' }}>
               <Statistic
                 title="已完成考试"
                 value={stats.completed}
@@ -148,7 +185,10 @@ const StudentHomePage: React.FC = () => {
                   dataSource={recentActivities}
                   renderItem={(item: any) => (
                     <List.Item
-                      actions={[getStatusTag(item.status), item.score ? <Text type="success">{item.score}分</Text> : null]}
+                      actions={[
+                        getStatusTag(item.status),
+                        item.score != null ? <Text type="success">{Number(item.score).toFixed(0)}分</Text> : null,
+                      ]}
                     >
                       <List.Item.Meta
                         title={
@@ -156,7 +196,14 @@ const StudentHomePage: React.FC = () => {
                             {item.title}
                           </a>
                         }
-                        description={<Tag>{item.subject}</Tag>}
+                        description={
+                          <Space>
+                            <Tag>{item.subject}</Tag>
+                            <Tag color={item.type === 'assessment' ? 'red' : 'green'}>
+                              {item.type === 'assessment' ? '测评' : '练习'}
+                            </Tag>
+                          </Space>
+                        }
                       />
                     </List.Item>
                   )}
