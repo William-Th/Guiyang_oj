@@ -342,15 +342,15 @@ class AutoGradingService {
 
       // 字符串处理
       const s = stripQuotes(String(value)).trim();
-      const upper = s.toUpperCase();
-
-      // 选项字母
-      if (/^[A-Z]$/.test(upper)) return upper;
-
-      // 布尔字符串 / 中文
       const lower = s.toLowerCase();
+
+      // 先检查布尔/语义字符串（如 t/f/y/n/true/false/对/错 等）
       if (TRUE_STRINGS.has(lower)) return 'A';
       if (FALSE_STRINGS.has(lower)) return 'B';
+
+      // 再检查选项字母（A/B/C/D）
+      const upper = s.toUpperCase();
+      if (/^[A-Z]$/.test(upper)) return upper;
 
       return null;
     };
