@@ -2,6 +2,8 @@
 
 > 统一密码：`password123` | 访问地址：`http://localhost:3100` 或 `http://localhost:8080`
 >
+> 🎨 界面已应用薄荷编程品牌设计规范：品牌主色 `#16a34a`（薄荷绿）、导航渐变 `#4D9899 → #7AC99C`
+>
 > 📸 本文档所有截图由 Playwright 自动生成，存放在 `docs/screenshots/` 目录
 
 ---
@@ -623,6 +625,7 @@
 | 层级 | 技术 |
 |------|------|
 | 前端 | React 18 + TypeScript + Ant Design 5 + Redux Toolkit + Vite |
+| 设计系统 | 薄荷品牌设计规范（bohe-design-guard）：品牌色 #16a34a、薄荷渐变、4px 间距网格 |
 | 后端 | Node.js + Express.js + PostgreSQL 15 + Redis |
 | 判题 | 独立 judge-service 服务，沙箱执行代码 |
 | 部署 | Docker Compose + Nginx 反向代理 |
@@ -642,6 +645,7 @@
 
 | 亮点 | 说明 |
 |------|------|
+| 薄荷品牌设计 | 统一设计系统：薄荷绿主色、渐变导航、4px 间距网格、品牌字体栈 |
 | 多级权限体系 | 5 层角色 × 6 个行政区，数据严格隔离 |
 | 7 种题型全覆盖 | 单选/多选/判断/填空/编程/匹配/问答 |
 | 编程题自动判题 | 独立判题服务，沙箱执行，多测试用例 |
