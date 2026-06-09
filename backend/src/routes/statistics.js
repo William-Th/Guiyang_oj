@@ -12,12 +12,8 @@ const { authMiddleware } = require('../middleware/auth');
  */
 router.get('/student/abilities', authMiddleware, async (req, res) => {
   try {
-    // 通过 user_id 查找 student_id
-    const studentResult = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
-    if (studentResult.rows.length === 0) {
-      return res.json({ success: true, data: [] });
-    }
-    const studentId = studentResult.rows[0].id;
+    // student_activities.student_id 存的是 users.id，直接用 req.user.id
+    const studentId = req.user.id;
     const { subject, ability } = req.query;
 
     let sql = `
@@ -73,12 +69,8 @@ router.get('/student/abilities', authMiddleware, async (req, res) => {
  */
 router.get('/student/knowledge-points', authMiddleware, async (req, res) => {
   try {
-    // 通过 user_id 查找 student_id
-    const studentResult = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
-    if (studentResult.rows.length === 0) {
-      return res.json({ success: true, data: [] });
-    }
-    const studentId = studentResult.rows[0].id;
+    // student_activities.student_id 存的是 users.id，直接用 req.user.id
+    const studentId = req.user.id;
     const { subject, knowledge_point } = req.query;
 
     let sql = `
