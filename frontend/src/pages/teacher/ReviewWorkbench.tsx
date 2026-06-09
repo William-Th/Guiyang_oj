@@ -18,6 +18,7 @@ import {
   Spin,
   Tooltip,
   Descriptions,
+  Image,
 } from 'antd';
 import {
   EyeOutlined,
@@ -61,6 +62,7 @@ interface Question {
   explanation?: string;
   abilities?: string[];
   knowledge_points?: string[];
+  image_url?: string;
   status: string;
   scope?: string[];
   target_scope?: string;
@@ -668,6 +670,15 @@ const ReviewWorkbench: React.FC = () => {
               <div style={{ marginTop: 8, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
                 {selectedQuestion.content}
               </div>
+              {selectedQuestion.image_url && (
+                <div style={{ marginTop: 8 }}>
+                  <Image
+                    src={selectedQuestion.image_url}
+                    alt="题目图片"
+                    style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                  />
+                </div>
+              )}
             </div>
 
             {selectedQuestion.options && selectedQuestion.options.length > 0 && (
@@ -755,6 +766,15 @@ const ReviewWorkbench: React.FC = () => {
               }}>
                 {selectedQuestion.content}
               </div>
+              {selectedQuestion.image_url && (
+                <div style={{ marginTop: 8 }}>
+                  <Image
+                    src={selectedQuestion.image_url}
+                    alt="题目图片"
+                    style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                  />
+                </div>
+              )}
             </div>
 
             {selectedQuestion.options && selectedQuestion.options.length > 0 && (

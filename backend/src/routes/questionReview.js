@@ -267,6 +267,7 @@ router.get('/pending', authMiddleware, async (req, res) => {
         qd.explanation,
         qd.abilities,
         qd.knowledge_points,
+        qd.image_url,
         qd.created_by,
         qd.created_at,
         qd.updated_at,
@@ -300,6 +301,7 @@ router.get('/pending', authMiddleware, async (req, res) => {
       explanation: row.explanation,
       abilities: row.abilities,
       knowledge_points: row.knowledge_points,
+      image_url: row.image_url,
       status: row.status,
       scope: [row.scope], // 包装成数组，兼容前端
       target_scope: row.scope, // 添加 target_scope 字段供筛选使用

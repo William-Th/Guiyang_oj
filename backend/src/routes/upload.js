@@ -7,15 +7,19 @@ const { authMiddleware } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 // 确保上传目录存在
-const uploadDir = path.join(__dirname, '../../uploads/achievements');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const achievementDir = path.join(__dirname, '../../uploads/achievements');
+const questionDir = path.join(__dirname, '../../uploads/questions');
+if (!fs.existsSync(achievementDir)) {
+  fs.mkdirSync(achievementDir, { recursive: true });
+}
+if (!fs.existsSync(questionDir)) {
+  fs.mkdirSync(questionDir, { recursive: true });
 }
 
 // 配置multer存储
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir);
+    cb(null, achievementDir);
   },
   filename: function (req, file, cb) {
     // 生成唯一文件名：时间戳_随机数.扩展名
@@ -128,7 +132,7 @@ router.delete('/achievement-icon/:filename', authMiddleware, async (req, res) =>
     }
 
     const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
+    const filePath = path.join(achievementDir, filename);
 
     // 检查文件是否存在
     if (!fs.existsSync(filePath)) {
@@ -156,6 +160,93 @@ router.delete('/achievement-icon/:filename', authMiddleware, async (req, res) =>
       success: false,
       message: '删除失败'
     });
+  }
+});
+
+// 题目图片上传存储配置
+const questionStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, questionDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'question-' + uniqueSuffix + ext);
+  }
+});
+
+const questionUpload = multer({
+  storage: questionStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: fileFilter // 复用已有的图片过滤器
+});
+
+/**
+ * 上传题目图片
+ * POST /api/upload/question-image
+ * 教师、管理员均可上传
+ */
+router.post('/question-image', authMiddleware, questionUpload.single('image'), async (req, res) => {
+  try {
+    const allowedRoles = ['system_admin', 'municipal_admin', 'district_admin', 'school_admin',
+      'municipal_school_admin', 'base_school_admin', 'teacher'];
+    if (!allowedRoles.includes(req.user.role)) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(403).json({ success: false, message: '没有权限上传图片' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '未选择文件' });
+    }
+
+    const fileUrl = `/uploads/questions/${req.file.filename}`;
+
+    logger.info('Question image uploaded', {
+      userId: req.user.id,
+      filename: req.file.filename,
+      size: req.file.size
+    });
+
+    res.json({
+      success: true,
+      message: '图片上传成功',
+      data: { url: fileUrl, filename: req.file.filename, size: req.file.size }
+    });
+  } catch (error) {
+    logger.error('Upload question image error:', error);
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
+    }
+    res.status(500).json({ success: false, message: error.message || '上传失败' });
+  }
+});
+
+/**
+ * 删除题目图片
+ * DELETE /api/upload/question-image/:filename
+ */
+router.delete('/question-image/:filename', authMiddleware, async (req, res) => {
+  try {
+    const allowedRoles = ['system_admin', 'municipal_admin', 'district_admin', 'school_admin',
+      'municipal_school_admin', 'base_school_admin', 'teacher'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: '没有权限删除图片' });
+    }
+
+    const { filename } = req.params;
+    const filePath = path.join(questionDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: '文件不存在' });
+    }
+
+    fs.unlinkSync(filePath);
+
+    logger.info('Question image deleted', { userId: req.user.id, filename });
+    res.json({ success: true, message: '图片删除成功' });
+  } catch (error) {
+    logger.error('Delete question image error:', error);
+    res.status(500).json({ success: false, message: '删除失败' });
   }
 });
 

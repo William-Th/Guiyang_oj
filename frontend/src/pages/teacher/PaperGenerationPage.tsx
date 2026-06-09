@@ -22,6 +22,7 @@ import {
   Descriptions,
   Tabs,
   Badge,
+  Image,
 } from 'antd';
 import {
   PlusOutlined,
@@ -1114,6 +1115,15 @@ const PaperGenerationPage: React.FC = () => {
                 <div style={{ whiteSpace: 'pre-wrap' }}>
                   {(previewQuestion as any).content}
                 </div>
+                {(previewQuestion as any).image_url && (
+                  <div style={{ marginTop: 8 }}>
+                    <Image
+                      src={(previewQuestion as any).image_url}
+                      alt="题目图片"
+                      style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                    />
+                  </div>
+                )}
               </Descriptions.Item>
               {(previewQuestion as any).options && (
                 <Descriptions.Item label="选项" span={2}>

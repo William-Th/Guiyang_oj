@@ -16,10 +16,12 @@ import {
   Alert,
   Tag,
   Divider,
+  Upload,
+  Image,
 } from 'antd';
-import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { MinusCircleOutlined, PlusOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { questionBankApi, questionReviewApi, testCaseAPI } from '../../services/api';
+import { questionBankApi, questionReviewApi, testCaseAPI, questionImageUploadApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject } from '../../config/subjects';
 import { CodeQuestionForm, CodeQuestionConfig, TestCase } from '../../components/questions';
 
@@ -56,6 +58,8 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgePoint[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [questionCode, setQuestionCode] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Programming question specific state
   const [codeConfig, setCodeConfig] = useState<CodeQuestionConfig>({
@@ -135,6 +139,10 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
         knowledge_points: question.knowledge_points || [],
       });
       setQuestionType(question.type);
+      // 初始化图片URL
+      if (question.image_url) {
+        setImageUrl(question.image_url);
+      }
       if (question.subject) {
         setSelectedSubject(question.subject);
       }
@@ -194,6 +202,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
         ...values,
         correct_answer: correctAnswer,
         target_scope: values.target_scope,
+        image_url: imageUrl || null,
       };
 
       // Add programming question fields if applicable
@@ -240,6 +249,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       form.resetFields();
       setQuestionType('single');
       setSelectedSubject('');
+      setImageUrl(null);
       // Reset code config
       setCodeConfig({
         time_limit: 1000,
@@ -627,6 +637,59 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
             rules={[{ required: true, message: '请输入题目内容' }]}
           >
             <TextArea rows={4} placeholder="请输入题目内容" />
+          </Form.Item>
+
+          {/* 题目图片上传 */}
+          <Form.Item label="题目插图">
+            {imageUrl ? (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <Image
+                  src={imageUrl}
+                  alt="题目插图"
+                  style={{ maxHeight: 200, maxWidth: 400, borderRadius: 4 }}
+                />
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  size="small"
+                  onClick={() => setImageUrl(null)}
+                >
+                  移除
+                </Button>
+              </div>
+            ) : (
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                customRequest={async ({ file, onSuccess: uploadSuccess, onError }) => {
+                  try {
+                    setImageUploading(true);
+                    const formData = new FormData();
+                    formData.append('image', file as File);
+                    const response = await questionImageUploadApi(formData);
+                    if (response.data?.url) {
+                      setImageUrl(response.data.url);
+                      message.success('图片上传成功');
+                      uploadSuccess?.(response.data);
+                    } else {
+                      onError?.(new Error(response.data?.message || '上传失败'));
+                    }
+                  } catch (err: any) {
+                    onError?.(err);
+                    message.error(err.response?.data?.message || '图片上传失败');
+                  } finally {
+                    setImageUploading(false);
+                  }
+                }}
+              >
+                <Button icon={<UploadOutlined />} loading={imageUploading}>
+                  上传题目插图
+                </Button>
+              </Upload>
+            )}
+            <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>
+              支持 JPG、PNG、GIF、WebP 格式，最大 10MB
+            </div>
           </Form.Item>
 
           {renderAnswerFields()}

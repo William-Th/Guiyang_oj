@@ -1523,4 +1523,12 @@ export const testCaseAPI = {
   },
 };
 
+// 题目图片上传
+export const questionImageUploadApi = async (formData: FormData) => {
+  const response = await api.post('/upload/question-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
 export default api;

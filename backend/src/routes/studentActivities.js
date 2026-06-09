@@ -390,7 +390,8 @@ router.get('/:id/questions',
           qb.type,
           qb.content,
           qb.options,
-          qb.difficulty
+          qb.difficulty,
+          qb.image_url
         FROM activity_questions aq
         JOIN question_bank_with_draft qb ON aq.question_id = qb.id
         WHERE aq.activity_id = $1

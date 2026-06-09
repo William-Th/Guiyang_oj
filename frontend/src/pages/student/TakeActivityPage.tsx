@@ -15,6 +15,7 @@ import {
   Divider,
   Progress,
   Affix,
+  Image,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -900,6 +901,17 @@ const TakeActivityPage: React.FC = () => {
                             <CheckOutlined style={{ color: '#52c41a', marginLeft: 8 }} />
                           )}
                         </div>
+
+                        {/* 题目插图 */}
+                        {(question as any).image_url && (
+                          <div style={{ margin: '8px 0 16px' }}>
+                            <Image
+                              src={(question as any).image_url}
+                              alt="题目图片"
+                              style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                            />
+                          </div>
+                        )}
 
                         {/* Single choice */}
                         {qType === 'single' && question.options && (

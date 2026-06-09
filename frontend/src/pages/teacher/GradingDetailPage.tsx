@@ -19,6 +19,7 @@ import {
   Affix,
   Tooltip,
   Modal,
+  Image,
 } from 'antd';
 import {
   SaveOutlined,
@@ -74,6 +75,7 @@ interface GradingDetailResponse {
     explanation?: string | null;
     score: number;
     difficulty?: string | null;
+    image_url?: string;
   }>;
 }
 
@@ -599,6 +601,16 @@ const GradingDetailPage: React.FC = () => {
                     <div style={{ marginBottom: 16 }}>
                       <Title level={5}>题目</Title>
                       <Paragraph>{question.content}</Paragraph>
+
+                      {question.image_url && (
+                        <div style={{ margin: '8px 0' }}>
+                          <Image
+                            src={question.image_url}
+                            alt="题目图片"
+                            style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                          />
+                        </div>
+                      )}
 
                       {question.options && (
                         <div>

@@ -204,6 +204,7 @@ router.get('/student-activity/:id',
           qb.correct_answer,
           qb.difficulty,
           qb.explanation,
+          qb.image_url,
           aq.score as max_score,
           aq.order_index,
           grader.real_name as graded_by_name
@@ -246,6 +247,7 @@ router.get('/student-activity/:id',
         correct_answer: row.correct_answer,
         difficulty: row.difficulty,
         explanation: row.explanation,
+        image_url: row.image_url,
         score: row.max_score
       }));
 
