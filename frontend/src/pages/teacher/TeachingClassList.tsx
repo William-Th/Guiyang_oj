@@ -61,11 +61,14 @@ const TeachingClassList: React.FC = () => {
         page: pagination.current,
         limit: pagination.pageSize
       });
-      const data = response.data || response;
-      setTeachingClasses(data.data || []);
+      // response 是 axios 解包后的 { success, data: [...], pagination }
+      // 也可能直接是数组（兼容旧格式）
+      const classList = Array.isArray(response) ? response : (response.data || []);
+      const paginationData = response.pagination || { total: classList.length };
+      setTeachingClasses(classList);
       setPagination(prev => ({
         ...prev,
-        total: data.pagination?.total || 0
+        total: paginationData.total || 0
       }));
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
