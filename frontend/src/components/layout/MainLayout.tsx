@@ -225,6 +225,7 @@ const MainLayout: React.FC = () => {
   const getTeacherSelectedKey = () => {
     const path = location.pathname;
     if (path.includes('/teacher/activities')) return '/teacher/activities';
+    if (path.includes('/teacher/teaching-classes')) return '/teacher/teaching-classes';
     if (path.includes('/teacher/question-bank')) return '/teacher/question-bank';
     if (path.includes('/teacher/review-workbench')) return '/teacher/review-workbench';
     if (path.includes('/teacher/grading')) return '/teacher/grading';
