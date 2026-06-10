@@ -74,10 +74,19 @@ class User {
       params.push(filters.school_id);
     }
 
+    if (filters.grade) {
+      const connector = whereClause ? ' AND' : ' WHERE';
+      paramCount++;
+      whereClause += `${connector} st.grade = $${paramCount}`;
+      params.push(filters.grade);
+    }
+
     const result = await query(
       `SELECT DISTINCT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at, u.updated_at,
               sc.name as school_name, sc.id as school_id,
-              d.name as district_name, d.id as district_id
+              d.name as district_name, d.id as district_id,
+              st.student_no, st.grade, st.class,
+              st.id as student_id
        FROM users u
        LEFT JOIN students st ON u.id = st.user_id
        LEFT JOIN teachers t ON u.id = t.user_id

@@ -567,6 +567,14 @@ router.get('/students', [
       }
     }
 
+    // 支持额外的查询参数筛选（教学班添加学生时使用）
+    if (req.query.school_id && ['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      filters.school_id = req.query.school_id;
+    }
+    if (req.query.grade) {
+      filters.grade = req.query.grade;
+    }
+
     const students = await User.findAll(filters);
     res.json({ students });
   } catch (error) {

@@ -112,10 +112,10 @@ const TeachingClassStudents: React.FC = () => {
         params.grade = teachingClass.grade;
       }
 
-      // Call a generic students endpoint (would need backend support)
-      const response = await api.get('/users', { params: { role: 'student', ...params } });
+      // Call the students endpoint with optional filters
+      const response = await api.get('/users/students', { params });
       const data = response.data;
-      const allStudents = data.users || data.data || [];
+      const allStudents = data.students || data.data || [];
 
       // Filter out students already in the class
       const currentStudentIds = students.filter(s => s.is_active).map(s => s.id);
