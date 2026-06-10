@@ -471,17 +471,23 @@ BEGIN
   -- ============================================
   INSERT INTO teaching_classes (name, description, scope, school_id, district_id, subject, grade, academic_year, status, created_by, approved_by, approved_at, submitted_at)
   VALUES
-    ('云岩一小三年级数学1班', '云岩区第一小学三年级数学一班，由蒋磊老师授课', 'school', 1, 1, '数学', '三年级', '2025-2026学年第二学期', 'approved', v_tchr_yy_math_uid, v_school_admin_uid, '2026-02-20 10:00:00', '2026-02-18 09:00:00')
+    ('云岩一小三年级数学1班', '云岩区第一小学三年级数学一班，由蒋磊老师授课', 'school',
+     (SELECT school_id FROM teachers WHERE user_id = v_tchr_yy_math_uid),
+     1, '数学', '三年级', '2025-2026学年第二学期', 'approved', v_tchr_yy_math_uid, v_school_admin_uid, '2026-02-20 10:00:00', '2026-02-18 09:00:00')
   RETURNING id INTO v_tc1;
 
   INSERT INTO teaching_classes (name, description, scope, school_id, district_id, subject, grade, academic_year, status, created_by, approved_by, approved_at, submitted_at)
   VALUES
-    ('云岩一小信息科技兴趣班', '信息科技兴趣小组，由韩雪老师指导', 'school', 1, 1, '信息科技', '三年级', '2025-2026学年第二学期', 'approved', v_tchr_yy_it_uid, v_school_admin_uid, '2026-02-20 10:30:00', '2026-02-19 14:00:00')
+    ('云岩一小信息科技兴趣班', '信息科技兴趣小组，由韩雪老师指导', 'school',
+     (SELECT school_id FROM teachers WHERE user_id = v_tchr_yy_it_uid),
+     1, '信息科技', '三年级', '2025-2026学年第二学期', 'approved', v_tchr_yy_it_uid, v_school_admin_uid, '2026-02-20 10:30:00', '2026-02-19 14:00:00')
   RETURNING id INTO v_tc2;
 
   INSERT INTO teaching_classes (name, description, scope, school_id, district_id, subject, grade, academic_year, status, created_by, submitted_at)
   VALUES
-    ('云岩一小四年级数学提高班', '四年级数学提高班（待审批）', 'school', 1, 1, '数学', '四年级', '2025-2026学年第二学期', 'pending', v_tchr_yy_math_uid, '2026-05-28 10:00:00')
+    ('云岩一小四年级数学提高班', '四年级数学提高班（待审批）', 'school',
+     (SELECT school_id FROM teachers WHERE user_id = v_tchr_yy_math_uid),
+     1, '数学', '四年级', '2025-2026学年第二学期', 'pending', v_tchr_yy_math_uid, '2026-05-28 10:00:00')
   RETURNING id INTO v_tc3;
 
   -- 教学班-教师关联
