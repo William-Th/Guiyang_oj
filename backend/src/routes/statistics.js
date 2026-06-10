@@ -185,8 +185,8 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
       });
     }
 
-    // Get teacher's school_id
-    const teacherSql = 'SELECT school_id FROM teachers WHERE user_id = $1';
+    // Get teacher's school_id and subjects
+    const teacherSql = 'SELECT school_id, subjects FROM teachers WHERE user_id = $1';
     const teacherResult = await query(teacherSql, [req.user.id]);
 
     if (teacherResult.rows.length === 0 || !teacherResult.rows[0].school_id) {
@@ -199,6 +199,7 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
     const schoolId = teacherResult.rows[0].school_id;
     const { subject, ability, grade } = req.query;
 
+    // 先查本校数据
     let sql = `
       SELECT
         ability,
@@ -236,7 +237,50 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
 
     sql += ' ORDER BY subject, grade, ability';
 
-    const result = await query(sql, params);
+    let result = await query(sql, params);
+
+    // 如果本校无数据，降级查询教师所教科目相关的全部学生能力数据
+    if (result.rows.length === 0) {
+      const teacherSubjects = teacherResult.rows[0].subjects || [];
+      const subjectNames = (Array.isArray(teacherSubjects) ? teacherSubjects : [])
+        .filter(Boolean);
+
+      let fallbackSql = `
+        SELECT
+          ability,
+          subject,
+          total_questions as total_attempts,
+          correct_count,
+          accuracy_rate,
+          avg_score,
+          last_activity_time
+        FROM v_student_ability_realtime
+        WHERE 1=1
+      `;
+      const fallbackParams = [];
+      let fpIdx = 0;
+
+      if (subject) {
+        fpIdx++;
+        fallbackSql += ` AND subject = $${fpIdx}`;
+        fallbackParams.push(subject);
+      } else if (subjectNames.length > 0) {
+        fpIdx++;
+        const placeholders = subjectNames.map((_, i) => `$${fpIdx + i}`).join(', ');
+        fallbackSql += ` AND subject IN (${placeholders})`;
+        fallbackParams.push(...subjectNames);
+        fpIdx += subjectNames.length;
+      }
+
+      if (ability) {
+        fpIdx++;
+        fallbackSql += ` AND ability = $${fpIdx}`;
+        fallbackParams.push(ability);
+      }
+
+      fallbackSql += ' ORDER BY subject, ability';
+      result = await query(fallbackSql, fallbackParams);
+    }
 
     res.json({
       success: true,
