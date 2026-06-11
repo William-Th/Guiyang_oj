@@ -855,12 +855,40 @@ router.post('/categories', authMiddleware, async (req, res) => {
   }
 });
 
+// Clean invisible control chars (keep newline/tab)
+/* eslint-disable no-control-regex, no-misleading-character-class */
+function sanitizeText(text) {
+  if (typeof text !== 'string') return text;
+  var ctrlChars = String.fromCharCode(
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+    0x0B, 0x0C,
+    0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    0x7F
+  );
+  var ctrlRe = new RegExp('[' + ctrlChars + ']', 'g');
+  var zw = String.fromCharCode(
+    0x200B, 0x200C, 0x200D, 0x200E, 0x200F,
+    0x2028, 0x2029, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x202F,
+    0xFEFF
+  );
+  var zwRe = new RegExp('[' + zw + ']', 'gu');
+  return text.replace(ctrlRe, '').replace(zwRe, '');
+}
+
 // Helper function to validate questions
 function validateQuestion(question) {
   const { type, content, correct_answer } = question;
 
   if (!type || !content) {
     return '题目类型和内容不能为空';
+  }
+
+  // 清洗题目内容中的不可见字符
+  if (question.content) {
+    question.content = sanitizeText(question.content);
+  }
+  if (question.explanation) {
+    question.explanation = sanitizeText(question.explanation);
   }
 
   switch (type) {

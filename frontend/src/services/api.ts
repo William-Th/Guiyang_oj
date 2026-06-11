@@ -350,6 +350,12 @@ export const questionBankApi = {
     return response.data;
   },
 
+  // Clone question (create revision copy for published questions)
+  cloneQuestion: async (id: number) => {
+    const response = await api.post(`/question-drafts/${id}/clone`);
+    return response.data;
+  },
+
   // Get categories
   getCategories: async () => {
     const response = await api.get('/question-bank/categories');

@@ -197,9 +197,32 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
         correctAnswer = correctAnswer === 'true' || correctAnswer === true;
       }
 
+      /* eslint-disable no-misleading-character-class */
+      // 清洗题目内容：过滤不可见控制字符（保留换行和制表符）
+      const sanitizeContent = (text: string): string => {
+        if (!text) return text;
+        const ctrlChars = String.fromCharCode(
+          0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x0B, 0x0C,
+          0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+          0x7F, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+          0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F
+        );
+        const ctrlRe = new RegExp('[' + ctrlChars + ']', 'g');
+        const zw = String.fromCharCode(
+          0x200B, 0x200C, 0x200D, 0x200E, 0x200F,
+          0x2028, 0x2029, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x202F,
+          0xFEFF
+        );
+        const zwRe = new RegExp('[' + zw + ']', 'gu');
+        return text.replace(ctrlRe, '').replace(zwRe, '');
+      };
+      /* eslint-enable no-misleading-character-class */
+
       // Build question data
       const questionData: any = {
         ...values,
+        content: sanitizeContent(values.content),
         correct_answer: correctAnswer,
         target_scope: values.target_scope,
         image_url: imageUrl || null,

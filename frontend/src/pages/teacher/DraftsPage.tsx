@@ -239,13 +239,26 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
       title: '科目',
       dataIndex: 'subject',
       key: 'subject',
-      width: 80,
+      width: 100,
+      ellipsis: true,
+      render: (text: string) => (
+        <Tooltip title={text}>{text}</Tooltip>
+      ),
     },
     {
       title: '年级',
       dataIndex: 'grade',
       key: 'grade',
-      width: 80,
+      width: 100,
+      render: (grade: string) => {
+        // 兼容显示：如果年级值是 L1-L7 格式，显示为原始值加提示
+        const isLevelFormat = /^L\d+$/.test(grade);
+        return (
+          <Tooltip title={isLevelFormat ? '年级字段格式异常（应为如"三年级"），请编辑修正' : grade}>
+            <span style={isLevelFormat ? { color: '#faad14' } : undefined}>{grade}</span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: '级别',

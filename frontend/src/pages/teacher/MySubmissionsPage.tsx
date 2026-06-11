@@ -20,11 +20,13 @@ import {
   CloseCircleOutlined,
   HistoryOutlined,
   SendOutlined,
+  CopyOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
-import { questionReviewApi } from '../../services/api';
+import { questionReviewApi, questionBankApi } from '../../services/api';
 import { buildDistrictScope, getDistrictById } from '../../config/districts';
 
 interface Question {
@@ -392,7 +394,7 @@ const MySubmissionsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 220,
       fixed: 'right' as const,
       render: (_: any, record: Question) => (
         <Space size="small">
@@ -410,6 +412,7 @@ const MySubmissionsPage: React.FC = () => {
                 <Button
                   type="link"
                   size="small"
+                  icon={<EditOutlined />}
                   onClick={() => handleEditRejected(record)}
                 >
                   修改
@@ -426,6 +429,29 @@ const MySubmissionsPage: React.FC = () => {
                 </Button>
               </Tooltip>
             </>
+          )}
+          {record.status === 'published' && (
+            <Tooltip title="克隆题目创建新版本">
+              <Button
+                type="link"
+                size="small"
+                icon={<CopyOutlined />}
+                onClick={async () => {
+                  try {
+                    const response = await questionBankApi.cloneQuestion(record.draft_id);
+                    const newId = response.data?.id;
+                    if (newId) {
+                      message.success('已创建修订副本');
+                      navigate(`/teacher/question-bank/edit/${newId}`);
+                    }
+                  } catch (error: any) {
+                    message.error(error.response?.data?.error || '创建修订副本失败');
+                  }
+                }}
+              >
+                修订
+              </Button>
+            </Tooltip>
           )}
         </Space>
       ),

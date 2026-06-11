@@ -9,12 +9,14 @@ import {
   UserOutlined,
   PhoneOutlined,
   MailOutlined,
-  IdcardOutlined
+  IdcardOutlined,
+  CopyOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useNavigate } from 'react-router-dom';
-import api from '@/services/api';
+import api, { questionBankApi } from '@/services/api';
 
 interface TeacherStats {
   totalQuestions: number;
@@ -80,23 +82,41 @@ const TeacherDashboard: React.FC = () => {
     }
   };
 
-  // 获取教师创建的题目
+  // 获取教师创建的题目（包含草稿和已发布）
   const fetchQuestions = async () => {
     setQuestionsLoading(true);
     try {
-      const response = await api.get('/question-bank/bank', {
-        params: {
-          limit: 10,
-          offset: 0
-        }
-      });
-      const questionData = response.data.questions || [];
-      setQuestions(questionData);
+      // 查询教师自己创建的所有题目（草稿+已提交+已发布）
+      const response = await api.get('/question-review/drafts');
+      const drafts = response.data?.data || [];
+      // 同时获取已提交/已发布的题目
+      const submittedResponse = await api.get('/question-review/my-submissions');
+      const submitted = submittedResponse.data?.data || [];
 
-      // 更新统计数据
+      // 合并：草稿 + 已提交的题目（按更新时间排序）
+      const allQuestions = [
+        ...drafts.map((q: any) => ({ ...q, source: 'draft' })),
+        ...submitted.map((q: any) => ({
+          id: q.draft_id || q.id,
+          type: q.type,
+          subject: q.subject,
+          grade: q.grade,
+          content: q.content,
+          difficulty: q.difficulty,
+          created_at: q.draft_created_at || q.submitted_at,
+          source: 'submitted',
+          status: q.status_text,
+        })),
+      ].sort((a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ).slice(0, 10);
+
+      setQuestions(allQuestions);
+
+      // 更新统计数据（总数 = 草稿数 + 提交数）
       setStats(prev => ({
         ...prev,
-        totalQuestions: response.data.total || questionData.length
+        totalQuestions: drafts.length + submitted.length
       }));
     } catch (error: any) {
       console.error('Failed to fetch questions:', error);
@@ -193,12 +213,12 @@ const TeacherDashboard: React.FC = () => {
   // 删除题目
   const handleDeleteQuestion = async (id: number) => {
     try {
-      await api.delete(`/question-bank/bank/${id}`);
+      await api.delete(`/question-drafts/${id}`);
       message.success('删除成功');
       fetchQuestions();
     } catch (error: any) {
       console.error('Failed to delete question:', error);
-      message.error(error.response?.data?.message || '删除失败');
+      message.error(error.response?.data?.error || error.response?.data?.message || '删除失败');
     }
   };
 
@@ -208,33 +228,34 @@ const TeacherDashboard: React.FC = () => {
       title: '题型',
       dataIndex: 'type',
       key: 'type',
-      width: 100,
+      width: 90,
       render: (type: string) => questionTypeMap[type] || type
     },
     {
       title: '科目',
       dataIndex: 'subject',
       key: 'subject',
-      width: 80
+      width: 90,
+      ellipsis: true,
     },
     {
       title: '年级',
       dataIndex: 'grade',
       key: 'grade',
-      width: 80
+      width: 80,
     },
     {
       title: '题目内容',
       dataIndex: 'content',
       key: 'content',
       ellipsis: true,
-      render: (text: string) => text.length > 50 ? text.substring(0, 50) + '...' : text
+      render: (text: string) => text?.length > 50 ? text.substring(0, 50) + '...' : (text || '-')
     },
     {
       title: '难度',
       dataIndex: 'difficulty',
       key: 'difficulty',
-      width: 80,
+      width: 70,
       render: (difficulty: string) => (
         <Tag color={difficultyColorMap[difficulty]}>
           {difficultyMap[difficulty] || difficulty}
@@ -242,30 +263,98 @@ const TeacherDashboard: React.FC = () => {
       )
     },
     {
+      title: '状态',
+      dataIndex: 'source',
+      key: 'source',
+      width: 80,
+      render: (source: string, record: any) => {
+        if (source === 'draft') return <Tag color="blue">草稿</Tag>;
+        if (record.status === '已通过') return <Tag color="green">已发布</Tag>;
+        if (record.status === '待审核') return <Tag color="orange">审核中</Tag>;
+        if (record.status === '已拒绝') return <Tag color="red">已拒绝</Tag>;
+        return <Tag>{record.status || source}</Tag>;
+      }
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 150,
-      render: (_: any, record: Question) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/teacher/question-bank/edit/${record.id}`)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDeleteQuestion(record.id)}
-          >
-            删除
-          </Button>
-        </Space>
-      )
+      width: 160,
+      render: (_: any, record: any) => {
+        const isDraft = record.source === 'draft';
+        const isPublished = record.status === '已通过';
+        const isPending = record.status === '待审核';
+        const isRejected = record.status === '已拒绝';
+
+        // 修订已发布题目：克隆后跳转编辑
+        const handleRevise = async () => {
+          try {
+            const response = await questionBankApi.cloneQuestion(record.id);
+            const newId = response.data?.id;
+            if (newId) {
+              message.success('已创建修订副本');
+              navigate(`/teacher/question-bank/edit/${newId}`);
+            }
+          } catch (error: any) {
+            message.error(error.response?.data?.error || '创建修订副本失败');
+          }
+        };
+
+        return (
+          <Space size="small">
+            {(isDraft || isRejected) && (
+              <>
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/teacher/question-bank/edit/${record.id}`)}
+                >
+                  编辑
+                </Button>
+                <Button
+                  type="link"
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDeleteQuestion(record.id)}
+                >
+                  删除
+                </Button>
+              </>
+            )}
+            {isPending && (
+              <Button
+                type="link"
+                size="small"
+                icon={<EyeOutlined />}
+                disabled
+              >
+                审核中
+              </Button>
+            )}
+            {isPublished && (
+              <>
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EyeOutlined />}
+                  onClick={() => navigate(`/teacher/question-bank/edit/${record.id}`)}
+                >
+                  查看
+                </Button>
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={handleRevise}
+                >
+                  修订
+                </Button>
+              </>
+            )}
+          </Space>
+        );
+      }
     }
   ];
 

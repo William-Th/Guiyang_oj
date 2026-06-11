@@ -400,6 +400,47 @@ class QuestionDraft {
   }
 
   /**
+   * 克隆草稿（用于"修订"已发布题目）
+   * @param {number} draftId - 原草稿ID
+   * @param {number} createdBy - 克隆者用户ID
+   * @returns {Promise<Object>} 新草稿
+   */
+  static async cloneFrom(draftId, createdBy) {
+    const original = await this.findById(draftId);
+    if (!original) {
+      throw new Error('原草稿不存在');
+    }
+
+    // 复制所有内容字段，创建新草稿
+    const clonedData = {
+      type: original.type,
+      subject: original.subject,
+      grade: original.grade,
+      content: original.content,
+      options: original.options,
+      correct_answer: original.correct_answer,
+      suggested_score: original.suggested_score,
+      level: original.level,
+      difficulty: original.difficulty,
+      explanation: original.explanation,
+      tags: original.tags,
+      image_url: original.image_url,
+      abilities: original.abilities,
+      knowledge_points: original.knowledge_points,
+      created_by: createdBy,
+      // 编程题字段
+      code_template: original.code_template,
+      time_limit: original.time_limit,
+      memory_limit: original.memory_limit,
+      judge_mode: original.judge_mode,
+      special_judge_code: original.special_judge_code,
+      supported_languages: original.supported_languages
+    };
+
+    return this.create(clonedData);
+  }
+
+  /**
    * 批量获取草稿（用于迁移或管理）
    * @param {Object} filters - 筛选条件
    * @returns {Promise<Array>} 草稿列表

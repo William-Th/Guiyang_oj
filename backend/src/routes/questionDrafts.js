@@ -95,6 +95,34 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 /**
+ * 克隆草稿（修订已发布题目）
+ * POST /api/question-drafts/:id/clone
+ */
+router.post('/:id/clone', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 检查原草稿是否存在
+    const existingDraft = await QuestionDraft.findById(id);
+    if (!existingDraft) {
+      return res.status(404).json({ success: false, error: '原草稿不存在' });
+    }
+
+    // 克隆草稿，创建者为当前用户
+    const clonedDraft = await QuestionDraft.cloneFrom(id, req.user.id);
+
+    res.status(201).json({
+      success: true,
+      data: clonedDraft,
+      message: '已创建修订副本，可在草稿箱中编辑'
+    });
+  } catch (error) {
+    console.error('Error cloning draft:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * 更新草稿
  * PUT /api/question-drafts/:id
  */
@@ -111,6 +139,17 @@ router.put('/:id', authMiddleware, async (req, res) => {
     // 权限检查：只能修改自己的草稿
     if (existingDraft.created_by !== req.user.id) {
       return res.status(403).json({ success: false, error: '无权修改此草稿' });
+    }
+
+    // 发布状态检查：已发布或审核中的题目不能直接编辑
+    const publications = await QuestionDraft.getPublications(id);
+    const lockedStatuses = publications.filter(p => p.status === 'published' || p.status === 'pending_review');
+    if (lockedStatuses.length > 0) {
+      const statusText = lockedStatuses[0].status === 'published' ? '已发布' : '审核中';
+      return res.status(403).json({
+        success: false,
+        error: `该题目${statusText}，不能直接编辑。请使用"修订"功能创建新版本。`
+      });
     }
 
     const draft = await QuestionDraft.update(id, req.body);
