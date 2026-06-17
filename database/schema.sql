@@ -946,6 +946,9 @@ CREATE TABLE public.question_bank (
     withdrawn_by integer,
     withdrawn_at timestamp without time zone,
     withdraw_reason text,
+    is_hidden boolean DEFAULT false,
+    submit_count integer DEFAULT 0,
+    correct_count integer DEFAULT 0,
     CONSTRAINT question_bank_difficulty_check CHECK (((difficulty)::text = ANY ((ARRAY['easy'::character varying, 'medium'::character varying, 'hard'::character varying])::text[]))),
     CONSTRAINT question_bank_level_check CHECK (((level)::text = ANY ((ARRAY['L1'::character varying, 'L2'::character varying, 'L3'::character varying, 'L4'::character varying, 'L5'::character varying, 'L6'::character varying, 'L7'::character varying, 'L8'::character varying, 'L9'::character varying])::text[]))),
     CONSTRAINT question_bank_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'approved'::character varying, 'rejected'::character varying, 'published'::character varying, 'inactive'::character varying])::text[]))),
@@ -5650,6 +5653,15 @@ COMMENT ON VIEW v_pending_teaching_classes IS '待审批教学班视图 - 显示
 
 -- =====================================================
 -- 编程题判题系统 完成
+-- =====================================================
+
+-- =====================================================
+-- 阶段一功能（提级 / 积分策略 / 错题集） 开始
+-- =====================================================
+\i migrations/043_phase1_features.sql
+\i migrations/044_add_question_bank_hidden.sql
+-- =====================================================
+-- 阶段一功能（提级 / 积分策略 / 错题集） 完成
 -- =====================================================
 
 

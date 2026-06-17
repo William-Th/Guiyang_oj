@@ -71,7 +71,7 @@ class PaperGenerationService {
 
     // Check if activity is already published
     if (activity.status === 'published') {
-      throw new Error('Cannot modify questions for published activity');
+      throw new Error('该活动已发布，不能继续组卷，请先撤回发布');
     }
 
     // Check if question already exists
@@ -142,7 +142,7 @@ class PaperGenerationService {
 
     // Check if activity is already published
     if (activity.status === 'published') {
-      throw new Error('Cannot modify questions for published activity');
+      throw new Error('该活动已发布，不能继续组卷，请先撤回发布');
     }
 
     const results = {
@@ -196,7 +196,7 @@ class PaperGenerationService {
 
     // Check if activity is already published
     if (activity.status === 'published') {
-      throw new Error('Cannot modify questions for published activity');
+      throw new Error('该活动已发布，不能继续组卷，请先撤回发布');
     }
 
     // Remove question
@@ -236,7 +236,7 @@ class PaperGenerationService {
 
     // Check if activity is already published
     if (activity.status === 'published') {
-      throw new Error('Cannot modify questions for published activity');
+      throw new Error('该活动已发布，不能继续组卷，请先撤回发布');
     }
 
     // Update question
@@ -275,7 +275,7 @@ class PaperGenerationService {
 
     // Check if activity is already published
     if (activity.status === 'published') {
-      throw new Error('Cannot modify questions for published activity');
+      throw new Error('该活动已发布，不能继续组卷，请先撤回发布');
     }
 
     // Update orders
@@ -378,7 +378,7 @@ class PaperGenerationService {
 
     // Check if activity is already published
     if (activity.status === 'published') {
-      throw new Error('Cannot modify questions for published activity');
+      throw new Error('该活动已发布，不能继续组卷，请先撤回发布');
     }
 
     // Remove all questions

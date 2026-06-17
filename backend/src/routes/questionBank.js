@@ -153,7 +153,8 @@ router.get('/bank', authMiddleware, async (req, res) => {
       userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
       districtId: userDetail.district_id || userDetail.teacher?.district_id,
       districtCode: userDetail.district_code || userDetail.teacher?.district_code,
-      schoolId: userDetail.school_id || userDetail.teacher?.school_id
+      schoolId: userDetail.school_id || userDetail.teacher?.school_id,
+      userId: req.user.id // A2 隐藏题库可见性判断
     };
 
     // 查询题目列表（带权限控制）
@@ -425,6 +426,132 @@ router.post('/bank/:id/withdraw', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error withdrawing question:', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 设置/取消题库隐藏（A2）
+router.put('/bank/:id/hidden', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_hidden } = req.body;
+
+    if (typeof is_hidden !== 'boolean') {
+      return res.status(400).json({ success: false, error: 'is_hidden 必须为布尔值' });
+    }
+
+    const question = await QuestionBank.findById(id);
+    if (!question) {
+      return res.status(404).json({ success: false, error: '题目不存在' });
+    }
+
+    // 权限：市级及以上管理员，或创建者/审核人
+    const role = req.user.role;
+    const canManageHidden = role === 'system_admin' || role === 'municipal_admin' ||
+      question.created_by === req.user.id || question.reviewer_id === req.user.id;
+    if (!canManageHidden) {
+      return res.status(403).json({ success: false, error: '无权设置该题目的隐藏状态' });
+    }
+
+    const updated = await QuestionBank.setHidden(id, is_hidden, req.user.id);
+    res.json({
+      success: true,
+      data: updated,
+      message: is_hidden ? '题目已隐藏' : '题目已取消隐藏'
+    });
+  } catch (error) {
+    console.error('Error toggling question hidden:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// A1 提级：区级所有者申请提级到市级（待市级审核）
+router.post('/bank/:id/promote', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const question = await QuestionBank.findById(id);
+    if (!question) {
+      return res.status(404).json({ success: false, error: '题目不存在' });
+    }
+    // 仅题目所有者可申请
+    if (question.created_by !== req.user.id) {
+      return res.status(403).json({ success: false, error: '仅题目所有者可申请提级' });
+    }
+    const promotion = await QuestionBank.requestPromotion(id, req.user.id);
+    res.status(201).json({
+      success: true,
+      data: promotion,
+      message: '提级申请已提交，等待市级管理员审核'
+    });
+  } catch (error) {
+    console.error('Error requesting promotion:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// A1 提级：市级管理员主动提级（直接生效）
+router.post('/bank/:id/admin-promote', authMiddleware, async (req, res) => {
+  try {
+    const role = req.user.role;
+    if (role !== 'municipal_admin' && role !== 'system_admin') {
+      return res.status(403).json({ success: false, error: '仅市级及以上管理员可主动提级' });
+    }
+    const { id } = req.params;
+    const result = await QuestionBank.adminPromote(id, req.user.id);
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: '题目已提级到市级题库'
+    });
+  } catch (error) {
+    console.error('Error admin promoting:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// A1 提级：提级申请列表（市级管理员审核用）
+router.get('/promotions', authMiddleware, async (req, res) => {
+  try {
+    const role = req.user.role;
+    if (role !== 'municipal_admin' && role !== 'system_admin') {
+      return res.status(403).json({ success: false, error: '仅市级及以上管理员可查看提级申请' });
+    }
+    const { status, limit = 20, offset = 0 } = req.query;
+    const promotions = await QuestionBank.listPromotions({
+      status,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    res.json({ success: true, data: promotions });
+  } catch (error) {
+    console.error('Error listing promotions:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// A1 提级：市级管理员审核提级申请
+router.post('/promotions/:id/review', authMiddleware, async (req, res) => {
+  try {
+    const role = req.user.role;
+    if (role !== 'municipal_admin' && role !== 'system_admin') {
+      return res.status(403).json({ success: false, error: '仅市级及以上管理员可审核提级申请' });
+    }
+    const { id } = req.params;
+    const { approve, comment } = req.body;
+    if (typeof approve !== 'boolean') {
+      return res.status(400).json({ success: false, error: 'approve 必须为布尔值' });
+    }
+    if (!approve && !comment?.trim()) {
+      return res.status(400).json({ success: false, error: '拒绝时必须填写审核意见' });
+    }
+    const result = await QuestionBank.approvePromotion(id, req.user.id, { approve, comment });
+    res.json({
+      success: true,
+      data: result,
+      message: approve ? '已通过提级，题目已进入市级题库' : '已拒绝提级申请'
+    });
+  } catch (error) {
+    console.error('Error reviewing promotion:', error);
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 

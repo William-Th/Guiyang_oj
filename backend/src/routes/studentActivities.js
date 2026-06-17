@@ -630,6 +630,47 @@ router.post('/:id/submit',
         // Don't fail the submission if auto-grading fails
       }
 
+      // B1 刷题积分 + D4 错题入库：遍历本次已自动判题的客观题
+      try {
+        const PointsPolicy = require('../services/points/PointsPolicy');
+        const WrongQuestion = require('../models/WrongQuestion');
+
+        const graded = await query(`
+          SELECT a.id AS answer_id, a.question_id, a.is_correct,
+                 qd.id AS draft_id, qd.subject, qd.difficulty, qd.knowledge_points
+          FROM answers a
+          JOIN question_bank qb ON a.question_id = qb.id
+          JOIN question_drafts qd ON qb.draft_id = qd.id
+          WHERE a.student_exam_id = $1
+            AND a.grading_status = 'auto_graded'
+            AND a.is_correct IS NOT NULL
+        `, [studentActivityId]);
+
+        for (const row of graded.rows) {
+          if (row.is_correct) {
+            await PointsPolicy.awardForCorrectAnswer(studentId, {
+              difficulty: row.difficulty,
+              sourceId: row.answer_id,
+              sourceType: 'answer',
+              description: '答题奖励'
+            });
+          } else {
+            await WrongQuestion.addIfWrong({
+              studentId,
+              questionId: row.question_id,
+              draftId: row.draft_id,
+              subject: row.subject,
+              knowledgePoints: row.knowledge_points,
+              difficulty: row.difficulty,
+              sourceActivityId: activityId
+            });
+          }
+        }
+      } catch (rewardError) {
+        logger.error('Award points / wrong question failed:', rewardError);
+        // 积分/错题失败不影响提交结果
+      }
+
       res.json({
         success: true,
         message: '提交成功',

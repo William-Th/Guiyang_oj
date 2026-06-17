@@ -79,6 +79,230 @@ class QuestionBank {
   }
 
   /**
+   * 设置/取消隐藏（A2）
+   * @param {number} id - 发布记录ID
+   * @param {boolean} isHidden - 是否隐藏
+   * @param {number} _userId - 操作人ID（预留审计）
+   * @returns {Promise<Object>} 更新后的记录
+   */
+  static async setHidden(id, isHidden, _userId) {
+    const sql = `
+      UPDATE question_bank
+      SET is_hidden = $1
+      WHERE id = $2 AND is_active = true
+      RETURNING id, draft_id, scope, status, is_hidden
+    `;
+    const result = await query(sql, [!!isHidden, id]);
+    return result.rows[0];
+  }
+
+  /**
+   * 判断 scope 是否为区级（A1 提级校验用）
+   * 兼容 practice_district（泛区级）与 practice_district_xxx（带区码）
+   */
+  static _isDistrictScope(scope) {
+    if (!scope) return false;
+    const s = String(scope);
+    return s === 'practice_district' || s.startsWith('practice_district_');
+  }
+
+  /**
+   * 申请提级（区级→市级），创建提级申请（待市级审核）
+   * @param {number} bankId - 源区级发布记录ID
+   * @param {number} requestedBy - 发起人ID
+   * @returns {Promise<Object>} 提级申请记录
+   */
+  static async requestPromotion(bankId, requestedBy) {
+    const source = await query(
+      'SELECT * FROM question_bank WHERE id = $1 AND is_active = true',
+      [bankId]
+    );
+    const src = source.rows[0];
+    if (!src) {
+      throw new Error('源题目不存在');
+    }
+    if (!QuestionBank._isDistrictScope(src.scope)) {
+      throw new Error('仅区级题目可申请提级到市级');
+    }
+
+    // 不能重复申请（已有待审或已通过）
+    const exist = await query(
+      `SELECT id FROM question_promotions
+       WHERE draft_id = $1 AND to_scope = 'practice_municipal'
+         AND status IN ('pending', 'approved')`,
+      [src.draft_id]
+    );
+    if (exist.rows[0]) {
+      throw new Error('该题目已提交提级申请或已提级到市级');
+    }
+
+    const ins = await query(
+      `INSERT INTO question_promotions
+         (draft_id, source_bank_id, from_scope, to_scope, requested_by)
+       VALUES ($1, $2, $3, 'practice_municipal', $4)
+       RETURNING *`,
+      [src.draft_id, bankId, src.scope, requestedBy]
+    );
+    return ins.rows[0];
+  }
+
+  /**
+   * 市级管理员审核提级申请
+   * @param {number} promotionId - 提级申请ID
+   * @param {number} reviewerId - 审核人ID
+   * @param {Object} opts - { approve, comment }
+   * @returns {Promise<Object>} { promotion, target }
+   */
+  static async approvePromotion(promotionId, reviewerId, opts = {}) {
+    const { approve, comment } = opts;
+    const r = await query('SELECT * FROM question_promotions WHERE id = $1', [promotionId]);
+    const p = r.rows[0];
+    if (!p) {
+      throw new Error('提级申请不存在');
+    }
+    if (p.status !== 'pending') {
+      throw new Error('该申请已处理');
+    }
+
+    if (approve) {
+      const src = await query(
+        'SELECT published_by FROM question_bank WHERE id = $1',
+        [p.source_bank_id]
+      );
+      const publishedBy = (src.rows[0] && src.rows[0].published_by) || p.requested_by;
+      // 建市级发布记录（复用 publish，内部校验重复发布）
+      const target = await QuestionBank.publish({
+        draft_id: p.draft_id,
+        scope: 'practice_municipal',
+        published_by: publishedBy,
+        reviewer_id: reviewerId,
+        status: 'published'
+      });
+      await query(
+        `UPDATE question_promotions
+         SET status = 'approved', reviewed_by = $1, reviewed_at = CURRENT_TIMESTAMP,
+             review_comment = $2, target_bank_id = $3, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $4`,
+        [reviewerId, comment || '', target.id, promotionId]
+      );
+      return { promotion: { id: promotionId, status: 'approved' }, target };
+    }
+
+    await query(
+      `UPDATE question_promotions
+       SET status = 'rejected', reviewed_by = $1, reviewed_at = CURRENT_TIMESTAMP,
+           review_comment = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [reviewerId, comment || '', promotionId]
+    );
+    return { promotion: { id: promotionId, status: 'rejected' } };
+  }
+
+  /**
+   * 市级管理员主动提级（直接生效）
+   * @param {number} bankId - 源区级发布记录ID
+   * @param {number} adminId - 操作管理员ID
+   * @returns {Promise<Object>} { promotion, target }
+   */
+  static async adminPromote(bankId, adminId) {
+    const source = await query(
+      'SELECT * FROM question_bank WHERE id = $1 AND is_active = true',
+      [bankId]
+    );
+    const src = source.rows[0];
+    if (!src) {
+      throw new Error('源题目不存在');
+    }
+    if (!QuestionBank._isDistrictScope(src.scope)) {
+      throw new Error('仅区级题目可提级到市级');
+    }
+
+    const target = await QuestionBank.publish({
+      draft_id: src.draft_id,
+      scope: 'practice_municipal',
+      published_by: src.published_by || null,
+      reviewer_id: adminId,
+      status: 'published'
+    });
+
+    const ins = await query(
+      `INSERT INTO question_promotions
+         (draft_id, source_bank_id, from_scope, to_scope, requested_by,
+          status, reviewed_by, reviewed_at, target_bank_id)
+       VALUES ($1, $2, $3, 'practice_municipal', $4, 'approved', $5, CURRENT_TIMESTAMP, $6)
+       RETURNING *`,
+      [src.draft_id, bankId, src.scope, src.published_by || adminId, adminId, target.id]
+    );
+    return { promotion: ins.rows[0], target };
+  }
+
+  /**
+   * 提级申请列表（市级管理员审核用）
+   * @param {Object} filters - { status, limit, offset }
+   * @returns {Promise<Array>} 申请列表
+   */
+  static async listPromotions(filters = {}) {
+    let sql = `
+      SELECT p.*,
+             qd.subject, qd.content, qd.grade, qd.type,
+             u1.real_name AS requester_name,
+             u2.real_name AS reviewer_name
+      FROM question_promotions p
+      JOIN question_drafts qd ON p.draft_id = qd.id
+      LEFT JOIN users u1 ON p.requested_by = u1.id
+      LEFT JOIN users u2 ON p.reviewed_by = u2.id
+      WHERE 1=1
+    `;
+    const values = [];
+    let c = 0;
+    if (filters.status) {
+      c += 1;
+      sql += ` AND p.status = $${c}`;
+      values.push(filters.status);
+    }
+    sql += ' ORDER BY p.requested_at DESC';
+    if (filters.limit) {
+      c += 1;
+      sql += ` LIMIT $${c}`;
+      values.push(filters.limit);
+      if (filters.offset) {
+        c += 1;
+        sql += ` OFFSET $${c}`;
+        values.push(filters.offset);
+      }
+    }
+    const r = await query(sql, values);
+    return r.rows;
+  }
+
+  /**
+   * 构建 A2 隐藏题库可见性过滤片段
+   * 规则：市级及以上管理员可见所有隐藏题；其余角色仅可见自己创建/审核的隐藏题；
+   *       未提供 userId 时仅返回非隐藏题目（保守策略）。
+   * @param {Object} userInfo - 用户信息
+   * @param {number} startCount - 起始参数编号
+   * @returns {Object} { sql, params, count }
+   */
+  static _buildHiddenFilter(userInfo, startCount) {
+    const role = userInfo && userInfo.userRole;
+    const canViewAll = role === 'system_admin' || role === 'municipal_admin';
+    if (canViewAll) {
+      return { sql: '', params: [], count: 0 };
+    }
+    const userId = userInfo && userInfo.userId;
+    if (!userId) {
+      return { sql: ' AND is_hidden = false', params: [], count: 0 };
+    }
+    const p1 = startCount + 1;
+    const p2 = startCount + 2;
+    return {
+      sql: ` AND (is_hidden = false OR created_by = $${p1} OR reviewer_id = $${p2})`,
+      params: [userId, userId],
+      count: 2
+    };
+  }
+
+  /**
    * 查询已发布题目列表（带权限控制和区县筛选）
    * @param {Object} filters - 筛选条件
    * @param {Object} userInfo - 用户信息（用于权限控制）
@@ -100,6 +324,12 @@ class QuestionBank {
       sql += ` AND status = $${paramCount}`;
       values.push(filters.status);
     }
+
+    // A2 隐藏题库可见性过滤
+    const hiddenFilter = QuestionBank._buildHiddenFilter(userInfo, paramCount);
+    sql += hiddenFilter.sql;
+    values.push(...hiddenFilter.params);
+    paramCount += hiddenFilter.count;
 
     // 范围筛选
     if (filters.scope) {
@@ -226,6 +456,12 @@ class QuestionBank {
       sql += ` AND status = $${paramCount}`;
       values.push(filters.status);
     }
+
+    // A2 隐藏题库可见性过滤（与 findAll 一致）
+    const hiddenFilter = QuestionBank._buildHiddenFilter(userInfo, paramCount);
+    sql += hiddenFilter.sql;
+    values.push(...hiddenFilter.params);
+    paramCount += hiddenFilter.count;
 
     // 范围筛选（与findAll相同逻辑）
     if (filters.scope) {
