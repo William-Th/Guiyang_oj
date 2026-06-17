@@ -211,4 +211,24 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * 获取当前连胜（D2）
+ * GET /api/points/streak
+ */
+router.get('/streak', authMiddleware, async (req, res) => {
+  try {
+    const StreakService = require('../services/streak/StreakService');
+    let studentId = req.user.id;
+    // 家长查看孩子连胜
+    if (req.query.studentId) {
+      studentId = parseInt(req.query.studentId, 10);
+    }
+    const streak = await StreakService.get(studentId);
+    res.json({ success: true, data: streak });
+  } catch (error) {
+    console.error('Error fetching streak:', error);
+    res.status(500).json({ success: false, message: '获取连胜失败', error: error.message });
+  }
+});
+
 module.exports = router;

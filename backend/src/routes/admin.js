@@ -562,4 +562,49 @@ router.get('/dashboard/region-stats', [
   }
 });
 
+// ============================================================================
+// E4 家长-学生关联管理（管理员）
+// ============================================================================
+
+// 建立家长-学生关联
+router.post('/parent-links', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { parentUserId, studentUserId, relation } = req.body;
+    if (!parentUserId || !studentUserId) {
+      return res.status(400).json({ success: false, error: 'parentUserId 和 studentUserId 必填' });
+    }
+    // 校验角色
+    const p = await query('SELECT role FROM users WHERE id=$1', [parentUserId]);
+    const s = await query('SELECT role FROM users WHERE id=$1', [studentUserId]);
+    if (!p.rows[0] || p.rows[0].role !== 'parent') {
+      return res.status(400).json({ success: false, error: 'parentUserId 不是家长角色' });
+    }
+    if (!s.rows[0] || s.rows[0].role !== 'student') {
+      return res.status(400).json({ success: false, error: 'studentUserId 不是学生角色' });
+    }
+    const ParentGuard = require('../models/ParentGuard');
+    const link = await ParentGuard.link(parentUserId, studentUserId, relation);
+    res.status(201).json({ success: true, data: link, message: '家长-学生关联已建立' });
+  } catch (error) {
+    console.error('Error linking parent:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 解除关联
+router.delete('/parent-links', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { parentUserId, studentUserId } = req.body;
+    const ParentGuard = require('../models/ParentGuard');
+    const removed = await ParentGuard.unlink(parentUserId, studentUserId);
+    if (!removed) {
+      return res.status(404).json({ success: false, error: '关联不存在' });
+    }
+    res.json({ success: true, message: '关联已解除' });
+  } catch (error) {
+    console.error('Error unlinking parent:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

@@ -146,6 +146,7 @@ app.use('/api/testcases', require('./routes/testcases')); // 测试用例管理
 app.use('/api/wrong-questions', require('./routes/wrongQuestions')); // 错题集（D4）
 app.use('/api/error-reports', require('./routes/errorReports')); // 题目纠错（C5）
 app.use('/api/shop', require('./routes/shop')); // 积分消费商店（E2）
+app.use('/api/parent', require('./routes/parent')); // 家长端（E4）
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

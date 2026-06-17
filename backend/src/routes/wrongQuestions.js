@@ -166,6 +166,7 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
     }
 
     let awarded = 0;
+    let streak = null;
     if (correct) {
       const PointsPolicy = require('../services/points/PointsPolicy');
       const policy = await PointsPolicy.load();
@@ -183,11 +184,20 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
       await WrongQuestion.incReviewCount(req.user.id, parseInt(questionId, 10));
     }
 
+    // D2 连胜：无论对错都更新（错则归零）
+    try {
+      const StreakService = require('../services/streak/StreakService');
+      streak = await StreakService.recordResult(req.user.id, correct);
+    } catch (e) {
+      console.error('update streak failed:', e.message);
+    }
+
     res.json({
       success: true,
       data: {
         correct,
         awarded,
+        streak,
         correct_answer: correct ? undefined : question.correct_answer
       },
       message: correct ? `回答正确，获得积分 ${awarded}` : '回答错误，再接再厉'

@@ -108,7 +108,8 @@ class User {
       'municipal_school_admin',
       'base_school_admin',
       'municipal_admin',
-      'system_admin'
+      'system_admin',
+      'parent'
     ];
     return validRoles.includes(role);
   }
@@ -123,7 +124,8 @@ class User {
       'municipal_school_admin': 5,
       'base_school_admin': 6,
       'municipal_admin': 7,
-      'system_admin': 999  // 系统总管理员最高权限
+      'system_admin': 999,  // 系统总管理员最高权限
+      'parent': 1           // 家长权限级别与学生相同（只读+代报名）
     };
     return roleLevels[role] || 0;
   }

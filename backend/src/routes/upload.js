@@ -46,7 +46,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB
+    fileSize: 2 * 1024 * 1024 // 2MB（E1 成就图标上限）
   },
   fileFilter: fileFilter
 });
@@ -177,7 +177,7 @@ const questionStorage = multer.diskStorage({
 
 const questionUpload = multer({
   storage: questionStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB（E1 题目图片上限）
   fileFilter: fileFilter // 复用已有的图片过滤器
 });
 
@@ -221,6 +221,47 @@ router.post('/question-image', authMiddleware, questionUpload.single('image'), a
   }
 });
 
+// E1 头像上传配置（500KB 上限）
+const avatarDir = path.join(__dirname, '../../uploads/avatars');
+if (!fs.existsSync(avatarDir)) {
+  fs.mkdirSync(avatarDir, { recursive: true });
+}
+const avatarStorage = multer.diskStorage({
+  destination: function (req, file, cb) { cb(null, avatarDir); },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'avatar-' + req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 500 * 1024 }, // 500KB（E1 头像上限）
+  fileFilter: fileFilter
+});
+
+/**
+ * 上传用户头像（500KB 上限）
+ * POST /api/upload/avatar
+ */
+router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '未选择文件' });
+    }
+    const fileUrl = `/uploads/avatars/${req.file.filename}`;
+    logger.info('Avatar uploaded', { userId: req.user.id, size: req.file.size });
+    res.json({
+      success: true,
+      message: '头像上传成功',
+      data: { url: fileUrl, filename: req.file.filename, size: req.file.size }
+    });
+  } catch (error) {
+    logger.error('Upload avatar error:', error);
+    if (req.file) { try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ } }
+    res.status(500).json({ success: false, message: error.message || '上传失败' });
+  }
+});
+
 /**
  * 删除题目图片
  * DELETE /api/upload/question-image/:filename
@@ -248,6 +289,17 @@ router.delete('/question-image/:filename', authMiddleware, async (req, res) => {
     logger.error('Delete question image error:', error);
     res.status(500).json({ success: false, message: '删除失败' });
   }
+});
+
+// E1 统一处理上传错误（超限等返回中文提示）
+router.use((err, req, res, _next) => {
+  if (err && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ success: false, message: '文件超过大小上限，请压缩后重试' });
+  }
+  if (err) {
+    return res.status(400).json({ success: false, message: err.message || '上传失败' });
+  }
+  return res.status(500).json({ success: false, message: '上传失败' });
 });
 
 module.exports = router;

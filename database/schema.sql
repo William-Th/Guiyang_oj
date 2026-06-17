@@ -5668,8 +5668,10 @@ COMMENT ON VIEW v_pending_teaching_classes IS '待审批教学班视图 - 显示
 \i migrations/050_daily_question_sets.sql
 \i migrations/051_practice_achievements.sql
 \i migrations/052_virtual_shop.sql
+\i migrations/053_student_streaks.sql
+\i migrations/054_parent_role.sql
 -- =====================================================
--- 阶段一/二/三功能 完成
+-- 阶段一/二/三/四功能 完成
 -- =====================================================
 
 
