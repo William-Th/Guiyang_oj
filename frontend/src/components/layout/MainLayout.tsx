@@ -15,6 +15,9 @@ import {
   StarOutlined,
   BarChartOutlined,
   SolutionOutlined,
+  ThunderboltOutlined,
+  FireOutlined,
+  ShoppingOutlined,
 } from '@ant-design/icons';
 import NotificationBell from '../common/NotificationBell';
 import { useSelector, useDispatch } from 'react-redux';
@@ -186,9 +189,19 @@ const MainLayout: React.FC = () => {
       label: '练习中心',
     },
     {
+      key: '/student/smart-practice',
+      icon: <ThunderboltOutlined />,
+      label: '智能练习',
+    },
+    {
       key: '/student/assessments',
       icon: <BookOutlined />,
       label: '测评中心',
+    },
+    {
+      key: '/student/wrong-questions',
+      icon: <FireOutlined />,
+      label: '错题集',
     },
     {
       key: '/student/statistics',
@@ -204,6 +217,11 @@ const MainLayout: React.FC = () => {
       key: '/student/points',
       icon: <StarOutlined />,
       label: '我的积分',
+    },
+    {
+      key: '/student/shop',
+      icon: <ShoppingOutlined />,
+      label: '积分商店',
     },
   ];
 

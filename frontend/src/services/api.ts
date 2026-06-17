@@ -1537,4 +1537,187 @@ export const questionImageUploadApi = async (formData: FormData) => {
   return response.data;
 };
 
+// ============================================================================
+// 阶段一~四新增 API
+// ============================================================================
+
+// 错题集（D4）
+export const wrongQuestionApi = {
+  list: async (filters?: { subject?: string; status?: string; page?: number; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    const response = await api.get(`/wrong-questions${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  getStats: async () => {
+    const response = await api.get('/wrong-questions/stats');
+    return response.data;
+  },
+  redo: async (questionId: number, answer: string) => {
+    const response = await api.post(`/wrong-questions/${questionId}/redo`, { answer });
+    return response.data;
+  },
+  mastered: async (questionId: number) => {
+    const response = await api.post(`/wrong-questions/${questionId}/mastered`);
+    return response.data;
+  },
+  remove: async (questionId: number) => {
+    const response = await api.delete(`/wrong-questions/${questionId}`);
+    return response.data;
+  },
+};
+
+// 推荐 / 每日推题 / 连胜（D1/D3/D2）
+export const recommendApi = {
+  recommend: async (subject: string, count?: number) => {
+    const params = new URLSearchParams({ subject });
+    if (count) params.append('count', count.toString());
+    const response = await api.get(`/student/activities/recommend${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  dailyQuestions: async (subject?: string) => {
+    const params = new URLSearchParams();
+    if (subject) params.append('subject', subject);
+    const response = await api.get(`/student/activities/daily-questions${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  getStreak: async () => {
+    const response = await api.get('/points/streak');
+    return response.data;
+  },
+};
+
+// 积分商店（E2）
+export const shopApi = {
+  listItems: async (category?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    const response = await api.get(`/shop/items${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  purchase: async (itemId: number) => {
+    const response = await api.post(`/shop/items/${itemId}/purchase`);
+    return response.data;
+  },
+  myItems: async () => {
+    const response = await api.get('/shop/my-items');
+    return response.data;
+  },
+  equip: async (purchaseId: number, equip: boolean) => {
+    const response = await api.post(`/shop/my-items/${purchaseId}/equip`, { equip });
+    return response.data;
+  },
+};
+
+// 题库治理（A1 提级 / A2 隐藏 / C4 配额 / C5 纠错 / 同质）
+export const questionGovernanceApi = {
+  promote: async (bankId: number) => {
+    const response = await api.post(`/question-bank/bank/${bankId}/promote`);
+    return response.data;
+  },
+  adminPromote: async (bankId: number) => {
+    const response = await api.post(`/question-bank/bank/${bankId}/admin-promote`);
+    return response.data;
+  },
+  listPromotions: async (status?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    const response = await api.get(`/question-bank/promotions${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  reviewPromotion: async (promotionId: number, approve: boolean, comment?: string) => {
+    const response = await api.post(`/question-bank/promotions/${promotionId}/review`, { approve, comment });
+    return response.data;
+  },
+  setHidden: async (bankId: number, isHidden: boolean) => {
+    const response = await api.put(`/question-bank/bank/${bankId}/hidden`, { is_hidden: isHidden });
+    return response.data;
+  },
+  getQuota: async (userId: number) => {
+    const response = await api.get(`/question-bank/quotas/${userId}`);
+    return response.data;
+  },
+  setQuota: async (userId: number, quota: number, reason?: string) => {
+    const response = await api.put(`/question-bank/quotas/${userId}`, { quota, reason });
+    return response.data;
+  },
+  checkSimilarity: async (draftId: number, againstDraftIds: number[]) => {
+    const response = await api.post('/question-bank/similarity/check', { draftId, againstDraftIds });
+    return response.data;
+  },
+  // 纠错（C5）
+  listErrorReports: async (status?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    const response = await api.get(`/error-reports${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  submitErrorReport: async (questionId: number, errorType: string, errorDescription: string) => {
+    const response = await api.post('/error-reports', { questionId, errorType, errorDescription });
+    return response.data;
+  },
+  handleErrorReport: async (id: number, action: 'accepted' | 'rejected', comment?: string) => {
+    const response = await api.post(`/error-reports/${id}/handle`, { action, comment });
+    return response.data;
+  },
+};
+
+// 组卷导出 / 虚拟练习 / 导入成绩（C2）
+export const paperExportApi = {
+  exportPaperPdfUrl: (activityId: number) => `/api/activities/${activityId}/paper/pdf`,
+  importGradesTemplateUrl: () => '/api/activities/import-grades/template',
+  importGrades: async (activityId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/activities/${activityId}/import-grades`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+};
+
+// 学习统计（E3）
+export const learningStatsApi = {
+  bySubject: async (subject?: string, weakThreshold?: number) => {
+    const params = new URLSearchParams();
+    if (subject) params.append('subject', subject);
+    if (weakThreshold) params.append('weak_threshold', weakThreshold.toString());
+    const response = await api.get(`/statistics/student/by-subject${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+};
+
+// 家长端（E4）
+export const parentApi = {
+  getChildren: async () => {
+    const response = await api.get('/parent/children');
+    return response.data;
+  },
+  getChildProfile: async (studentId: number) => {
+    const response = await api.get(`/parent/children/${studentId}/profile`);
+    return response.data;
+  },
+  getChildResults: async (studentId: number) => {
+    const response = await api.get(`/parent/children/${studentId}/results`);
+    return response.data;
+  },
+  getChildWrongQuestions: async (studentId: number, subject?: string) => {
+    const params = new URLSearchParams();
+    if (subject) params.append('subject', subject);
+    const response = await api.get(`/parent/children/${studentId}/wrong-questions${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
+  getChildStats: async (studentId: number) => {
+    const response = await api.get(`/parent/children/${studentId}/stats`);
+    return response.data;
+  },
+  registerForChild: async (studentId: number, activityId: number) => {
+    const response = await api.post(`/parent/children/${studentId}/register/${activityId}`);
+    return response.data;
+  },
+};
+
 export default api;

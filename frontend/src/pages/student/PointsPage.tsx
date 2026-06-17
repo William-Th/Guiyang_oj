@@ -21,8 +21,10 @@ import {
   TrophyOutlined,
   GiftOutlined,
   ClockCircleOutlined,
+  FireOutlined,
 } from '@ant-design/icons';
 import { pointsApi } from '../../services/api';
+import { recommendApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';
 import './PointsPage.css';
 
@@ -68,6 +70,7 @@ const PointsPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [transactionType, setTransactionType] = useState<'all' | 'earn' | 'spend'>('all');
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [streak, setStreak] = useState(0);
 
   // 从localStorage获取当前登录用户的ID
   const userStr = localStorage.getItem('user');
@@ -79,6 +82,18 @@ const PointsPage: React.FC = () => {
       loadData();
     }
   }, [currentUserId, transactionType, pagination.current]);
+
+  // 加载连胜（D2）
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await recommendApi.getStreak();
+        if (r.success) setStreak(r.data?.current_streak || 0);
+      } catch (e) {
+        /* ignore */
+      }
+    })();
+  }, []);
 
   const loadData = async () => {
     try {
@@ -297,6 +312,17 @@ const PointsPage: React.FC = () => {
               value={pointsAccount?.spent_points || 0}
               prefix={<FallOutlined />}
               valueStyle={{ color: '#ff4d4f', fontSize: 32 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="当前连胜"
+              value={streak}
+              suffix="题"
+              prefix={<FireOutlined />}
+              valueStyle={{ color: '#fa8c16', fontSize: 32 }}
             />
           </Card>
         </Col>

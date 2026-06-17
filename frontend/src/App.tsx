@@ -34,6 +34,9 @@ import MyStatistics from './pages/student/MyStatistics';
 import MyRegistrationsPage from './pages/student/MyRegistrationsPage';
 import GrowthCenterPage from './pages/student/GrowthCenterPage';
 import ActivityResultPage from './pages/student/ActivityResultPage';
+import WrongQuestionsPage from './pages/student/WrongQuestionsPage';
+import SmartPracticePage from './pages/student/SmartPracticePage';
+import ShopPage from './pages/student/ShopPage';
 import DataAnalytics from './pages/teacher/DataAnalytics';
 import TeachingClassList from './pages/teacher/TeachingClassList';
 import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
@@ -91,6 +94,9 @@ const App: React.FC = () => {
               <Route path="statistics" element={<MyStatistics />} />
               <Route path="registrations" element={<MyRegistrationsPage />} />
               <Route path="growth" element={<GrowthCenterPage />} />
+              <Route path="wrong-questions" element={<WrongQuestionsPage />} />
+              <Route path="smart-practice" element={<SmartPracticePage />} />
+              <Route path="shop" element={<ShopPage />} />
             </Route>
 
             {/* 教师路由 - 题库管理 */}
