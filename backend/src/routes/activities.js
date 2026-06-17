@@ -13,6 +13,11 @@ const StudentExam = require('../models/StudentExam'); // Will be renamed to Stud
 const Answer = require('../models/Answer');
 const logger = require('../utils/logger');
 const { query } = require('../database/connection');
+const multer = require('multer');
+const XLSX = require('xlsx');
+
+// C2 导入成绩文件上传（内存存储，5MB 上限）
+const importUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ========================================
 // Student-specific APIs
@@ -1633,5 +1638,113 @@ router.get('/:id/paper/validate',
     }
   }
 );
+
+// ============================================================================
+// C2: 导入成绩模板下载
+// ============================================================================
+router.get('/import-grades/template', authMiddleware, (req, res) => {
+  const data = [
+    { 学号: '示例学号', 姓名: '张三', 总分: 90 },
+    { 学号: '示例学号2', 姓名: '李四', 总分: 85 }
+  ];
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '成绩导入');
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="grades-template.xlsx"');
+  res.end(buf);
+});
+
+// ============================================================================
+// C2: 组卷导出 PDF
+// ============================================================================
+router.get('/:id/paper/pdf', authMiddleware, async (req, res) => {
+  try {
+    const PaperExportService = require('../services/paperExportService');
+    await PaperExportService.exportPaperPDF(parseInt(req.params.id, 10), req.user, res);
+  } catch (error) {
+    logger.error('Export paper PDF error:', error);
+    if (!res.headersSent) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+});
+
+// ============================================================================
+// C2: 导入成绩（Excel：学号 / 姓名 / 总分），适用于虚拟练习
+// ============================================================================
+router.post('/:id/import-grades', authMiddleware, importUpload.single('file'), async (req, res) => {
+  try {
+    const activityId = parseInt(req.params.id, 10);
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '请上传 Excel 文件' });
+    }
+
+    const activity = await Activity.findById(activityId);
+    if (!activity) {
+      return res.status(404).json({ success: false, message: '活动不存在' });
+    }
+
+    // 权限：创建者 / 教师 / 管理员
+    const adminRoles = ['school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'];
+    if (activity.created_by !== req.user.id && req.user.role !== 'teacher' && !adminRoles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: '无权导入成绩' });
+    }
+
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+
+    let successCount = 0;
+    const failed = [];
+    for (const row of rows) {
+      const sno = String(row['学号'] != null ? row['学号'] : (row.student_no != null ? row.student_no : '')).trim();
+      const score = parseFloat(row['总分'] != null ? row['总分'] : (row.score != null ? row.score : NaN));
+      if (!sno || isNaN(score)) {
+        failed.push({ row, reason: '学号或总分缺失' });
+        continue;
+      }
+      const stu = await query('SELECT user_id FROM students WHERE student_no = $1', [sno]);
+      if (!stu.rows[0]) {
+        failed.push({ sno, reason: '学号未找到对应学生' });
+        continue;
+      }
+      const userId = stu.rows[0].user_id;
+      const exist = await query(
+        `SELECT id FROM student_activities
+         WHERE student_id = $1 AND activity_id = $2
+         ORDER BY attempt_number DESC LIMIT 1`,
+        [userId, activityId]
+      );
+      if (exist.rows[0]) {
+        await query(
+          `UPDATE student_activities
+           SET score = $1, status = 'graded', submit_time = CURRENT_TIMESTAMP
+           WHERE id = $2`,
+          [score, exist.rows[0].id]
+        );
+      } else {
+        await query(
+          `INSERT INTO student_activities
+             (student_id, activity_id, status, score, submit_time, attempt_number)
+           VALUES ($1, $2, 'graded', $3, CURRENT_TIMESTAMP, 1)`,
+          [userId, activityId, score]
+        );
+      }
+      successCount += 1;
+    }
+
+    logger.info(`Import grades for activity ${activityId}: success=${successCount}, failed=${failed.length}`);
+    res.json({
+      success: true,
+      message: `导入完成：成功 ${successCount} 条，失败 ${failed.length} 条`,
+      data: { success: successCount, failed: failed.length, details: failed }
+    });
+  } catch (error) {
+    logger.error('Import grades error:', error);
+    res.status(500).json({ success: false, message: '导入成绩失败', error: error.message });
+  }
+});
 
 module.exports = router;

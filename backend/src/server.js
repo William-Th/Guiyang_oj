@@ -143,6 +143,7 @@ app.use('/api/notifications', require('./routes/notifications')); // 通知系�
 app.use('/api/judge', require('./routes/judge')); // 编程题判题服务
 app.use('/api/testcases', require('./routes/testcases')); // 测试用例管理
 app.use('/api/wrong-questions', require('./routes/wrongQuestions')); // 错题集（D4）
+app.use('/api/error-reports', require('./routes/errorReports')); // 题目纠错（C5）
 
 // Error handling middleware
 app.use((err, req, res, _next) => {

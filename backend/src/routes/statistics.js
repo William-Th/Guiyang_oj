@@ -167,6 +167,55 @@ router.get('/student/overview', authMiddleware, async (req, res) => {
 });
 
 /**
+ * GET /api/statistics/student/by-subject
+ * E3 学习统计：按科目聚合（总题数/正确数/正确率/薄弱知识点数）
+ * Query params:
+ *   - subject: (optional) 单科明细时使用
+ *   - weak_threshold: (optional) 薄弱知识点正确率阈值，默认 0.6
+ */
+router.get('/student/by-subject', authMiddleware, async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { subject } = req.query;
+    const weakThreshold = parseFloat(req.query.weak_threshold) || 0.6;
+
+    let sql = `
+      SELECT
+        subject,
+        COALESCE(SUM(total_questions), 0) AS total_questions,
+        COALESCE(SUM(correct_count), 0) AS correct_count,
+        CASE WHEN SUM(total_questions) > 0
+          THEN ROUND(SUM(correct_count)::numeric / SUM(total_questions), 4)
+          ELSE 0 END AS accuracy_rate,
+        ROUND(AVG(avg_score), 2) AS avg_score,
+        COUNT(*) AS knowledge_point_count,
+        COUNT(*) FILTER (WHERE total_questions > 0 AND accuracy_rate < $2) AS weak_count
+      FROM v_student_knowledge_realtime
+      WHERE student_id = $1
+    `;
+    const params = [studentId, weakThreshold];
+    let paramIndex = 3;
+    if (subject) {
+      sql += ` AND subject = $${paramIndex}`;
+      params.push(subject);
+      paramIndex += 1;
+    }
+    sql += ' GROUP BY subject ORDER BY subject';
+
+    const result = await query(sql, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      meta: { weak_threshold: weakThreshold }
+    });
+  } catch (error) {
+    console.error('Get student by-subject error:', error);
+    res.status(500).json({ success: false, error: '获取科目维度统计失败' });
+  }
+});
+
+/**
  * GET /api/statistics/teacher/school-abilities
  * Get school-level ability statistics (for teachers)
  * Requires teacher role

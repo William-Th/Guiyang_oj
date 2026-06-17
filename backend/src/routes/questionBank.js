@@ -163,9 +163,29 @@ router.get('/bank', authMiddleware, async (req, res) => {
       QuestionBank.countAll(filters, userInfo)
     ]);
 
+    // A5 使用统计：附加正确率与换题告警
+    const USAGE_ALERT_THRESHOLD = 500;       // 使用次数超此值建议换题（可配置）
+    const LOW_CORRECT_THRESHOLD = 0.3;       // 正确率低于此值建议换题（可配置）
+    const enriched = questions.map((q) => {
+      const submitCount = q.submit_count || 0;
+      const correctCount = q.correct_count || 0;
+      const correctRate = submitCount > 0 ? correctCount / submitCount : null;
+      const usageAlert = (q.usage_count || 0) > USAGE_ALERT_THRESHOLD ||
+        (correctRate !== null && correctRate < LOW_CORRECT_THRESHOLD);
+      const alertReason = [];
+      if ((q.usage_count || 0) > USAGE_ALERT_THRESHOLD) alertReason.push('使用次数过多');
+      if (correctRate !== null && correctRate < LOW_CORRECT_THRESHOLD) alertReason.push('正确率过低');
+      return {
+        ...q,
+        correct_rate: correctRate,
+        usage_alert: usageAlert,
+        alert_reason: alertReason.join('、') || null
+      };
+    });
+
     res.json({
       success: true,
-      data: questions,
+      data: enriched,
       meta: {
         count: questions.length,
         total: total,
@@ -1156,5 +1176,77 @@ async function importQuestions(questions, userId, batchId) {
 
   return { successful, failed, errors };
 }
+
+// ============================================================================
+// 算法① 同质化检查（C3 / A3-同质）
+// ============================================================================
+
+// 检查一道题与一批题的同质性
+// POST /api/question-bank/similarity/check  body: { draftId, againstDraftIds: [] }
+router.post('/similarity/check', authMiddleware, async (req, res) => {
+  try {
+    const QuestionSimilarityService = require('../services/similarity/QuestionSimilarityService');
+    const { draftId, againstDraftIds } = req.body;
+    if (!draftId || !Array.isArray(againstDraftIds)) {
+      return res.status(400).json({ success: false, error: 'draftId 和 againstDraftIds 必填' });
+    }
+    const result = await QuestionSimilarityService.checkHomogeneity(
+      parseInt(draftId, 10),
+      againstDraftIds.map((x) => parseInt(x, 10))
+    );
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error checking homogeneity:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// C4 教师题目配额管理（市级及以上管理员）
+// ============================================================================
+
+// 查询教师配额与已用
+router.get('/quotas/:userId', authMiddleware, async (req, res) => {
+  try {
+    const role = req.user.role;
+    if (role !== 'municipal_admin' && role !== 'system_admin') {
+      return res.status(403).json({ success: false, error: '仅市级及以上管理员可查看配额' });
+    }
+    const QuestionQuota = require('../models/QuestionQuota');
+    const userId = parseInt(req.params.userId, 10);
+    const [quota, owned] = await Promise.all([
+      QuestionQuota.getQuota(userId),
+      QuestionQuota.countOwned(userId)
+    ]);
+    res.json({
+      success: true,
+      data: { user_id: userId, quota, owned, remaining: Math.max(0, quota - owned) }
+    });
+  } catch (error) {
+    console.error('Error fetching quota:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 设置/调整教师配额
+router.put('/quotas/:userId', authMiddleware, async (req, res) => {
+  try {
+    const role = req.user.role;
+    if (role !== 'municipal_admin' && role !== 'system_admin') {
+      return res.status(403).json({ success: false, error: '仅市级及以上管理员可调整配额' });
+    }
+    const { quota, reason } = req.body;
+    if (!Number.isInteger(quota) || quota < 0) {
+      return res.status(400).json({ success: false, error: 'quota 必须为非负整数' });
+    }
+    const QuestionQuota = require('../models/QuestionQuota');
+    const userId = parseInt(req.params.userId, 10);
+    const updated = await QuestionQuota.setQuota(userId, quota, req.user.id, reason);
+    res.json({ success: true, data: updated, message: '配额已更新' });
+  } catch (error) {
+    console.error('Error setting quota:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 module.exports = router;

@@ -76,12 +76,30 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    // C4 题量配额校验
+    const QuestionQuota = require('../models/QuestionQuota');
+    const quotaCheck = await QuestionQuota.checkCanCreate(req.user.id);
+    if (!quotaCheck.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: `已达到题目上限（${quotaCheck.quota}道），请联系上级管理员申请追加额度`
+      });
+    }
+
     const draftData = {
       ...req.body,
       created_by: req.user.id
     };
 
     const draft = await QuestionDraft.create(draftData);
+
+    // 算法①：异步计算同质化指纹（失败不阻塞）
+    try {
+      const QuestionSimilarityService = require('../services/similarity/QuestionSimilarityService');
+      await QuestionSimilarityService.computeAndStore(draft.id, draft);
+    } catch (e) {
+      console.error('compute fingerprint failed:', e.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -153,6 +171,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     const draft = await QuestionDraft.update(id, req.body);
+
+    // 算法①：内容变更后重算指纹（失败不阻塞）
+    try {
+      const QuestionSimilarityService = require('../services/similarity/QuestionSimilarityService');
+      await QuestionSimilarityService.computeAndStore(id, draft);
+    } catch (e) {
+      console.error('recompute fingerprint failed:', e.message);
+    }
 
     res.json({
       success: true,

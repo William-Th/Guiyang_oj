@@ -41,6 +41,7 @@ router.get('/practice', authMiddleware, async (req, res) => {
       LEFT JOIN student_activities sa ON a.id = sa.activity_id AND sa.student_id = $1
       WHERE a.type = 'practice'
         AND a.status = 'published'
+        AND (a.is_virtual = false OR a.is_virtual IS NULL)
         AND (a.start_time IS NULL OR a.start_time <= CURRENT_TIMESTAMP)
         AND (a.end_time IS NULL OR a.end_time >= CURRENT_TIMESTAMP)
     `;
@@ -101,6 +102,7 @@ router.get('/assessment', authMiddleware, async (req, res) => {
       LEFT JOIN student_activities sa ON a.id = sa.activity_id AND sa.student_id = $1
       WHERE a.type = 'assessment'
         AND a.status = 'published'
+        AND (a.is_virtual = false OR a.is_virtual IS NULL)
         AND (a.start_time IS NULL OR a.start_time <= CURRENT_TIMESTAMP)
         AND (a.end_time IS NULL OR a.end_time >= CURRENT_TIMESTAMP)
     `;
@@ -647,6 +649,15 @@ router.post('/:id/submit',
         `, [studentActivityId]);
 
         for (const row of graded.rows) {
+          // A5 使用统计：累计提交人数 / 正确人数 / 使用次数
+          await query(
+            `UPDATE question_bank
+             SET submit_count = submit_count + 1,
+                 correct_count = correct_count + $1,
+                 usage_count = usage_count + 1
+             WHERE id = $2`,
+            [row.is_correct ? 1 : 0, row.question_id]
+          );
           if (row.is_correct) {
             await PointsPolicy.awardForCorrectAnswer(studentId, {
               difficulty: row.difficulty,

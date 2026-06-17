@@ -210,7 +210,9 @@ class Activity {
       timeLimitType,
       time_limit_type,  // Support both naming conventions
       resultPublishTime,
-      result_publish_time  // Support both naming conventions
+      result_publish_time,  // Support both naming conventions
+      isVirtual,
+      is_virtual            // Support both naming conventions
     } = activityData;
 
     // Use snake_case values if camelCase is not provided
@@ -218,6 +220,7 @@ class Activity {
     const finalAllowRetake = allowRetake !== undefined ? allowRetake : (allow_retake !== undefined ? allow_retake : false);
     const finalMaxAttempts = maxAttempts || max_attempts || 1;
     const finalIsOfficial = isOfficial !== undefined ? isOfficial : (is_official !== undefined ? is_official : false);
+    const finalIsVirtual = isVirtual !== undefined ? isVirtual : (is_virtual !== undefined ? is_virtual : false);
     const finalTargetAudience = targetAudience || target_audience || { grades: [], schools: [], classes: [] };
     const finalCertificateConfig = certificateConfig || certificate_config || { enabled: false, template: null };
     const finalTimeLimitType = time_limit_type || timeLimitType || 'unlimited';
@@ -247,17 +250,18 @@ class Activity {
         title, description, subject, grade, start_time, end_time,
         duration, total_score, pass_score, created_by, type, ability_level,
         scope, allow_retake, max_attempts, is_official, target_audience,
-        certificate_config, time_limit_type, result_publish_time
+        certificate_config, time_limit_type, result_publish_time, is_virtual
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING id, title, subject, grade, start_time, end_time, duration, total_score,
                 pass_score, status, type, ability_level, scope, is_official, allow_retake,
-                max_attempts, created_at, time_limit_type, result_publish_time
+                max_attempts, created_at, time_limit_type, result_publish_time, is_virtual
     `, [
       title, description, subject, grade, finalStartTime, finalEndTime, finalDuration,
       totalScore, passScore, createdBy, type, finalAbilityLevel, scope, finalAllowRetake,
       finalMaxAttempts, finalIsOfficial, JSON.stringify(finalTargetAudience),
-      JSON.stringify(finalCertificateConfig), finalTimeLimitType, finalResultPublishTime
+      JSON.stringify(finalCertificateConfig), finalTimeLimitType, finalResultPublishTime,
+      finalIsVirtual
     ]);
 
     return result.rows[0];

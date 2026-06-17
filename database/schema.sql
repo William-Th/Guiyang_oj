@@ -5660,8 +5660,13 @@ COMMENT ON VIEW v_pending_teaching_classes IS '待审批教学班视图 - 显示
 -- =====================================================
 \i migrations/043_phase1_features.sql
 \i migrations/044_add_question_bank_hidden.sql
+\i migrations/045_teacher_quotas.sql
+\i migrations/046_error_reports.sql
+\i migrations/047_activity_virtual.sql
+\i migrations/048_question_fingerprint.sql
+\i migrations/049_fingerprint_text.sql
 -- =====================================================
--- 阶段一功能（提级 / 积分策略 / 错题集） 完成
+-- 阶段一/二功能 完成
 -- =====================================================
 
 
