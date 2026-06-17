@@ -83,6 +83,49 @@ router.get('/practice', authMiddleware, async (req, res) => {
 });
 
 // ============================================================================
+// D1 碎片化学习推荐（算法②）
+// ============================================================================
+router.get('/recommend', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ success: false, message: '仅学生可使用推荐' });
+    }
+    const { subject, grade, count } = req.query;
+    if (!subject) {
+      return res.status(400).json({ success: false, message: 'subject 必填' });
+    }
+    const QuestionRecommender = require('../services/recommend/QuestionRecommender');
+    const result = await QuestionRecommender.recommend(req.user.id, {
+      subject,
+      grade,
+      count: Math.min(parseInt(count, 10) || 10, 30)
+    });
+    res.json({ success: true, data: result.recommendations, meta: result.meta });
+  } catch (error) {
+    logger.error('Recommend questions error:', error);
+    res.status(500).json({ success: false, message: '获取推荐失败', error: error.message });
+  }
+});
+
+// ============================================================================
+// D3 每日推题（算法③）
+// ============================================================================
+router.get('/daily-questions', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ success: false, message: '仅学生可使用每日推题' });
+    }
+    const { subject } = req.query;
+    const DailyQuestionService = require('../services/recommend/DailyQuestionService');
+    const set = await DailyQuestionService.getToday(req.user.id, subject || null);
+    res.json({ success: true, data: set });
+  } catch (error) {
+    logger.error('Daily questions error:', error);
+    res.status(500).json({ success: false, message: '获取每日推题失败', error: error.message });
+  }
+});
+
+// ============================================================================
 // 2. 获取可用测评列表
 // ============================================================================
 router.get('/assessment', authMiddleware, async (req, res) => {
@@ -680,6 +723,28 @@ router.post('/:id/submit',
       } catch (rewardError) {
         logger.error('Award points / wrong question failed:', rewardError);
         // 积分/错题失败不影响提交结果
+      }
+
+      // B2 触发刷题成就检测：发 practice.completed 事件，携带累计正确数
+      try {
+        const eventBus = require('../services/EventBus');
+        const { STUDENT_PRACTICE } = require('../services/EventTypes');
+        const totalCorrectRow = await query(
+          `SELECT COUNT(*) AS c FROM answers a
+           JOIN student_activities sa ON a.student_exam_id = sa.id
+           WHERE sa.student_id = $1 AND a.is_correct = true`,
+          [studentId]
+        );
+        const activityRow = await query('SELECT subject FROM activities WHERE id = $1', [activityId]);
+        eventBus.emit(STUDENT_PRACTICE.COMPLETED, {
+          userId: studentId,
+          studentId,
+          subject: activityRow.rows[0] ? activityRow.rows[0].subject : null,
+          count: parseInt(totalCorrectRow.rows[0].c, 10) || 0,
+          activityId
+        });
+      } catch (eventError) {
+        logger.error('Emit practice event failed:', eventError);
       }
 
       res.json({

@@ -105,6 +105,37 @@ class PaperGenerationService {
     // Default score is question's suggested score
     const score = options.score || question.suggested_score || 5;
 
+    // C3 同质化检查：与该活动已有题目查重（提示但不阻止，除非强同质）
+    let homogeneityWarning = null;
+    try {
+      const QuestionSimilarityService = require('./similarity/QuestionSimilarityService');
+      const existingRows = await ActivityQuestion.getActivityQuestions(activityId);
+      const existingDraftIds = (existingRows || [])
+        .map((q) => q.draft_id)
+        .filter((id) => id != null);
+      const newDraftId = question.draft_id;
+      if (newDraftId && existingDraftIds.length > 0) {
+        const homo = await QuestionSimilarityService.checkHomogeneity(newDraftId, existingDraftIds);
+        if (homo.level !== 'none') {
+          homogeneityWarning = {
+            level: homo.level,
+            score: homo.maxScore,
+            message: homo.level === 'strong'
+              ? '该题与试卷中已有题目高度同质，建议更换'
+              : '该题与试卷中已有题目疑似同质，请确认'
+          };
+          if (options.skipHomogeneous !== true && homo.level === 'strong' && !options.forceAdd) {
+            throw new Error(homogeneityWarning.message);
+          }
+        }
+      }
+    } catch (homoError) {
+      if (homoError.message && homoError.message.includes('同质')) {
+        throw homoError;
+      }
+      // 同质检查自身错误不阻塞组卷
+    }
+
     // Add question
     const addedQuestion = await ActivityQuestion.addQuestion({
       activityId,
@@ -113,6 +144,9 @@ class PaperGenerationService {
       score
     });
 
+    if (homogeneityWarning) {
+      addedQuestion.homogeneity_warning = homogeneityWarning;
+    }
     return addedQuestion;
   }
 

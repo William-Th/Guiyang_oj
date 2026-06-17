@@ -7,6 +7,7 @@ const logger = require('./utils/logger');
 const { startAutoSubmitCron, stopAutoSubmitCron } = require('./services/autoSubmitService');
 const { startEscalationCron, stopEscalationCron } = require('./services/registrationEscalationService');
 const { startLeaderboardCron, stopLeaderboardCron } = require('./services/points/leaderboardCron');
+const { startDailyQuestionCron } = require('./services/recommend/dailyQuestionCron');
 
 // Load environment variables based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' 
@@ -144,6 +145,7 @@ app.use('/api/judge', require('./routes/judge')); // 编程题判题服务
 app.use('/api/testcases', require('./routes/testcases')); // 测试用例管理
 app.use('/api/wrong-questions', require('./routes/wrongQuestions')); // 错题集（D4）
 app.use('/api/error-reports', require('./routes/errorReports')); // 题目纠错（C5）
+app.use('/api/shop', require('./routes/shop')); // 积分消费商店（E2）
 
 // Error handling middleware
 app.use((err, req, res, _next) => {
@@ -232,6 +234,10 @@ const server = app.listen(PORT, async () => {
   // Start leaderboard generation cron job
   leaderboardTask = startLeaderboardCron();
   console.log('⏰ Leaderboard generation cron job started (runs hourly at 5th minute)');
+
+  // Start daily question warmup cron job (D3)
+  startDailyQuestionCron();
+  console.log('📅 Daily question cron job started (runs daily at 03:07)');
 
   // Initialize achievement detector
   try {
