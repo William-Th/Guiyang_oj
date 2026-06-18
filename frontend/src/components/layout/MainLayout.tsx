@@ -274,6 +274,7 @@ const MainLayout: React.FC = () => {
     if (path.includes('/teacher/teaching-classes')) return '/teacher/teaching-classes';
     if (path.includes('/teacher/question-bank')) return '/teacher/question-bank';
     if (path.includes('/teacher/review-workbench')) return '/teacher/review-workbench';
+    if (path.includes('/teacher/error-reports')) return '/teacher/error-reports';
     if (path.includes('/teacher/grading')) return '/teacher/grading';
     if (path.includes('/teacher/data-analytics')) return '/teacher/data-analytics';
     if (path === '/') return '/';
@@ -284,10 +285,13 @@ const MainLayout: React.FC = () => {
   const getStudentSelectedKey = () => {
     const path = location.pathname;
     if (path.includes('/student/practice')) return '/student/practice';
+    if (path.includes('/student/smart-practice')) return '/student/smart-practice';
     if (path.includes('/student/assessments')) return '/student/assessments';
+    if (path.includes('/student/wrong-questions')) return '/student/wrong-questions';
     if (path.includes('/student/statistics')) return '/student/statistics';
     if (path.includes('/student/achievements')) return '/student/achievements';
     if (path.includes('/student/points')) return '/student/points';
+    if (path.includes('/student/shop')) return '/student/shop';
     if (path === '/') return '/';
     return '/';
   };
