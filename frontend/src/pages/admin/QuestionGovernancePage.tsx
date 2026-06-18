@@ -249,7 +249,7 @@ const QuestionGovernancePage: React.FC = () => {
                 }
               >
                 {promoLoading ? <Spin /> : promotions.length ? (
-                  <Table columns={promotionColumns} dataSource={promotions} rowKey="id" pagination={{ pageSize: 10 }} />
+                  <Table columns={promotionColumns} dataSource={promotions} rowKey="id" pagination={{ pageSize: 10 }} scroll={{ x: 900 }} />
                 ) : <Empty description="暂无提级申请" />}
               </Card>
             ),
@@ -260,7 +260,7 @@ const QuestionGovernancePage: React.FC = () => {
             children: (
               <Card extra={<Button icon={<ReloadOutlined />} onClick={fetchQuotas} loading={quotaLoading}>刷新</Button>}>
                 {quotaLoading ? <Spin /> : quotas.length ? (
-                  <Table columns={quotaColumns} dataSource={quotas} rowKey="user_id" pagination={{ pageSize: 10 }} />
+                  <Table columns={quotaColumns} dataSource={quotas} rowKey="user_id" pagination={{ pageSize: 10 }} scroll={{ x: 800 }} />
                 ) : <Empty description="暂无配额数据，可通过教师详情页调整单个教师配额" />}
               </Card>
             ),

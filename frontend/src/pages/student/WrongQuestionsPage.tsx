@@ -183,7 +183,13 @@ const WrongQuestionsPage: React.FC = () => {
         {loading ? (
           <Spin />
         ) : list.length ? (
-          <Table columns={columns} dataSource={list} rowKey="id" pagination={{ pageSize: 10 }} />
+          <Table
+            columns={columns}
+            dataSource={list}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 900 }}
+          />
         ) : (
           <Empty description="暂无错题，继续加油！" />
         )}

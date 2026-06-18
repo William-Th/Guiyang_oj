@@ -45,3 +45,87 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--bohe-text-tertiary);
 }
+
+/* ============================================================
+   F4 移动端响应式适配（D2 学生端手机刷题）
+   ============================================================ */
+@media (max-width: 768px) {
+  /* 页面整体内边距收紧 */
+  .ant-layout-content,
+  main {
+    padding: 12px !important;
+  }
+
+  /* 页面容器通用内边距 */
+  [style*='padding: 24px'],
+  [style*='padding:24px'] {
+    padding: 12px !important;
+  }
+
+  /* 标题缩小 */
+  h2.ant-typography {
+    font-size: 20px !important;
+  }
+  h3.ant-typography {
+    font-size: 18px !important;
+  }
+
+  /* 统计卡片数字缩小 */
+  .ant-statistic-content-value {
+    font-size: 22px !important;
+  }
+
+  /* 卡片间距收紧 */
+  .ant-card {
+    margin-bottom: 12px !important;
+  }
+
+  /* 表格横向滚动（关键：移动端表格可滑动） */
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ant-table-content {
+    overflow-x: auto !important;
+  }
+
+  /* Tabs 标签可横向滚动 */
+  .ant-tabs-nav {
+    overflow-x: auto;
+  }
+  .ant-tabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Modal 全屏化 */
+  .ant-modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto !important;
+  }
+  .ant-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* 顶部导航 logo 缩小 */
+  .ant-layout-header {
+    padding: 0 12px !important;
+  }
+
+  /* 按钮组换行 */
+  .ant-space {
+    flex-wrap: wrap;
+    gap: 4px 8px !important;
+  }
+}
+
+/* 超小屏（<480px）进一步优化 */
+@media (max-width: 480px) {
+  .ant-statistic-content-value {
+    font-size: 18px !important;
+  }
+  .ant-card-head-title {
+    font-size: 14px !important;
+  }
+}
+
