@@ -14,8 +14,10 @@ const LoginPage: React.FC = () => {
   const dispatch = useDispatch();
   const [studentForm] = Form.useForm();
   const [teacherForm] = Form.useForm();
+  const [parentForm] = Form.useForm();
 
-  const handleStudentLogin = async (values: any) => {
+  // 共用登录逻辑：用户名/手机号 + 密码，成功后按角色跳转
+  const doLogin = async (username: string, password: string, redirectPath: string) => {
     dispatch(loginStart());
     try {
       // Clear any existing tokens before login
@@ -24,8 +26,8 @@ const LoginPage: React.FC = () => {
 
       // Step 1: Login to get token
       const loginResponse = await api.post('/auth/login', {
-        username: values.phone,
-        password: values.password,
+        username,
+        password,
         loginType: 'username'
       });
 
@@ -41,42 +43,23 @@ const LoginPage: React.FC = () => {
         token: token
       }));
       message.success('登录成功');
-      navigate('/');
+      navigate(redirectPath);
     } catch (error: any) {
       message.error(error.response?.data?.message || error.message || '登录失败');
     }
   };
 
+  const handleStudentLogin = async (values: any) => {
+    await doLogin(values.phone, values.password, '/');
+  };
+
   const handleTeacherLogin = async (values: any) => {
-    dispatch(loginStart());
-    try {
-      // Clear any existing tokens before login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    await doLogin(values.username, values.password, '/');
+  };
 
-      // Step 1: Login to get token
-      const loginResponse = await api.post('/auth/login', {
-        username: values.username,
-        password: values.password,
-        loginType: 'username'
-      });
-
-      const { token } = loginResponse.data;
-
-      // Step 2: Fetch detailed profile with token
-      const profileResponse = await api.get('/users/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      dispatch(loginSuccess({
-        user: profileResponse.data.user,
-        token: token
-      }));
-      message.success('登录成功');
-      navigate('/');
-    } catch (error: any) {
-      message.error(error.response?.data?.message || error.message || '登录失败');
-    }
+  // 家长登录：成功后跳转家长端
+  const handleParentLogin = async (values: any) => {
+    await doLogin(values.username, values.password, '/parent/dashboard');
   };
 
   return (
@@ -123,6 +106,29 @@ const LoginPage: React.FC = () => {
               </Form.Item>
               <Form.Item
                 key="teacher-password"
+                name="password"
+                rules={[{ required: true, message: '请输入密码' }]}
+              >
+                <Input.Password prefix={<LockOutlined />} placeholder="密码" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" block>
+                  登录
+                </Button>
+              </Form.Item>
+            </Form>
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="家长入口" key="parent">
+            <Form form={parentForm} onFinish={handleParentLogin} size="large">
+              <Form.Item
+                key="parent-username"
+                name="username"
+                rules={[{ required: true, message: '请输入用户名' }]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="用户名" />
+              </Form.Item>
+              <Form.Item
+                key="parent-password"
                 name="password"
                 rules={[{ required: true, message: '请输入密码' }]}
               >
