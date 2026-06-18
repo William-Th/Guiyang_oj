@@ -1640,6 +1640,10 @@ export const questionGovernanceApi = {
     const response = await api.get(`/question-bank/quotas/${userId}`);
     return response.data;
   },
+  getMyQuota: async () => {
+    const response = await api.get('/question-bank/my-quota');
+    return response.data;
+  },
   setQuota: async (userId: number, quota: number, reason?: string) => {
     const response = await api.put(`/question-bank/quotas/${userId}`, { quota, reason });
     return response.data;

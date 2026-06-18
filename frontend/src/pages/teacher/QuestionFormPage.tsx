@@ -21,7 +21,7 @@ import {
 } from 'antd';
 import { MinusCircleOutlined, PlusOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { questionBankApi, questionReviewApi, testCaseAPI, questionImageUploadApi } from '../../services/api';
+import { questionBankApi, questionReviewApi, testCaseAPI, questionImageUploadApi, questionGovernanceApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject } from '../../config/subjects';
 import { CodeQuestionForm, CodeQuestionConfig, TestCase } from '../../components/questions';
 
@@ -80,6 +80,16 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       loadQuestion();
     }
   }, [id]);
+
+  // C4 配额提示（仅新建模式）
+  const [quota, setQuota] = useState<{ quota: number; owned: number; remaining: number; allowed: boolean } | null>(null);
+  useEffect(() => {
+    if (!isEditMode) {
+      questionGovernanceApi.getMyQuota()
+        .then((r) => { if (r.success) setQuota(r.data); })
+        .catch(() => { /* 非教师或无配额限制，忽略 */ });
+    }
+  }, [isEditMode]);
 
   useEffect(() => {
     if (selectedSubject) {
@@ -507,6 +517,15 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       <Card
         title={isEditMode ? '编辑题目' : '新建题目'}
       >
+        {quota && !isEditMode && (
+          <Alert
+            style={{ marginBottom: 16 }}
+            type={quota.allowed ? 'info' : 'warning'}
+            showIcon
+            message={`题目配额：已用 ${quota.owned} / ${quota.quota} 道，剩余 ${quota.remaining} 道`}
+            description={!quota.allowed ? '已达题目上限，如需更多请联系上级管理员申请追加额度。' : undefined}
+          />
+        )}
         <Form
           form={form}
           layout="vertical"

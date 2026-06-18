@@ -1205,6 +1205,18 @@ router.post('/similarity/check', authMiddleware, async (req, res) => {
 // C4 教师题目配额管理（市级及以上管理员）
 // ============================================================================
 
+// 教师自查配额（C4，用于创建题目前的剩余提示）
+router.get('/my-quota', authMiddleware, async (req, res) => {
+  try {
+    const QuestionQuota = require('../models/QuestionQuota');
+    const result = await QuestionQuota.checkCanCreate(req.user.id);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error fetching my quota:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 查询教师配额与已用
 router.get('/quotas/:userId', authMiddleware, async (req, res) => {
   try {

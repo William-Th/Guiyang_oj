@@ -37,6 +37,7 @@ import ActivityResultPage from './pages/student/ActivityResultPage';
 import WrongQuestionsPage from './pages/student/WrongQuestionsPage';
 import SmartPracticePage from './pages/student/SmartPracticePage';
 import ShopPage from './pages/student/ShopPage';
+import ErrorReportsPage from './pages/teacher/ErrorReportsPage';
 import DataAnalytics from './pages/teacher/DataAnalytics';
 import TeachingClassList from './pages/teacher/TeachingClassList';
 import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
@@ -114,6 +115,7 @@ const App: React.FC = () => {
                 <Route path=":id/paper" element={<PaperGenerationPage />} />
               </Route>
               <Route path="review-workbench" element={<ReviewWorkbench />} />
+              <Route path="error-reports" element={<ErrorReportsPage />} />
               <Route path="grading">
                 <Route index element={<GradingListPage />} />
                 <Route path=":id" element={<GradingDetailPage />} />

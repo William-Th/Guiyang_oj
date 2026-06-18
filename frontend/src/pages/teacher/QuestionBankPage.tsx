@@ -22,11 +22,13 @@ import {
   FileExcelOutlined,
   FileTextOutlined,
   RollbackOutlined,
+  EyeInvisibleOutlined,
+  ArrowUpOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { questionBankApi } from '../../services/api';
+import { questionBankApi, questionGovernanceApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject, getAllGrades } from '../../config/subjects';
 import { getAllDistricts, District } from '../../config/districts';
 
@@ -47,6 +49,7 @@ interface Question {
   scope?: string[];       // 题库范围（如["assessment", "practice_municipal"]）
   usage_count: number;
   success_rate?: number;
+  is_hidden?: boolean;    // A2 是否隐藏
   created_at: string;
   creator_name?: string;  // 出题人姓名
   reviewer_name?: string; // 审核人姓名
@@ -147,6 +150,33 @@ const QuestionBankPage: React.FC = () => {
       setLoading(false);
     }
   }, [currentPage, pageSize, filters, canSelectDistrict]);
+
+  // A2 切换隐藏
+  const handleToggleHidden = async (record: Question) => {
+    try {
+      await questionGovernanceApi.setHidden(record.id, !record.is_hidden);
+      message.success(record.is_hidden ? '已取消隐藏' : '已隐藏');
+      loadQuestions();
+    } catch (e: any) {
+      message.error(e.response?.data?.error || '操作失败');
+    }
+  };
+
+  // A1 申请提级（区级题目）
+  const handlePromote = async (record: Question) => {
+    Modal.confirm({
+      title: '申请提级到市级题库',
+      content: '提交后将由市级管理员审核，审核通过后题目进入市级题库。',
+      onOk: async () => {
+        try {
+          await questionGovernanceApi.promote(record.id);
+          message.success('提级申请已提交，等待市级审核');
+        } catch (e: any) {
+          message.error(e.response?.data?.error || '申请失败');
+        }
+      },
+    });
+  };
 
   // 🔧 防抖的筛选条件更新函数 - 避免快速切换时多次API调用
   const updateFiltersWithReset = useCallback((newFilters: Partial<typeof filters>) => {
@@ -533,35 +563,57 @@ const QuestionBankPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 140,
-      render: (_: any, record: Question) => (
-        <Space size="small">
-          <Tooltip title="查看">
-            <Button
-              type="link"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => {
-                setPreviewQuestion(record);
-                setPreviewVisible(true);
-              }}
-            />
-          </Tooltip>
-          <Tooltip title="撤回">
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<RollbackOutlined />}
-              onClick={() => {
-                setWithdrawQuestionId(record.id);
-                setWithdrawReason('');
-                setWithdrawModalVisible(true);
-              }}
-            />
-          </Tooltip>
-        </Space>
-      ),
+      width: 200,
+      render: (_: any, record: Question) => {
+        const scopeArr = Array.isArray(record.scope) ? record.scope : (record.scope ? [record.scope] : []);
+        const isDistrict = scopeArr.some((s) => s === 'practice_district' || s.startsWith('practice_district_'));
+        return (
+          <Space size="small">
+            <Tooltip title="查看">
+              <Button
+                type="link"
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() => {
+                  setPreviewQuestion(record);
+                  setPreviewVisible(true);
+                }}
+              />
+            </Tooltip>
+            <Tooltip title={record.is_hidden ? '取消隐藏' : '隐藏'}>
+              <Button
+                type="link"
+                size="small"
+                icon={record.is_hidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                onClick={() => handleToggleHidden(record)}
+              />
+            </Tooltip>
+            {isDistrict && (
+              <Tooltip title="申请提级到市级">
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<ArrowUpOutlined />}
+                  onClick={() => handlePromote(record)}
+                />
+              </Tooltip>
+            )}
+            <Tooltip title="撤回">
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<RollbackOutlined />}
+                onClick={() => {
+                  setWithdrawQuestionId(record.id);
+                  setWithdrawReason('');
+                  setWithdrawModalVisible(true);
+                }}
+              />
+            </Tooltip>
+          </Space>
+        );
+      },
     },
   ];
 

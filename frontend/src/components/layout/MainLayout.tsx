@@ -165,6 +165,11 @@ const MainLayout: React.FC = () => {
       label: '审核工作台',
     },
     {
+      key: '/teacher/error-reports',
+      icon: <AuditOutlined />,
+      label: '纠错处理',
+    },
+    {
       key: '/teacher/grading',
       icon: <AuditOutlined />,
       label: '评卷管理',

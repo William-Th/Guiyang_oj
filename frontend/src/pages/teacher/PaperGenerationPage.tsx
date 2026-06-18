@@ -34,9 +34,10 @@ import {
   BarChartOutlined,
   ClearOutlined,
   EyeOutlined,
+  FilePdfOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { activityApi } from '../../services/api';
+import { activityApi, paperExportApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';
 import { getAbilityLevelsBySubject } from '../../config/subjects';
 
@@ -218,11 +219,17 @@ const PaperGenerationPage: React.FC = () => {
   const handleQuickAddQuestion = async (question: Question) => {
     setAddingQuestion(true);
     try {
-      await activityApi.addQuestionToActivity(activityId, {
+      const response = await activityApi.addQuestionToActivity(activityId, {
         questionId: question.id,
         score: question.suggested_score || 5,
       });
-      message.success('题目添加成功');
+      // C3 同质化提示
+      const warning = response?.question?.homogeneity_warning || response?.data?.question?.homogeneity_warning;
+      if (warning) {
+        message.warning(warning.message);
+      } else {
+        message.success('题目添加成功');
+      }
       await loadData();
     } catch (error: any) {
       message.error(error.response?.data?.message || '添加题目失败');
@@ -652,6 +659,29 @@ const PaperGenerationPage: React.FC = () => {
           <Space>
             <Button icon={<ReloadOutlined />} onClick={loadData}>
               刷新
+            </Button>
+            <Button
+              icon={<FilePdfOutlined />}
+              onClick={() => {
+                const token = localStorage.getItem('token');
+                const url = paperExportApi.exportPaperPdfUrl(activityId);
+                // 带token下载PDF
+                fetch(url, { headers: { Authorization: token ? `Bearer ${token}` : '' } })
+                  .then((r) => {
+                    if (!r.ok) throw new Error('导出失败');
+                    return r.blob();
+                  })
+                  .then((blob) => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `paper-${activityId}.pdf`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                  })
+                  .catch(() => message.error('导出 PDF 失败'));
+              }}
+            >
+              导出PDF
             </Button>
             <Button
               type="primary"
