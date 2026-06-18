@@ -61,6 +61,18 @@ const QuestionGovernancePage: React.FC = () => {
   const [editingQuota, setEditingQuota] = useState<QuotaRow | null>(null);
   const [newQuota, setNewQuota] = useState<number>(1000);
   const [quotaReason, setQuotaReason] = useState('');
+  const [quotaSearch, setQuotaSearch] = useState('');
+
+  // 配额搜索过滤：按 ID / 用户名 / 姓名
+  const filteredQuotas = quotas.filter((q) => {
+    const kw = quotaSearch.trim().toLowerCase();
+    if (!kw) return true;
+    return (
+      String(q.user_id).includes(kw) ||
+      (q.username || '').toLowerCase().includes(kw) ||
+      (q.real_name || '').toLowerCase().includes(kw)
+    );
+  });
 
   const fetchPromotions = async () => {
     setPromoLoading(true);
@@ -258,10 +270,21 @@ const QuestionGovernancePage: React.FC = () => {
             key: 'quota',
             label: '配额管理',
             children: (
-              <Card extra={<Button icon={<ReloadOutlined />} onClick={fetchQuotas} loading={quotaLoading}>刷新</Button>}>
-                {quotaLoading ? <Spin /> : quotas.length ? (
-                  <Table columns={quotaColumns} dataSource={quotas} rowKey="user_id" pagination={{ pageSize: 10 }} scroll={{ x: 800 }} />
-                ) : <Empty description="暂无配额数据，可通过教师详情页调整单个教师配额" />}
+              <Card extra={
+                <Space>
+                  <Input.Search
+                    allowClear
+                    placeholder="搜索 ID / 用户名 / 姓名"
+                    value={quotaSearch}
+                    onChange={(e) => setQuotaSearch(e.target.value)}
+                    style={{ width: 220 }}
+                  />
+                  <Button icon={<ReloadOutlined />} onClick={fetchQuotas} loading={quotaLoading}>刷新</Button>
+                </Space>
+              }>
+                {quotaLoading ? <Spin /> : filteredQuotas.length ? (
+                  <Table columns={quotaColumns} dataSource={filteredQuotas} rowKey="user_id" pagination={{ pageSize: 10 }} scroll={{ x: 800 }} />
+                ) : <Empty description={quotaSearch ? '未找到匹配的教师' : '暂无配额数据'} />}
               </Card>
             ),
           },
