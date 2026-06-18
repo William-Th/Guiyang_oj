@@ -8,7 +8,7 @@ import { Timestamps } from './common';
 /**
  * User role types
  */
-export type UserRole = 'student' | 'teacher' | 'admin' | 'super_admin';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'super_admin' | 'parent';
 
 /**
  * Permission scope for hierarchical permissions

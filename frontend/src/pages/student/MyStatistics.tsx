@@ -32,7 +32,7 @@ import {
   Legend,
   Cell,
 } from 'recharts';
-import { statisticsApi } from '../../services/api';
+import { statisticsApi, learningStatsApi } from '../../services/api';
 
 // 与后端 v_student_learning_overview 视图字段保持一致
 interface LearningOverview {
@@ -71,6 +71,8 @@ const MyStatistics: React.FC = () => {
   const [overview, setOverview] = useState<LearningOverview | null>(null);
   const [abilities, setAbilities] = useState<AbilityStats[]>([]);
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgeStats[]>([]);
+  // E3 弱项知识点（按科目维度）
+  const [weakPoints, setWeakPoints] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [subjects, setSubjects] = useState<string[]>([]);
 
@@ -85,11 +87,24 @@ const MyStatistics: React.FC = () => {
         loadOverview(),
         loadAbilities(),
         loadKnowledgePoints(),
+        loadWeakPoints(),
       ]);
     } catch (error: any) {
       message.error('加载统计数据失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // E3 按科目加载薄弱知识点（正确率<60%）
+  const loadWeakPoints = async () => {
+    try {
+      const response = await learningStatsApi.bySubject(undefined, 60);
+      if (response.success) {
+        setWeakPoints(response.data || []);
+      }
+    } catch (e) {
+      // 接口可能暂无数据，忽略
     }
   };
 
@@ -381,6 +396,26 @@ const MyStatistics: React.FC = () => {
                 </>
               ) : (
                 <Empty description="暂无知识点统计数据" />
+              )}
+            </Card>
+
+            {/* E3 薄弱知识点（按科目维度，正确率<60%） */}
+            <Card title="⚠ 薄弱知识点（建议加强）" style={{ marginTop: 16 }}>
+              {weakPoints.length > 0 ? (
+                <Row gutter={[16, 16]}>
+                  {weakPoints.map((wp: any, index) => (
+                    <Col key={index} xs={24} sm={12} md={8}>
+                      <Card size="small" style={{ borderLeft: '3px solid #ff4d4f' }}>
+                        <div><strong>{wp.subject}</strong> · {wp.knowledge_point}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>
+                          正确率：{(wp.accuracy_rate || 0).toFixed(1)}%（{wp.correct_count || 0}/{wp.total_questions || 0}）
+                        </div>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              ) : (
+                <Empty description="暂无薄弱知识点，继续保持！" />
               )}
             </Card>
           </Tabs.TabPane>

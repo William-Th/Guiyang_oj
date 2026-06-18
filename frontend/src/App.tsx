@@ -38,6 +38,8 @@ import WrongQuestionsPage from './pages/student/WrongQuestionsPage';
 import SmartPracticePage from './pages/student/SmartPracticePage';
 import ShopPage from './pages/student/ShopPage';
 import ErrorReportsPage from './pages/teacher/ErrorReportsPage';
+import QuestionGovernancePage from './pages/admin/QuestionGovernancePage';
+import ParentDashboard from './pages/parent/ParentDashboard';
 import DataAnalytics from './pages/teacher/DataAnalytics';
 import TeachingClassList from './pages/teacher/TeachingClassList';
 import TeachingClassDetail from './pages/teacher/TeachingClassDetail';
@@ -77,6 +79,7 @@ const App: React.FC = () => {
               <Route path="users" element={<UserManagement />} />
               <Route path="permissions" element={<PermissionManagement />} />
               <Route path="approval-center" element={<ApprovalCenter />} />
+              <Route path="question-governance" element={<QuestionGovernancePage />} />
               <Route path="achievements" element={<AchievementManagementPage />} />
             </Route>
 
@@ -138,6 +141,12 @@ const App: React.FC = () => {
               <Route path="edit/:id" element={<ActivityFormPage />} />
               <Route path=":id" element={<ActivityDetailPage />} />
               <Route path=":id/paper" element={<PaperGenerationPage />} />
+            </Route>
+
+            {/* 家长路由 */}
+            <Route path="parent">
+              <Route index element={<ParentDashboard />} />
+              <Route path="dashboard" element={<ParentDashboard />} />
             </Route>
           </Route>
         </Routes>

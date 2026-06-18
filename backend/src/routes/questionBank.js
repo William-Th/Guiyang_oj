@@ -1217,6 +1217,21 @@ router.get('/my-quota', authMiddleware, async (req, res) => {
   }
 });
 
+// 配额列表（仅管理员，C4）
+router.get('/quotas', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
+      return res.status(403).json({ success: false, error: '仅市级及以上管理员可查看配额列表' });
+    }
+    const QuestionQuota = require('../models/QuestionQuota');
+    const list = await QuestionQuota.listAllWithUsage();
+    res.json({ success: true, data: list });
+  } catch (error) {
+    console.error('Error listing quotas:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 查询教师配额与已用
 router.get('/quotas/:userId', authMiddleware, async (req, res) => {
   try {

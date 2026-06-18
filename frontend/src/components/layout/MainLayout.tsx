@@ -56,6 +56,11 @@ const MainLayout: React.FC = () => {
     return user && user.role === 'student';
   };
 
+  // 检查是否为家长角色
+  const isParent = () => {
+    return user && user.role === 'parent';
+  };
+
   const userMenuItems = [
     { key: 'profile', icon: <UserOutlined />, label: '个人信息' },
     { key: 'logout', icon: <LogoutOutlined />, label: '退出登录' },
@@ -113,6 +118,11 @@ const MainLayout: React.FC = () => {
         key: '/admin/approval-center',
         icon: <AuditOutlined />,
         label: '审批中心',
+      },
+      {
+        key: '/admin/question-governance',
+        icon: <AuditOutlined />,
+        label: '题库治理',
       },
     ];
 
@@ -229,6 +239,19 @@ const MainLayout: React.FC = () => {
       label: '积分商店',
     },
   ];
+
+  // 家长菜单项
+  const parentMenuItems = [
+    {
+      key: '/parent/dashboard',
+      icon: <TeamOutlined />,
+      label: '孩子学习',
+    },
+  ];
+
+  const handleParentMenuClick = ({ key }: { key: string }) => {
+    navigate(key);
+  };
 
   // 获取当前选中的菜单项（管理员）
   const getAdminSelectedKey = () => {
@@ -347,6 +370,24 @@ const MainLayout: React.FC = () => {
             selectedKeys={[getStudentSelectedKey()]}
             items={studentMenuItems}
             onClick={handleStudentMenuClick}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: 'transparent',
+              borderBottom: 'none',
+              lineHeight: '64px',
+            }}
+            theme="dark"
+          />
+        )}
+
+        {/* 家长导航菜单 */}
+        {isParent() && (
+          <Menu
+            mode="horizontal"
+            selectedKeys={[location.pathname]}
+            items={parentMenuItems}
+            onClick={handleParentMenuClick}
             style={{
               flex: 1,
               minWidth: 0,

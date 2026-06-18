@@ -1648,6 +1648,10 @@ export const questionGovernanceApi = {
     const response = await api.put(`/question-bank/quotas/${userId}`, { quota, reason });
     return response.data;
   },
+  listQuotas: async () => {
+    const response = await api.get('/question-bank/quotas');
+    return response.data;
+  },
   checkSimilarity: async (draftId: number, againstDraftIds: number[]) => {
     const response = await api.post('/question-bank/similarity/check', { draftId, againstDraftIds });
     return response.data;

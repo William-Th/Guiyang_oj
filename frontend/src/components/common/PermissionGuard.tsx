@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
 
-type UserRole = 'student' | 'teacher' | 'admin' | 'school_admin' | 'district_admin' | 'municipal_school_admin' | 'base_school_admin' | 'municipal_admin' | 'system_admin';
+type UserRole = 'student' | 'teacher' | 'admin' | 'school_admin' | 'district_admin' | 'municipal_school_admin' | 'base_school_admin' | 'municipal_admin' | 'system_admin' | 'parent';
 
 interface PermissionGuardProps {
   children: React.ReactNode;

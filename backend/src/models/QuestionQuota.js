@@ -78,6 +78,36 @@ class QuestionQuota {
     };
   }
 
+  /**
+   * 列出所有教师及其配额使用情况（管理员用）
+   * @returns {Promise<Array>} [{ user_id, username, real_name, quota, owned, remaining }]
+   */
+  static async listAllWithUsage() {
+    const r = await query(
+      `SELECT u.id AS user_id, u.username, u.real_name,
+              COALESCE(tq.quota, $1) AS quota,
+              COALESCE(owned.cnt, 0) AS owned
+       FROM users u
+       LEFT JOIN teacher_quotas tq ON tq.user_id = u.id
+       LEFT JOIN (
+         SELECT created_by, COUNT(*) AS cnt
+         FROM question_drafts WHERE is_active = true
+         GROUP BY created_by
+       ) owned ON owned.created_by = u.id
+       WHERE u.role = 'teacher'
+       ORDER BY owned.cnt DESC NULLS LAST`,
+      [DEFAULT_QUOTA]
+    );
+    return r.rows.map((row) => ({
+      user_id: row.user_id,
+      username: row.username,
+      real_name: row.real_name,
+      quota: parseInt(row.quota, 10),
+      owned: parseInt(row.owned, 10),
+      remaining: Math.max(0, parseInt(row.quota, 10) - parseInt(row.owned, 10))
+    }));
+  }
+
   static get DEFAULT_QUOTA() {
     return DEFAULT_QUOTA;
   }
