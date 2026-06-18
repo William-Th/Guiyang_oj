@@ -262,6 +262,7 @@ const MainLayout: React.FC = () => {
     if (path.includes('/admin/question-bank')) return '/admin/question-bank';
     if (path.includes('/admin/users')) return '/admin/users';
     if (path.includes('/admin/approval-center')) return '/admin/approval-center';
+    if (path.includes('/admin/question-governance')) return '/admin/question-governance';
     if (path.includes('/admin/permissions')) return '/admin/permissions';
     if (path.includes('/admin/achievements')) return '/admin/achievements';
     return '/admin/home';
