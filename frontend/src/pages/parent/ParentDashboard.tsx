@@ -22,10 +22,13 @@ import type { ColumnsType } from 'antd/es/table';
 const { Title, Text } = Typography;
 
 interface Child {
-  student_id: number;
-  student_name: string;
+  student_user_id: number;
+  student_id?: number;
+  username: string;
+  real_name?: string;
   grade?: string;
   class?: string;
+  relation?: string;
 }
 
 interface ResultRow {
@@ -54,7 +57,7 @@ const ParentDashboard: React.FC = () => {
       const r = await parentApi.getChildren();
       setChildren(r.data || []);
       if ((r.data || []).length > 0 && !selectedChild) {
-        setSelectedChild(r.data[0].student_id);
+        setSelectedChild(r.data[0].student_user_id);
       }
     } catch (e: any) {
       message.error(e.response?.data?.error || '加载孩子信息失败');
@@ -148,8 +151,8 @@ const ParentDashboard: React.FC = () => {
             value={selectedChild}
             onChange={setSelectedChild}
             options={children.map((c) => ({
-              value: c.student_id,
-              label: `${c.student_name}${c.grade ? `（${c.grade}）` : ''}`,
+              value: c.student_user_id,
+              label: `${c.real_name || c.username}${c.grade ? `（${c.grade}）` : ''}`,
             }))}
           />
           <Button icon={<ReloadOutlined />} onClick={fetchChildren}>刷新</Button>
