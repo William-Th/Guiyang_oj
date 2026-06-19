@@ -14,7 +14,6 @@ const LoginPage: React.FC = () => {
   const dispatch = useDispatch();
   const [studentForm] = Form.useForm();
   const [teacherForm] = Form.useForm();
-  const [parentForm] = Form.useForm();
 
   // 共用登录逻辑：用户名/手机号 + 密码，成功后按角色跳转
   const doLogin = async (username: string, password: string, redirectPath: string) => {
@@ -55,11 +54,6 @@ const LoginPage: React.FC = () => {
 
   const handleTeacherLogin = async (values: any) => {
     await doLogin(values.username, values.password, '/');
-  };
-
-  // 家长登录：成功后跳转家长端
-  const handleParentLogin = async (values: any) => {
-    await doLogin(values.username, values.password, '/parent/dashboard');
   };
 
   return (
@@ -106,29 +100,6 @@ const LoginPage: React.FC = () => {
               </Form.Item>
               <Form.Item
                 key="teacher-password"
-                name="password"
-                rules={[{ required: true, message: '请输入密码' }]}
-              >
-                <Input.Password prefix={<LockOutlined />} placeholder="密码" />
-              </Form.Item>
-              <Form.Item>
-                <Button type="primary" htmlType="submit" block>
-                  登录
-                </Button>
-              </Form.Item>
-            </Form>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="家长入口" key="parent">
-            <Form form={parentForm} onFinish={handleParentLogin} size="large">
-              <Form.Item
-                key="parent-username"
-                name="username"
-                rules={[{ required: true, message: '请输入用户名' }]}
-              >
-                <Input prefix={<UserOutlined />} placeholder="用户名" />
-              </Form.Item>
-              <Form.Item
-                key="parent-password"
                 name="password"
                 rules={[{ required: true, message: '请输入密码' }]}
               >
