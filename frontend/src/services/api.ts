@@ -204,7 +204,7 @@ export const userManagementApi = {
   createUser: async (userData: {
     username: string;
     password: string;
-    role: 'student' | 'teacher' | 'admin';
+    role: string;
     realName: string;
     idCard?: string;
     phone?: string;
@@ -217,7 +217,7 @@ export const userManagementApi = {
   // Update user information and permissions
   updateUser: async (userId: number, userData: {
     realName?: string;
-    role?: 'student' | 'teacher' | 'admin';
+    role?: string;
     status?: 'active' | 'inactive' | 'suspended';
     phone?: string;
     email?: string;

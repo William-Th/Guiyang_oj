@@ -34,7 +34,7 @@ import { RootState } from '@/store';
 const { Option } = Select;
 const { Title } = Typography;
 
-type UserRole = 'student' | 'teacher' | 'school_admin' | 'district_admin' | 'municipal_school_admin' | 'base_school_admin' | 'municipal_admin' | 'system_admin';
+type UserRole = 'student' | 'parent' | 'teacher' | 'school_admin' | 'district_admin' | 'municipal_school_admin' | 'base_school_admin' | 'municipal_admin' | 'system_admin';
 
 interface User {
   id: number;
@@ -55,6 +55,7 @@ interface User {
 // 角色层级定义（数字越大，权限越高）
 const ROLE_HIERARCHY: Record<UserRole, number> = {
   'student': 1,
+  'parent': 1,
   'teacher': 2,
   'school_admin': 3,
   'municipal_school_admin': 4,
@@ -67,6 +68,7 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 // 角色选项配置
 const ROLE_OPTIONS = [
   { value: 'student', label: '学生', level: 1 },
+  { value: 'parent', label: '家长', level: 1 },
   { value: 'teacher', label: '教师', level: 2 },
   { value: 'school_admin', label: '校级管理员', level: 3 },
   { value: 'municipal_school_admin', label: '市直属学校管理员', level: 4 },
@@ -108,6 +110,7 @@ const getViewableRoles = (currentUserRole: UserRole): Array<{ text: string; valu
       // 市级管理员：可以查看除系统管理员外的所有角色
       return [
         { text: '学生', value: 'student' },
+        { text: '家长', value: 'parent' },
         { text: '教师', value: 'teacher' },
         { text: '校级管理员', value: 'school_admin' },
         { text: '区级管理员', value: 'district_admin' },
@@ -120,6 +123,7 @@ const getViewableRoles = (currentUserRole: UserRole): Array<{ text: string; valu
       // 系统管理员：可以查看所有角色
       return [
         { text: '学生', value: 'student' },
+        { text: '家长', value: 'parent' },
         { text: '教师', value: 'teacher' },
         { text: '校级管理员', value: 'school_admin' },
         { text: '区级管理员', value: 'district_admin' },
@@ -144,24 +148,9 @@ interface UserFormData {
   status?: 'active' | 'inactive' | 'suspended';
 }
 
-// 角色映射：将前端扩展角色转换为API支持的基础角色
-const mapRoleToApiRole = (role: UserRole): 'student' | 'teacher' | 'admin' => {
-  switch (role) {
-    case 'student':
-      return 'student';
-    case 'teacher':
-      return 'teacher';
-    case 'school_admin':
-    case 'district_admin':
-    case 'municipal_school_admin':
-    case 'base_school_admin':
-    case 'municipal_admin':
-    case 'system_admin':
-      return 'admin';
-    default:
-      return 'student';
-  }
-};
+// 角色映射：后端校验白名单已支持所有真实角色串（含 parent/各层级 admin），
+// 直接透传即可。早期版本曾把 admin 角色压成 'admin'，但后端不认 'admin' 会 400。
+const mapRoleToApiRole = (role: UserRole): UserRole => role;
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -182,6 +171,7 @@ const UserManagement: React.FC = () => {
   const [statistics, setStatistics] = useState({
     totalUsers: 0,
     students: 0,
+    parents: 0,
     teachers: 0,
     schoolAdmins: 0,
     districtAdmins: 0,
@@ -196,62 +186,55 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   }, [filters]);
 
+  // 统计独立于筛选：仅在挂载时拉取一次（增删改后手动刷新）
+  useEffect(() => {
+    fetchStatistics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 检查当前用户是否有权限查看某个角色的统计
   const canViewRoleStats = (role: string): boolean => {
     const viewableRoles = getViewableRoles(currentUser?.role as UserRole);
     return viewableRoles.some(r => r.value === role);
   };
 
+  // 基于给定用户集合计算统计（仅渲染当前管理员可见角色的卡片）
+  const computeStatistics = (list: User[]) => {
+    const viewableRoleValues = getViewableRoles(currentUser?.role as UserRole).map(r => r.value);
+    const countOf = (role: string) => viewableRoleValues.includes(role)
+      ? list.filter(u => u.role === role).length
+      : 0;
+    setStatistics({
+      totalUsers: list.length,
+      students: countOf('student'),
+      parents: countOf('parent'),
+      teachers: countOf('teacher'),
+      schoolAdmins: countOf('school_admin'),
+      districtAdmins: countOf('district_admin'),
+      municipalSchoolAdmins: countOf('municipal_school_admin'),
+      baseSchoolAdmins: countOf('base_school_admin'),
+      municipalAdmins: countOf('municipal_admin'),
+      systemAdmins: countOf('system_admin'),
+      activeUsers: list.filter(u => u.status === 'active').length,
+    });
+  };
+
+  // 统计：不带任何筛选，反映当前管理员权限范围内的全量数据，不随角色/状态筛选变化
+  const fetchStatistics = async () => {
+    try {
+      const resp = await userManagementApi.getAllUsers({});
+      computeStatistics(resp.users || []);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    }
+  };
+
+  // 列表：随角色/状态/搜索筛选变化
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response = await userManagementApi.getAllUsers(filters);
       setUsers(response.users || []);
-
-      // Get viewable roles for current user
-      const viewableRoles = getViewableRoles(currentUser?.role as UserRole);
-      const viewableRoleValues = viewableRoles.map(r => r.value);
-
-      // Calculate statistics - only for roles current user can view
-      const total = response.users?.length || 0;
-      const students = viewableRoleValues.includes('student')
-        ? response.users?.filter((u: User) => u.role === 'student').length || 0
-        : 0;
-      const teachers = viewableRoleValues.includes('teacher')
-        ? response.users?.filter((u: User) => u.role === 'teacher').length || 0
-        : 0;
-      const schoolAdmins = viewableRoleValues.includes('school_admin')
-        ? response.users?.filter((u: User) => u.role === 'school_admin').length || 0
-        : 0;
-      const districtAdmins = viewableRoleValues.includes('district_admin')
-        ? response.users?.filter((u: User) => u.role === 'district_admin').length || 0
-        : 0;
-      const municipalSchoolAdmins = viewableRoleValues.includes('municipal_school_admin')
-        ? response.users?.filter((u: User) => u.role === 'municipal_school_admin').length || 0
-        : 0;
-      const baseSchoolAdmins = viewableRoleValues.includes('base_school_admin')
-        ? response.users?.filter((u: User) => u.role === 'base_school_admin').length || 0
-        : 0;
-      const municipalAdmins = viewableRoleValues.includes('municipal_admin')
-        ? response.users?.filter((u: User) => u.role === 'municipal_admin').length || 0
-        : 0;
-      const systemAdmins = viewableRoleValues.includes('system_admin')
-        ? response.users?.filter((u: User) => u.role === 'system_admin').length || 0
-        : 0;
-      const active = response.users?.filter((u: User) => u.status === 'active').length || 0;
-
-      setStatistics({
-        totalUsers: total,
-        students,
-        teachers,
-        schoolAdmins,
-        districtAdmins,
-        municipalSchoolAdmins,
-        baseSchoolAdmins,
-        municipalAdmins,
-        systemAdmins,
-        activeUsers: active,
-      });
     } catch (error) {
       message.error('获取用户列表失败');
       console.error('Error fetching users:', error);
@@ -303,6 +286,7 @@ const UserManagement: React.FC = () => {
         message.success('用户删除成功');
       }
       fetchUsers();
+      fetchStatistics();
     } catch (error: any) {
       message.error(error.response?.data?.message || '删除用户失败');
     }
@@ -343,6 +327,7 @@ const UserManagement: React.FC = () => {
       setModalVisible(false);
       form.resetFields();
       fetchUsers();
+      fetchStatistics();
     } catch (error: any) {
       message.error(error.response?.data?.message || '操作失败');
     }
@@ -365,6 +350,7 @@ const UserManagement: React.FC = () => {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'student': return 'green';
+      case 'parent': return 'geekblue';
       case 'teacher': return 'blue';
       case 'school_admin': return 'orange';
       case 'district_admin': return 'purple';
@@ -379,6 +365,7 @@ const UserManagement: React.FC = () => {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'student': return <UserOutlined />;
+      case 'parent': return <TeamOutlined />;
       case 'teacher': return <TeamOutlined />;
       case 'school_admin':
       case 'district_admin':
@@ -393,6 +380,7 @@ const UserManagement: React.FC = () => {
   const getRoleName = (role: string) => {
     switch (role) {
       case 'student': return '学生';
+      case 'parent': return '家长';
       case 'teacher': return '教师';
       case 'school_admin': return '校级管理员';
       case 'district_admin': return '区级管理员';
@@ -592,6 +580,18 @@ const UserManagement: React.FC = () => {
             </Card>
           </Col>
         )}
+        {canViewRoleStats('parent') && (
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="家长"
+                value={statistics.parents}
+                prefix={<TeamOutlined />}
+                valueStyle={{ color: '#2f54eb' }}
+              />
+            </Card>
+          </Col>
+        )}
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
@@ -687,7 +687,7 @@ const UserManagement: React.FC = () => {
             </Button>
             <Button
               icon={<ReloadOutlined />}
-              onClick={fetchUsers}
+              onClick={() => { fetchUsers(); fetchStatistics(); }}
             >
               刷新
             </Button>

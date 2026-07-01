@@ -353,7 +353,7 @@ router.post('/create', [
   requireAdmin,
   body('username').isLength({ min: 3 }).withMessage('用户名至少3个字符'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
-  body('role').isIn(['student', 'teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'])
+  body('role').isIn(['student', 'parent', 'teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'])
     .withMessage('角色必须是有效的用户角色'),
   body('realName').notEmpty().withMessage('真实姓名不能为空'),
   body('phone').optional().isMobilePhone('zh-CN').withMessage('手机号格式不正确'),
@@ -414,7 +414,7 @@ router.put('/:id', [
   authMiddleware,
   requireAdmin,
   body('realName').optional().isLength({ min: 1 }).withMessage('真实姓名不能为空'),
-  body('role').optional().isIn(['student', 'teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'])
+  body('role').optional().isIn(['student', 'parent', 'teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'])
     .withMessage('角色必须是有效的用户角色'),
   body('status').optional().isIn(['active', 'inactive', 'suspended']).withMessage('状态必须是active、inactive或suspended'),
   body('phone').optional().isMobilePhone('zh-CN').withMessage('手机号格式不正确'),

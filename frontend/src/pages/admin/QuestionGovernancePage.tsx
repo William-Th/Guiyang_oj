@@ -104,7 +104,20 @@ const QuestionGovernancePage: React.FC = () => {
 
   useEffect(() => {
     fetchPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [promoStatus]);
+
+  // 配额管理：进入页面即加载（此前仅在手动点“刷新”时拉取）
+  useEffect(() => {
+    fetchQuotas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 切换 Tab 时刷新对应数据，确保每次进入都展示最新
+  const handleTabChange = (key: string) => {
+    if (key === 'promotion') fetchPromotions();
+    else if (key === 'quota') fetchQuotas();
+  };
 
   const handleReview = async () => {
     if (!reviewing) return;
@@ -243,6 +256,7 @@ const QuestionGovernancePage: React.FC = () => {
     <div>
       <Title level={3}>题库治理</Title>
       <Tabs
+        onChange={handleTabChange}
         items={[
           {
             key: 'promotion',
