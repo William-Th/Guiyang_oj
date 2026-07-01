@@ -61,13 +61,13 @@ async function autoSubmitExpiredActivities() {
 
         const totalScore = answersResult.rows[0].total_score || 0;
 
-        // Update student_activity status to completed
+        // 更新 student_activities：注意该表无 updated_at/submitted_at 列，
+        // 交卷时间列名为 submit_time，status 约束不含 'completed'（用 'submitted'）
         await query(`
           UPDATE student_activities
-          SET status = 'completed',
+          SET status = 'submitted',
               score = $1,
-              submitted_at = NOW(),
-              updated_at = NOW()
+              submit_time = NOW()
           WHERE id = $2
         `, [totalScore, record.id]);
 

@@ -450,20 +450,20 @@ router.get('/dashboard/workflows', [
 ], async (req, res) => {
   try {
     // 查询各模块的待处理数量
+    // 注：question_drafts 与 certificates 表均无 status 列。
+    //   - 题目审核状态走 question_reviews 流程表（status: pending/approved/rejected）
+    //   - certificates 表为已颁发记录，无“待颁发”概念，故该项移除
     const [
       registrationPending,
       questionSubmitted,
-      activitiesOngoing,
-      certificatesPending
+      activitiesOngoing
     ] = await Promise.all([
       // 待审核的学生注册
       query('SELECT COUNT(*) as count FROM student_registration_requests WHERE status = \'pending\''),
-      // 待审核的题目
-      query('SELECT COUNT(*) as count FROM question_drafts WHERE status = \'submitted\''),
+      // 待审核的题目（走 question_reviews 流程表）
+      query('SELECT COUNT(*) as count FROM question_reviews WHERE status = \'pending\''),
       // 进行中的活动
-      query('SELECT COUNT(*) as count FROM activities WHERE status IN (\'published\', \'ongoing\')'),
-      // 待颁发的证书
-      query('SELECT COUNT(*) as count FROM certificates WHERE status = \'pending\'')
+      query('SELECT COUNT(*) as count FROM activities WHERE status IN (\'published\', \'ongoing\')')
     ]);
 
     const workflows = [];
@@ -501,18 +501,6 @@ router.get('/dashboard/workflows', [
         description: `${aCount}场活动进行中或待开始`,
         status: 'pending',
         priority: 'medium'
-      });
-    }
-
-    const cCount = parseInt(certificatesPending.rows[0].count);
-    if (cCount > 0) {
-      workflows.push({
-        id: 'certificate_issue',
-        type: 'certificate_issue',
-        title: '证书颁发',
-        description: `${cCount}份证书待颁发`,
-        status: 'processing',
-        priority: 'low'
       });
     }
 
