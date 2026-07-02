@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Spin, Select, Tabs } from 'antd';
+import { Card, Table, Tag, Button, Space, message, Select, Tabs } from 'antd';
 import { EyeOutlined, PlayCircleOutlined, FormOutlined, UnorderedListOutlined, TrophyOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import { SUBJECTS, getAllGrades, getAllAbilityLevels } from '../../config/subjects';
 import AssessmentRegistrationModal from '../../components/student/AssessmentRegistrationModal';
@@ -47,10 +47,13 @@ interface HistoryAssessment {
  */
 const AssessmentCenterPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // 进入页面时若带 tab state（从结果页返回），则恢复到对应 Tab
+  const initialTab = location.state?.tab === 'completed' ? 'completed' : 'available';
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [completedAssessments, setCompletedAssessments] = useState<HistoryAssessment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('available');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [registrationModalVisible, setRegistrationModalVisible] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [filters, setFilters] = useState<{
@@ -105,6 +108,11 @@ const AssessmentCenterPage: React.FC = () => {
 
   const handleStartAssessment = async (assessmentId: number) => {
     navigate(`/student/activity/${assessmentId}`);
+  };
+
+  // 跳转结果页，携带来源类型与当前 Tab，便于结果页“返回”回到正确 Tab
+  const goResult = (activityId: number) => {
+    navigate(`/student/results/${activityId}`, { state: { from: 'assessment', tab: activeTab } });
   };
 
   const formatDateTime = (dateTimeString: string) => {
@@ -229,7 +237,7 @@ const AssessmentCenterPage: React.FC = () => {
       title: '操作', key: 'action', width: 120, fixed: 'right' as const,
       render: (_: any, record: HistoryAssessment) => (
         <Button size="small" type="primary" icon={<TrophyOutlined />}
-          onClick={() => navigate(`/student/results/${record.id}`)}>
+          onClick={() => goResult(record.id)}>
           查看结果
         </Button>
       ),
@@ -245,14 +253,6 @@ const AssessmentCenterPage: React.FC = () => {
     loadAssessments();
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载测评列表中..." />
-      </div>
-    );
-  }
-
   return (
     <div>
       <Card
@@ -262,15 +262,15 @@ const AssessmentCenterPage: React.FC = () => {
             <Button icon={<UnorderedListOutlined />} onClick={() => navigate('/student/registrations')}>
               我的报名
             </Button>
-            <Select placeholder="科目" allowClear style={{ width: 120 }}
+            <Select placeholder="科目" allowClear style={{ width: 120 }} value={filters.subject}
               onChange={(value) => setFilters({ ...filters, subject: value })} virtual={false}>
               {SUBJECTS.map(s => <Select.Option key={s.value} value={s.value}>{s.label}</Select.Option>)}
             </Select>
-            <Select placeholder="年级" allowClear style={{ width: 120 }}
+            <Select placeholder="年级" allowClear style={{ width: 120 }} value={filters.grade}
               onChange={(value) => setFilters({ ...filters, grade: value })} virtual={false}>
               {getAllGrades().map(g => <Select.Option key={g.value} value={g.value}>{g.label}</Select.Option>)}
             </Select>
-            <Select placeholder="能力等级" allowClear style={{ width: 120 }}
+            <Select placeholder="能力等级" allowClear style={{ width: 120 }} value={filters.ability_level}
               onChange={(value) => setFilters({ ...filters, ability_level: value })} virtual={false}>
               {getAllAbilityLevels().map(l => <Select.Option key={l.value} value={l.value}>{l.label}</Select.Option>)}
             </Select>
@@ -283,6 +283,7 @@ const AssessmentCenterPage: React.FC = () => {
             label: `可参加测评 (${assessments.length})`,
             children: (
               <Table columns={availableColumns} dataSource={assessments} rowKey="id" scroll={{ x: 1300 }}
+                loading={loading}
                 locale={{ emptyText: '暂无可用测评' }}
                 pagination={{ showSizeChanger: true, showTotal: (total) => `共 ${total} 个测评` }} />
             ),
@@ -292,6 +293,7 @@ const AssessmentCenterPage: React.FC = () => {
             label: `已完成 (${completedAssessments.length})`,
             children: (
               <Table columns={completedColumns} dataSource={completedAssessments} rowKey="id" scroll={{ x: 1200 }}
+                loading={loading}
                 locale={{ emptyText: '暂无已完成的测评' }}
                 pagination={{ showSizeChanger: true, showTotal: (total) => `共 ${total} 个测评` }} />
             ),

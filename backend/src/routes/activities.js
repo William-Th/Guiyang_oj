@@ -158,10 +158,12 @@ router.get('/student/history', [
   requireRole(['student'])
 ], async (req, res) => {
   try {
-    const { type, ability_level } = req.query;
+    const { type, subject, grade, ability_level } = req.query;
     const filters = {};
 
     if (type) filters.type = type;
+    if (subject) filters.subject = subject;
+    if (grade) filters.grade = grade;
     if (ability_level) filters.ability_level = ability_level;
 
     const history = await Activity.getStudentHistory(req.user.id, filters);

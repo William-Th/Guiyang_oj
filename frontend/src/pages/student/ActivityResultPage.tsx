@@ -22,7 +22,7 @@ import {
   TrophyOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 
 const { Title, Text, Paragraph } = Typography;
@@ -91,6 +91,7 @@ interface ApiResponse {
 const ActivityResultPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -112,6 +113,19 @@ const ActivityResultPage: React.FC = () => {
       setError(err.response?.data?.message || '加载结果失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 返回：若由练习/测评中心跳入（携带 from state），则回到对应中心的来源 Tab；
+  // 否则回退到上一页（适配成长中心、交卷后、直接访问等其它入口）
+  const handleBack = () => {
+    const { from, tab } = (location.state || {}) as { from?: string; tab?: string };
+    if (from === 'practice') {
+      navigate('/student/practice', { state: { tab } });
+    } else if (from === 'assessment') {
+      navigate('/student/assessments', { state: { tab } });
+    } else {
+      navigate(-1);
     }
   };
 
@@ -383,7 +397,7 @@ const ActivityResultPage: React.FC = () => {
           type="error"
           showIcon
           action={
-            <Button type="primary" onClick={() => navigate(-1)}>
+            <Button type="primary" onClick={handleBack}>
               返回
             </Button>
           }
@@ -429,7 +443,7 @@ const ActivityResultPage: React.FC = () => {
             </Space>
           </Col>
           <Col>
-            <Button onClick={() => navigate(-1)}>
+            <Button onClick={handleBack}>
               返回
             </Button>
           </Col>
