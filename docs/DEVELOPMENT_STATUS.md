@@ -1230,6 +1230,15 @@ const typeOrder = {
     - `backend/src/routes/activities.js` - 新增 `GET /:id/participants` 路由
   - 状态: ✅ 完成
 
+- ✅ **智能练习推荐与在线作答**
+  - 算法②碎片化推荐（`QuestionRecommender`）：薄弱知识点优先（0.35）+ ZPD难度匹配（0.25）+ SM-2错题复习（0.20）+ 新鲜度（0.15）+ 同质去重（-0.05），排除该生已答对的题
+  - 算法③每日推题（`DailyQuestionService`）：10题 = 35%错题复习 + 65%弱项新题，当天缓存，每日03:07预热
+  - 推荐答题判题（`POST /student/activities/recommend/:id/answer`）：客观题本地判题 → 记 `student_question_practice` → 答错入错题集/答对发积分+连胜+标记掌握；仅答错返回正确答案与解析
+  - 新表: `database/migrations/create_student_question_practice.sql`
+  - 前端: `SmartPracticePage.tsx` 答题弹窗（每日+碎片化共用）
+  - 算法详解见: [docs/RECOMMENDATION_ALGORITHM.md](./RECOMMENDATION_ALGORITHM.md)
+  - 状态: ✅ 完成
+
 ---
 
-*最后更新时间：2026-02-26*
+*最后更新时间：2026-07-02*
