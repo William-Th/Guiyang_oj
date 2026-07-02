@@ -1584,6 +1584,10 @@ export const recommendApi = {
     const response = await api.get(`/student/activities/daily-questions${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
+  answerQuestion: async (questionId: number, answer: any) => {
+    const response = await api.post(`/student/activities/recommend/${questionId}/answer`, { answer });
+    return response.data;
+  },
   getStreak: async () => {
     const response = await api.get('/points/streak');
     return response.data;

@@ -95,25 +95,43 @@ class DailyQuestionService {
   }
 
   /**
-   * 获取今日题集（无则即时生成）
+   * 获取今日题集（无则即时生成），并附加题目详情供前端展示与作答
+   * 注：不返回 correct_answer/explanation，避免答案泄露；判对错走推荐答题接口
    */
   static async getToday(studentId, subject) {
-    const r = await query(
-      `SELECT * FROM daily_question_sets
-       WHERE student_id = $1 AND stat_date = CURRENT_DATE AND subject IS NOT DISTINCT FROM $2`,
-      [studentId, subject || null]
-    );
-    if (r.rows[0]) {
-      return r.rows[0];
+    const fetchRow = async () => {
+      const r = await query(
+        `SELECT * FROM daily_question_sets
+         WHERE student_id = $1 AND stat_date = CURRENT_DATE AND subject IS NOT DISTINCT FROM $2`,
+        [studentId, subject || null]
+      );
+      return r.rows[0] || null;
+    };
+
+    let row = await fetchRow();
+    if (!row) {
+      // 即时生成
+      await DailyQuestionService.generateForStudent(studentId, subject);
+      row = await fetchRow();
     }
-    // 即时生成
-    await DailyQuestionService.generateForStudent(studentId, subject);
-    const r2 = await query(
-      `SELECT * FROM daily_question_sets
-       WHERE student_id = $1 AND stat_date = CURRENT_DATE AND subject IS NOT DISTINCT FROM $2`,
-      [studentId, subject || null]
+    if (!row || !Array.isArray(row.question_ids) || row.question_ids.length === 0) {
+      return row;
+    }
+
+    // 附加题目详情，按 question_ids 原顺序排列
+    const det = await query(
+      `SELECT qb.id AS question_id, qb.draft_id, qd.content, qd.options, qd.type, qd.difficulty
+       FROM question_bank qb
+       JOIN question_drafts qd ON qb.draft_id = qd.id
+       WHERE qb.id = ANY($1::int[]) AND qd.is_active = true`,
+      [row.question_ids]
     );
-    return r2.rows[0];
+    const map = {};
+    det.rows.forEach((d) => { map[d.question_id] = d; });
+    row.questions = row.question_ids
+      .map((qid) => map[qid])
+      .filter(Boolean);
+    return row;
   }
 
   /**

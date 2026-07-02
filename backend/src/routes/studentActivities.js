@@ -125,6 +125,136 @@ router.get('/daily-questions', authMiddleware, async (req, res) => {
   }
 });
 
+// 客观题本地判题（编程/问答/匹配返回 null 表示不支持自动判题）
+function judgeObjective(type, studentAnswer, correctAnswer) {
+  if (type === 'code' || type === 'essay' || type === 'matching') return null;
+  const norm = (v) => {
+    if (v == null) return '';
+    if (Array.isArray(v)) return v.map((x) => String(x).trim().toUpperCase()).filter(Boolean).sort().join('|');
+    if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+    return String(v).trim().toUpperCase();
+  };
+  const a = norm(studentAnswer);
+  if (type === 'blank') {
+    const arr = Array.isArray(correctAnswer)
+      ? correctAnswer.map(norm)
+      : [norm(correctAnswer)];
+    return arr.includes(a);
+  }
+  return a === norm(correctAnswer) && a !== '';
+}
+
+// ============================================================================
+// 推荐答题判题（算法②/③ 题目可作答：判对错→记练习表→入错题/积分/连胜）
+// POST /recommend/:questionId/answer  body: { answer }
+// ============================================================================
+router.post('/recommend/:questionId/answer', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ success: false, message: '仅学生可作答推荐题目' });
+    }
+    const { questionId } = req.params;
+    const { answer } = req.body;
+    if (answer == null) {
+      return res.status(400).json({ success: false, message: 'answer 必填' });
+    }
+
+    // 取题目（type/correct_answer/options/explanation/draft_id/subject/difficulty）
+    const qr = await query(
+      `SELECT qb.id AS question_id, qb.draft_id, qd.type, qd.difficulty, qd.subject,
+              qd.options, qd.correct_answer, qd.explanation, qd.knowledge_points
+       FROM question_bank qb
+       JOIN question_drafts qd ON qb.draft_id = qd.id
+       WHERE qb.id = $1 AND qd.is_active = true`,
+      [parseInt(questionId, 10)]
+    );
+    const question = qr.rows[0];
+    if (!question) {
+      return res.status(404).json({ success: false, message: '题目不存在' });
+    }
+
+    const correct = judgeObjective(question.type, answer, question.correct_answer);
+    if (correct === null) {
+      return res.status(400).json({
+        success: false,
+        message: '该题型（编程/问答/匹配）不支持自动判题'
+      });
+    }
+
+    // 记录推荐答题（upsert：同一题只留最后作答状态）
+    const subject = question.subject || null;
+    await query(
+      `INSERT INTO student_question_practice
+         (student_id, question_id, draft_id, subject, is_correct, source)
+       VALUES ($1, $2, $3, $4, $5, 'recommend')
+       ON CONFLICT (student_id, question_id) DO UPDATE SET
+         is_correct = EXCLUDED.is_correct,
+         draft_id = EXCLUDED.draft_id,
+         subject = EXCLUDED.subject,
+         answered_at = CURRENT_TIMESTAMP`,
+      [req.user.id, parseInt(questionId, 10), question.draft_id || null, subject, correct]
+    );
+
+    const WrongQuestion = require('../models/WrongQuestion');
+    let awarded = 0;
+    let streak = null;
+
+    if (correct) {
+      // 答对：积分 + 若在错题集则标记掌握
+      const PointsPolicy = require('../services/points/PointsPolicy');
+      try {
+        const award = await PointsPolicy.awardForCorrectAnswer(req.user.id, {
+          difficulty: question.difficulty,
+          isRedo: false,
+          sourceType: 'recommend_practice',
+          description: '智能练习答对奖励'
+        });
+        awarded = award.awarded;
+      } catch (e) {
+        logger.error('award recommend points failed:', e.message);
+      }
+      await WrongQuestion.markMastered(req.user.id, parseInt(questionId, 10))
+        .catch((e) => logger.error('markMastered failed:', e.message));
+    } else {
+      // 答错：入错题集（幂等 upsert）
+      await WrongQuestion.addIfWrong({
+        studentId: req.user.id,
+        questionId: parseInt(questionId, 10),
+        draftId: question.draft_id || null,
+        subject,
+        knowledgePoints: Array.isArray(question.knowledge_points) ? question.knowledge_points : [],
+        difficulty: question.difficulty || null,
+        sourceActivityId: null
+      }).catch((e) => logger.error('addIfWrong failed:', e.message));
+    }
+
+    // 连胜：无论对错都更新（错则归零）
+    try {
+      const StreakService = require('../services/streak/StreakService');
+      streak = await StreakService.recordResult(req.user.id, correct);
+    } catch (e) {
+      logger.error('update streak failed:', e.message);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        correct,
+        awarded,
+        streak,
+        type: question.type,
+        options: question.options,
+        correct_answer: correct ? undefined : question.correct_answer,
+        explanation: correct ? undefined : (question.explanation || null)
+      },
+      message: correct ? `回答正确，获得积分 ${awarded}` : '回答错误，已加入错题集'
+    });
+  } catch (error) {
+    logger.error('Recommend answer error:', error);
+    res.status(500).json({ success: false, message: '提交答案失败', error: error.message });
+  }
+});
+
 // ============================================================================
 // 2. 获取可用测评列表
 // ============================================================================

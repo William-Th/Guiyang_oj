@@ -131,10 +131,27 @@ class QuestionRecommender {
     );
     const recentSet = new Set(recentRows.rows.map((r) => r.draft_id));
 
+    // 已答对 draft_id 集合：答对过的题（推荐答题记录 + 正式活动 answers）不再推荐，
+    // 避免重复推送已掌握的题目
+    const correctRows = await query(
+      `(SELECT qb.draft_id
+         FROM student_question_practice sqp
+         JOIN question_bank qb ON sqp.question_id = qb.id
+        WHERE sqp.student_id = $1 AND sqp.is_correct = true)
+       UNION
+       (SELECT qb.draft_id
+         FROM answers a
+         JOIN student_activities sa ON a.student_exam_id = sa.id
+         JOIN question_bank qb ON a.question_id = qb.id
+        WHERE sa.student_id = $1 AND a.is_correct = true)`,
+      [studentId]
+    );
+    const correctSet = new Set(correctRows.rows.map((r) => r.draft_id));
+
     // 候选题目池：该年级+科目已发布、非隐藏
     const candRows = await query(
       `SELECT qb.id AS question_id, qb.draft_id, qd.difficulty,
-              qd.knowledge_points, qd.content, qd.type
+              qd.knowledge_points, qd.content, qd.options, qd.type
        FROM question_bank qb
        JOIN question_drafts qd ON qb.draft_id = qd.id
        WHERE qb.status = 'published' AND qb.is_active = true
@@ -148,6 +165,7 @@ class QuestionRecommender {
     const scored = [];
     for (const q of candRows.rows) {
       if (excludeDraftIds.includes(q.draft_id)) continue;
+      if (correctSet.has(q.draft_id)) continue;  // 已答对，不再推荐
 
       // mastery：题目涉及知识点中最低掌握度（最薄弱）→ 高分
       const kps = Array.isArray(q.knowledge_points) ? q.knowledge_points : [];
@@ -171,7 +189,8 @@ class QuestionRecommender {
         question_id: q.question_id,
         draft_id: q.draft_id,
         difficulty: q.difficulty,
-        content: q.content ? String(q.content).slice(0, 60) : '',
+        content: q.content ? String(q.content) : '',
+        options: q.options || null,
         type: q.type,
         score: Number(rawScore.toFixed(4)),
         factors: {
