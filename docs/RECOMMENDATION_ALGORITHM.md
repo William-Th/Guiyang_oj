@@ -93,20 +93,24 @@ noveltyScore = 近7天答过(draft_id ∈ recentSet) ? 0 : 1;
 
 ### 3.3 候选池与排除规则
 
-候选池（`question_bank ⋈ question_drafts`）筛选条件：
-- `status = 'published'` 且 `is_active = true` 且 `is_hidden ≠ true`
-- `grade / subject` 匹配学生年级与所选科目
+候选池（`question_bank ⋈ question_drafts`）采用**两级范围**（同年级优先，不足时回退，应对题库偏小）：
+- 第一级（同年级）：`qd.grade = 学生年级 AND qd.subject = 科目`
+- 第二级（全年级兜底）：当同年级去排除后选不足 `count` 时，回退 `qd.subject = 科目` 的**其他年级**题补足
+- 公共筛选：`status = 'published'` 且 `is_active = true` 且 `is_hidden ≠ true`
 - **仅客观题**：`type IN ('single','multiple','true_false','blank')`（不推编程/问答/匹配）
-- `LIMIT 500`
+- 各级 `LIMIT 500`
 
-**排除规则**（打分循环中 `continue`）：
-1. `excludeDraftIds`：调用方传入的排除集（如每日推题中已用作复习的 draft）
+**排除规则**（打分循环中跳过）：
+1. `excludeDraftIds`：调用方传入的 draft 排除集（如每日推题中已用作复习的 draft）
 2. **`correctSet`：该生已答对的题**（重点）——来源是两处 UNION：
    - `student_question_practice` 中 `is_correct = true`（推荐答题答对）
    - `answers` 中 `is_correct = true`（正式活动答对）
-3. 同质去重阶段：与已选题同质
+3. **`excludeShownIds`：本会话已展示过的 `question_id`**（碎片化"换一批"时前端累积传入，强制换内容，见 3.6）
+4. 同质去重阶段：与已选题同质
 
-> 这保证了"答对的题不再重复推送"。
+> 这保证了"答对的题不再重复推送"，且"换一批"能真正换内容。
+
+**打分随机扰动**：排序键 `_sortScore = rawScore + Math.random()·JITTER`（`JITTER = 0.03`），让分数相近的题目每次顺序不同；返回字段 `score` 仍保留原始值供前端展示。薄弱优先的大方向不变（mastery 权重最高），但同分附近题目换一批时有真实变化。
 
 ### 3.4 返回字段
 
@@ -129,13 +133,23 @@ noveltyScore = 近7天答过(draft_id ∈ recentSet) ? 0 : 1;
 碎片化 N 题 = round(N·0.30) 道到期错题 + (N − 复习数) 道打分新题
 ```
 
-- 复习槽来源：`_getDueReviews`（`status='active'` 的客观题错题，按 `_spacedScore` 到期程度排序）
+- 复习槽来源：`_getDueReviews`（`status='active'` 的客观题错题）——先按 `_spacedScore` 到期程度排序取"较到期"候选池（top `limit·2`），**池内 Fisher-Yates 随机采样** `limit` 道，避免每次换一批都是同样错题；`excludeShownIds` 同时作用于复习槽
 - 复习题的 `draft_id` 并入 `excludeDraftIds`，**新题槽不再重复推送**
 - 合并后统一做同质去重（复习槽优先放入，新题补足至 N）
 - 复习题项标记 `factors.review = true`、`score = dueScore`（便于前端区分）
 - `meta.reviewCount` 返回实际混入的错题数
 
 > 每日推题（算法③）自行管理复习槽（35%），调用 `recommend` 时 **不** 开启 `includeReviews`（默认 false），避免复习题重复。
+
+### 3.6「换一批」机制（碎片化推荐）
+
+碎片化推荐点"换一批"时，前端把**本会话已展示的 `question_id` 累积**传入 `excludeShownIds`，后端据此排除已展示题，彻底解决"换一批结果不变"（算法此前纯确定性 + 同年级候选偏小，导致每次返回相同题目）：
+
+- 前端 `shownRecIdsRef` 累积每批 qid，请求 `/recommend?subject=..&excludeShownIds=1,2,3`
+- 后端排除 shown → 同年级不足触发全年级兜底（3.3）→ 若 `selected` 仍为空且 `shownSet` 非空，**清空 shown 重试**（保证总有题可推）
+- 前端额外兜底：返回 < 3 道时重置 `shownRecIdsRef` 重新拉取，形成循环推荐
+- 切科目清空累积，避免跨科目误排除
+- 每日推题（算法③）当天题集缓存固定，不参与此机制
 
 ---
 
@@ -241,12 +255,13 @@ if (isRedo) points *= redoRatio                 // 错题重做打折 (默认0.5
   > 这解决了"选项序号重复渲染"问题（数据已带 `A.` 前缀时不再补）。
 - **true_false 的 key 是 `A`/`B`**（匹配 `correct_answer` 实际存储 `"A"/"B"`），**不是** `true/false`——与正式活动页 TakeActivityPage 不同（后者用 true/false 会判错）。
 - **已作答移除（按来源分离）**：`dailyAnswered` 与 `recAnswered` 独立维护——每日推题作答不影响碎片化推荐列表，反之亦然；碎片化「换一批」重置 `recAnswered`，新批次可完整展示与重复作答。
+- **「换一批」累积排除**：`shownRecIdsRef` 累积本会话已展示的 `question_id`，换一批时作为 `excludeShownIds` 传入后端强制换内容；返回 < 3 道时重置 ref 重新拉取形成循环；切科目清空累积（详见 3.6）。
 
 **API 层**：`frontend/src/services/api.ts`
 ```ts
-recommendApi.recommend(subject, count)          // GET /student/activities/recommend
-recommendApi.dailyQuestions(subject)            // GET /student/activities/daily-questions
-recommendApi.answerQuestion(questionId, answer) // POST /student/activities/recommend/:id/answer
+recommendApi.recommend(subject, count, excludeShownIds?)  // GET /student/activities/recommend
+recommendApi.dailyQuestions(subject)                      // GET /student/activities/daily-questions
+recommendApi.answerQuestion(questionId, answer)           // POST /student/activities/recommend/:id/answer
 ```
 
 ---
@@ -281,6 +296,7 @@ recommendApi.answerQuestion(questionId, answer) // POST /student/activities/reco
 - `ZPD_LOW / ZPD_HIGH`（0.6 / 0.85）控制难度区间宽度
 - `RECENT_DAYS`（7）控制新鲜度窗口
 - SM-2 间隔系数 `2.5` 可按学科调整
+- `JITTER`（0.03）打分随机扰动幅度：调大 → 换一批更多样但薄弱聚焦减弱；调小 → 更稳定但换一批变化少
 
 数据冷启动：新生无 `student_knowledge_stats` 时，`ability` 默认 0.5、未覆盖知识点默认掌握度 0.5，推荐退化为"难度匹配 + 新鲜度"。随答题积累（推荐答题 + 正式活动），掌握度数据丰富，推荐精准度提升。
 

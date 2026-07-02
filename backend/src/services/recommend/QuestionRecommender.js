@@ -14,6 +14,7 @@ const RECENT_DAYS = 7;        // 新鲜度：近 N 天做过视为不新鲜
 const ZPD_LOW = 0.6;          // ZPD：期望正确率区间下限
 const ZPD_HIGH = 0.85;        // ZPD：期望正确率区间上限
 const REVIEW_RATIO = 0.30;    // 碎片化推荐中错题复习占比 ~30%（每日推题另管复习槽，不复用）
+const JITTER = 0.03;          // 打分随机扰动幅度：同分附近题目换一批时随机变化（薄弱优先大方向不变）
 
 /**
  * QuestionRecommender (算法② 碎片化学习推荐)
@@ -56,10 +57,23 @@ class QuestionRecommender {
   }
 
   /**
-   * 取 SM-2 到期的客观题错题（碎片化推荐的复习槽）
-   * 返回按到期程度排序的题目（含 content/options/type/difficulty 供前端作答）
+   * Fisher-Yates 洗牌（返回新数组，不修改原数组）
    */
-  static async _getDueReviews(studentId, subject, limit) {
+  static _shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  /**
+   * 取 SM-2 到期的客观题错题（碎片化推荐的复习槽）
+   * 从"较到期"的错题池中随机采样（而非固定取 top N），避免每次换一批都返回相同错题
+   * excludeQids：本会话已展示过的 question_id，换一批时排除以强制换内容
+   */
+  static async _getDueReviews(studentId, subject, limit, excludeQids = []) {
     const r = await query(
       `SELECT qb.id AS question_id, qb.draft_id, wq.review_count, wq.last_wrong_at,
               qd.content, qd.options, qd.difficulty, qd.type
@@ -72,13 +86,17 @@ class QuestionRecommender {
          AND qd.is_active = true
        ORDER BY wq.last_wrong_at ASC
        LIMIT $3`,
-      [studentId, subject || null, limit * 3]
+      [studentId, subject || null, limit * 5]
     );
     const now = Date.now();
-    return r.rows
+    const exSet = new Set(excludeQids);
+    const pool = r.rows
+      .filter((row) => !exSet.has(row.question_id))
       .map((row) => ({ ...row, dueScore: QuestionRecommender._spacedScore(row, now) }))
-      .sort((a, b) => b.dueScore - a.dueScore)
-      .slice(0, limit);
+      .sort((a, b) => b.dueScore - a.dueScore);   // 到期优先
+    // 从"较到期"的候选池内随机采样 → 错题较多时换一批错题也会变化
+    const topPool = pool.slice(0, Math.max(limit * 2, limit));
+    return QuestionRecommender._shuffle(topPool).slice(0, limit);
   }
 
   /**
@@ -98,16 +116,19 @@ class QuestionRecommender {
   /**
    * 推荐 N 道题
    * @param {number} studentId
-   * @param {Object} opts - { subject, grade, count, excludeDraftIds, includeReviews }
+   * @param {Object} opts - { subject, grade, count, excludeDraftIds, includeReviews, excludeShownIds }
    * @param {boolean} opts.includeReviews - 是否混入 SM-2 到期错题复习槽（碎片化推荐用）
+   * @param {number[]} opts.excludeShownIds - 本会话已展示过的 question_id（碎片化"换一批"传入，强制换内容）
    * @returns {Promise<Object>} { recommendations, meta }
    */
   static async recommend(studentId, opts = {}) {
     const subject = opts.subject;
     const count = opts.count || 10;
     const excludeDraftIds = opts.excludeDraftIds || [];
+    const excludeShownIds = opts.excludeShownIds || [];
     const includeReviews = opts.includeReviews === true;
     const now = Date.now();
+    const shownSet = new Set(excludeShownIds);
 
     // 学生年级
     const stu = await query(
@@ -177,91 +198,23 @@ class QuestionRecommender {
     );
     const correctSet = new Set(correctRows.rows.map((r) => r.draft_id));
 
-    // 候选题目池：该年级+科目已发布、非隐藏，仅客观题（支持自动判题，可在线作答）
-    const candRows = await query(
-      `SELECT qb.id AS question_id, qb.draft_id, qd.difficulty,
+    // 候选池查询：gradeFilter 传 null 时取同科目全年级（用于候选不足时的兜底回退）
+    const fetchCand = async (gradeFilter) => {
+      const sql = `SELECT qb.id AS question_id, qb.draft_id, qd.difficulty, qd.grade,
               qd.knowledge_points, qd.content, qd.options, qd.type
        FROM question_bank qb
        JOIN question_drafts qd ON qb.draft_id = qd.id
        WHERE qb.status = 'published' AND qb.is_active = true
          AND (qb.is_hidden = false OR qb.is_hidden IS NULL)
-         AND qd.grade = $1 AND qd.subject = $2 AND qd.is_active = true
+         AND qd.subject = $1 AND qd.is_active = true
          AND qd.type IN ('single','multiple','true_false','blank')
-       LIMIT 500`,
-      [grade, subject]
-    );
+         ${gradeFilter ? 'AND qd.grade = $2' : ''}
+       LIMIT 500`;
+      const r = await query(sql, gradeFilter ? [subject, gradeFilter] : [subject]);
+      return r.rows;
+    };
 
-    // 错题复习槽（仅碎片化推荐 includeReviews 时启用；每日推题自行管理复习槽，不复用）
-    let reviewItems = [];
-    if (includeReviews) {
-      const reviewCount = Math.round(count * REVIEW_RATIO);
-      if (reviewCount > 0) {
-        const dueReviews = await QuestionRecommender._getDueReviews(studentId, subject, reviewCount);
-        reviewItems = dueReviews.map((r) => ({
-          question_id: r.question_id,
-          draft_id: r.draft_id,
-          difficulty: r.difficulty,
-          content: r.content ? String(r.content) : '',
-          options: r.options || null,
-          type: r.type,
-          score: Number((r.dueScore || 0).toFixed(4)),
-          factors: { review: true, dueScore: Number((r.dueScore || 0).toFixed(3)) }
-        }));
-        // 新题排除这些错题 draft，避免重复推送
-        reviewItems.forEach((rv) => {
-          if (rv.draft_id != null && !excludeDraftIds.includes(rv.draft_id)) {
-            excludeDraftIds.push(rv.draft_id);
-          }
-        });
-      }
-    }
-
-    // 打分
-    const scored = [];
-    for (const q of candRows.rows) {
-      if (excludeDraftIds.includes(q.draft_id)) continue;
-      if (correctSet.has(q.draft_id)) continue;  // 已答对，不再推荐
-
-      // mastery：题目涉及知识点中最低掌握度（最薄弱）→ 高分
-      const kps = Array.isArray(q.knowledge_points) ? q.knowledge_points : [];
-      let masteryScore = 0.5;
-      if (kps.length > 0) {
-        const accs = kps.map((kp) => (mastery[kp] ? mastery[kp].accuracy : 0.5));
-        masteryScore = 1 - Math.min(...accs);  // 越薄弱越高
-      }
-
-      const zpdScore = QuestionRecommender._zpdScore(q.difficulty, ability);
-      const wrongRow = wrongMap[q.draft_id];
-      const spacedScore = wrongRow ? QuestionRecommender._spacedScore(wrongRow, now) : 0;
-      const noveltyScore = recentSet.has(q.draft_id) ? 0 : 1;
-
-      const rawScore = W.mastery * masteryScore
-        + W.zpd * zpdScore
-        + W.spaced * spacedScore
-        + W.novelty * noveltyScore;
-
-      scored.push({
-        question_id: q.question_id,
-        draft_id: q.draft_id,
-        difficulty: q.difficulty,
-        content: q.content ? String(q.content) : '',
-        options: q.options || null,
-        type: q.type,
-        score: Number(rawScore.toFixed(4)),
-        factors: {
-          mastery: Number(masteryScore.toFixed(3)),
-          zpd: Number(zpdScore.toFixed(3)),
-          spaced: Number(spacedScore.toFixed(3)),
-          novelty: noveltyScore
-        }
-      });
-    }
-
-    // 按分排序，取 top count*3 做同质去重
-    scored.sort((a, b) => b.score - a.score);
-    const topPool = scored.slice(0, Math.max(count * 3, count));
-
-    // 同质去重：贪心选，与已选同质则降权跳过
+    // 同质去重选择器（复习槽优先 → 新题补充），selected 跨重试复用前需清空
     const selected = [];
     const selectedDrafts = [];
     const pickItem = async (item) => {
@@ -276,22 +229,126 @@ class QuestionRecommender {
       if (item.draft_id != null) selectedDrafts.push(item.draft_id);
       return true;
     };
-    // 1) 错题复习槽优先放入（含同质去重）
-    for (const rv of reviewItems) {
-      await pickItem(rv);
+
+    let sameGradeCandTotal = 0;  // 同年级客观题候选总数（meta 上报）
+
+    /**
+     * 一次完整选择流程（抽出便于"shown 排除致空"时清空 shown 重试）
+     * - 复习槽(随机采样) → 同年级新题(打分+扰动) → 同年级不足时同科目全年级兜底补足
+     */
+    const selectWith = async (shown) => {
+      const sSet = new Set(shown);
+      const localExclude = excludeDraftIds.slice();  // 复习 draft 推到这里，不污染外部
+
+      // 打分单题：返回评分项或 null（已答对 / 调用方排除 / 本会话已展示）
+      // _sortScore 含小随机扰动(JITTER)，让候选充足时换一批有真实变化；score 字段保留原始值供前端展示
+      const scoreOne = (q) => {
+        if (localExclude.includes(q.draft_id)) return null;
+        if (correctSet.has(q.draft_id)) return null;
+        if (sSet.has(q.question_id)) return null;
+        const kps = Array.isArray(q.knowledge_points) ? q.knowledge_points : [];
+        let masteryScore = 0.5;
+        if (kps.length > 0) {
+          const accs = kps.map((kp) => (mastery[kp] ? mastery[kp].accuracy : 0.5));
+          masteryScore = 1 - Math.min(...accs);  // 越薄弱越高
+        }
+        const zpdScore = QuestionRecommender._zpdScore(q.difficulty, ability);
+        const wrongRow = wrongMap[q.draft_id];
+        const spacedScore = wrongRow ? QuestionRecommender._spacedScore(wrongRow, now) : 0;
+        const noveltyScore = recentSet.has(q.draft_id) ? 0 : 1;
+        const rawScore = W.mastery * masteryScore
+          + W.zpd * zpdScore
+          + W.spaced * spacedScore
+          + W.novelty * noveltyScore;
+        return {
+          question_id: q.question_id,
+          draft_id: q.draft_id,
+          difficulty: q.difficulty,
+          content: q.content ? String(q.content) : '',
+          options: q.options || null,
+          type: q.type,
+          score: Number(rawScore.toFixed(4)),
+          _sortScore: rawScore + Math.random() * JITTER,
+          factors: {
+            mastery: Number(masteryScore.toFixed(3)),
+            zpd: Number(zpdScore.toFixed(3)),
+            spaced: Number(spacedScore.toFixed(3)),
+            novelty: noveltyScore
+          }
+        };
+      };
+
+      // 错题复习槽（仅 includeReviews；每日推题自行管理复习槽，不复用）
+      let reviewItems = [];
+      if (includeReviews) {
+        const reviewCount = Math.round(count * REVIEW_RATIO);
+        if (reviewCount > 0) {
+          const dueReviews = await QuestionRecommender._getDueReviews(studentId, subject, reviewCount, [...sSet]);
+          reviewItems = dueReviews.map((r) => ({
+            question_id: r.question_id,
+            draft_id: r.draft_id,
+            difficulty: r.difficulty,
+            content: r.content ? String(r.content) : '',
+            options: r.options || null,
+            type: r.type,
+            score: Number((r.dueScore || 0).toFixed(4)),
+            _sortScore: (r.dueScore || 0) + Math.random() * JITTER,
+            factors: { review: true, dueScore: Number((r.dueScore || 0).toFixed(3)) }
+          }));
+          // 新题排除这些错题 draft，避免重复推送
+          reviewItems.forEach((rv) => {
+            if (rv.draft_id != null && !localExclude.includes(rv.draft_id)) {
+              localExclude.push(rv.draft_id);
+            }
+          });
+        }
+      }
+
+      // 1) 复习槽优先放入（含同质去重）
+      for (const rv of reviewItems) {
+        await pickItem(rv);
+      }
+      // 2) 同年级新题（打分 + 扰动排序 + 同质去重）
+      const sgRows = await fetchCand(grade);
+      sameGradeCandTotal = Math.max(sameGradeCandTotal, sgRows.length);
+      const sameGrade = sgRows.map(scoreOne).filter(Boolean)
+        .sort((a, b) => b._sortScore - a._sortScore);
+      for (const cand of sameGrade) {
+        if (selected.length >= count) break;
+        await pickItem(cand);
+      }
+      // 3) 同年级不足 → 回退同科目其他年级补足（应对题库偏小；同年级已在上一阶段处理）
+      if (selected.length < count) {
+        const seenDrafts = new Set(selectedDrafts);
+        const backfill = (await fetchCand(null))
+          .filter((q) => q.grade !== grade)
+          .map(scoreOne).filter(Boolean)
+          .filter((s) => s.draft_id == null || !seenDrafts.has(s.draft_id))
+          .sort((a, b) => b._sortScore - a._sortScore);
+        for (const cand of backfill) {
+          if (selected.length >= count) break;
+          await pickItem(cand);
+        }
+      }
+    };
+
+    await selectWith([...shownSet]);
+    // 兜底：若 shown 排除导致几乎没选出题，清空 shown 重试，保证总有题可推
+    if (selected.length === 0 && shownSet.size > 0) {
+      selected.length = 0;
+      selectedDrafts.length = 0;
+      await selectWith([]);
     }
-    // 2) 新题补充至 count
-    for (const cand of topPool) {
-      if (selected.length >= count) break;
-      await pickItem(cand);
-    }
+
+    // 清理内部排序字段（不返回给前端）
+    selected.forEach((s) => { delete s._sortScore; });
 
     const reviewReturned = selected.filter((s) => s.factors && s.factors.review).length;
     return {
       recommendations: selected,
       meta: {
         subject, grade, ability: Number(ability.toFixed(3)),
-        candidateCount: candRows.rows.length,
+        candidateCount: sameGradeCandTotal,
         returned: selected.length,
         reviewCount: reviewReturned
       }

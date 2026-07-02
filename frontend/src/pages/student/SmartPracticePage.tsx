@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   Tabs,
@@ -124,6 +124,9 @@ const SmartPracticePage: React.FC = () => {
   // 当前作答来源，用于答完后从对应题单移除
   const [currentSource, setCurrentSource] = useState<'daily' | 'recommend'>('daily');
 
+  // 碎片化推荐：本会话已展示过的 question_id（换一批时累积排除，强制换内容；题库用尽则重置循环）
+  const shownRecIdsRef = useRef<number[]>([]);
+
   const fetchDaily = async () => {
     setDailyLoading(true);
     try {
@@ -136,14 +139,28 @@ const SmartPracticePage: React.FC = () => {
     }
   };
 
-  const fetchRecommend = async () => {
+  // reset=true：重置已展示（切科目/初始）；reset=false：换一批，累积排除已展示
+  const fetchRecommend = async (reset = false) => {
     if (!subject) {
       message.warning('请先选择科目');
       return;
     }
     setRecLoading(true);
     try {
-      const r = await recommendApi.recommend(subject, 10);
+      // 换一批：把当前批次并入排除集，强制后端返回未展示过的题
+      if (reset) {
+        shownRecIdsRef.current = [];
+      } else {
+        shownRecIdsRef.current = Array.from(
+          new Set([...shownRecIdsRef.current, ...recs.map((r) => r.question_id)])
+        );
+      }
+      let r = await recommendApi.recommend(subject, 10, shownRecIdsRef.current);
+      // 候选基本用尽（返回过少）→ 重置排除集重新拉取，保证换一批始终有题可推
+      if (!reset && (r.data || []).length < 3 && shownRecIdsRef.current.length > 0) {
+        shownRecIdsRef.current = [];
+        r = await recommendApi.recommend(subject, 10, []);
+      }
       setRecs(r.data || []);
       setAbility(r.meta?.ability);
       setRecAnswered([]);   // 换一批：重置已答记录，允许新批次完整展示与重复作答
@@ -157,6 +174,12 @@ const SmartPracticePage: React.FC = () => {
   useEffect(() => {
     if (tab === 'daily') fetchDaily();
   }, [tab, subject]);
+
+  // 切科目：清空碎片化推荐累积排除与旧批次，避免跨科目误排除 / 显示旧题
+  useEffect(() => {
+    shownRecIdsRef.current = [];
+    setRecs([]);
+  }, [subject]);
 
   // 打开答题弹窗：按题型初始化答案，记录作答来源
   const openAnswer = (q: QuestionItem, source: 'daily' | 'recommend') => {
@@ -309,7 +332,7 @@ const SmartPracticePage: React.FC = () => {
                         <Tag>能力 {ability}</Tag>
                       </Tooltip>
                     )}
-                    <Button icon={<ReloadOutlined />} onClick={fetchRecommend} loading={recLoading}>换一批</Button>
+                    <Button icon={<ReloadOutlined />} onClick={() => fetchRecommend(false)} loading={recLoading}>换一批</Button>
                   </Space>
                 }
               >

@@ -1572,9 +1572,13 @@ export const wrongQuestionApi = {
 
 // 推荐 / 每日推题 / 连胜（D1/D3/D2）
 export const recommendApi = {
-  recommend: async (subject: string, count?: number) => {
+  recommend: async (subject: string, count?: number, excludeShownIds?: number[]) => {
     const params = new URLSearchParams({ subject });
     if (count) params.append('count', count.toString());
+    // 换一批：传入本会话已展示的 question_id（逗号拼接），后端排除以强制换内容
+    if (excludeShownIds && excludeShownIds.length) {
+      params.append('excludeShownIds', excludeShownIds.join(','));
+    }
     const response = await api.get(`/student/activities/recommend${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },

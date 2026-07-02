@@ -90,16 +90,24 @@ router.get('/recommend', authMiddleware, async (req, res) => {
     if (req.user.role !== 'student') {
       return res.status(403).json({ success: false, message: '仅学生可使用推荐' });
     }
-    const { subject, grade, count } = req.query;
+    const { subject, grade, count, excludeShownIds } = req.query;
     if (!subject) {
       return res.status(400).json({ success: false, message: 'subject 必填' });
     }
+    // 换一批：前端把本会话已展示的 question_id 传入，后端排除以强制换内容
+    const shownIds = Array.isArray(excludeShownIds)
+      ? excludeShownIds
+      : String(excludeShownIds || '')
+          .split(',')
+          .map((s) => parseInt(s, 10))
+          .filter((n) => Number.isFinite(n));
     const QuestionRecommender = require('../services/recommend/QuestionRecommender');
     const result = await QuestionRecommender.recommend(req.user.id, {
       subject,
       grade,
       count: Math.min(parseInt(count, 10) || 10, 30),
-      includeReviews: true   // 碎片化推荐混入 SM-2 到期错题复习槽
+      includeReviews: true,          // 碎片化推荐混入 SM-2 到期错题复习槽
+      excludeShownIds: shownIds
     });
     res.json({ success: true, data: result.recommendations, meta: result.meta });
   } catch (error) {
