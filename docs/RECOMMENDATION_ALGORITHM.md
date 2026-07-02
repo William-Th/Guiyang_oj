@@ -121,6 +121,22 @@ noveltyScore = 近7天答过(draft_id ∈ recentSet) ? 0 : 1;
 ```
 > 注：`content` 返回完整内容（不再截断），`options` 一并返回，二者用于前端答题弹窗。
 
+### 3.5 错题复习槽（碎片化推荐 `includeReviews`）
+
+碎片化推荐（API 路由 `/recommend`）开启 `includeReviews` 时，先取 **~30%** 的 SM-2 到期客观题错题作为复习槽，剩余配额给打分新题：
+
+```
+碎片化 N 题 = round(N·0.30) 道到期错题 + (N − 复习数) 道打分新题
+```
+
+- 复习槽来源：`_getDueReviews`（`status='active'` 的客观题错题，按 `_spacedScore` 到期程度排序）
+- 复习题的 `draft_id` 并入 `excludeDraftIds`，**新题槽不再重复推送**
+- 合并后统一做同质去重（复习槽优先放入，新题补足至 N）
+- 复习题项标记 `factors.review = true`、`score = dueScore`（便于前端区分）
+- `meta.reviewCount` 返回实际混入的错题数
+
+> 每日推题（算法③）自行管理复习槽（35%），调用 `recommend` 时 **不** 开启 `includeReviews`（默认 false），避免复习题重复。
+
 ---
 
 ## 4. 算法③ 每日推题（DailyQuestionService）
@@ -224,7 +240,7 @@ if (isRedo) points *= redoRatio                 // 错题重做打折 (默认0.5
   - 无前缀字符串 → 用 `65+i` 推字母兜底
   > 这解决了"选项序号重复渲染"问题（数据已带 `A.` 前缀时不再补）。
 - **true_false 的 key 是 `A`/`B`**（匹配 `correct_answer` 实际存储 `"A"/"B"`），**不是** `true/false`——与正式活动页 TakeActivityPage 不同（后者用 true/false 会判错）。
-- **已作答移除**：本会话用 `answeredIds` 过滤，答对/答错都立即从题单移除（答对不再推、答错已入错题集去错题集做）。
+- **已作答移除（按来源分离）**：`dailyAnswered` 与 `recAnswered` 独立维护——每日推题作答不影响碎片化推荐列表，反之亦然；碎片化「换一批」重置 `recAnswered`，新批次可完整展示与重复作答。
 
 **API 层**：`frontend/src/services/api.ts`
 ```ts

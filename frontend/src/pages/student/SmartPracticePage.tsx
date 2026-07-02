@@ -118,8 +118,11 @@ const SmartPracticePage: React.FC = () => {
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // 本会话已作答的题目 id（答对/答错都从题单移除，避免重复作答）
-  const [answeredIds, setAnsweredIds] = useState<number[]>([]);
+  // 各题单已作答的题目 id（按来源分离：每日推题与碎片化推荐互不影响）
+  const [dailyAnswered, setDailyAnswered] = useState<number[]>([]);
+  const [recAnswered, setRecAnswered] = useState<number[]>([]);
+  // 当前作答来源，用于答完后从对应题单移除
+  const [currentSource, setCurrentSource] = useState<'daily' | 'recommend'>('daily');
 
   const fetchDaily = async () => {
     setDailyLoading(true);
@@ -143,6 +146,7 @@ const SmartPracticePage: React.FC = () => {
       const r = await recommendApi.recommend(subject, 10);
       setRecs(r.data || []);
       setAbility(r.meta?.ability);
+      setRecAnswered([]);   // 换一批：重置已答记录，允许新批次完整展示与重复作答
     } catch (e: any) {
       message.error(e.response?.data?.error || '获取推荐失败');
     } finally {
@@ -154,9 +158,10 @@ const SmartPracticePage: React.FC = () => {
     if (tab === 'daily') fetchDaily();
   }, [tab, subject]);
 
-  // 打开答题弹窗：按题型初始化答案
-  const openAnswer = (q: QuestionItem) => {
+  // 打开答题弹窗：按题型初始化答案，记录作答来源
+  const openAnswer = (q: QuestionItem, source: 'daily' | 'recommend') => {
     setCurrent(q);
+    setCurrentSource(source);
     setResult(null);
     setAnswer(q.type === 'multiple' ? [] : '');
   };
@@ -181,8 +186,9 @@ const SmartPracticePage: React.FC = () => {
       const payload = isMultiple ? answer : String(answer).trim();
       const r = await recommendApi.answerQuestion(current.question_id, payload);
       setResult(r.data);
-      // 无论对错，本会话内从题单移除（答对不再推，答错已入错题集）
-      setAnsweredIds((prev) => (prev.includes(current.question_id) ? prev : [...prev, current.question_id]));
+      // 无论对错，仅从当前作答的题单移除（每日推题与碎片化推荐互不影响）
+      const setAns = currentSource === 'daily' ? setDailyAnswered : setRecAnswered;
+      setAns((prev) => (prev.includes(current.question_id) ? prev : [...prev, current.question_id]));
       if (r.data?.correct) {
         const streakInfo = r.data.streak ? `，连胜 ${r.data.streak.current_streak}` : '';
         message.success(`回答正确！积分 +${r.data.awarded}${streakInfo}`);
@@ -204,9 +210,9 @@ const SmartPracticePage: React.FC = () => {
   };
 
   const dailyQuestions: QuestionItem[] = (dailySet?.questions || []).filter(
-    (q) => !answeredIds.includes(q.question_id)
+    (q) => !dailyAnswered.includes(q.question_id)
   );
-  const visibleRecs = recs.filter((r) => !answeredIds.includes(r.question_id));
+  const visibleRecs = recs.filter((r) => !recAnswered.includes(r.question_id));
 
   // 当前题归一化选项
   const currentType = current?.type || '';
@@ -265,7 +271,7 @@ const SmartPracticePage: React.FC = () => {
                               size="small"
                               type="primary"
                               icon={<EditOutlined />}
-                              onClick={() => openAnswer(q)}
+                              onClick={() => openAnswer(q, 'daily')}
                             >
                               作答
                             </Button>,
@@ -321,7 +327,7 @@ const SmartPracticePage: React.FC = () => {
                             size="small"
                             type="primary"
                             icon={<EditOutlined />}
-                            onClick={() => openAnswer(item)}
+                            onClick={() => openAnswer(item, 'recommend')}
                           >
                             作答
                           </Button>,

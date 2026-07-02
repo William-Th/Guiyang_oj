@@ -98,7 +98,8 @@ router.get('/recommend', authMiddleware, async (req, res) => {
     const result = await QuestionRecommender.recommend(req.user.id, {
       subject,
       grade,
-      count: Math.min(parseInt(count, 10) || 10, 30)
+      count: Math.min(parseInt(count, 10) || 10, 30),
+      includeReviews: true   // 碎片化推荐混入 SM-2 到期错题复习槽
     });
     res.json({ success: true, data: result.recommendations, meta: result.meta });
   } catch (error) {

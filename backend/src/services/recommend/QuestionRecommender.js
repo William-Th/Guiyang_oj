@@ -13,6 +13,7 @@ const W = {
 const RECENT_DAYS = 7;        // 新鲜度：近 N 天做过视为不新鲜
 const ZPD_LOW = 0.6;          // ZPD：期望正确率区间下限
 const ZPD_HIGH = 0.85;        // ZPD：期望正确率区间上限
+const REVIEW_RATIO = 0.30;    // 碎片化推荐中错题复习占比 ~30%（每日推题另管复习槽，不复用）
 
 /**
  * QuestionRecommender (算法② 碎片化学习推荐)
@@ -55,6 +56,32 @@ class QuestionRecommender {
   }
 
   /**
+   * 取 SM-2 到期的客观题错题（碎片化推荐的复习槽）
+   * 返回按到期程度排序的题目（含 content/options/type/difficulty 供前端作答）
+   */
+  static async _getDueReviews(studentId, subject, limit) {
+    const r = await query(
+      `SELECT qb.id AS question_id, qb.draft_id, wq.review_count, wq.last_wrong_at,
+              qd.content, qd.options, qd.difficulty, qd.type
+       FROM student_wrong_questions wq
+       JOIN question_bank qb ON wq.question_id = qb.id
+       JOIN question_drafts qd ON qb.draft_id = qd.id
+       WHERE wq.student_id = $1 AND wq.status = 'active'
+         AND (wq.subject = $2 OR $2 IS NULL)
+         AND qd.type IN ('single','multiple','true_false','blank')
+         AND qd.is_active = true
+       ORDER BY wq.last_wrong_at ASC
+       LIMIT $3`,
+      [studentId, subject || null, limit * 3]
+    );
+    const now = Date.now();
+    return r.rows
+      .map((row) => ({ ...row, dueScore: QuestionRecommender._spacedScore(row, now) }))
+      .sort((a, b) => b.dueScore - a.dueScore)
+      .slice(0, limit);
+  }
+
+  /**
    * ZPD 难度匹配分：用难度映射期望正确率，落在区间内最高
    */
   static _zpdScore(difficulty, ability) {
@@ -71,13 +98,15 @@ class QuestionRecommender {
   /**
    * 推荐 N 道题
    * @param {number} studentId
-   * @param {Object} opts - { subject, grade, count, excludeDraftIds }
+   * @param {Object} opts - { subject, grade, count, excludeDraftIds, includeReviews }
+   * @param {boolean} opts.includeReviews - 是否混入 SM-2 到期错题复习槽（碎片化推荐用）
    * @returns {Promise<Object>} { recommendations, meta }
    */
   static async recommend(studentId, opts = {}) {
     const subject = opts.subject;
     const count = opts.count || 10;
     const excludeDraftIds = opts.excludeDraftIds || [];
+    const includeReviews = opts.includeReviews === true;
     const now = Date.now();
 
     // 学生年级
@@ -162,6 +191,31 @@ class QuestionRecommender {
       [grade, subject]
     );
 
+    // 错题复习槽（仅碎片化推荐 includeReviews 时启用；每日推题自行管理复习槽，不复用）
+    let reviewItems = [];
+    if (includeReviews) {
+      const reviewCount = Math.round(count * REVIEW_RATIO);
+      if (reviewCount > 0) {
+        const dueReviews = await QuestionRecommender._getDueReviews(studentId, subject, reviewCount);
+        reviewItems = dueReviews.map((r) => ({
+          question_id: r.question_id,
+          draft_id: r.draft_id,
+          difficulty: r.difficulty,
+          content: r.content ? String(r.content) : '',
+          options: r.options || null,
+          type: r.type,
+          score: Number((r.dueScore || 0).toFixed(4)),
+          factors: { review: true, dueScore: Number((r.dueScore || 0).toFixed(3)) }
+        }));
+        // 新题排除这些错题 draft，避免重复推送
+        reviewItems.forEach((rv) => {
+          if (rv.draft_id != null && !excludeDraftIds.includes(rv.draft_id)) {
+            excludeDraftIds.push(rv.draft_id);
+          }
+        });
+      }
+    }
+
     // 打分
     const scored = [];
     for (const q of candRows.rows) {
@@ -210,24 +264,36 @@ class QuestionRecommender {
     // 同质去重：贪心选，与已选同质则降权跳过
     const selected = [];
     const selectedDrafts = [];
+    const pickItem = async (item) => {
+      if (selected.length >= count) return false;
+      if (selectedDrafts.length > 0 && item.draft_id != null) {
+        const homo = await QuestionSimilarityService.checkHomogeneity(
+          item.draft_id, selectedDrafts
+        );
+        if (homo.level !== 'none') return false;  // 同质跳过
+      }
+      selected.push(item);
+      if (item.draft_id != null) selectedDrafts.push(item.draft_id);
+      return true;
+    };
+    // 1) 错题复习槽优先放入（含同质去重）
+    for (const rv of reviewItems) {
+      await pickItem(rv);
+    }
+    // 2) 新题补充至 count
     for (const cand of topPool) {
       if (selected.length >= count) break;
-      if (selectedDrafts.length > 0) {
-        const homo = await QuestionSimilarityService.checkHomogeneity(
-          cand.draft_id, selectedDrafts
-        );
-        if (homo.level !== 'none') continue;  // 同质跳过
-      }
-      selected.push(cand);
-      selectedDrafts.push(cand.draft_id);
+      await pickItem(cand);
     }
 
+    const reviewReturned = selected.filter((s) => s.factors && s.factors.review).length;
     return {
       recommendations: selected,
       meta: {
         subject, grade, ability: Number(ability.toFixed(3)),
         candidateCount: candRows.rows.length,
-        returned: selected.length
+        returned: selected.length,
+        reviewCount: reviewReturned
       }
     };
   }
