@@ -15,6 +15,8 @@ import {
   Modal,
   Input,
   Alert,
+  Radio,
+  Checkbox,
 } from 'antd';
 import { ReloadOutlined, FireOutlined, ThunderboltOutlined, EditOutlined } from '@ant-design/icons';
 import { recommendApi } from '../../services/api';
@@ -78,6 +80,27 @@ const TYPE_LABEL: Record<string, string> = {
 // 不支持在线自动判题的题型
 const UNSUPPORTED_TYPES = ['code', 'essay', 'matching'];
 
+/**
+ * 选项归一化：把题库中三种 options 格式统一成 { key, text }
+ *  - single/true_false: ["A. xxx", "B. yyy"]            → 提取字母 key + 去前缀 text
+ *  - multiple:          [{label:"A",content:"xxx"}]      → label 作 key，content 作 text
+ *  - 兜底：无前缀字符串 / 非对象                           → 用 65+i 推字母
+ */
+interface OptItem { key: string; text: string }
+function normalizeOptions(options: any): OptItem[] {
+  if (!Array.isArray(options)) return [];
+  return options.map((opt: any, i: number) => {
+    if (opt && typeof opt === 'object' && !Array.isArray(opt)) {
+      const key = String(opt.label || String.fromCharCode(65 + i)).toUpperCase();
+      return { key, text: opt.content != null ? String(opt.content) : '' };
+    }
+    const t = String(opt ?? '');
+    const m = t.match(/^\s*([A-Za-z])[.、):：]\s*(.*)$/);
+    if (m) return { key: m[1].toUpperCase(), text: m[2] };
+    return { key: String.fromCharCode(65 + i), text: t };
+  });
+}
+
 const SmartPracticePage: React.FC = () => {
   const [tab, setTab] = useState('daily');
   const [subject, setSubject] = useState<string | undefined>();
@@ -91,9 +114,12 @@ const SmartPracticePage: React.FC = () => {
 
   // 答题弹窗状态
   const [current, setCurrent] = useState<QuestionItem | null>(null);
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState<any>(null);
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // 本会话已作答的题目 id（答对/答错都从题单移除，避免重复作答）
+  const [answeredIds, setAnsweredIds] = useState<number[]>([]);
 
   const fetchDaily = async () => {
     setDailyLoading(true);
@@ -128,37 +154,38 @@ const SmartPracticePage: React.FC = () => {
     if (tab === 'daily') fetchDaily();
   }, [tab, subject]);
 
-  // 打开答题弹窗
+  // 打开答题弹窗：按题型初始化答案
   const openAnswer = (q: QuestionItem) => {
     setCurrent(q);
-    setAnswer('');
     setResult(null);
+    setAnswer(q.type === 'multiple' ? [] : '');
   };
 
   const closeAnswer = () => {
     setCurrent(null);
-    setAnswer('');
+    setAnswer(null);
     setResult(null);
   };
 
   // 提交答案
   const handleSubmit = async () => {
     if (!current) return;
-    if (!answer.trim()) {
-      message.warning('请输入答案');
+    const isMultiple = current.type === 'multiple';
+    const empty = isMultiple ? !answer || answer.length === 0 : !String(answer ?? '').trim();
+    if (empty) {
+      message.warning('请选择/输入答案');
       return;
     }
     setSubmitting(true);
     try {
-      const r = await recommendApi.answerQuestion(current.question_id, answer.trim());
+      const payload = isMultiple ? answer : String(answer).trim();
+      const r = await recommendApi.answerQuestion(current.question_id, payload);
       setResult(r.data);
+      // 无论对错，本会话内从题单移除（答对不再推，答错已入错题集）
+      setAnsweredIds((prev) => (prev.includes(current.question_id) ? prev : [...prev, current.question_id]));
       if (r.data?.correct) {
         const streakInfo = r.data.streak ? `，连胜 ${r.data.streak.current_streak}` : '';
         message.success(`回答正确！积分 +${r.data.awarded}${streakInfo}`);
-        // 碎片化推荐：答对后刷新（已答对的题不再推送）
-        if (tab === 'recommend') {
-          setTimeout(() => fetchRecommend(), 800);
-        }
       } else {
         message.error('回答错误，已加入错题集');
       }
@@ -169,14 +196,22 @@ const SmartPracticePage: React.FC = () => {
     }
   };
 
-  // 渲染题目内容摘要
+  // 题目内容摘要
   const renderContent = (c?: string, max = 80) => {
     if (!c) return '（无内容）';
     const plain = c.replace(/<[^>]+>/g, '');
     return plain.length > max ? plain.slice(0, max) + '...' : plain;
   };
 
-  const dailyQuestions: QuestionItem[] = dailySet?.questions || [];
+  const dailyQuestions: QuestionItem[] = (dailySet?.questions || []).filter(
+    (q) => !answeredIds.includes(q.question_id)
+  );
+  const visibleRecs = recs.filter((r) => !answeredIds.includes(r.question_id));
+
+  // 当前题归一化选项
+  const currentType = current?.type || '';
+  const currentOpts = current ? normalizeOptions(current.options) : [];
+  const unsupported = UNSUPPORTED_TYPES.includes(currentType);
 
   return (
     <div>
@@ -216,7 +251,7 @@ const SmartPracticePage: React.FC = () => {
                 ) : dailyQuestions.length ? (
                   <>
                     <Text type="secondary">
-                      今日推荐 {dailyQuestions.length} 题（{dailySet?.stat_date}），含错题复习与新题巩固
+                      剩余 {dailyQuestions.length} 题（{dailySet?.stat_date}），含错题复习与新题巩固
                     </Text>
                     <List
                       style={{ marginTop: 16 }}
@@ -274,10 +309,10 @@ const SmartPracticePage: React.FC = () => {
               >
                 {recLoading ? (
                   <Spin />
-                ) : recs.length ? (
+                ) : visibleRecs.length ? (
                   <List
                     bordered
-                    dataSource={recs}
+                    dataSource={visibleRecs}
                     renderItem={(item, idx) => (
                       <List.Item
                         actions={[
@@ -333,13 +368,16 @@ const SmartPracticePage: React.FC = () => {
         open={!!current}
         onCancel={closeAnswer}
         width={620}
+        destroyOnClose
         footer={
           result
             ? [<Button key="ok" type="primary" onClick={closeAnswer}>知道了</Button>]
-            : [
-                <Button key="cancel" onClick={closeAnswer}>取消</Button>,
-                <Button key="submit" type="primary" loading={submitting} onClick={handleSubmit}>提交</Button>,
-              ]
+            : unsupported
+              ? [<Button key="close" onClick={closeAnswer}>关闭</Button>]
+              : [
+                  <Button key="cancel" onClick={closeAnswer}>取消</Button>,
+                  <Button key="submit" type="primary" loading={submitting} onClick={handleSubmit}>提交</Button>,
+                ]
         }
       >
         {current && (
@@ -353,63 +391,95 @@ const SmartPracticePage: React.FC = () => {
               {current.type && <Tag>{TYPE_LABEL[current.type] || current.type}</Tag>}
             </Space>
             <div
-              style={{ marginBottom: 12, lineHeight: 1.8 }}
+              style={{ marginBottom: 16, fontSize: 16, lineHeight: 1.8 }}
               dangerouslySetInnerHTML={{ __html: current.content || '' }}
             />
-            {/* 选项展示：兼容对象 / 数组两种结构 */}
-            {current.options && typeof current.options === 'object' && !Array.isArray(current.options) &&
-              Object.entries(current.options).map(([k, v]) => (
-                <div key={k} style={{ marginLeft: 16, lineHeight: 1.8 }}>{k}. {String(v)}</div>
-              ))}
-            {Array.isArray(current.options) &&
-              current.options.map((v, i) => (
-                <div key={i} style={{ marginLeft: 16, lineHeight: 1.8 }}>
-                  {String.fromCharCode(65 + i)}. {String(v)}
-                </div>
-              ))}
 
-            {/* 不支持自动判题的题型提示 */}
-            {current.type && UNSUPPORTED_TYPES.includes(current.type) && !result && (
+            {/* 结果已出：禁用交互，仅展示对错与解析 */}
+            {result ? (
               <Alert
-                style={{ marginTop: 12 }}
+                type={result.correct ? 'success' : 'error'}
+                showIcon
+                message={result.correct ? `回答正确！积分 +${result.awarded}` : '回答错误，已加入错题集'}
+                description={
+                  !result.correct && (
+                    <div>
+                      <div>正确答案：<Text strong>{String(result.correct_answer ?? '')}</Text></div>
+                      {result.explanation && (
+                        <div style={{ marginTop: 4 }}>解析：{result.explanation}</div>
+                      )}
+                    </div>
+                  )
+                }
+              />
+            ) : unsupported ? (
+              <Alert
                 type="warning"
                 showIcon
                 message="该题型（编程/问答/匹配）暂不支持在线自动判题"
               />
-            )}
+            ) : (
+              <>
+                {/* 单选 */}
+                {currentType === 'single' && (
+                  <Radio.Group
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {currentOpts.map((o) => (
+                        <Radio key={o.key} value={o.key} style={{ fontSize: 15, lineHeight: 1.8 }}>
+                          {o.key}. {o.text}
+                        </Radio>
+                      ))}
+                    </Space>
+                  </Radio.Group>
+                )}
 
-            {/* 答案输入（未提交且题型支持时显示） */}
-            {!result && !(current.type && UNSUPPORTED_TYPES.includes(current.type)) && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ marginBottom: 4 }}>请输入答案：</div>
-                <TextArea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  rows={2}
-                  placeholder="选项字母（如 A）/ 多选（如 AC）/ 判断（对/错）/ 填空答案"
-                />
-              </div>
-            )}
+                {/* 多选 */}
+                {currentType === 'multiple' && (
+                  <Checkbox.Group
+                    value={answer}
+                    onChange={(v) => setAnswer(v)}
+                    style={{ width: '100%' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {currentOpts.map((o) => (
+                        <Checkbox key={o.key} value={o.key} style={{ fontSize: 15, lineHeight: 1.8 }}>
+                          {o.key}. {o.text}
+                        </Checkbox>
+                      ))}
+                    </Space>
+                  </Checkbox.Group>
+                )}
 
-            {/* 结果展示 */}
-            {result && (
-              <div style={{ marginTop: 16 }}>
-                <Alert
-                  type={result.correct ? 'success' : 'error'}
-                  showIcon
-                  message={result.correct ? `回答正确！积分 +${result.awarded}` : '回答错误，已加入错题集'}
-                  description={
-                    !result.correct && (
-                      <div>
-                        <div>正确答案：<Text strong>{String(result.correct_answer ?? '')}</Text></div>
-                        {result.explanation && (
-                          <div style={{ marginTop: 4 }}>解析：{result.explanation}</div>
-                        )}
-                      </div>
-                    )
-                  }
-                />
-              </div>
+                {/* 判断：key 为 A/B，匹配 correct_answer 实际存储 */}
+                {currentType === 'true_false' && (
+                  <Radio.Group
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                  >
+                    <Space>
+                      {currentOpts.map((o) => (
+                        <Radio key={o.key} value={o.key} style={{ fontSize: 15 }}>
+                          {o.text}
+                        </Radio>
+                      ))}
+                    </Space>
+                  </Radio.Group>
+                )}
+
+                {/* 填空 */}
+                {currentType === 'blank' && (
+                  <TextArea
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    rows={2}
+                    placeholder="请输入答案"
+                  />
+                )}
+              </>
             )}
           </div>
         )}

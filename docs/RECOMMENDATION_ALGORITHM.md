@@ -211,10 +211,18 @@ if (isRedo) points *= redoRatio                 // 错题重做打折 (默认0.5
 **代码位置**：`frontend/src/pages/student/SmartPracticePage.tsx`
 
 - 两个 Tab（每日推题 / 碎片化推荐）共用同一答题弹窗
-- 答题输入：TextArea 手输（与错题重做一致），选项字母 / 多选 / 判断 / 填空均可
-- 选项展示兼容两种结构：对象 `{A:..., B:...}` 与数组 `["A. ...", "B. ..."]`
-- `code / essay / matching` 题型提示"不支持在线自动判题"
-- 答对：碎片化 Tab 自动刷新（已答对题从列表移除）；每日 Tab 不刷新（当天题集固定）
+- **点击选择作答**（非手输）：
+  - `single` / `true_false` → Radio
+  - `multiple` → Checkbox.Group（提交选中 key 数组，如 `["A","C"]`）
+  - `blank` → TextArea
+  - `code / essay / matching` → 提示"不支持在线自动判题"
+- **选项归一化 `normalizeOptions`**：题库 options 有三种格式，统一为 `{key, text}`：
+  - 带前缀字符串数组 `["A. 12", "B. 15"]`（single/true_false）→ 提取字母 key + 去前缀 text
+  - 对象数组 `[{label:"A",content:"Python"}]`（multiple）→ label 作 key，content 作 text
+  - 无前缀字符串 → 用 `65+i` 推字母兜底
+  > 这解决了"选项序号重复渲染"问题（数据已带 `A.` 前缀时不再补）。
+- **true_false 的 key 是 `A`/`B`**（匹配 `correct_answer` 实际存储 `"A"/"B"`），**不是** `true/false`——与正式活动页 TakeActivityPage 不同（后者用 true/false 会判错）。
+- **已作答移除**：本会话用 `answeredIds` 过滤，答对/答错都立即从题单移除（答对不再推、答错已入错题集去错题集做）。
 
 **API 层**：`frontend/src/services/api.ts`
 ```ts
