@@ -148,7 +148,7 @@ class QuestionRecommender {
     );
     const correctSet = new Set(correctRows.rows.map((r) => r.draft_id));
 
-    // 候选题目池：该年级+科目已发布、非隐藏
+    // 候选题目池：该年级+科目已发布、非隐藏，仅客观题（支持自动判题，可在线作答）
     const candRows = await query(
       `SELECT qb.id AS question_id, qb.draft_id, qd.difficulty,
               qd.knowledge_points, qd.content, qd.options, qd.type
@@ -157,6 +157,7 @@ class QuestionRecommender {
        WHERE qb.status = 'published' AND qb.is_active = true
          AND (qb.is_hidden = false OR qb.is_hidden IS NULL)
          AND qd.grade = $1 AND qd.subject = $2 AND qd.is_active = true
+         AND qd.type IN ('single','multiple','true_false','blank')
        LIMIT 500`,
       [grade, subject]
     );

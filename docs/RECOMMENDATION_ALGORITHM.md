@@ -15,7 +15,7 @@
 | 碎片化推荐 | 算法② `QuestionRecommender` | 实时计算，针对薄弱知识点推荐 N 道新题 |
 | 每日推题 | 算法③ `DailyQuestionService` | 每日 10 题 = 错题复习 + 弱项新题，当天缓存 |
 
-设计原则：**薄弱点优先**（掌握度权重最高）、难度落在最近发展区、错题间隔重复、已掌握题不再推。
+设计原则：**薄弱点优先**（掌握度权重最高）、难度落在最近发展区、错题间隔重复、已掌握题不再推、**仅推客观题**（`single/multiple/true_false/blank`，支持在线作答与自动判题，不推 `code/essay/matching`）。
 
 ---
 
@@ -96,6 +96,7 @@ noveltyScore = 近7天答过(draft_id ∈ recentSet) ? 0 : 1;
 候选池（`question_bank ⋈ question_drafts`）筛选条件：
 - `status = 'published'` 且 `is_active = true` 且 `is_hidden ≠ true`
 - `grade / subject` 匹配学生年级与所选科目
+- **仅客观题**：`type IN ('single','multiple','true_false','blank')`（不推编程/问答/匹配）
 - `LIMIT 500`
 
 **排除规则**（打分循环中 `continue`）：
@@ -138,6 +139,7 @@ noveltyScore = 近7天答过(draft_id ∈ recentSet) ? 0 : 1;
 
 - **槽1 错题复习**：取 SM-2 到期的错题（`_getDueReviews`）
   - 按 `last_wrong_at ASC` 取 `limit*3`，再用 `_spacedScore` 排序取 top `limit`
+  - 仅取客观题错题（`type IN ('single','multiple','true_false','blank')`）
 - **槽2 弱项新题**：调用 `QuestionRecommender.recommend`，`count = newCount + 5`（多取以备同质去重），`excludeDraftIds = 槽1已用的 draft`
 - **合并 + 同质去重**：贪心遍历合并集，调用 `checkHomogeneity` 去重至 `count` 道
 

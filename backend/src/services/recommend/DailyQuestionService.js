@@ -24,6 +24,7 @@ class DailyQuestionService {
        JOIN question_drafts qd ON qb.draft_id = qd.id
        WHERE wq.student_id = $1 AND wq.status = 'active'
          AND (wq.subject = $2 OR $2 IS NULL)
+         AND qd.type IN ('single','multiple','true_false','blank')
        ORDER BY wq.last_wrong_at ASC
        LIMIT $3`,
       [studentId, subject || null, limit * 3]
@@ -118,12 +119,13 @@ class DailyQuestionService {
       return row;
     }
 
-    // 附加题目详情，按 question_ids 原顺序排列
+    // 附加题目详情，按 question_ids 原顺序排列（仅客观题，防御旧缓存含非客观题）
     const det = await query(
       `SELECT qb.id AS question_id, qb.draft_id, qd.content, qd.options, qd.type, qd.difficulty
        FROM question_bank qb
        JOIN question_drafts qd ON qb.draft_id = qd.id
-       WHERE qb.id = ANY($1::int[]) AND qd.is_active = true`,
+       WHERE qb.id = ANY($1::int[]) AND qd.is_active = true
+         AND qd.type IN ('single','multiple','true_false','blank')`,
       [row.question_ids]
     );
     const map = {};
