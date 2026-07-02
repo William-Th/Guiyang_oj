@@ -101,7 +101,15 @@ const MyStatistics: React.FC = () => {
     try {
       const response = await learningStatsApi.bySubject(undefined, 60);
       if (response.success) {
-        setWeakPoints(response.data || []);
+        // PostgreSQL numeric 类型返回字符串，统一转为数字（避免 .toFixed 报错）
+        const data = (response.data || []).map((item: any) => ({
+          ...item,
+          accuracy_rate: parseFloat(item.accuracy_rate) || 0,
+          avg_score: parseFloat(item.avg_score) || 0,
+          total_questions: parseInt(item.total_questions) || 0,
+          correct_count: parseInt(item.correct_count) || 0,
+        }));
+        setWeakPoints(data);
       }
     } catch (e) {
       // 接口可能暂无数据，忽略
