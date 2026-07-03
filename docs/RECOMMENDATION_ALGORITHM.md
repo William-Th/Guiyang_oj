@@ -17,6 +17,45 @@
 
 设计原则：**薄弱点优先**（掌握度权重最高）、难度落在最近发展区、错题间隔重复、已掌握题不再推、**仅推客观题**（`single/multiple/true_false/blank`，支持在线作答与自动判题，不推 `code/essay/matching`）。
 
+### 1.1 推荐数据流总览（两条独立管线）
+
+推荐结果 = **新题槽** + **复习槽**，两条线数据源独立、互为补充：
+
+| 管线 | 数据源 | 占比 | 依赖错题？ | 选题依据 |
+|------|--------|------|-----------|----------|
+| **新题槽**（主体） | `question_bank` 候选池 | 碎片化 70%、每日 65% | 否 | 掌握度 0.35 + 难度匹配 0.25 + 新鲜度 0.15 打分 |
+| **复习槽**（温故） | `student_wrong_questions` 错题集 | 碎片化 30%、每日 35% | 是 | SM-2 到期程度 |
+
+> ⚠️ **常见误解澄清**：错题只是「复习槽」这一条线的来源，**不是整个推荐的来源**。新题槽才是主体，没有错题也能正常推荐（见下方冷启动）。
+
+**冷启动（学生没做过题）时如何推荐？**
+新题槽在零数据下靠默认值兜底，仍能推题：
+- `_getAbility` 无掌握度记录 → 能力默认 **0.5**
+- 知识点未覆盖 → 掌握度默认 **0.5**（中性）
+- 新鲜度：没做过 → **满分 1**
+- 已答对集合空 → 不排除任何题
+- 复习槽空 → 配额全部让给新题（每日 10 题全为新题）
+
+→ 退化为「**难度匹配 + 新鲜度 + 同质去重**」选题。全新学生登录选科目即可立即拿到难度适中、互不雷同的题。
+
+**随答题积累逐步精准**：
+
+| 积累的数据 | 作用管线 | 效果 |
+|-----------|----------|------|
+| `student_knowledge_stats`（知识点正确率） | 新题槽 | 薄弱知识点被优先推（mastery 因子生效） |
+| `student_wrong_questions`（错题集） | 复习槽 | SM-2 到期错题回流复习 |
+| `student_question_practice` / `answers` 答对记录 | 新题槽 | 答对的题不再重复推（correctSet 排除） |
+
+### 1.2 设计决策：卷子错题入错题集
+
+正式活动/卷子提交批量判题时，客观题答错会调用 `WrongQuestion.addIfWrong` 入错题集（`backend/src/routes/studentActivities.js` 提交接口的批量判题循环）。**决定保留**，理由：
+
+- 卷子是学生**最大量的答题场景**，也是错题的主要产生地；若只收推荐练习的错题，错题集会很稀疏。
+- 复习槽（每日 35% / 碎片化 30% 配额）的数据来源就是错题集；错题过少 → 复习槽常空 → SM-2 间隔复习无法发挥作用。
+- 已与积分、连胜、推荐复习槽打通；去掉只削弱"温故"这一环，**不影响新题推荐**。
+
+> 即：「没有错题就不能推荐」是误解；真正的影响是「复习功能需要足够多的错题才有意义」。
+
 ---
 
 ## 2. 数据模型
@@ -28,7 +67,7 @@
 | `question_drafts` | 题目内容主表：`content / options / correct_answer / explanation / type / difficulty / knowledge_points / grade / subject` |
 | `question_bank` | 发布记录：`draft_id / status / is_active / is_hidden`。一个 draft 可对应多条发布记录 |
 | `student_knowledge_stats` | 学生知识点掌握度：`(student_id, subject, knowledge_point) → accuracy_rate(0-100), total_questions` |
-| `student_wrong_questions` | 错题集：`review_count / last_wrong_at / status(active/inactive)`，供 SM-2 间隔重复 |
+| `student_wrong_questions` | 错题集：`review_count / last_wrong_at / status(active/inactive)`，供 SM-2 间隔重复。**错题来源两处**：① 卷子提交批量判题答错（`studentActivities` 提交接口）② 推荐答题答错（见 §5） |
 | `student_question_practice` | **推荐答题记录**：`(student_id, question_id) → is_correct`，用于排除已答对的题 |
 | `answers` + `student_activities` | 正式活动答题记录，同样参与"已答对排除" |
 
@@ -298,8 +337,8 @@ recommendApi.answerQuestion(questionId, answer)           // POST /student/activ
 - SM-2 间隔系数 `2.5` 可按学科调整
 - `JITTER`（0.03）打分随机扰动幅度：调大 → 换一批更多样但薄弱聚焦减弱；调小 → 更稳定但换一批变化少
 
-数据冷启动：新生无 `student_knowledge_stats` 时，`ability` 默认 0.5、未覆盖知识点默认掌握度 0.5，推荐退化为"难度匹配 + 新鲜度"。随答题积累（推荐答题 + 正式活动），掌握度数据丰富，推荐精准度提升。
+数据冷启动：详见 §1.1。新生无任何答题记录时，推荐退化为「难度匹配 + 新鲜度 + 同质去重」，仍可正常推题；随答题积累（卷子 + 推荐练习），掌握度与错题数据丰富，推荐逐步精准。
 
 ---
 
-**最后更新**：2026-07-02
+**最后更新**：2026-07-03
