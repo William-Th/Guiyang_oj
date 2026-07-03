@@ -84,6 +84,8 @@ class QuestionRecommender {
          AND (wq.subject = $2 OR $2 IS NULL)
          AND qd.type IN ('single','multiple','true_false','blank')
          AND qd.is_active = true
+         AND qb.status = 'published' AND qb.is_active = true
+         AND (qb.is_hidden = false OR qb.is_hidden IS NULL)
        ORDER BY wq.last_wrong_at ASC
        LIMIT $3`,
       [studentId, subject || null, limit * 5]
