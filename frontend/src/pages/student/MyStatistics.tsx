@@ -122,11 +122,14 @@ const MyStatistics: React.FC = () => {
       }));
       setAbilities(data);
 
-      // Extract unique subjects
-      const uniqueSubjects = Array.from(
-        new Set<string>(data.map((item: AbilityStats) => item.subject))
-      );
-      setSubjects(uniqueSubjects);
+      // 仅在加载全部科目（初始/未指定科目）时刷新科目下拉列表，
+      // 避免选定某科目后 abilities 被过滤，导致下拉只剩当前科目
+      if (!subject || subject === 'all') {
+        const uniqueSubjects = Array.from(
+          new Set<string>(data.map((item: AbilityStats) => item.subject))
+        );
+        setSubjects(uniqueSubjects);
+      }
     }
   };
 
@@ -281,20 +284,38 @@ const MyStatistics: React.FC = () => {
                     {selectedSubject === 'all' ? '全部科目' : selectedSubject} - 能力分析
                   </h3>
                   <ResponsiveContainer width="100%" height={400}>
-                    <RadarChart data={radarData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="ability" />
-                      <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                      <Radar
-                        name="正确率 (%)"
-                        dataKey="accuracy"
-                        stroke="#16a34a"
-                        fill="#16a34a"
-                        fillOpacity={0.6}
-                      />
-                      <Tooltip />
-                      <Legend />
-                    </RadarChart>
+                    {radarData.length >= 3 ? (
+                      <RadarChart data={radarData}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="ability" />
+                        <PolarRadiusAxis angle={90} domain={[0, 100]} />
+                        <Radar
+                          name="正确率 (%)"
+                          dataKey="accuracy"
+                          stroke="#16a34a"
+                          fill="#16a34a"
+                          fillOpacity={0.6}
+                        />
+                        <Tooltip />
+                        <Legend />
+                      </RadarChart>
+                    ) : (
+                      // 能力维度少于 3 个时雷达图会退化成线段，改用柱状图友好呈现
+                      <BarChart
+                        data={radarData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="ability" />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip />
+                        <Bar dataKey="accuracy" name="正确率 (%)">
+                          {radarData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={getBarColor(entry.accuracy)} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    )}
                   </ResponsiveContainer>
                   <div style={{ marginTop: 16 }}>
                     <h4>详细数据：</h4>
