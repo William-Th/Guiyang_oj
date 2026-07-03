@@ -32,7 +32,7 @@ import {
   Legend,
   Cell,
 } from 'recharts';
-import { statisticsApi, learningStatsApi } from '../../services/api';
+import { statisticsApi } from '../../services/api';
 
 // 与后端 v_student_learning_overview 视图字段保持一致
 interface LearningOverview {
@@ -71,9 +71,7 @@ const MyStatistics: React.FC = () => {
   const [overview, setOverview] = useState<LearningOverview | null>(null);
   const [abilities, setAbilities] = useState<AbilityStats[]>([]);
   const [knowledgePoints, setKnowledgePoints] = useState<KnowledgeStats[]>([]);
-  // E3 弱项知识点（按科目维度）
-  const [weakPoints, setWeakPoints] = useState<any[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedSubject, setSelectedSubject] = useState<string | undefined>(undefined);
   const [subjects, setSubjects] = useState<string[]>([]);
 
   useEffect(() => {
@@ -85,34 +83,12 @@ const MyStatistics: React.FC = () => {
       setLoading(true);
       await Promise.all([
         loadOverview(),
-        loadAbilities(),
-        loadKnowledgePoints(),
-        loadWeakPoints(),
+        loadAbilities(),      // 初始加载全部仅用于提取"科目下拉列表"，未选科目时不展示图表
       ]);
     } catch (error: any) {
       message.error('加载统计数据失败');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // E3 按科目加载薄弱知识点（正确率<60%）
-  const loadWeakPoints = async () => {
-    try {
-      const response = await learningStatsApi.bySubject(undefined, 60);
-      if (response.success) {
-        // PostgreSQL numeric 类型返回字符串，统一转为数字（避免 .toFixed 报错）
-        const data = (response.data || []).map((item: any) => ({
-          ...item,
-          accuracy_rate: parseFloat(item.accuracy_rate) || 0,
-          avg_score: parseFloat(item.avg_score) || 0,
-          total_questions: parseInt(item.total_questions) || 0,
-          correct_count: parseInt(item.correct_count) || 0,
-        }));
-        setWeakPoints(data);
-      }
-    } catch (e) {
-      // 接口可能暂无数据，忽略
     }
   };
 
@@ -171,8 +147,14 @@ const MyStatistics: React.FC = () => {
     }
   };
 
-  const handleSubjectChange = async (value: string) => {
+  const handleSubjectChange = async (value?: string) => {
     setSelectedSubject(value);
+    // 未选科目：清空图表数据，页面提示"请先选择科目"
+    if (!value) {
+      setAbilities([]);
+      setKnowledgePoints([]);
+      return;
+    }
     setLoading(true);
     try {
       await Promise.all([
@@ -183,6 +165,11 @@ const MyStatistics: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // 薄弱知识点：从已加载的真实知识点明细中筛正确率<60%（按正确率升序，最薄弱在前）
+  const weakPoints = knowledgePoints
+    .filter((k) => k.total_questions > 0 && k.accuracy_rate < 60)
+    .sort((a, b) => a.accuracy_rate - b.accuracy_rate);
 
   // Prepare radar chart data (ability stats)
   const radarData = abilities.map((item) => ({
@@ -267,10 +254,12 @@ const MyStatistics: React.FC = () => {
             <span style={{ marginRight: 8 }}>选择科目：</span>
             <Select
               style={{ width: 200 }}
+              allowClear
+              showSearch
+              placeholder="请先选择科目"
               value={selectedSubject}
               onChange={handleSubjectChange}
             >
-              <Select.Option value="all">全部科目</Select.Option>
               {subjects.map((subject) => (
                 <Select.Option key={subject} value={subject}>
                   {subject}
@@ -284,7 +273,9 @@ const MyStatistics: React.FC = () => {
         <Tabs defaultActiveKey="abilities">
           <Tabs.TabPane tab="能力雷达图" key="abilities">
             <Card>
-              {radarData.length > 0 ? (
+              {!selectedSubject ? (
+                <Empty description="请先选择科目查看能力分析" />
+              ) : radarData.length > 0 ? (
                 <>
                   <h3 style={{ textAlign: 'center', marginBottom: 24 }}>
                     {selectedSubject === 'all' ? '全部科目' : selectedSubject} - 能力分析
@@ -335,7 +326,9 @@ const MyStatistics: React.FC = () => {
 
           <Tabs.TabPane tab="知识点掌握度" key="knowledge">
             <Card>
-              {barData.length > 0 ? (
+              {!selectedSubject ? (
+                <Empty description="请先选择科目查看知识点掌握" />
+              ) : barData.length > 0 ? (
                 <>
                   <h3 style={{ textAlign: 'center', marginBottom: 24 }}>
                     {selectedSubject === 'all' ? '全部科目' : selectedSubject} - 知识点掌握情况
@@ -407,16 +400,17 @@ const MyStatistics: React.FC = () => {
               )}
             </Card>
 
-            {/* E3 薄弱知识点（按科目维度，正确率<60%） */}
-            <Card title="⚠ 薄弱知识点（建议加强）" style={{ marginTop: 16 }}>
+            {/* 薄弱知识点：基于真实知识点明细（正确率<60%），仅选定科目后展示 */}
+            {selectedSubject && (
+            <Card title={`⚠ 薄弱知识点（正确率<60%，共 ${weakPoints.length} 个）`} style={{ marginTop: 16 }}>
               {weakPoints.length > 0 ? (
                 <Row gutter={[16, 16]}>
-                  {weakPoints.map((wp: any, index) => (
+                  {weakPoints.map((wp, index) => (
                     <Col key={index} xs={24} sm={12} md={8}>
                       <Card size="small" style={{ borderLeft: '3px solid #ff4d4f' }}>
-                        <div><strong>{wp.subject}</strong> · {wp.knowledge_point}</div>
+                        <div><strong>{wp.knowledge_point}</strong></div>
                         <div style={{ fontSize: 12, color: '#666' }}>
-                          正确率：{(wp.accuracy_rate || 0).toFixed(1)}%（{wp.correct_count || 0}/{wp.total_questions || 0}）
+                          正确率：{wp.accuracy_rate.toFixed(1)}%（{wp.correct_count}/{wp.total_questions}）
                         </div>
                       </Card>
                     </Col>
@@ -426,6 +420,7 @@ const MyStatistics: React.FC = () => {
                 <Empty description="暂无薄弱知识点，继续保持！" />
               )}
             </Card>
+            )}
           </Tabs.TabPane>
         </Tabs>
       </Spin>
