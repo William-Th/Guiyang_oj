@@ -8,6 +8,9 @@ import {
   Space,
   Modal,
   Input,
+  Radio,
+  Checkbox,
+  Alert,
   message,
   Empty,
   Spin,
@@ -43,13 +46,47 @@ const difficultyMap: Record<string, { text: string; color: string }> = {
   hard: { text: '困难', color: 'red' },
 };
 
+const TYPE_LABEL: Record<string, string> = {
+  single: '单选题',
+  multiple: '多选题',
+  true_false: '判断题',
+  blank: '填空题',
+  code: '编程题',
+  essay: '问答题',
+  matching: '匹配题',
+};
+
+// 不支持在线自动判题的题型（与后端 judgeObjective 保持一致）
+const UNSUPPORTED_TYPES = ['code', 'essay', 'matching'];
+
+/**
+ * 选项归一化：把题库中多种 options 格式统一成 { key, text }
+ *  - 字符串数组 ["A. xxx", "B. yyy"]        → 提取字母 key + 去前缀 text（避免字母重复）
+ *  - 对象数组 [{label:"A",content:"xxx"}]   → label 作 key，content 作 text
+ *  - 兜底：无前缀字符串                       → 用 65+i 推字母
+ */
+interface OptItem { key: string; text: string }
+function normalizeOptions(options: any): OptItem[] {
+  if (!Array.isArray(options)) return [];
+  return options.map((opt: any, i: number) => {
+    if (opt && typeof opt === 'object' && !Array.isArray(opt)) {
+      const key = String(opt.label || String.fromCharCode(65 + i)).toUpperCase();
+      return { key, text: opt.content != null ? String(opt.content) : '' };
+    }
+    const t = String(opt ?? '');
+    const m = t.match(/^\s*([A-Za-z])[.、):：]\s*(.*)$/);
+    if (m) return { key: m[1].toUpperCase(), text: m[2] };
+    return { key: String.fromCharCode(65 + i), text: t };
+  });
+}
+
 const WrongQuestionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState<WrongQuestion[]>([]);
   const [stats, setStats] = useState<{ total: number; bySubject: any[] }>({ total: 0, bySubject: [] });
   const [subjectFilter, setSubjectFilter] = useState<string | undefined>();
   const [redoing, setRedoing] = useState<WrongQuestion | null>(null);
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState<any>('');
   const [submitting, setSubmitting] = useState(false);
 
   const fetchData = async () => {
@@ -72,14 +109,28 @@ const WrongQuestionsPage: React.FC = () => {
     fetchData();
   }, [subjectFilter]);
 
+  // 打开重做弹窗：按题型初始化答案（多选为数组，其余为字符串）
+  const openRedo = (q: WrongQuestion) => {
+    setRedoing(q);
+    setAnswer(q.type === 'multiple' ? [] : '');
+  };
+
   const handleRedo = async () => {
     if (!redoing) return;
+    const isMultiple = redoing.type === 'multiple';
+    const empty = isMultiple ? !answer || answer.length === 0 : !String(answer ?? '').trim();
+    if (empty) {
+      message.warning('请选择/输入答案');
+      return;
+    }
     setSubmitting(true);
     try {
-      const r = await wrongQuestionApi.redo(redoing.question_id, answer);
+      const payload = isMultiple ? answer : String(answer).trim();
+      const r = await wrongQuestionApi.redo(redoing.question_id, payload);
       if (r.data?.correct) {
         const streakInfo = r.data.streak ? `，连胜 ${r.data.streak.current_streak}` : '';
-        message.success(`回答正确！积分 +${r.data.awarded}${streakInfo}`);
+        const awardInfo = r.data.awarded ? `，积分 +${r.data.awarded}` : '';
+        message.success(`回答正确！已掌握并移出错题集${awardInfo}${streakInfo}`);
         setRedoing(null);
         setAnswer('');
         fetchData();
@@ -148,7 +199,7 @@ const WrongQuestionsPage: React.FC = () => {
       width: 230,
       render: (_: any, r: WrongQuestion) => (
         <Space>
-          <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={() => { setRedoing(r); setAnswer(''); }}>
+          <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(r)}>
             重做
           </Button>
           <Button size="small" icon={<CheckOutlined />} onClick={() => handleMastered(r)}>掌握</Button>
@@ -203,26 +254,67 @@ const WrongQuestionsPage: React.FC = () => {
         okText="提交"
         cancelText="取消"
       >
-        {redoing && (
-          <div>
-            <div style={{ marginBottom: 8 }} dangerouslySetInnerHTML={{ __html: redoing.content }} />
-            {redoing.options && typeof redoing.options === 'object' && !Array.isArray(redoing.options) &&
-              Object.entries(redoing.options).map(([k, v]) => (
-                <div key={k} style={{ marginLeft: 16 }}>{k}. {String(v)}</div>
-              ))}
-            {Array.isArray(redoing.options) &&
-              redoing.options.map((v, i) => (
-                <div key={i} style={{ marginLeft: 16 }}>{String.fromCharCode(65 + i)}. {String(v)}</div>
-              ))}
-            <div style={{ marginTop: 12, marginBottom: 4 }}>请输入答案：</div>
-            <TextArea
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              rows={2}
-              placeholder="选项字母（如 A）/ 多选（如 AC）/ 填空答案"
-            />
-          </div>
-        )}
+        {redoing && (() => {
+          const opts = normalizeOptions(redoing.options);
+          const unsupported = UNSUPPORTED_TYPES.includes(redoing.type);
+          return (
+            <div>
+              <Space style={{ marginBottom: 8 }}>
+                {redoing.difficulty && (
+                  <Tag color={difficultyMap[redoing.difficulty]?.color}>
+                    {difficultyMap[redoing.difficulty]?.text}
+                  </Tag>
+                )}
+                {redoing.type && <Tag>{TYPE_LABEL[redoing.type] || redoing.type}</Tag>}
+              </Space>
+              <div
+                style={{ marginBottom: 16, fontSize: 16, lineHeight: 1.8 }}
+                dangerouslySetInnerHTML={{ __html: redoing.content || '' }}
+              />
+              {unsupported ? (
+                <Alert type="warning" showIcon message="该题型（编程/问答/匹配）暂不支持在线自动判题" />
+              ) : redoing.type === 'multiple' ? (
+                <Checkbox.Group
+                  value={answer}
+                  onChange={(v) => setAnswer(v)}
+                  style={{ width: '100%' }}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    {opts.map((o) => (
+                      <Checkbox key={o.key} value={o.key} style={{ fontSize: 15, lineHeight: 1.8 }}>
+                        {o.key}. {o.text}
+                      </Checkbox>
+                    ))}
+                  </Space>
+                </Checkbox.Group>
+              ) : redoing.type === 'blank' ? (
+                <>
+                  <div style={{ marginTop: 4, marginBottom: 4 }}>请输入答案：</div>
+                  <TextArea
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    rows={2}
+                    placeholder="若有多个空，用逗号分隔"
+                  />
+                </>
+              ) : (
+                <Radio.Group
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    {opts.map((o) => (
+                      <Radio key={o.key} value={o.key} style={{ fontSize: 15, lineHeight: 1.8 }}>
+                        {o.key}. {o.text}
+                      </Radio>
+                    ))}
+                  </Space>
+                </Radio.Group>
+              )}
+            </div>
+          );
+        })()}
       </Modal>
     </div>
   );

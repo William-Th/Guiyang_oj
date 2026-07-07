@@ -182,6 +182,8 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
         awarded = award.awarded;
       }
       await WrongQuestion.incReviewCount(req.user.id, parseInt(questionId, 10));
+      // 答对即掌握：自动移出错题集（后续若再次答错，addIfWrong 会重新置为 active）
+      await WrongQuestion.markMastered(req.user.id, parseInt(questionId, 10));
     }
 
     // D2 连胜：无论对错都更新（错则归零）
@@ -200,7 +202,9 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
         streak,
         correct_answer: correct ? undefined : question.correct_answer
       },
-      message: correct ? `回答正确，获得积分 ${awarded}` : '回答错误，再接再厉'
+      message: correct
+        ? `回答正确，已掌握并移出错题集${awarded ? `，获得积分 ${awarded}` : ''}`
+        : '回答错误，再接再厉'
     });
   } catch (error) {
     console.error('Error redo wrong question:', error);
