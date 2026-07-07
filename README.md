@@ -1,6 +1,6 @@
 # 贵阳市小学生测评服务平台
 
-一个为贵阳市小学生设计的在线测评服务平台，支持多科目在线考试、自动评分、成绩查询和证书生成等功能。
+一个为贵阳市小学生设计的在线测评服务平台，支持多科目在线考试与练习、自动评分、智能推荐、错题集、学习统计、成绩查询与证书生成等功能，覆盖学生、教师、管理员、家长多端角色。
 
 ## 🚀 快速开始
 
@@ -29,11 +29,13 @@ docker-compose logs -f
 ```
 
 服务将在以下端口启动：
-- 前端：http://localhost:3000
-- 后端API：http://localhost:3001
-- PostgreSQL：localhost:5432
+- 前端：http://localhost:3100
+- 后端 API：http://localhost:3003
+- Nginx 统一入口：http://localhost:8080
+- 判题服务：http://localhost:3002
+- PostgreSQL：localhost:5433（容器内 5432）
 - Redis：localhost:6379
-- pgAdmin：http://localhost:5050
+- pgAdmin：http://localhost:5051（容器内 80）
 
 ### 本地开发环境
 
@@ -70,47 +72,47 @@ npm run dev
 
 ```
 guiyang_oj/
-├── backend/                 # 后端服务
+├── backend/                 # 后端 API 服务（Express.js）
 │   ├── src/
-│   │   ├── routes/         # API路由
+│   │   ├── routes/         # API 路由（auth、activities、questionDrafts、statistics、judge 等）
 │   │   ├── controllers/    # 控制器
 │   │   ├── models/         # 数据模型
-│   │   ├── middleware/     # 中间件
-│   │   ├── services/       # 业务逻辑
+│   │   ├── services/       # 业务逻辑（autoGrading、recommend 推荐算法等）
+│   │   ├── middleware/     # 中间件（auth、permissions）
+│   │   ├── config/         # 配置
+│   │   ├── database/       # 数据库初始化
 │   │   ├── utils/          # 工具函数
-│   │   └── server.js       # 服务器入口
+│   │   └── server.js       # 服务入口
 │   ├── package.json
 │   └── Dockerfile
-├── frontend/                # 前端应用
+├── frontend/                # 前端应用（React 18 + TypeScript + Ant Design）
 │   ├── src/
-│   │   ├── components/     # React组件
-│   │   ├── pages/          # 页面组件
-│   │   ├── services/       # API服务
-│   │   ├── store/          # Redux状态管理
-│   │   ├── utils/          # 工具函数
+│   │   ├── components/     # React 组件
+│   │   ├── pages/          # 页面组件（student / teacher / admin 等）
+│   │   ├── services/       # API 服务层
+│   │   ├── store/          # Redux 状态管理
 │   │   └── App.tsx         # 应用入口
 │   ├── package.json
 │   └── Dockerfile
-├── database/                # 数据库相关
-│   ├── schema.sql          # 数据库架构
-│   ├── seed.sql            # 种子数据
-│   └── import_*.js         # 数据导入脚本
-├── documents/               # 📋 核心项目文档
-│   ├── README.md           # 文档索引
-│   ├── API_Document.md     # API接口文档
-│   ├── updated_system_design_0707_v2.md  # 系统设计文档
-│   └── 功能需求文档.md     # 功能需求文档
-├── report/                  # 📊 技术报告文档
-│   ├── README.md           # 报告索引
-│   ├── 功能实现状态报告.md  # 实现进度
-│   ├── data-restructuring-report.md  # 数据重构报告
-│   └── ...                 # 其他技术报告
-├── docker/                  # Docker配置
-├── nginx/                   # Nginx配置
-├── docker-compose.yml       # Docker Compose配置
-├── README.md               # 项目说明
-├── PROGRESS.md             # 开发进度
-└── MVP_Plan.md             # MVP计划
+├── judge-service/           # 独立判题微服务（编程题自动判题 + Docker 沙箱）
+│   ├── src/                # 判题逻辑
+│   └── Dockerfile
+├── database/                # 数据库 schema、种子数据与迁移脚本
+│   ├── schema.sql
+│   ├── seed.sql
+│   └── migrations/         # 增量迁移脚本
+├── config/                  # 全局配置（学校、区县、能力、知识点、角色层级等 JSON）
+├── tests/                   # 测试套件
+│   ├── e2e/                # Playwright E2E 测试
+│   ├── api/                # API / 业务流程测试
+│   └── docs/               # 测试规范文档
+├── docs/                    # 📋 项目文档（开发状态、API、推荐算法、需求等）
+├── documents/               # 判题服务设计文档（JUDGE_SERVICE_DESIGN.md）
+├── buget/                   # 预算与部署配置记录
+├── nginx/                   # Nginx 反向代理配置
+├── docker-compose.yml       # Docker Compose 编排
+├── CLAUDE.md                # Claude Code 使用指南
+└── README.md                # 项目说明（本文档）
 
 ```
 
@@ -149,34 +151,55 @@ guiyang_oj/
 - **认证**: JWT
 - **验证**: express-validator
 
+### 判题服务
+- **运行时**: Node.js（独立微服务）
+- **能力**: 编程题自动判题，支持测试用例管理
+
 ### 基础设施
-- **容器化**: Docker
+- **容器化**: Docker + Docker Compose
 - **反向代理**: Nginx
 - **数据库管理**: pgAdmin
+- **测试**: Playwright（E2E）+ Jest（API/单元）
 
 ## 📊 功能特性
 
+> 以下功能反映截至 2026 年 7 月的最新迭代进度：✅ 为已有功能，🆕 为近期新增。
+
 ### 学生端
-- ✅ 手机号登录
-- ✅ 在线考试
-- ✅ 自动计时
-- ✅ 成绩查询
-- ✅ 证书下载
-- ✅ 考试历史
+- ✅ 手机号登录、在线测评/练习、自动计时、自动交卷
+- ✅ 成绩查询、考试/练习历史、证书下载
+- 🆕 智能推荐：基于能力维度与薄弱知识点的个性化推题（仅推客观题，自动排除已掌握题目）
+- 🆕 碎片化推荐：短时练习，混入错题复习槽，换一批不再雷同
+- 🆕 每日推题：每日任务驱动，自动过滤隐藏/未发布题目
+- 🆕 错题集：错题来源管理、错题复习
+- 🆕 学习统计：能力维度雷达图/柱状图（维度 < 3 时自动降级柱状图）、知识点掌握度、薄弱知识点明细
+- 🆕 智能练习在线作答：点击选择式答题弹窗
+- 🆕 积分商店、连胜（streak）激励
+- ✅ 题目插图展示
 
 ### 教师端
-- ✅ 题库管理
-- ✅ 考试发布
-- ✅ 成绩统计
-- ✅ 学生管理
-- ✅ 批量导入
+- ✅ 题库管理（草稿 / 审核 / 发布全流程）、批量导入
+- 🆕 题库治理：配额管理（按 ID/用户名/姓名检索）、纠错、同质化检测、统计
+- 🆕 试卷生成与 PDF 导出
+- 🆕 教学班管理（学生增删、年级筛选）
+- 🆕 数据分析面板（能力维度统计，无数据时降级查询）
+- ✅ 成绩统计、教师评卷
 
 ### 管理端
-- ✅ 用户管理
-- ✅ 学校管理
-- ✅ 数据统计
-- ✅ 系统配置
-- ✅ 审计日志
+- ✅ 用户管理（含家长角色）、学校管理
+- 🆕 题库治理菜单、内容工作流（提级 / 隐藏 / 发布审核）
+- ✅ 数据统计与可视化、系统配置、审计日志
+
+### 家长端
+- 🆕 选择孩子、查看学情（家长端后续集成到小程序）
+
+### 判题服务
+- 🆕 独立判题微服务，支持编程题自动判题与测试用例管理
+
+### 通用
+- ✅ 薄荷品牌设计规范（全前端主题重构）
+- ✅ 响应式适配
+- ✅ 多层级角色权限体系（system_admin → student，共 8 级）
 
 ## 🔧 常用命令
 
@@ -216,44 +239,48 @@ docker exec guiyang_oj_postgres pg_dump -U postgres guiyang_oj > backup.sql
 
 ### 核心文档
 - **[README.md](./README.md)** - 项目总体说明（本文档）
-- **[DEVELOPMENT_STATUS.md](./DEVELOPMENT_STATUS.md)** - 🔥 功能开发状态追踪
-- **[PROGRESS.md](./PROGRESS.md)** - 开发进度追踪
-- **[MVP_Plan.md](./MVP_Plan.md)** - MVP开发计划
-- **[API_Document.md](./API_Document.md)** - 完整API接口文档
-- **[CLAUDE.md](./CLAUDE.md)** - Claude Code使用指南
-- **[DEMO_GUIDE.md](./DEMO_GUIDE.md)** - 演示指南
+- **[CLAUDE.md](./CLAUDE.md)** - Claude Code 使用指南
+- **[开发状态追踪](./docs/DEVELOPMENT_STATUS.md)** - 🔥 功能开发状态
+- **[API 接口文档](./docs/API_Document.md)** - 完整 API 接口文档
+- **[推荐算法文档](./docs/RECOMMENDATION_ALGORITHM.md)** - 智能练习推荐算法设计
+- **[演示指南](./docs/DEMO_GUIDE.md)** - 演示操作指南
+- **[开发进度（归档）](./docs/archive/PROGRESS.md)** - 历史开发进度
 
-### 技术报告
-所有技术报告和实现文档已整理到 **[report/](./report/)** 文件夹：
-- **[功能需求文档](./report/功能需求文档.md)** - 完整的功能需求说明
-- **[功能实现状态报告](./report/功能实现状态报告.md)** - 功能实现进度
-- **[题库管理系统报告](./report/question-bank-implementation-report.md)** - 题库系统实现详情
-- **[前端实现报告](./report/frontend-implementation-report.md)** - 前端开发详情
-- **[问题修复汇总](./report/fix-summary.md)** - 常见问题解决方案
+### 需求与设计文档
+- **[功能需求](./docs/FEATURE_REQUIREMENTS.md)** - 功能需求说明
+- **[题库重构](./docs/QUESTION_BANK_REDESIGN.md)** - 题库系统设计
+- **[教学班需求](./docs/TEACHING_CLASS_REQUIREMENTS.md)** - 教学班设计
+- **[数据可视化需求](./docs/DATA_VISUALIZATION_REQUIREMENTS.md)** - 学习统计设计
+- **[判题服务设计](./documents/JUDGE_SERVICE_DESIGN.md)** - judge-service 设计文档
 
-👉 查看完整报告列表：**[report/README.md](./report/README.md)**
+👉 完整文档列表见 **[docs/README.md](./docs/README.md)**
 
 ## 🚦 API文档
 
-详细的API文档请查看 **[API_Document.md](./API_Document.md)**
+详细的API文档请查看 **[API 接口文档](./docs/API_Document.md)**
 
-主要API端点：
+主要 API 路由模块：
 
-### 认证
-- `POST /api/auth/login` - 用户登录
-- `POST /api/auth/register` - 用户注册
-- `POST /api/auth/logout` - 用户登出
-
-### 考试
-- `GET /api/exams` - 获取考试列表
-- `GET /api/exams/:id` - 获取考试详情
-- `POST /api/exams/:id/start` - 开始考试
-- `POST /api/exams/:id/submit` - 提交答案
-
-### 成绩
-- `GET /api/results/student/:id` - 获取学生成绩
-- `GET /api/results/exam/:id` - 获取考试成绩
-- `GET /api/results/exam/:id/statistics` - 获取统计数据
+| 模块 | 路径 | 说明 |
+|------|------|------|
+| 认证 | `/api/auth` | 登录、登出、刷新 token |
+| 用户 | `/api/users` | 用户管理（含家长角色） |
+| 管理员 | `/api/admin` | 管理员管理、题库治理、工作流 |
+| 活动 | `/api/activities` | 测评/练习活动系统 |
+| 学生活动 | `/api/student/activities` | 学生答题、智能练习 |
+| 教师评卷 | `/api/teacher/grading` | 教师评卷系统 |
+| 题库 | `/api/question-bank` | 题库 CRUD |
+| 题目草稿 | `/api/question-drafts` | 题目草稿管理 |
+| 题目审核 | `/api/question-review` | 题目审核流程 |
+| 智能推荐 | `/api/student/activities/recommend` | 碎片化推荐 / 每日推题 / 复习 |
+| 成绩 | `/api/results` | 成绩查询与统计 |
+| 学习统计 | `/api/statistics` | 数据统计与可视化 |
+| 证书 | `/api/certificates` | 证书生成与下载 |
+| 积分/成就 | `/api/points`、`/api/achievements` | 积分商店、成就系统 |
+| 每日任务 | `/api/daily-tasks` | 日常任务系统 |
+| 教学班 | `/api/teaching-classes` | 教学班管理 |
+| 判题 | `/api/judge`、`/api/testcases` | 编程题判题与测试用例 |
+| 通知 | `/api/notifications` | 通知系统 |
 
 ## 🐛 故障排除
 
@@ -319,7 +346,7 @@ docker exec guiyang_oj_postgres pg_dump -U postgres guiyang_oj > backup.sql
 - **重要步骤：** 后端代码修改后必须重新构建Docker镜像才能生效
 - 重新构建后端：`docker-compose up --build -d backend`
 - 等待服务启动完成（约10-30秒）
-- 验证服务正常运行：`curl http://localhost:3001/health`
+- 验证服务正常运行：`curl http://localhost:3003/health`
 - 检查日志确认无错误：`docker-compose logs backend`
 
 #### 3️⃣ API测试
@@ -354,7 +381,7 @@ docker exec guiyang_oj_postgres pg_dump -U postgres guiyang_oj > backup.sql
 - 重新构建前端：`docker-compose up --build -d frontend`
 - 重新构建后端：`docker-compose up --build -d backend`
 - 等待服务启动完成（约10-30秒）
-- 验证服务正常运行：`curl http://localhost:3000` 或 `curl http://localhost:3001/health`
+- 验证服务正常运行：`curl http://localhost:3100` 或 `curl http://localhost:3003/health`
 
 #### 5️⃣ 前端E2E测试
 - 编写Playwright端到端测试用例（`tests/e2e/`）
@@ -370,14 +397,14 @@ docker exec guiyang_oj_postgres pg_dump -U postgres guiyang_oj > backup.sql
 
 #### 6️⃣ 最终文档整理
 - 确认所有阶段的文档都已更新完成
-- 更新 **[DEVELOPMENT_STATUS.md](./DEVELOPMENT_STATUS.md)** 标记功能完成状态
+- 更新 **[DEVELOPMENT_STATUS.md](./docs/DEVELOPMENT_STATUS.md)** 标记功能完成状态
 - 更新项目进度文档（如需要）
 - 记录已知问题和注意事项
-- 整理技术决策和实现要点到 **[report/](./report/)** 文件夹（如有重要技术点）
+- 整理技术决策和实现要点到 **[docs/](./docs/)** 文件夹（如有重要技术点）
 
 ### 开发状态追踪
 
-所有功能的开发状态应记录在 **[DEVELOPMENT_STATUS.md](./DEVELOPMENT_STATUS.md)** 文件中。
+所有功能的开发状态应记录在 **[DEVELOPMENT_STATUS.md](./docs/DEVELOPMENT_STATUS.md)** 文件中。
 
 每个功能包含以下状态：
 - 🟦 **数据库** - 已完成/进行中/未开始
@@ -470,7 +497,7 @@ npm run test:e2e  # 运行测试
 
 # 6. 最终文档整理
 # 📝 更新 DEVELOPMENT_STATUS.md，标记各阶段完成状态
-# 📝 如有重要技术决策，整理到 report/ 文件夹
+# 📝 如有重要技术决策，整理到 docs/ 文件夹
 ```
 
 ## 📄 许可证
@@ -491,4 +518,4 @@ npm run test:e2e  # 运行测试
 
 ---
 
-*最后更新：2024年*
+*最后更新：2026 年 7 月*
