@@ -35,7 +35,7 @@ class StudentPoints {
    * @returns {Promise<Array>}
    */
   static async getTransactionHistory(studentId, filters = {}) {
-    let query = `
+    let sql = `
       SELECT
         transaction_id,
         points_change,
@@ -56,32 +56,115 @@ class StudentPoints {
     let paramCount = 2;
 
     if (filters.transactionType) {
-      query += ` AND transaction_type = $${paramCount}`;
+      sql += ` AND transaction_type = $${paramCount}`;
       params.push(filters.transactionType);
       paramCount++;
     }
 
+    // earn/spend：按积分变动正负过滤（获得 > 0 / 消费 < 0）
+    if (filters.earnSpend === 'earn') {
+      sql += ` AND points_change > 0`;
+    } else if (filters.earnSpend === 'spend') {
+      sql += ` AND points_change < 0`;
+    }
+
     if (filters.startDate) {
-      query += ` AND created_at >= $${paramCount}`;
+      sql += ` AND created_at >= $${paramCount}`;
       params.push(filters.startDate);
       paramCount++;
     }
 
     if (filters.endDate) {
-      query += ` AND created_at <= $${paramCount}`;
+      sql += ` AND created_at <= $${paramCount}`;
       params.push(filters.endDate);
       paramCount++;
     }
 
-    query += ' ORDER BY created_at DESC';
+    sql += ' ORDER BY created_at DESC';
 
     if (filters.limit) {
-      query += ` LIMIT $${paramCount}`;
+      sql += ` LIMIT $${paramCount}`;
       params.push(filters.limit);
+      paramCount++;
     }
 
-    const result = await pool.query(query, params);
+    if (filters.offset) {
+      sql += ` OFFSET $${paramCount}`;
+      params.push(filters.offset);
+      paramCount++;
+    }
+
+    const result = await pool.query(sql, params);
     return result.rows;
+  }
+
+  /**
+   * 统计交易记录总数（与 getTransactionHistory 同过滤条件，用于分页）
+   */
+  static async countTransactionHistory(studentId, filters = {}) {
+    let sql = `SELECT COUNT(*)::int AS total FROM points_transactions WHERE student_id = $1`;
+    const params = [studentId];
+    let paramCount = 2;
+
+    if (filters.transactionType) {
+      sql += ` AND transaction_type = $${paramCount}`;
+      params.push(filters.transactionType);
+      paramCount++;
+    }
+    if (filters.earnSpend === 'earn') {
+      sql += ` AND points_change > 0`;
+    } else if (filters.earnSpend === 'spend') {
+      sql += ` AND points_change < 0`;
+    }
+    if (filters.startDate) {
+      sql += ` AND created_at >= $${paramCount}`;
+      params.push(filters.startDate);
+      paramCount++;
+    }
+    if (filters.endDate) {
+      sql += ` AND created_at <= $${paramCount}`;
+      params.push(filters.endDate);
+      paramCount++;
+    }
+
+    const result = await pool.query(sql, params);
+    return result.rows[0]?.total || 0;
+  }
+
+  /**
+   * 积分汇总（供交易记录顶部卡片）：今日/本周获得、累计获得/消耗
+   * 累计获得/消耗直接从 points_transactions 流水汇总，确保与交易记录列表完全一致
+   * （student_points.total_points/spent_points 为 seed 历史值，与实际流水不符，故不采用）
+   */
+  static async getSummary(studentId) {
+    const [aggRes, earnedTodayRes, earnedWeekRes] = await Promise.all([
+      pool.query(
+        `SELECT
+           COALESCE(SUM(points_change) FILTER (WHERE points_change > 0), 0)::int AS total_earned,
+           COALESCE(SUM(-points_change) FILTER (WHERE points_change < 0), 0)::int AS total_spent
+         FROM points_transactions WHERE student_id = $1`,
+        [studentId]
+      ),
+      pool.query(
+        `SELECT COALESCE(SUM(points_change), 0)::int AS v
+         FROM points_transactions
+         WHERE student_id = $1 AND points_change > 0 AND created_at >= CURRENT_DATE`,
+        [studentId]
+      ),
+      pool.query(
+        `SELECT COALESCE(SUM(points_change), 0)::int AS v
+         FROM points_transactions
+         WHERE student_id = $1 AND points_change > 0
+           AND created_at >= date_trunc('week', CURRENT_DATE)`,
+        [studentId]
+      )
+    ]);
+    return {
+      todayEarned: earnedTodayRes.rows[0]?.v || 0,
+      weekEarned: earnedWeekRes.rows[0]?.v || 0,
+      totalEarned: aggRes.rows[0]?.total_earned || 0,
+      totalSpent: aggRes.rows[0]?.total_spent || 0
+    };
   }
 
   /**

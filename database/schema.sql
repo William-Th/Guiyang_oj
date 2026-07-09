@@ -1766,7 +1766,7 @@ CREATE TABLE public.points_transactions (
     expires_at timestamp without time zone,
     is_expired boolean DEFAULT false,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_transaction_type CHECK (((transaction_type)::text = ANY ((ARRAY['achievement'::character varying, 'daily_task'::character varying, 'activity'::character varying, 'redemption'::character varying, 'manual'::character varying, 'teacher_reward'::character varying, 'expired'::character varying])::text[])))
+    CONSTRAINT check_transaction_type CHECK (((transaction_type)::text = ANY ((ARRAY['achievement'::character varying, 'daily_task'::character varying, 'activity'::character varying, 'redemption'::character varying, 'manual'::character varying, 'teacher_reward'::character varying, 'expired'::character varying, 'practice'::character varying, 'wrong_redo'::character varying, 'streak'::character varying, 'shop_purchase'::character varying])::text[])))
 );
 
 
@@ -1788,7 +1788,7 @@ COMMENT ON COLUMN public.points_transactions.points_change IS '积分变动：�
 -- Name: COLUMN points_transactions.transaction_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.points_transactions.transaction_type IS '交易类型：achievement(成就)/daily_task(日常任务)/redemption(商城兑换)/manual(手动调整)';
+COMMENT ON COLUMN public.points_transactions.transaction_type IS '交易类型：获得类 achievement(成就)/practice(答题)/wrong_redo(错题重做)/streak(连胜)/daily_task(日常任务)/activity(活动)/teacher_reward(教师奖励)/manual(手动调整)；消耗类 redemption(兑换)/shop_purchase(商城消费)/manual；过期 expired';
 
 
 --

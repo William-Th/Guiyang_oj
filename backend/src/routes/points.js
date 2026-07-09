@@ -68,7 +68,7 @@ router.get('/account/:studentId', authMiddleware, async (req, res) => {
 router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { transactionType, startDate, endDate, limit } = req.query;
+    const { transactionType, type, startDate, endDate, limit, offset } = req.query;
     const inputId = parseInt(studentId);
 
     // 查询student记录（支持user_id或student_id）
@@ -99,24 +99,73 @@ router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
 
     const filters = {};
     if (transactionType) filters.transactionType = transactionType;
+    if (type === 'earn' || type === 'spend') filters.earnSpend = type;
     if (startDate) filters.startDate = startDate;
     if (endDate) filters.endDate = endDate;
     if (limit) filters.limit = parseInt(limit);
+    if (offset) filters.offset = parseInt(offset);
 
-    const transactions = await StudentPoints.getTransactionHistory(
-      actualStudentId,
-      filters
-    );
+    const [transactions, total] = await Promise.all([
+      StudentPoints.getTransactionHistory(actualStudentId, filters),
+      StudentPoints.countTransactionHistory(actualStudentId, filters)
+    ]);
 
     res.json({
       success: true,
-      data: transactions
+      data: transactions,
+      total
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 积分汇总（今日/本周获得、累计获得/消耗）— 供交易记录顶部卡片
+ * GET /api/points/summary/:studentId
+ */
+router.get('/summary/:studentId', authMiddleware, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const inputId = parseInt(studentId);
+
+    const { pool } = require('../database/connection');
+    const studentQuery = await pool.query(
+      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
+      [inputId]
+    );
+
+    if (studentQuery.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    const student = studentQuery.rows[0];
+    if (req.user.role === 'student' && req.user.id !== student.user_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+
+    const summary = await StudentPoints.getSummary(student.id);
+
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    console.error('Error fetching points summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch summary',
       error: error.message
     });
   }

@@ -1194,6 +1194,12 @@ export const pointsApi = {
     const response = await api.get(`/points/leaderboard${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
+
+  // Get points summary (today/week earned, total earned/spent)
+  getPointsSummary: async (studentId: number) => {
+    const response = await api.get(`/points/summary/${studentId}`);
+    return response.data;
+  },
 };
 
 // ============================================================================

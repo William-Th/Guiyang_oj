@@ -507,7 +507,7 @@ class DailyTask {
           source_type, source_id, description, balance_after
         )
         SELECT
-          $1, $2, 'earn', 'daily_task', $3, $4,
+          $1, $2, 'daily_task', 'daily_task', $3, $4,
           (SELECT current_points FROM student_points WHERE student_id = $1)`,
         [
           studentId,

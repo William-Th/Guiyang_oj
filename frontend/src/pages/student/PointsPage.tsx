@@ -22,6 +22,10 @@ import {
   GiftOutlined,
   ClockCircleOutlined,
   FireOutlined,
+  CheckCircleOutlined,
+  ReloadOutlined,
+  CheckSquareOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { pointsApi } from '../../services/api';
 import { recommendApi } from '../../services/api';
@@ -42,14 +46,21 @@ interface PointsAccount {
 interface PointsTransaction {
   transaction_id: number;
   student_id: number;
-  transaction_type: string; // achievement, daily_task, activity, redemption, manual
+  transaction_type: string; // practice/wrong_redo/streak/achievement/daily_task/shop_purchase/redemption/manual/...
   points_change: number;
-  points_amount?: number; // alias for points_change
   source_type: string | null;
   source_id?: number;
   description: string;
-  transaction_date?: string;
+  balance_before?: number | null;
+  balance_after?: number | null;
   created_at: string;
+}
+
+interface PointsSummary {
+  todayEarned: number;
+  weekEarned: number;
+  totalEarned: number;
+  totalSpent: number;
 }
 
 interface LeaderboardEntry {
@@ -71,6 +82,7 @@ const PointsPage: React.FC = () => {
   const [transactionType, setTransactionType] = useState<'all' | 'earn' | 'spend'>('all');
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [streak, setStreak] = useState(0);
+  const [summary, setSummary] = useState<PointsSummary>({ todayEarned: 0, weekEarned: 0, totalEarned: 0, totalSpent: 0 });
 
   // 从localStorage获取当前登录用户的ID
   const userStr = localStorage.getItem('user');
@@ -133,6 +145,16 @@ const PointsPage: React.FC = () => {
         // 排行榜加载失败不影响主要功能
         console.warn('Failed to load leaderboard:', error);
       }
+
+      // 加载积分汇总（今日/本周获得、累计获得/消耗）
+      try {
+        const summaryRes = await pointsApi.getPointsSummary(currentUserId);
+        if (summaryRes.success) {
+          setSummary(summaryRes.data);
+        }
+      } catch (error) {
+        console.warn('Failed to load points summary:', error);
+      }
     } catch (error: any) {
       console.error('Failed to load points data:', error);
       message.error(error.response?.data?.message || '加载积分数据失败');
@@ -141,17 +163,21 @@ const PointsPage: React.FC = () => {
     }
   };
 
-  // 获取来源类型显示信息
-  const getSourceTypeInfo = (sourceType: string) => {
-    const sourceMap: Record<string, { color: string; label: string }> = {
-      achievement: { color: 'gold', label: '成就奖励' },
-      activity_complete: { color: 'blue', label: '活动完成' },
-      daily_login: { color: 'green', label: '每日登录' },
-      manual_adjust: { color: 'purple', label: '手动调整' },
-      system_reward: { color: 'cyan', label: '系统奖励' },
-      redemption: { color: 'red', label: '兑换消费' },
+  // 获取交易类型显示信息（图标 + 颜色 + 中文标签）
+  const getTypeInfo = (type: string): { color: string; label: string; icon: React.ReactNode } => {
+    const map: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
+      practice: { color: 'green', label: '答题', icon: <CheckCircleOutlined /> },
+      wrong_redo: { color: 'green', label: '错题重做', icon: <ReloadOutlined /> },
+      streak: { color: 'orange', label: '连胜', icon: <FireOutlined /> },
+      achievement: { color: 'gold', label: '成就', icon: <TrophyOutlined /> },
+      daily_task: { color: 'blue', label: '任务', icon: <CheckSquareOutlined /> },
+      activity: { color: 'blue', label: '活动', icon: <TrophyOutlined /> },
+      shop_purchase: { color: 'red', label: '兑换', icon: <GiftOutlined /> },
+      redemption: { color: 'red', label: '兑换', icon: <GiftOutlined /> },
+      teacher_reward: { color: 'cyan', label: '奖励', icon: <StarOutlined /> },
+      manual: { color: 'purple', label: '调整', icon: <EditOutlined /> },
     };
-    return sourceMap[sourceType] || { color: 'default', label: sourceType };
+    return map[type] || { color: 'default', label: type, icon: null };
   };
 
   // 交易记录表格列定义
@@ -160,10 +186,10 @@ const PointsPage: React.FC = () => {
       title: '时间',
       dataIndex: 'created_at',
       key: 'created_at',
-      width: 180,
+      width: 170,
       render: (date: string) => (
         <Space>
-          <ClockCircleOutlined />
+          <ClockCircleOutlined style={{ color: '#8c8c8c' }} />
           <Text>{date ? new Date(date).toLocaleString('zh-CN') : '-'}</Text>
         </Space>
       ),
@@ -172,29 +198,14 @@ const PointsPage: React.FC = () => {
       title: '类型',
       dataIndex: 'transaction_type',
       key: 'transaction_type',
-      width: 100,
+      width: 110,
       render: (type: string) => {
-        const config: Record<string, { color: string; label: string }> = {
-          achievement: { color: 'gold', label: '成就' },
-          daily_task: { color: 'green', label: '任务' },
-          activity: { color: 'blue', label: '活动' },
-          redemption: { color: 'red', label: '兑换' },
-          manual: { color: 'purple', label: '调整' },
-          teacher_reward: { color: 'cyan', label: '奖励' },
-        };
-        const info = config[type] || { color: 'default', label: type };
-        return <Tag color={info.color}>{info.label}</Tag>;
-      },
-    },
-    {
-      title: '来源',
-      dataIndex: 'source_type',
-      key: 'source_type',
-      width: 120,
-      render: (sourceType: string | null) => {
-        if (!sourceType) return <Text type="secondary">—</Text>;
-        const info = getSourceTypeInfo(sourceType);
-        return <Tag color={info.color}>{info.label}</Tag>;
+        const info = getTypeInfo(type);
+        return (
+          <Tag color={info.color} icon={info.icon}>
+            {info.label}
+          </Tag>
+        );
       },
     },
     {
@@ -207,22 +218,25 @@ const PointsPage: React.FC = () => {
       title: '积分变动',
       dataIndex: 'points_change',
       key: 'points_change',
-      width: 120,
+      width: 110,
       align: 'right',
       render: (change: number) => {
         const isEarn = change > 0;
         return (
-          <Text
-            strong
-            style={{
-              color: isEarn ? '#52c41a' : '#ff4d4f',
-              fontSize: 16,
-            }}
-          >
-            {isEarn ? '+' : ''}{change}
+          <Text strong style={{ color: isEarn ? '#52c41a' : '#ff4d4f', fontSize: 15 }}>
+            {isEarn ? <RiseOutlined /> : <FallOutlined />} {isEarn ? '+' : ''}{change}
           </Text>
         );
       },
+    },
+    {
+      title: '余额',
+      dataIndex: 'balance_after',
+      key: 'balance_after',
+      width: 90,
+      align: 'right',
+      render: (v: number | null | undefined) =>
+        v != null ? <Text type="secondary">{v}</Text> : <Text type="secondary">—</Text>,
     },
   ];
 
@@ -269,7 +283,7 @@ const PointsPage: React.FC = () => {
     },
   ];
 
-  if (loading) {
+  if (loading && !pointsAccount) {
     return (
       <div style={{ textAlign: 'center', padding: '100px 0' }}>
         <Spin size="large" />
@@ -283,46 +297,67 @@ const PointsPage: React.FC = () => {
         <StarOutlined /> 我的积分
       </Title>
 
-      {/* 积分统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card>
+      {/* 当前积分（突出展示） + 连胜 */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row align="middle" justify="space-between">
+          <Col>
             <Statistic
-              title="当前积分"
+              title="当前可用积分"
               value={pointsAccount?.current_points || 0}
               prefix={<StarOutlined />}
-              valueStyle={{ color: '#16a34a', fontSize: 32 }}
+              valueStyle={{ color: '#16a34a', fontSize: 40 }}
+            />
+          </Col>
+          <Col>
+            <div style={{ textAlign: 'right' }}>
+              <Text type="secondary">当前连胜</Text>
+              <div style={{ fontSize: 24, color: '#fa8c16', fontWeight: 600, marginTop: 4 }}>
+                <FireOutlined /> {streak} 题
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* 积分汇总卡片：今日 / 本周 / 累计获得 / 累计消耗 */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={12} sm={6}>
+          <Card>
+            <Statistic
+              title="今日获得"
+              value={summary.todayEarned}
+              prefix={<RiseOutlined />}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={8}>
+        <Col xs={12} sm={6}>
+          <Card>
+            <Statistic
+              title="本周获得"
+              value={summary.weekEarned}
+              prefix={<RiseOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6}>
           <Card>
             <Statistic
               title="累计获得"
-              value={pointsAccount?.total_points || 0}
-              prefix={<RiseOutlined />}
-              valueStyle={{ color: '#52c41a', fontSize: 32 }}
+              value={summary.totalEarned}
+              prefix={<TrophyOutlined />}
+              valueStyle={{ color: '#fa8c16' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={8}>
+        <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="累计消费"
-              value={pointsAccount?.spent_points || 0}
+              title="累计消耗"
+              value={summary.totalSpent}
               prefix={<FallOutlined />}
-              valueStyle={{ color: '#ff4d4f', fontSize: 32 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="当前连胜"
-              value={streak}
-              suffix="题"
-              prefix={<FireOutlined />}
-              valueStyle={{ color: '#fa8c16', fontSize: 32 }}
+              valueStyle={{ color: '#ff4d4f' }}
             />
           </Card>
         </Col>
@@ -353,6 +388,7 @@ const PointsPage: React.FC = () => {
                 columns={transactionColumns}
                 dataSource={transactions}
                 rowKey="transaction_id"
+                loading={loading}
                 pagination={{
                   ...pagination,
                   onChange: (page) => setPagination({ ...pagination, current: page }),
