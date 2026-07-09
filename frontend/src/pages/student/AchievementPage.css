@@ -12,25 +12,41 @@
 }
 
 .achievement-card.earned {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .achievement-card.locked {
   background-color: #fafafa;
-  filter: grayscale(50%);
+  filter: grayscale(60%);
+}
+
+/* 已获得卡片按稀有度发光，越稀有越显眼 */
+.achievement-card.earned.rarity-legendary {
+  box-shadow: 0 0 0 2px rgba(250, 140, 22, 0.35), 0 6px 18px rgba(250, 140, 22, 0.4);
+  background: linear-gradient(135deg, #fff7e6 0%, #ffffff 65%);
+}
+
+.achievement-card.earned.rarity-epic {
+  box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.3), 0 5px 16px rgba(114, 46, 209, 0.32);
+  background: linear-gradient(135deg, #f9f0ff 0%, #ffffff 65%);
+}
+
+.achievement-card.earned.rarity-rare {
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.3), 0 4px 14px rgba(22, 163, 74, 0.28);
+  background: linear-gradient(135deg, #f6ffed 0%, #ffffff 65%);
 }
 
 .achievement-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .achievement-header {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px 0;
-  min-height: 100px;
+  padding: 4px 0;
+  min-height: 40px;
   position: relative;
 }
 
@@ -46,7 +62,7 @@
 }
 
 .achievement-body {
-  padding: 0 16px 16px;
+  padding: 0 8px 8px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -77,11 +93,11 @@
   }
 
   .achievement-header {
-    padding: 12px 0;
-    min-height: 80px;
+    padding: 4px 0;
+    min-height: 40px;
   }
 
   .achievement-icon {
-    font-size: 36px !important;
+    font-size: 22px !important;
   }
 }

@@ -31,6 +31,14 @@ import './AchievementPage.css';
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
+// 稀有度排序权重：数值越大越稀有，排序时越靠前（传说 > 史诗 > 稀有 > 普通）
+const RARITY_ORDER: Record<string, number> = {
+  legendary: 4,
+  epic: 3,
+  rare: 2,
+  common: 1,
+};
+
 interface Achievement {
   achievement_id: number;
   achievement_code: string;
@@ -200,14 +208,23 @@ const AchievementPage: React.FC = () => {
     return earned?.awarded_count || 0;
   };
 
+  // 成就排序：已获得排前面、未获得排后面；同组内按稀有度从高到低（传说→普通）
+  const sortAchievements = (list: Achievement[]) =>
+    [...list].sort((a, b) => {
+      const aEarned = isAchievementEarned(a.achievement_id);
+      const bEarned = isAchievementEarned(b.achievement_id);
+      if (aEarned !== bEarned) return aEarned ? -1 : 1;
+      return (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+    });
+
   // 获取成就进度
   const getAchievementProgress = (achievementId: number) => {
     return achievementProgress.find(p => p.achievement_id === achievementId);
   };
 
-  // 筛选成就列表
+  // 筛选成就列表（已获得在前、未获得在后，同组按稀有度从高到低排序）
   const getFilteredAchievements = () => {
-    return allAchievements.filter(achievement => {
+    const filtered = allAchievements.filter(achievement => {
       if (selectedCategory !== 'all' && achievement.category !== selectedCategory) {
         return false;
       }
@@ -216,6 +233,7 @@ const AchievementPage: React.FC = () => {
       }
       return true;
     });
+    return sortAchievements(filtered);
   };
 
   // 渲染成就卡片
@@ -223,15 +241,12 @@ const AchievementPage: React.FC = () => {
     const rarityInfo = getRarityInfo(achievement.rarity);
     const categoryInfo = getCategoryInfo(achievement.category);
     const count = getAchievementCount(achievement.achievement_id);
-    const studentAchievement = studentAchievements.find(
-      a => a.achievement_id === achievement.achievement_id
-    );
     const progress = getAchievementProgress(achievement.achievement_id);
 
     return (
       <Card
         key={achievement.achievement_id}
-        className={`achievement-card ${earned ? 'earned' : 'locked'}`}
+        className={`achievement-card ${earned ? 'earned' : 'locked'} rarity-${achievement.rarity}`}
         hoverable
         style={{
           opacity: earned ? 1 : 0.6,
@@ -243,7 +258,7 @@ const AchievementPage: React.FC = () => {
         }}
       >
         <div className="achievement-header">
-          <div className="achievement-icon" style={{ fontSize: 48, color: rarityInfo.color }}>
+          <div className="achievement-icon" style={{ fontSize: 26, color: rarityInfo.color }}>
             {earned ? rarityInfo.icon : <LockOutlined />}
           </div>
           {earned && (
@@ -261,8 +276,8 @@ const AchievementPage: React.FC = () => {
             </Title>
 
             <Paragraph
-              ellipsis={{ rows: 2 }}
-              style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c' }}
+              ellipsis={{ rows: 1 }}
+              style={{ marginBottom: 4, fontSize: 12, color: '#8c8c8c' }}
             >
               {achievement.achievement_desc}
             </Paragraph>
@@ -276,8 +291,8 @@ const AchievementPage: React.FC = () => {
             </Space>
             {/* 进度条显示（未获得的成就） */}
             {!earned && progress && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div style={{ marginTop: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <Text style={{ fontSize: 12, color: '#8c8c8c' }}>进度</Text>
                   <Text style={{ fontSize: 12, color: '#16a34a' }}>
                     {progress.current_value}/{progress.target_value}
@@ -295,7 +310,7 @@ const AchievementPage: React.FC = () => {
               </div>
             )}
 
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 4 }}>
               <Space>
                 <Text strong style={{ color: '#fa8c16' }}>
                   +{achievement.points_reward} 积分
@@ -307,12 +322,6 @@ const AchievementPage: React.FC = () => {
                 )}
               </Space>
             </div>
-
-            {earned && studentAchievement && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                获得时间: {new Date(studentAchievement.awarded_at).toLocaleDateString()}
-              </Text>
-            )}
           </Space>
         </div>
       </Card>
@@ -326,8 +335,8 @@ const AchievementPage: React.FC = () => {
     totalPoints: studentAchievements.reduce((sum, a) => sum + a.points_reward * a.awarded_count, 0),
   };
 
-  const earnedAchievements = allAchievements.filter(a => isAchievementEarned(a.achievement_id));
-  const lockedAchievements = allAchievements.filter(a => !isAchievementEarned(a.achievement_id));
+  const earnedAchievements = sortAchievements(allAchievements.filter(a => isAchievementEarned(a.achievement_id)));
+  const lockedAchievements = sortAchievements(allAchievements.filter(a => !isAchievementEarned(a.achievement_id)));
 
   if (loading) {
     return (
@@ -426,7 +435,7 @@ const AchievementPage: React.FC = () => {
           {getFilteredAchievements().length > 0 ? (
             <Row gutter={[16, 16]}>
               {getFilteredAchievements().map(achievement =>
-                <Col xs={24} sm={12} md={8} lg={6} key={achievement.achievement_id}>
+                <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
                   {renderAchievementCard(
                     achievement,
                     isAchievementEarned(achievement.achievement_id)
@@ -443,7 +452,7 @@ const AchievementPage: React.FC = () => {
           {earnedAchievements.length > 0 ? (
             <Row gutter={[16, 16]}>
               {earnedAchievements.map(achievement =>
-                <Col xs={24} sm={12} md={8} lg={6} key={achievement.achievement_id}>
+                <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
                   {renderAchievementCard(achievement, true)}
                 </Col>
               )}
@@ -457,7 +466,7 @@ const AchievementPage: React.FC = () => {
           {lockedAchievements.length > 0 ? (
             <Row gutter={[16, 16]}>
               {lockedAchievements.map(achievement =>
-                <Col xs={24} sm={12} md={8} lg={6} key={achievement.achievement_id}>
+                <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
                   {renderAchievementCard(achievement, false)}
                 </Col>
               )}
