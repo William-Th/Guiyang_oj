@@ -118,20 +118,23 @@ guiyang_oj/
 
 ## 🔑 默认登录账号
 
-所有演示账号的密码统一为：`password123`
+所有演示账号的密码统一为：`password123`。**学生用手机号登录，其余角色用用户名登录。**
 
-### 学生账号
-- 手机号：`13800138003`
-- 真实姓名：张小明
-- 密码：`password123`
+| 身份 | 角色 | 用户名 | 姓名 | 手机号 |
+|------|------|--------|------|--------|
+| 系统管理员 / 市级管理员 | municipal_admin | `admin` | 系统管理员 | 13800138000 |
+| 市直属学校管理员 | municipal_school_admin | `municipal_school_admin` | 市直属学校总管理员 | 13800138030 |
+| 基地学校管理员 | base_school_admin | `base_school_admin` | 信息技术基地校管理员 | 13800138040 |
+| 区级管理员 | district_admin | `yunyan_admin` | 云岩区管理员 | 13800138010 |
+| 校级管理员 | school_admin | `school_admin_01` | 第一小学管理员 | 13800138020 |
+| 教师 | teacher | `teacher_by_ps_math` | 陈刚（白云一小·数学） | 13800138101 |
+| 学生 | student | `13800138003` | 张小明 | 13800138003 |
+| 家长 | parent | `parent01` | 测试家长 | 13900000001 |
 
-### 教师账号
-- 用户名：`teacher01`
-- 密码：`password123`
-
-### 管理员账号
-- 用户名：`admin`
-- 密码：`password123`
+> - 当前最高管理员仅 `admin` 一个（role=municipal_admin），同时承担系统管理员与市级管理员职能。
+> - 区级管理员共 6 个：`yunyan_admin` / `nanming_admin` / `guanshanhu_admin` / `baiyun_admin` / `huaxi_admin` / `wudang_admin`。
+> - 教师共 18 个，命名规则 `teacher_<区缩写>_<学段>_<科目>`（如 `teacher_by_ps_math` = 白云·小学·数学，`teacher_nm_ms_it` = 南明·初中·信息科技）。
+> - 学生共 10 个，用户名即手机号（13800138003 ~ 13800138009 等）。
 
 ## 🛠 技术栈
 
