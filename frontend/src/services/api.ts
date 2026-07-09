@@ -1552,8 +1552,10 @@ export const wrongQuestionApi = {
     const response = await api.get(`/wrong-questions${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
-  getStats: async () => {
-    const response = await api.get('/wrong-questions/stats');
+  getStats: async (subject?: string) => {
+    const params = new URLSearchParams();
+    if (subject) params.append('subject', subject);
+    const response = await api.get(`/wrong-questions/stats${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
   redo: async (questionId: number, answer: string) => {

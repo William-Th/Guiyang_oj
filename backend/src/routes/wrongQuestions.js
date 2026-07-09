@@ -72,25 +72,48 @@ router.get('/', authMiddleware, studentOnly, async (req, res) => {
 });
 
 /**
- * 错题统计（按科目分组）
+ * 错题统计（按科目分组 + 按状态分组）
  * GET /api/wrong-questions/stats
+ * 返回 total/bySubject（活跃错题，供科目筛选）/ byStatus（各状态计数，供 Tab badge）
  */
 router.get('/stats', authMiddleware, studentOnly, async (req, res) => {
   try {
     const { query } = require('../database/connection');
-    const result = await query(
-      `SELECT subject, COUNT(*) AS count
-       FROM student_wrong_questions
-       WHERE student_id = $1 AND status = 'active'
-       GROUP BY subject ORDER BY count DESC`,
-      [req.user.id]
-    );
-    const totalCount = result.rows.reduce((s, r) => s + parseInt(r.count, 10), 0);
+    const { subject } = req.query;
+    // 选了科目时，byStatus/bySubject 只统计该科目（Tab badge 随科目筛选变化）
+    const params = [req.user.id];
+    let subjectCond = '';
+    if (subject) {
+      params.push(subject);
+      subjectCond = ` AND subject = $${params.length}`;
+    }
+    const [subjectResult, statusResult] = await Promise.all([
+      query(
+        `SELECT subject, COUNT(*) AS count
+         FROM student_wrong_questions
+         WHERE student_id = $1${subjectCond} AND status = 'active'
+         GROUP BY subject ORDER BY count DESC`,
+        params
+      ),
+      query(
+        `SELECT status, COUNT(*) AS count
+         FROM student_wrong_questions
+         WHERE student_id = $1${subjectCond}
+         GROUP BY status`,
+        params
+      )
+    ]);
+    const totalCount = subjectResult.rows.reduce((s, r) => s + parseInt(r.count, 10), 0);
+    const byStatus = { active: 0, mastered: 0, removed: 0 };
+    statusResult.rows.forEach((r) => {
+      byStatus[r.status] = parseInt(r.count, 10);
+    });
     res.json({
       success: true,
       data: {
         total: totalCount,
-        bySubject: result.rows
+        bySubject: subjectResult.rows,
+        byStatus
       }
     });
   } catch (error) {
@@ -153,8 +176,9 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
     }
 
     const wq = await WrongQuestion.findByStudentAndQuestion(req.user.id, parseInt(questionId, 10));
-    if (!wq || wq.status !== 'active') {
-      return res.status(400).json({ success: false, error: '该题不在你的错题集中' });
+    // active 可重做；mastered 允许重新练习（答错由 addIfWrong 重置为 active，回到活跃 Tab）；removed 拒绝
+    if (!wq || wq.status === 'removed') {
+      return res.status(400).json({ success: false, error: '该题已移除，无法重做' });
     }
 
     const correct = judgeObjective(question.type, answer, question.correct_answer);
@@ -184,6 +208,21 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
       await WrongQuestion.incReviewCount(req.user.id, parseInt(questionId, 10));
       // 答对即掌握：自动移出错题集（后续若再次答错，addIfWrong 会重新置为 active）
       await WrongQuestion.markMastered(req.user.id, parseInt(questionId, 10));
+    } else {
+      // 答错：重新激活错题（error_count+1，status→active），已掌握的题回到活跃 Tab
+      try {
+        await WrongQuestion.addIfWrong({
+          studentId: req.user.id,
+          questionId: parseInt(questionId, 10),
+          draftId: wq.draft_id || null,
+          subject: wq.subject || null,
+          knowledgePoints: wq.knowledge_points || [],
+          difficulty: wq.difficulty || null,
+          sourceActivityId: null
+        });
+      } catch (e) {
+        console.error('reactivate wrong question failed:', e.message);
+      }
     }
 
     // D2 连胜：无论对错都更新（错则归零）

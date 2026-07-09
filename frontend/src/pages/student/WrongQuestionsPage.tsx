@@ -15,8 +15,7 @@ import {
   Empty,
   Spin,
   Typography,
-  Statistic,
-  Row,
+  Tabs,
 } from 'antd';
 import { ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
 import { wrongQuestionApi } from '../../services/api';
@@ -38,6 +37,7 @@ interface WrongQuestion {
   correct_answer: any;
   type: string;
   explanation: string;
+  status?: string;
 }
 
 const difficultyMap: Record<string, { text: string; color: string }> = {
@@ -55,6 +55,15 @@ const TYPE_LABEL: Record<string, string> = {
   essay: '问答题',
   matching: '匹配题',
 };
+
+// 科目筛选下拉选项（覆盖项目主要科目，所有 Tab 通用，避免只显示活跃错题的科目）
+const SUBJECT_OPTIONS = [
+  { value: '数学', label: '数学' },
+  { value: '信息科技', label: '信息科技' },
+  { value: '语文', label: '语文' },
+  { value: '英语', label: '英语' },
+  { value: '科学', label: '科学' },
+];
 
 // 不支持在线自动判题的题型（与后端 judgeObjective 保持一致）
 const UNSUPPORTED_TYPES = ['code', 'essay', 'matching'];
@@ -83,7 +92,8 @@ function normalizeOptions(options: any): OptItem[] {
 const WrongQuestionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState<WrongQuestion[]>([]);
-  const [stats, setStats] = useState<{ total: number; bySubject: any[] }>({ total: 0, bySubject: [] });
+  const [stats, setStats] = useState<{ total: number; bySubject: any[]; byStatus?: { active: number; mastered: number; removed: number } }>({ total: 0, bySubject: [] });
+  const [statusTab, setStatusTab] = useState<string>('active');
   const [subjectFilter, setSubjectFilter] = useState<string | undefined>();
   const [redoing, setRedoing] = useState<WrongQuestion | null>(null);
   const [answer, setAnswer] = useState<any>('');
@@ -93,8 +103,8 @@ const WrongQuestionsPage: React.FC = () => {
     setLoading(true);
     try {
       const [l, s] = await Promise.all([
-        wrongQuestionApi.list({ subject: subjectFilter, limit: 100 }),
-        wrongQuestionApi.getStats(),
+        wrongQuestionApi.list({ subject: subjectFilter, status: statusTab, limit: 100 }),
+        wrongQuestionApi.getStats(subjectFilter),
       ]);
       setList(l.data || []);
       setStats(s.data || { total: 0, bySubject: [] });
@@ -107,7 +117,7 @@ const WrongQuestionsPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [subjectFilter]);
+  }, [subjectFilter, statusTab]);
 
   // 打开重做弹窗：按题型初始化答案（多选为数组，其余为字符串）
   const openRedo = (q: WrongQuestion) => {
@@ -135,7 +145,10 @@ const WrongQuestionsPage: React.FC = () => {
         setAnswer('');
         fetchData();
       } else {
-        message.error('回答错误，再接再厉');
+        message.error('回答错误，已回到活跃错题');
+        setRedoing(null);
+        setAnswer('');
+        fetchData();
       }
     } catch (e: any) {
       message.error(e.response?.data?.error || '提交失败');
@@ -197,39 +210,55 @@ const WrongQuestionsPage: React.FC = () => {
     {
       title: '操作',
       width: 230,
-      render: (_: any, r: WrongQuestion) => (
-        <Space>
-          <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(r)}>
-            重做
-          </Button>
-          <Button size="small" icon={<CheckOutlined />} onClick={() => handleMastered(r)}>掌握</Button>
-          <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleRemove(r)}>移除</Button>
-        </Space>
-      ),
+      render: (_: any, r: WrongQuestion) => {
+        // 已移除的题不可操作；已掌握的可重做复习；活跃的可重做/掌握/移除
+        if (statusTab === 'removed') {
+          return <Text type="secondary">已移除</Text>;
+        }
+        return (
+          <Space>
+            <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(r)}>
+              {statusTab === 'mastered' ? '练习' : '重做'}
+            </Button>
+            {statusTab === 'active' && (
+              <Button size="small" icon={<CheckOutlined />} onClick={() => handleMastered(r)}>掌握</Button>
+            )}
+            {statusTab === 'active' && (
+              <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleRemove(r)}>移除</Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
   return (
     <div>
       <Title level={3}>错题集</Title>
-      <Row style={{ marginBottom: 16 }}>
-        <Card>
-          <Statistic title="活跃错题数" value={stats.total} />
-        </Card>
-      </Row>
       <Card style={{ marginBottom: 16 }}>
         <Space>
           <Text>科目筛选：</Text>
           <Select
             allowClear
+            showSearch
             placeholder="全部科目"
             style={{ width: 180 }}
             value={subjectFilter}
             onChange={setSubjectFilter}
-            options={(stats.bySubject || []).map((s: any) => ({ value: s.subject, label: `${s.subject} (${s.count})` }))}
+            options={SUBJECT_OPTIONS}
           />
         </Space>
       </Card>
+      <Tabs
+        activeKey={statusTab}
+        onChange={(k) => setStatusTab(k)}
+        style={{ marginBottom: 16 }}
+        items={[
+          { key: 'active', label: `活跃错题（${stats.byStatus?.active ?? 0}）` },
+          { key: 'mastered', label: `已掌握（${stats.byStatus?.mastered ?? 0}）` },
+          { key: 'removed', label: `已移除（${stats.byStatus?.removed ?? 0}）` },
+        ]}
+      />
       <Card>
         {loading ? (
           <Spin />
