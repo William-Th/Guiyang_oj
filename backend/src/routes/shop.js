@@ -46,7 +46,12 @@ router.post('/items/:itemId/purchase', authMiddleware, studentOnly, async (req, 
   const client = await pool.connect();
   try {
     const itemId = parseInt(req.params.itemId, 10);
-    const studentId = req.user.id;
+    // req.user.id 是 user_id，积分/购买按 students.id 口径存储，需转换
+    const studentRow = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
+    if (!studentRow.rows[0]) {
+      return res.status(404).json({ success: false, error: '学生档案不存在' });
+    }
+    const studentId = studentRow.rows[0].id;
 
     await client.query('BEGIN');
 
@@ -126,6 +131,8 @@ router.post('/items/:itemId/purchase', authMiddleware, studentOnly, async (req, 
  */
 router.get('/my-items', authMiddleware, studentOnly, async (req, res) => {
   try {
+    const studentRow = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
+    const studentId = studentRow.rows[0]?.id;
     const r = await query(
       `SELECT sp.id, sp.is_equipped, sp.purchased_at,
               vi.item_code, vi.name, vi.category, vi.config
@@ -133,7 +140,7 @@ router.get('/my-items', authMiddleware, studentOnly, async (req, res) => {
        JOIN virtual_items vi ON sp.item_id = vi.id
        WHERE sp.student_id = $1
        ORDER BY sp.purchased_at DESC`,
-      [req.user.id]
+      [studentId]
     );
     res.json({ success: true, data: r.rows });
   } catch (error) {
@@ -151,7 +158,11 @@ router.post('/my-items/:purchaseId/equip', authMiddleware, studentOnly, async (r
   try {
     const purchaseId = parseInt(req.params.purchaseId, 10);
     const { equip } = req.body;
-    const studentId = req.user.id;
+    const studentRow = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
+    if (!studentRow.rows[0]) {
+      return res.status(404).json({ success: false, error: '学生档案不存在' });
+    }
+    const studentId = studentRow.rows[0].id;
 
     await client.query('BEGIN');
 

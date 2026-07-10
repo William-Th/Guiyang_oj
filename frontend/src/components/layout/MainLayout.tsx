@@ -20,6 +20,7 @@ import {
   ShoppingOutlined,
 } from '@ant-design/icons';
 import NotificationBell from '../common/NotificationBell';
+import { ColoredName } from '@/hooks/useEquippedNameColor';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { logout } from '@/store/authSlice';
@@ -416,7 +417,7 @@ const MainLayout: React.FC = () => {
           >
             <Space style={{ color: 'white', cursor: 'pointer' }}>
               <Avatar icon={<UserOutlined />} />
-              <span>{user?.realName || user?.username || '用户'}</span>
+              <ColoredName name={user?.realName || user?.username || '用户'} />
             </Space>
           </Dropdown>
         </Space>

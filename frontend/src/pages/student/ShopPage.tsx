@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import { ShoppingOutlined, CrownOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { shopApi, pointsApi } from '../../services/api';
+import { EQUIPMENT_CHANGED } from '@/hooks/useEquippedNameColor';
 
 const { Title, Text } = Typography;
 
@@ -105,6 +106,8 @@ const ShopPage: React.FC = () => {
       await shopApi.equip(my.id, equip);
       message.success(equip ? '已装备' : '已卸下');
       fetchData();
+      // 通知顶部导航等处的 ColoredName 立即刷新装备颜色（无需切页面或整页刷新）
+      window.dispatchEvent(new Event(EQUIPMENT_CHANGED));
     } catch (e: any) {
       message.error(e.response?.data?.error || '操作失败');
     }
