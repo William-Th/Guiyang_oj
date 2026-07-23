@@ -110,7 +110,6 @@ const QuestionGovernancePage: React.FC = () => {
   // 配额管理：进入页面即加载（此前仅在手动点“刷新”时拉取）
   useEffect(() => {
     fetchQuotas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 切换 Tab 时刷新对应数据，确保每次进入都展示最新

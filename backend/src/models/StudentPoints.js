@@ -63,9 +63,9 @@ class StudentPoints {
 
     // earn/spend：按积分变动正负过滤（获得 > 0 / 消费 < 0）
     if (filters.earnSpend === 'earn') {
-      sql += ` AND points_change > 0`;
+      sql += ' AND points_change > 0';
     } else if (filters.earnSpend === 'spend') {
-      sql += ` AND points_change < 0`;
+      sql += ' AND points_change < 0';
     }
 
     if (filters.startDate) {
@@ -102,7 +102,7 @@ class StudentPoints {
    * 统计交易记录总数（与 getTransactionHistory 同过滤条件，用于分页）
    */
   static async countTransactionHistory(studentId, filters = {}) {
-    let sql = `SELECT COUNT(*)::int AS total FROM points_transactions WHERE student_id = $1`;
+    let sql = 'SELECT COUNT(*)::int AS total FROM points_transactions WHERE student_id = $1';
     const params = [studentId];
     let paramCount = 2;
 
@@ -112,9 +112,9 @@ class StudentPoints {
       paramCount++;
     }
     if (filters.earnSpend === 'earn') {
-      sql += ` AND points_change > 0`;
+      sql += ' AND points_change > 0';
     } else if (filters.earnSpend === 'spend') {
-      sql += ` AND points_change < 0`;
+      sql += ' AND points_change < 0';
     }
     if (filters.startDate) {
       sql += ` AND created_at >= $${paramCount}`;

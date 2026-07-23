@@ -98,9 +98,9 @@ router.get('/recommend', authMiddleware, async (req, res) => {
     const shownIds = Array.isArray(excludeShownIds)
       ? excludeShownIds
       : String(excludeShownIds || '')
-          .split(',')
-          .map((s) => parseInt(s, 10))
-          .filter((n) => Number.isFinite(n));
+        .split(',')
+        .map((s) => parseInt(s, 10))
+        .filter((n) => Number.isFinite(n));
     const QuestionRecommender = require('../services/recommend/QuestionRecommender');
     const result = await QuestionRecommender.recommend(req.user.id, {
       subject,
