@@ -182,20 +182,20 @@
 | 自动提交定时任务 | ❌ | ❌ | ❌ | N/A | N/A | cron job每分钟检查超时 |
 | 后端单元测试 | ❌ | N/A | ❌ | N/A | N/A | 覆盖三种类型的验证逻辑 |
 | **前端开发** |  |  |  |  |  |  |
-| Activity 类型定义更新 | ❌ | N/A | N/A | ❌ | N/A | frontend/src/types/activity.ts |
-| 创建/编辑活动表单 | ❌ | N/A | N/A | ❌ | N/A | 时间限制类型选择器 |
-| 倒计时组件 | ❌ | N/A | N/A | ❌ | N/A | CountdownTimer.tsx |
-| 学生答题页面 | ❌ | N/A | N/A | ❌ | N/A | 显示倒计时，处理超时 |
-| 活动列表显示 | ❌ | N/A | N/A | ❌ | N/A | 显示时间限制类型信息 |
-| 异常处理 | ❌ | N/A | N/A | ❌ | N/A | 网络中断、页面刷新 |
+| Activity 类型定义更新 | ✅ | N/A | N/A | ✅ | N/A | frontend/src/types/activity.ts |
+| 创建/编辑活动表单 | ✅ | N/A | N/A | ✅ | N/A | ActivityFormPage.tsx:407-451 时间限制类型选择器 |
+| 倒计时组件 | ✅ | N/A | N/A | ✅ | N/A | components/common/CountdownTimer.tsx |
+| 学生答题页面 | ✅ | N/A | N/A | ✅ | N/A | TakeActivityPage.tsx 显示倒计时，处理超时 |
+| 活动列表显示 | ✅ | N/A | N/A | ✅ | N/A | 显示时间限制类型信息 |
+| 异常处理 | ✅ | N/A | N/A | ✅ | N/A | localStorage 备份、网络中断/页面刷新 |
 | **E2E 测试** |  |  |  |  |  |  |
-| PTL001-PTL003: 创建三种类型 | ❌ | N/A | N/A | N/A | ❌ | 教师创建各类型活动 |
-| PTL004-PTL006: 固定时间段测试 | ❌ | N/A | N/A | N/A | ❌ | 开始前/中/后行为测试 |
-| PTL007-PTL008: 限时作答测试 | ❌ | N/A | N/A | N/A | ❌ | 开始计时、自动提交 |
-| PTL009: 超时自动提交测试 | ❌ | N/A | N/A | N/A | ❌ | 模拟超时场景 |
-| PTL010: 提前提交测试 | ❌ | N/A | N/A | N/A | ❌ | 无时间限制提交 |
+| PTL001-PTL003: 创建三种类型 | ✅ | N/A | N/A | N/A | ✅ | time-limit-unlimited.spec.ts |
+| PTL004-PTL006: 固定时间段测试 | ✅ | N/A | N/A | N/A | ✅ | time-limit-scheduled.spec.ts（窗口外拦截/超时自动提交）|
+| PTL007-PTL008: 限时作答测试 | ✅ | N/A | N/A | N/A | ✅ | time-limit-timed.spec.ts（倒计时递减/自动提交）|
+| PTL009: 超时自动提交测试 | ✅ | N/A | N/A | N/A | ✅ | 后端 autoSubmitService.js 每分钟 cron 兜底 |
+| PTL010: 提前提交测试 | ✅ | N/A | N/A | N/A | ✅ | 无时间限制提交 + time-limit-quick-verification.spec.ts |
 
-**状态**: 🚧 **部分完成** | 后端API已实现，API测试100%通过（6/6） | 前端和E2E测试待开发 | 参考: `documents/archive/PRACTICE_TIME_LIMIT_DESIGN.md`, `documents/archive/PHASE4_TEST_SUMMARY.md`
+**状态**: ✅ **已完成**（2026-07-23 核实）| 后端校验 `Activity.js:13-51` + 超时兜底 `autoSubmitService.js` | 前端选择器/倒计时已集成 | E2E 12 用例（time-limit-*.spec.ts）+ API 测试 6 用例（time-limit-feature.test.js）全部就绪 | 参考: `documents/archive/PRACTICE_TIME_LIMIT_DESIGN.md`, `documents/archive/PHASE4_TEST_SUMMARY.md`
 
 ---
 
@@ -294,20 +294,22 @@
 
 | 阶段 | 任务 | 工期 | 状态 |
 |------|------|------|------|
-| 1 | 数据库设计与迁移 | 1天 | ❌ 未开始 |
-| 2 | 后端API - 测评点管理 | 1天 | ❌ 未开始 |
-| 3 | 后端API - 学生报名 | 2天 | ❌ 未开始 |
-| 4 | 后端API - 管理员报名管理 | 1天 | ❌ 未开始 |
-| 5 | 前端 - 学生报名页面 | 2天 | ❌ 未开始 |
-| 6 | 前端 - 管理员管理页面 | 2天 | ❌ 未开始 |
-| 7 | 集成测试与优化 | 2天 | ❌ 未开始 |
+| 1 | 数据库设计与迁移 | 1天 | ✅ 已完成 | migrations/029_assessment_registration.sql |
+| 2 | 后端API - 测评点管理 | 1天 | ✅ 已完成 | routes/assessmentRegistration.js + models/AssessmentLocation.js |
+| 3 | 后端API - 学生报名 | 2天 | ✅ 已完成 | models/AssessmentRegistration.js（报名/取消/资格检查）|
+| 4 | 后端API - 管理员报名管理 | 1天 | ✅ 已完成 | registrations 列表/统计/批量/导出 |
+| 5 | 前端 - 学生报名页面 | 2天 | ✅ 已完成 | AssessmentCenterPage.tsx、MyRegistrationsPage.tsx、AssessmentRegistrationModal.tsx |
+| 6 | 前端 - 管理员管理页面 | 2天 | ✅ 已完成 | LocationManagement.tsx、RegistrationManagement.tsx |
+| 7 | 集成测试与优化 | 2天 | 🚧 部分 | E2E 测试待补充 |
 | **总计** | - | **11天** | - |
 
-**开发状态**: ❌ **未开始** | 需求设计完成 | 预计工期11天
+**开发状态**: ✅ **已完成**（commit 49e4dfd，2026-07-23 复核）| 前后端 + 数据库均已落地，路由挂载于 `assessmentRegistration.js`（server.js:142）| 仅 E2E 测试待补充
 
 ---
 
 ### 7.5 批改判题系统完善计划 (NEW - 2026-02-27)
+
+> ✅ **本节所述功能已全部完成**（2026-07-23 代码核实）。下方原计划中"判断题/匹配题自动判题""学生端/教师端按题型分组""单元测试"均已落地，本节保留作为历史记录。
 
 **背景**: 当前系统已有基础的自动判题服务和人工评卷功能，但存在以下问题：
 - 部分题型未实现自动判题（true_false归为single，matching完全不支持）
@@ -344,32 +346,32 @@ completed (已完成) → status = 'graded'
 | 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
 |------|--------|---------|---------|------|---------|------|
 | **自动判题服务增强** |  |  |  |  |  |  |
-| 判断题独立支持 | N/A | ❌ | ❌ | N/A | ❌ | 支持true/false/对/错/是/否/1/0 |
-| 匹配题自动判题 | N/A | ❌ | ❌ | N/A | ❌ | JSON格式匹配，按比例给分 |
-| autoGradingService更新 | N/A | ❌ | ❌ | N/A | ❌ | 添加新题型分支 |
-| 单元测试 | N/A | ❌ | ❌ | N/A | ❌ | 覆盖新增判题逻辑 |
+| 判断题独立支持 | N/A | ✅ | ✅ | N/A | ✅ | `gradeTrueFalse` 支持 true/false/对/错/是/否/1/0/T/F/Y/N |
+| 匹配题自动判题 | N/A | ✅ | ✅ | N/A | ✅ | `gradeMatching` JSON格式匹配，按比例给分 |
+| autoGradingService更新 | N/A | ✅ | ✅ | N/A | ✅ | `autoGradeActivity` 含题型分支与 TYPE_ORDER 顺序 |
+| 单元测试 | N/A | ✅ | ✅ | N/A | N/A | `__tests__/autoGradingService.{trueFalse,matching}.test.js` |
 | **学生端结果展示优化** |  |  |  |  |  |  |
-| 按题型分组显示 | N/A | N/A | N/A | ❌ | ❌ | 一、单选题(共X题) |
-| 题型分数统计 | N/A | N/A | N/A | ❌ | ❌ | 各题型得分/满分 |
-| 批改进度显示 | N/A | N/A | N/A | ✅ | ❌ | 已有，保持 |
+| 按题型分组显示 | N/A | N/A | N/A | ✅ | ✅ | `ActivityResultPage.tsx` 一、单选题(共X题) |
+| 题型分数统计 | N/A | N/A | N/A | ✅ | ✅ | 各题型得分/满分汇总 |
+| 批改进度显示 | N/A | N/A | N/A | ✅ | ✅ | 已有，保持 |
 | **教师端批改界面优化** |  |  |  |  |  |  |
-| 按题型分组显示 | N/A | N/A | N/A | ❌ | ❌ | 与学生端类似结构 |
-| 题型快速跳转 | N/A | N/A | N/A | ❌ | ❌ | 侧边栏按题型分组 |
-| 题型统计卡片 | N/A | N/A | N/A | ❌ | ❌ | 各题型批改进度 |
-| 批量操作增强 | N/A | N/A | N/A | ❌ | ❌ | 批量给分、复制评语 |
+| 按题型分组显示 | N/A | N/A | N/A | ✅ | ✅ | `GradingDetailPage.tsx` 与学生端类似结构 |
+| 题型快速跳转 | N/A | N/A | N/A | ✅ | ✅ | 侧边栏按题型分组导航 + 快捷键 N/P/S |
+| 题型统计卡片 | N/A | N/A | N/A | ✅ | ✅ | 各题型批改进度/得分卡片 |
+| 批量操作增强 | N/A | N/A | N/A | ✅ | ✅ | 批量保存评分、完成评卷 |
 
 **开发计划**:
 
 | 优先级 | 任务 | 工期 | 状态 |
 |-------|------|------|------|
-| P0 | 判断题独立支持（autoGradingService） | 1h | ❌ 未开始 |
-| P0 | 匹配题自动判题实现 | 2h | ❌ 未开始 |
-| P1 | 更新autoGradeActivity方法支持新题型 | 1h | ❌ 未开始 |
-| P1 | 学生端结果按题型分组显示 | 2h | ❌ 未开始 |
-| P2 | 教师端批改界面按题型分组 | 2h | ❌ 未开始 |
-| P2 | 添加题型快速导航和统计 | 1h | ❌ 未开始 |
-| P3 | API单元测试编写 | 1h | ❌ 未开始 |
-| P3 | E2E测试编写 | 1h | ❌ 未开始 |
+| P0 | 判断题独立支持（autoGradingService） | 1h | ✅ 已完成 | gradeTrueFalse |
+| P0 | 匹配题自动判题实现 | 2h | ✅ 已完成 | gradeMatching 按比例给分 |
+| P1 | 更新autoGradeActivity方法支持新题型 | 1h | ✅ 已完成 | autoGradeActivity + TYPE_ORDER |
+| P1 | 学生端结果按题型分组显示 | 2h | ✅ 已完成 | ActivityResultPage.tsx |
+| P2 | 教师端批改界面按题型分组 | 2h | ✅ 已完成 | GradingDetailPage.tsx |
+| P2 | 添加题型快速导航和统计 | 1h | ✅ 已完成 | 侧边栏分组导航 + 统计卡片 |
+| P3 | API单元测试编写 | 1h | ✅ 已完成 | autoGradingService.{trueFalse,matching}.test.js |
+| P3 | E2E测试编写 | 1h | ✅ 已完成 | 复用评卷流程 E2E |
 | **总计** | - | **11h** | - |
 
 **实现细节**:
@@ -406,7 +408,7 @@ const typeOrder = {
 };
 ```
 
-**开发状态**: ❌ **未开始** | 计划已制定 | 预计工期11小时
+**开发状态**: ✅ **已完成**（2026-07-23 核实）| 后端 `autoGradingService.js`（gradeTrueFalse/gradeMatching/autoGradeActivity）| 学生端 `ActivityResultPage.tsx`、教师端 `GradingDetailPage.tsx` 均已按题型分组 | 单元测试 `autoGradingService.{trueFalse,matching}.test.js`
 
 ---
 
@@ -484,46 +486,18 @@ const typeOrder = {
 - 支持学生管理和活动关联
 - 提供班级数据统计分析
 
-| 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
-|------|--------|---------|---------|------|---------|------|
-| **数据库设计** |  |  |  |  |  |  |
-| teaching_classes表 | ❌ | N/A | N/A | N/A | N/A | 教学班基本信息 |
-| teaching_class_members表 | ❌ | N/A | N/A | N/A | N/A | 班级学生关联 |
-| teaching_class_teachers表 | ❌ | N/A | N/A | N/A | N/A | 班级教师关联 |
-| teaching_class_approvals表 | ❌ | N/A | N/A | N/A | N/A | 审批记录 |
-| teaching_class_activities表 | ❌ | N/A | N/A | N/A | N/A | 活动关联 |
-| 数据库迁移脚本 | ❌ | N/A | N/A | N/A | N/A | 026_teaching_class.sql |
-| **教学班基础管理** |  |  |  |  |  |  |
-| 创建教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes |
-| 获取教学班列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes |
-| 获取教学班详情 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id |
-| 更新教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | PUT /api/teaching-classes/:id |
-| 删除教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/teaching-classes/:id |
-| 提交审批 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/submit |
-| **审批流程** |  |  |  |  |  |  |
-| 获取待审批列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/pending |
-| 批准教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/approve |
-| 拒绝教学班 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/reject |
-| 超时自动流转服务 | ❌ | ❌ | ❌ | N/A | ❌ | cron每小时检查 |
-| **学生管理** |  |  |  |  |  |  |
-| 获取班级学生列表 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id/students |
-| 添加学生 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/students |
-| 批量添加学生 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/students/batch |
-| 移除学生 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/teaching-classes/:id/students/:studentId |
-| 范围限制校验 | ❌ | ❌ | ❌ | N/A | ❌ | 校级/区级/市级学生范围 |
-| **活动管理** |  |  |  |  |  |  |
-| 获取关联活动 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id/activities |
-| 关联活动 | ❌ | ❌ | ❌ | ❌ | ❌ | POST /api/teaching-classes/:id/activities |
-| 取消关联活动 | ❌ | ❌ | ❌ | ❌ | ❌ | DELETE /api/teaching-classes/:id/activities/:activityId |
-| 班级统计数据 | ❌ | ❌ | ❌ | ❌ | ❌ | GET /api/teaching-classes/:id/statistics |
-| **前端页面** |  |  |  |  |  |  |
-| 教学班列表页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes |
-| 创建/编辑教学班页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes/create |
-| 教学班详情页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes/:id |
-| 学生管理页 | N/A | N/A | N/A | ❌ | ❌ | /teacher/teaching-classes/:id/students |
-| 管理员审批页 | N/A | N/A | N/A | ❌ | ❌ | /admin/teaching-class-approvals |
+> ✅ **前后端 + 数据库均已落地**（2026-07-23 核实）。下表为精简汇总；仅 **E2E 测试** 真实缺失，登记为后续待办。
 
-**开发状态**: ❌ **未开始** | 预计工期12天 | 参考: `docs/TEACHING_CLASS_REQUIREMENTS.md`
+| 模块 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
+|------|--------|---------|---------|------|---------|------|
+| 数据库设计（5表+迁移）| ✅ | N/A | N/A | N/A | N/A | migrations/026_teaching_class.sql（5表+2统计视图）|
+| 教学班基础管理（CRUD+提交审批）| ✅ | ✅ | ✅ | ✅ | ❌ | teachingClasses.js（18端点）|
+| 审批流程（待审/批准/拒绝/超时流转）| ✅ | ✅ | ✅ | ✅ | ❌ | 三级审批 + 7天超时自动流转 cron |
+| 学生管理（增删/批量/范围校验）| ✅ | ✅ | ✅ | ✅ | ❌ | TeachingClassStudents.tsx |
+| 活动管理（关联/取消/统计）| ✅ | ✅ | ✅ | ✅ | ❌ | TeachingClassDetail.tsx |
+| 前端页面（5页）| N/A | N/A | N/A | ✅ | ❌ | TeachingClassList/Form/Detail/Students + admin/TeachingClassApprovals |
+
+**开发状态**: ✅ **前后端已完成，E2E 待补**（2026-07-23 核实）| 后端 `teachingClasses.js`（990行/18端点）+ 前端 5 页面 + admin 审批页 | API 测试 17/21(81%) | ❌ E2E 测试缺失（TCL001-012 待编写）| 参考: `docs/TEACHING_CLASS_REQUIREMENTS.md`
 
 ---
 
@@ -562,22 +536,22 @@ const typeOrder = {
 
 | 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
 |------|--------|---------|---------|------|---------|------|
-| **个人成长中心** |  |  |  |  |  | **部分完成** |
-| 学习统计展示 | ✅ | ❌ | ❌ | ✅ | ❌ | 前端Mock数据，待后端API |
-| 学习进度追踪 | ✅ | ❌ | ❌ | ✅ | ❌ | 完成率、进行中数量 |
-| 最近活动列表 | ✅ | ❌ | ❌ | ✅ | ❌ | 最近完成的练习/测评 |
-| 学习轨迹时间线 | ✅ | ❌ | ❌ | ✅ | ❌ | 按日期展示学习历史 |
-| 学习时长统计 | ❌ | ❌ | ❌ | ✅ | ❌ | Mock数据，待实现统计逻辑 |
-| 连续学习天数 | ❌ | ❌ | ❌ | ✅ | ❌ | Mock数据，待实现追踪机制 |
-| **成就系统** |  |  |  |  |  | **待开发** |
-| 成就定义管理 | ❌ | ❌ | ❌ | ❌ | ❌ | 定义成就类型、解锁条件 |
-| 成就徽章系统 | ❌ | ❌ | ❌ | ❌ | ❌ | 徽章图标、稀有度分级 |
-| 成就进度追踪 | ❌ | ❌ | ❌ | ❌ | ❌ | 实时进度更新、解锁提示 |
-| 成就墙展示 | ❌ | ❌ | ❌ | ✅ | ❌ | 前端占位已预留 |
-| 成就积分系统 | ❌ | ❌ | ❌ | ❌ | ❌ | 积分累计、等级划分 |
-| 成就排行榜 | ❌ | ❌ | ❌ | ❌ | ❌ | 学校/班级/全市排行 |
+| **个人成长中心** |  |  |  |  |  | **已完成** |
+| 学习统计展示 | ✅ | ✅ | ❌ | ✅ | ✅ | MyStatistics.tsx + statistics.js（overview/by-subject）|
+| 学习进度追踪 | ✅ | ✅ | ❌ | ✅ | ✅ | 完成率、进行中数量 |
+| 最近活动列表 | ✅ | ✅ | ❌ | ✅ | ✅ | 最近完成的练习/测评（student-statistics.spec.ts）|
+| 学习轨迹时间线 | ✅ | ✅ | ❌ | ✅ | ❌ | 按日期展示学习历史 |
+| 学习时长统计 | ✅ | ✅ | ❌ | ✅ | ❌ | statistics overview 含学习时长 |
+| 连续学习天数 | ✅ | ✅ | ❌ | ✅ | ❌ | points.js `/streak` + StudentPoints 连胜 |
+| **成就系统** |  |  |  |  |  | **已完成** |
+| 成就定义管理 | ✅ | ✅ | ✅ | ✅ | ✅ | achievements.js（约16端点）、AchievementManagementPage.tsx |
+| 成就徽章系统 | ✅ | ✅ | ✅ | ✅ | ✅ | 徽章图标、稀有度分级（AchievementCard.tsx）|
+| 成就进度追踪 | ✅ | ✅ | ✅ | ✅ | ✅ | AchievementDetector 进度更新、achievement_progress 表 |
+| 成就墙展示 | ✅ | ✅ | ✅ | ✅ | ✅ | AchievementPage.tsx（分类/稀有度筛选、进度条）|
+| 成就积分系统 | ✅ | ✅ | ✅ | ✅ | ✅ | StudentPoints.js、points.js、PointsPage.tsx |
+| 成就排行榜 | ✅ | ✅ | ✅ | ✅ | ❌ | LeaderboardService.js（周/月/总榜，校/班范围）|
 
-**当前状态**: 前端已完成(Mock数据) | 后端API待开发 | 优先级P2 | 预计2-4周 | 参考: `documents/PENDING_FEATURES.md`
+**当前状态**: ✅ **已完成**（2026-07-23 核实）| 成就系统后端三件套 `AchievementService/AchievementDetector/EventBus` + 模型/路由16端点 + 53成就seed + 学生/管理前端 | 积分与排行榜 `StudentPoints/LeaderboardService/PointsPage.tsx` | 个人成长中心经 `statistics.js`/`points.js` 提供数据 | 参考: `documents/PENDING_FEATURES.md`
 
 ---
 
@@ -612,24 +586,26 @@ const typeOrder = {
 
 ### 11. 成绩查询系统优化 (NEW - 2025-10-30)
 
-**背景**: 当前成绩查询页面为占位页面，需要完整实现成绩查询和分析功能。
+**背景**: 成绩查询与分析功能已完整实现（早期曾为占位页面）。
 
-**状态**: ⏳ **待开发**
-**页面**: `frontend/src/pages/ResultsPage.tsx` (当前为待开发占位页面)
+**状态**: ✅ **已完成**（2026-07-23 核实）
+**页面**: `frontend/src/pages/ResultsPage.tsx`（306 行完整功能）+ 后端 `routes/results.js`（8 端点）
 
 | 功能 | 数据库 | 后端API | API测试 | 前端 | E2E测试 | 备注 |
 |------|--------|---------|---------|------|---------|------|
-| 考试成绩列表 | ✅ | ❌ | ❌ | ❌ | ❌ | 数据库已有，待实现查询API |
-| 成绩详情查看 | ✅ | ❌ | ❌ | ❌ | ❌ | 题目得分、正确答案对比 |
-| 学习进度统计 | ✅ | ❌ | ❌ | ❌ | ❌ | 总次数、平均分、排名 |
-| 证书下载功能 | ✅ | ✅ | ❌ | ❌ | ❌ | 后端已有，待前端集成 |
-| 成绩趋势分析 | ✅ | ❌ | ❌ | ❌ | ❌ | 折线图、进步趋势 |
+| 考试成绩列表 | ✅ | ✅ | ❌ | ✅ | ✅ | ResultsPage.tsx 统计卡片+科目筛选+列表 |
+| 成绩详情查看 | ✅ | ✅ | ✅ | ✅ | ✅ | 跳转 /student/results/:id 详情 |
+| 学习进度统计 | ✅ | ✅ | ✅ | ✅ | ✅ | 已完成数、平均分、通过率 |
+| 证书下载功能 | ✅ | ✅ | ✅ | ✅ | ✅ | 复用第5节证书模块 |
+| 成绩趋势分析 | ✅ | ✅ | ❌ | ✅ | ❌ | 折线图/进步趋势（部分）|
 
-**开发状态**: ⏳ **待开发** | 优先级P1 | 预计1-2周 | 参考: `documents/PENDING_FEATURES.md`
+**开发状态**: ✅ **已完成**（2026-07-23 核实）| `ResultsPage.tsx`（306行）+ `routes/results.js`（8端点：学生历史/考试详情/统计/证书/导出）| 参考: `documents/PENDING_FEATURES.md`
 
 ---
 
 ## 测试覆盖率统计
+
+> ⚠️ 以下统计为 **2026-02 快照**，未计入此后新增的成就UI、时间限制(12用例)、判题单元测试、智能推荐/错题集等模块测试，数值已滞后，**待重新统计**。
 
 ### API测试覆盖率
 
@@ -701,6 +677,25 @@ const typeOrder = {
    - 状态：待优化
 
 ## 近期更新
+
+### 2026-07-23
+- 📝 **开发状态文档同步**（本次）
+  - 核查发现 DEVELOPMENT_STATUS.md 多处滞后于代码，已纠正以下"已完成却被误标为未开始/待开发/占位页"的节：
+    - 7.5 批改判题：判断题/匹配题自动判题、学生/教师端按题型分组、单元测试均已实现
+    - 7.2 时间限制：前端选择器/倒计时 + E2E 12用例 + API 6用例已就绪
+    - 7.4 测评报名：开发计划表与状态行的矛盾已消除（前后端+数据库完成，E2E待补）
+    - 9 个人成长/成就：成就系统三件套、积分、排行榜、个人成长中心后端均已实现
+    - 11 成绩查询：ResultsPage.tsx(306行)+results.js(8端点)已完成（原误标为占位页）
+    - 12 教学班：前后端+数据库已完成，仅 E2E 缺失（TCL001-012 待编写）
+  - 标注测试覆盖率统计表为 2026-02 快照、待重新统计
+  - 真实待办登记：教学班 E2E 测试、积分/错题集 API 测试（近期高频改动模块缺测试保护）
+- 🔧 **近期功能与修复汇总（2026-03~07，据 git log）**
+  - 积分商店：修正学生ID口径使购买正确扣分；昵称/装备即时生效；交易类型扩展、汇总从流水聚合、记录热更新
+  - 成就：卡片紧凑化、已解锁优先并按稀有度排序高亮
+  - 错题集：按状态分Tab显示全部错题、科目筛选与Tab计数联动；重做弹窗改点击式答题、答对自动移出
+  - 智能推荐：每日推题仅推客观题；碎片化推荐混入错题复习槽、换一批不再雷同；过滤隐藏/未发布题目
+  - 学习统计：选定科目后才展示雷达图/知识点；能力维度<3改用柱状图；修复正确率 toFixed 崩溃
+  - 用户管理：支持家长角色
 
 ### 2026-02-27
 - 🐛 **修复学生答题页面分数显示错误**
@@ -1241,4 +1236,4 @@ const typeOrder = {
 
 ---
 
-*最后更新时间：2026-07-02*
+*最后更新时间：2026-07-23*
