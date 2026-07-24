@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parseOption } from '../../components/questions/questionOption';
 import {
   Card,
   Row,
@@ -222,10 +223,10 @@ const ActivityResultPage: React.FC = () => {
 
     return (
       <div style={{ marginTop: 8 }}>
-        {options.map((opt: string, idx: number) => {
-          // 提取选项字母（如 "A. xxx" → "A"）
-          const letterMatch = opt.match(/^([A-Za-z])[.、．)\s]/);
-          const letter = letterMatch ? letterMatch[1].toUpperCase() : String.fromCharCode(65 + idx);
+        {options.map((opt: any, idx: number) => {
+          // 兼容字符串 "A. xxx" 与对象 {label, content} 两种格式
+          const { label, content } = parseOption(opt, idx);
+          const letter = (label || String.fromCharCode(65 + idx)).toUpperCase();
 
           const isMyAnswer = myAnsLetters.includes(letter);
           const isCorrect = correctAnsLetters.includes(letter);
@@ -266,7 +267,7 @@ const ActivityResultPage: React.FC = () => {
               }}
             >
               <span style={{ minWidth: 20, textAlign: 'center' }}>{letter}.</span>
-              <span>{opt.replace(/^[A-Za-z][.、．)\s]+/, '')}</span>
+              <span>{content}</span>
               {isMyAnswer && (
                 <Tag color={data?.can_show_answers ? (isCorrect ? 'success' : 'error') : 'blue'} style={{ marginLeft: 'auto' }}>
                   你的选择

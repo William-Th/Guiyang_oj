@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { optionText } from '../../components/questions/questionOption';
 import {
   Card,
   Form,
@@ -70,7 +71,7 @@ interface GradingDetailResponse {
     id: number;
     type: string;
     content: string;
-    options?: Record<string, string>;
+    options?: any[];
     correct_answer?: string | string[];
     explanation?: string | null;
     score: number;
@@ -614,9 +615,9 @@ const GradingDetailPage: React.FC = () => {
 
                       {question.options && (
                         <div>
-                          {Object.entries(question.options).map(([key, value]) => (
-                            <div key={key}>
-                              {key}. {value}
+                          {question.options.map((option, idx) => (
+                            <div key={idx}>
+                              {optionText(option, idx)}
                             </div>
                           ))}
                         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
 import {
   Card,
   Row,
@@ -1161,7 +1162,7 @@ const PaperGenerationPage: React.FC = () => {
                     {Array.isArray((previewQuestion as any).options)
                       ? (previewQuestion as any).options.map((opt: string, idx: number) => (
                           <div key={idx}>
-                            {String.fromCharCode(65 + idx)}. {opt}
+                            {optionText(opt, idx)}
                           </div>
                         ))
                       : (previewQuestion as any).options}
@@ -1170,7 +1171,7 @@ const PaperGenerationPage: React.FC = () => {
               )}
               {(previewQuestion as any).correct_answer && (
                 <Descriptions.Item label="正确答案" span={2}>
-                  <Tag color="green">{(previewQuestion as any).correct_answer}</Tag>
+                  <Tag color="green">{formatCorrectAnswer((previewQuestion as any).correct_answer)}</Tag>
                 </Descriptions.Item>
               )}
             </Descriptions>
@@ -1268,7 +1269,7 @@ const PaperGenerationPage: React.FC = () => {
                             {Array.isArray((question as any).options)
                               ? (question as any).options.map((opt: string, optIdx: number) => (
                                   <div key={optIdx} style={{ marginBottom: 4 }}>
-                                    {String.fromCharCode(65 + optIdx)}. {opt}
+                                    {optionText(opt, optIdx)}
                                   </div>
                                 ))
                               : null}

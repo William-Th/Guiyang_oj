@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
 import {
   Card,
   Table,
@@ -39,7 +40,7 @@ interface Question {
   grade: string;
   level?: string;
   content: string;
-  options?: string[];
+  options?: any[];
   correct_answer: any;
   score: number;
   suggested_score?: number;
@@ -479,8 +480,8 @@ const QuestionBankPage: React.FC = () => {
     },
     {
       title: '分值',
-      dataIndex: 'score',
-      key: 'score',
+      dataIndex: 'suggested_score',
+      key: 'suggested_score',
       width: 60,
     },
     {
@@ -881,7 +882,7 @@ const QuestionBankPage: React.FC = () => {
                 </p>
                 {previewQuestion.options.map((option, idx) => (
                   <p key={idx} style={{ marginLeft: 20 }}>
-                    {String.fromCharCode(65 + idx)}. {option}
+                    {optionText(option, idx)}
                   </p>
                 ))}
               </>
@@ -890,9 +891,7 @@ const QuestionBankPage: React.FC = () => {
             <p>
               <strong>正确答案：</strong>
               <Tag color="green" style={{ marginLeft: 10 }}>
-                {typeof previewQuestion.correct_answer === 'object'
-                  ? JSON.stringify(previewQuestion.correct_answer)
-                  : previewQuestion.correct_answer}
+                {formatCorrectAnswer(previewQuestion.correct_answer)}
               </Tag>
             </p>
 
@@ -908,7 +907,7 @@ const QuestionBankPage: React.FC = () => {
             )}
 
             <p>
-              <strong>分值：</strong>{previewQuestion.score} 分
+              <strong>分值：</strong>{previewQuestion.suggested_score ?? '—'} 分
               <strong style={{ marginLeft: 20 }}>使用次数：</strong>
               {previewQuestion.usage_count} 次
             </p>

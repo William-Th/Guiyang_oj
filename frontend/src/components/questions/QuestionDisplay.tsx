@@ -1,11 +1,12 @@
 import React from 'react';
 import { Radio, Checkbox, Input, Space } from 'antd';
+import { optionText, parseOption } from './questionOption';
 
 interface Question {
   id: number
   type: 'single' | 'multiple' | 'blank' | 'essay' | 'code' | 'true_false' | 'matching'
   content: string
-  options?: string[]
+  options?: any[]
   score: number
   explanation?: string
   blanks_count?: number
@@ -47,7 +48,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                     color: showAnswer && correctAnswer === option ? '#52c41a' : undefined
                   }}
                 >
-                  {option}
+                  {optionText(option, index)}
                 </Radio>
               ))}
             </Space>
@@ -71,7 +72,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                     color: showAnswer && correctAnswer?.includes(option) ? '#52c41a' : undefined
                   }}
                 >
-                  {option}
+                  {optionText(option, index)}
                 </Checkbox>
               ))}
             </Space>
@@ -195,19 +196,25 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
                 <strong>左侧选项:</strong>
-                {question.options?.slice(0, Math.ceil(question.options.length / 2)).map((option, index) => (
-                  <div key={index} style={{ padding: '8px', border: '1px solid #d9d9d9', margin: '4px 0', borderRadius: '4px' }}>
-                    {option}
-                  </div>
-                ))}
+                {question.options?.map((option, index) => {
+                  const { label } = parseOption(option, index);
+                  return (
+                    <div key={index} style={{ padding: '8px', border: '1px solid #d9d9d9', margin: '4px 0', borderRadius: '4px' }}>
+                      {String.fromCharCode(65 + index)}. {label}
+                    </div>
+                  );
+                })}
               </div>
               <div>
                 <strong>右侧选项:</strong>
-                {question.options?.slice(Math.ceil(question.options.length / 2)).map((option, index) => (
-                  <div key={index} style={{ padding: '8px', border: '1px solid #d9d9d9', margin: '4px 0', borderRadius: '4px' }}>
-                    {option}
-                  </div>
-                ))}
+                {question.options?.map((option, index) => {
+                  const { content } = parseOption(option, index);
+                  return (
+                    <div key={index} style={{ padding: '8px', border: '1px solid #d9d9d9', margin: '4px 0', borderRadius: '4px' }}>
+                      {index + 1}. {content}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <Input.TextArea

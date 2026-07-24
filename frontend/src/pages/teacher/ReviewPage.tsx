@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
 import {
   Card,
   Table,
@@ -233,10 +234,7 @@ const ReviewPage: React.FC = () => {
     switch (question.type) {
       case 'single':
       case 'multiple':
-        if (Array.isArray(question.correct_answer)) {
-          return question.correct_answer.join(', ');
-        }
-        return question.correct_answer;
+        return formatCorrectAnswer(question.correct_answer);
       case 'true_false':
         return question.correct_answer ? '正确' : '错误';
       case 'blank':
@@ -436,7 +434,7 @@ const ReviewPage: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.options.map((option, index) => (
                     <div key={index} style={{ padding: '4px 0' }}>
-                      {String.fromCharCode(65 + index)}. {option}
+                      {optionText(option, index)}
                     </div>
                   ))}
                 </div>

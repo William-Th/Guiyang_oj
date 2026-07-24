@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { optionText } from '../../components/questions/questionOption';
 import {
   Card,
   Form,
@@ -929,7 +930,7 @@ const TakeActivityPage: React.FC = () => {
                                     value={String.fromCharCode(65 + optIndex)}
                                     style={{ fontSize: '16px', lineHeight: '1.8' }}
                                   >
-                                    {String.fromCharCode(65 + optIndex)}. {option}
+                                    {optionText(option, optIndex)}
                                   </Radio>
                                 ))}
                               </Space>
@@ -953,7 +954,7 @@ const TakeActivityPage: React.FC = () => {
                                     value={String.fromCharCode(65 + optIndex)}
                                     style={{ fontSize: '16px', lineHeight: '1.8' }}
                                   >
-                                    {String.fromCharCode(65 + optIndex)}. {option}
+                                    {optionText(option, optIndex)}
                                   </Checkbox>
                                 ))}
                               </Space>

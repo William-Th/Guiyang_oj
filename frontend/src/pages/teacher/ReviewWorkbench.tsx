@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
 import {
   Card,
   Table,
@@ -327,10 +328,7 @@ const ReviewWorkbench: React.FC = () => {
     switch (question.type) {
       case 'single':
       case 'multiple':
-        if (Array.isArray(question.correct_answer)) {
-          return question.correct_answer.join(', ');
-        }
-        return question.correct_answer;
+        return formatCorrectAnswer(question.correct_answer);
       case 'true_false':
         return question.correct_answer ? '正确' : '错误';
       case 'blank':
@@ -687,7 +685,7 @@ const ReviewWorkbench: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.options.map((option, index) => (
                     <div key={index} style={{ padding: '4px 0' }}>
-                      {String.fromCharCode(65 + index)}. {option}
+                      {optionText(option, index)}
                     </div>
                   ))}
                 </div>
@@ -697,9 +695,7 @@ const ReviewWorkbench: React.FC = () => {
             <div style={{ marginBottom: 16 }}>
               <strong>正确答案：</strong>
               <div style={{ marginTop: 8, padding: 12, background: '#f0fdf4', borderRadius: 4 }}>
-                {Array.isArray(selectedQuestion.correct_answer)
-                  ? selectedQuestion.correct_answer.join(', ')
-                  : String(selectedQuestion.correct_answer)}
+                {formatCorrectAnswer(selectedQuestion.correct_answer)}
               </div>
             </div>
 
@@ -783,7 +779,7 @@ const ReviewWorkbench: React.FC = () => {
                 <div style={{ marginTop: 8 }}>
                   {selectedQuestion.options.map((option, index) => (
                     <div key={index} style={{ padding: '4px 0' }}>
-                      {String.fromCharCode(65 + index)}. {option}
+                      {optionText(option, index)}
                     </div>
                   ))}
                 </div>
