@@ -678,6 +678,18 @@ const typeOrder = {
 
 ## 近期更新
 
+### 2026-07-24
+- 🐛 **题目显示统一修复**（commit e60b05f）
+  - 根因：`question_bank.options` 存在三种不一致格式——single/true_false 为字符串 `["A. 12"]`、multiple 为对象 `[{label,content}]`、matching 为 `[{left,right}]`；各页面按单一格式渲染导致崩溃或重复
+  - 新建共用 helper `frontend/src/components/questions/questionOption.ts`（`parseOption`/`optionText`/`formatCorrectAnswer`），智能解析三种格式，**不改数据、零判题风险**
+  - 修复**多选题查看白屏**（options 对象直接渲染触发 React #31）：QuestionDisplay / QuestionBankPage / ReviewPage / ReviewWorkbench / PaperGenerationPage / GradingDetailPage
+  - 修复**单选题"A. A. 12"重复**（字符串已含前缀再叠加前缀）：同上各页 + 学生端 TakeActivityPage / ActivityResultPage
+  - 正确答案显示由 `["A","C"]` / `A, C` 统一为 **`A、C`**
+  - 修复分值列/弹窗分值空白（字段名 `score`→`suggested_score`）
+  - 数据一致性：后端 `ActivityQuestion.js` 原样 `SELECT qb.options` 返回 DB，无转换层
+  - 验证：Playwright 实测 single（MATH-0002）/ multiple（MATH-0045）在题库查看、学生答题页均 0 崩溃、不重复
+  - 未改动（已有等价 `normalizeOptions`）：SmartPracticePage / WrongQuestionsPage
+
 ### 2026-07-23
 - 📝 **开发状态文档同步**（本次）
   - 核查发现 DEVELOPMENT_STATUS.md 多处滞后于代码，已纠正以下"已完成却被误标为未开始/待开发/占位页"的节：
