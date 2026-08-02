@@ -159,7 +159,7 @@ describe('Auto Submit Service', () => {
       expect(sqlQuery).toContain('ORDER BY sa.time_limit_deadline ASC');
     });
 
-    it('should set submitted_at timestamp on auto-submit', async () => {
+    it('should set submit_time and submitted status on auto-submit', async () => {
       const mockExpiredActivities = [
         {
           id: 1,
@@ -180,10 +180,11 @@ describe('Auto Submit Service', () => {
 
       const updateQuery = query.mock.calls[2][0];
 
-      // Verify update includes timestamp
-      expect(updateQuery).toContain('submitted_at = NOW()');
-      expect(updateQuery).toContain('updated_at = NOW()');
-      expect(updateQuery).toContain('status = \'completed\'');
+      // Verify the update matches the student_activities schema.
+      expect(updateQuery).toContain('submit_time = NOW()');
+      expect(updateQuery).toContain('status = \'submitted\'');
+      expect(updateQuery).not.toContain('submitted_at');
+      expect(updateQuery).not.toContain('updated_at');
     });
   });
 });
