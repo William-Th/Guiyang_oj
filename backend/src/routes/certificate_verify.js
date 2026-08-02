@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Certificate = require('../models/Certificate');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
 // 简单的内存存储限速器
 const rateLimitMap = new Map();
@@ -8,7 +9,7 @@ const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15分钟
 const MAX_ATTEMPTS = 10; // 15分钟内最多10次验证
 
 // 清理过期的限速记录
-setInterval(() => {
+const rateLimitCleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, data] of rateLimitMap.entries()) {
     if (now - data.firstAttempt > RATE_LIMIT_WINDOW) {
@@ -16,6 +17,9 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000); // 每5分钟清理一次
+
+// The cleanup is best-effort and must not keep a worker or test process alive.
+rateLimitCleanupTimer.unref();
 
 // 限速中间件
 const verifyRateLimit = (req, res, next) => {
@@ -94,7 +98,10 @@ router.get('/verify/:certNumber', verifyRateLimit, async (req, res) => {
 });
 
 // 测试用的创建证书端点
-router.post('/test/create', async (req, res) => {
+router.post('/test/create', authMiddleware, requireRole(['system_admin']), async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ message: '接口不存在' });
+  }
   try {
     const certificateService = require('../services/certificateService_basic');
         

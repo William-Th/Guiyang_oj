@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const { pool } = require('../database/connection');
 const logger = require('../utils/logger');
+const { runWithAdvisoryLock } = require('./distributedLock');
 
 /**
  * 注册申请自动升级服务
@@ -164,9 +165,9 @@ async function escalatePendingRequests() {
  */
 function startEscalationCron() {
   // 启动定时任务
-  const task = cron.schedule('0 * * * *', () => {
+  const task = cron.schedule('0 * * * *', async () => {
     logger.info('Running scheduled registration escalation check');
-    escalatePendingRequests();
+    await runWithAdvisoryLock('registration-escalation', escalatePendingRequests);
   });
 
   logger.info('Registration escalation cron started', {

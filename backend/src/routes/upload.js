@@ -42,6 +42,26 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+function hasSupportedImageSignature(filePath) {
+  const signature = fs.readFileSync(filePath).subarray(0, 12);
+  const isJpeg = signature[0] === 0xff && signature[1] === 0xd8 && signature[2] === 0xff;
+  const isPng = signature.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  const isGif = signature.subarray(0, 6).toString('ascii') === 'GIF87a'
+    || signature.subarray(0, 6).toString('ascii') === 'GIF89a';
+  const isWebp = signature.subarray(0, 4).toString('ascii') === 'RIFF'
+    && signature.subarray(8, 12).toString('ascii') === 'WEBP';
+  return isJpeg || isPng || isGif || isWebp;
+}
+
+function rejectInvalidImageUpload(req, res) {
+  if (req.file && !hasSupportedImageSignature(req.file.path)) {
+    fs.unlinkSync(req.file.path);
+    res.status(400).json({ success: false, message: '上传文件不是有效的图片' });
+    return true;
+  }
+  return false;
+}
+
 // 配置multer
 const upload = multer({
   storage: storage,
@@ -77,6 +97,8 @@ router.post('/achievement-icon', authMiddleware, upload.single('icon'), async (r
         message: '未选择文件'
       });
     }
+
+    if (rejectInvalidImageUpload(req, res)) return;
 
     // 返回文件URL路径
     const fileUrl = `/uploads/achievements/${req.file.filename}`;
@@ -199,6 +221,8 @@ router.post('/question-image', authMiddleware, questionUpload.single('image'), a
       return res.status(400).json({ success: false, message: '未选择文件' });
     }
 
+    if (rejectInvalidImageUpload(req, res)) return;
+
     const fileUrl = `/uploads/questions/${req.file.filename}`;
 
     logger.info('Question image uploaded', {
@@ -248,6 +272,7 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
     if (!req.file) {
       return res.status(400).json({ success: false, message: '未选择文件' });
     }
+    if (rejectInvalidImageUpload(req, res)) return;
     const fileUrl = `/uploads/avatars/${req.file.filename}`;
     logger.info('Avatar uploaded', { userId: req.user.id, size: req.file.size });
     res.json({

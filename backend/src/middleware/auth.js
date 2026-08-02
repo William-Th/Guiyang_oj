@@ -17,6 +17,10 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid token. User not found.' });
     }
 
+    if (user.status !== 'active' || decoded.tokenVersion !== user.token_version) {
+      return res.status(401).json({ message: 'Session expired. Please sign in again.' });
+    }
+
     req.user = {
       id: user.id,
       username: user.username,
@@ -138,6 +142,9 @@ const optionalAuth = async (req, res, next) => {
       const user = await User.findById(decoded.userId);
       
       if (user) {
+        if (user.status !== 'active' || decoded.tokenVersion !== user.token_version) {
+          return next();
+        }
         req.user = {
           id: user.id,
           username: user.username,

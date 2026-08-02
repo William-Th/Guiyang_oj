@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Avatar, Dropdown, Space, Menu } from 'antd';
+import { Layout, Avatar, Button, Drawer, Dropdown, Space, Menu } from 'antd';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import {
   UserOutlined,
@@ -18,6 +18,7 @@ import {
   ThunderboltOutlined,
   FireOutlined,
   ShoppingOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
 import NotificationBell from '../common/NotificationBell';
 import { ColoredName } from '@/hooks/useEquippedNameColor';
@@ -33,6 +34,7 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const [mobileNavigationOpen, setMobileNavigationOpen] = React.useState(false);
 
   // 身份验证守卫：同步判断，未登录直接重定向，避免首次渲染闪现内容（修复 BUG-001）
   const token = localStorage.getItem('token');
@@ -250,10 +252,6 @@ const MainLayout: React.FC = () => {
     },
   ];
 
-  const handleParentMenuClick = ({ key }: { key: string }) => {
-    navigate(key);
-  };
-
   // 获取当前选中的菜单项（管理员）
   const getAdminSelectedKey = () => {
     const path = location.pathname;
@@ -298,115 +296,50 @@ const MainLayout: React.FC = () => {
     return '/';
   };
 
-  // 处理管理员菜单点击
-  const handleAdminMenuClick: MenuProps['onClick'] = (e) => {
-    navigate(e.key);
+  const getNavigation = (): { items: MenuProps['items']; selectedKeys: string[] } | null => {
+    if (isAdmin()) return { items: getAdminMenuItems(), selectedKeys: [getAdminSelectedKey()] };
+    if (isTeacher()) return { items: teacherMenuItems, selectedKeys: [getTeacherSelectedKey()] };
+    if (isStudent()) return { items: studentMenuItems, selectedKeys: [getStudentSelectedKey()] };
+    if (isParent()) return { items: parentMenuItems, selectedKeys: [location.pathname] };
+    return null;
   };
 
-  // 处理教师菜单点击
-  const handleTeacherMenuClick: MenuProps['onClick'] = (e) => {
-    navigate(e.key);
-  };
-
-  // 处理学生菜单点击
-  const handleStudentMenuClick: MenuProps['onClick'] = (e) => {
+  const navigation = getNavigation();
+  const handleNavigationClick: MenuProps['onClick'] = (e) => {
+    setMobileNavigationOpen(false);
     navigate(e.key);
   };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex',
-        alignItems: 'center',
-        background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
-        padding: '0 24px',
-        boxShadow: '0 2px 8px rgba(77, 152, 153, 0.3)',
-      }}>
-        <div style={{
-          color: 'white',
-          fontSize: '20px',
-          fontWeight: 600,
-          marginRight: '48px',
-          whiteSpace: 'nowrap',
-          letterSpacing: '1px',
-        }}>
+      <Header className="app-header">
+        {navigation && (
+          <Button
+            className="app-mobile-navigation-trigger"
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={() => setMobileNavigationOpen(true)}
+            aria-label="打开导航菜单"
+          />
+        )}
+
+        <div className="app-brand">
           贵阳市小学生测评平台
         </div>
 
-        {/* 管理员导航菜单 */}
-        {isAdmin() && (
+        {navigation && (
           <Menu
+            className="app-desktop-navigation"
             mode="horizontal"
-            selectedKeys={[getAdminSelectedKey()]}
-            items={getAdminMenuItems()}
-            onClick={handleAdminMenuClick}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              background: 'transparent',
-              borderBottom: 'none',
-              lineHeight: '64px',
-            }}
-            theme="dark"
-          />
-        )}
-
-        {/* 教师导航菜单 */}
-        {isTeacher() && (
-          <Menu
-            mode="horizontal"
-            selectedKeys={[getTeacherSelectedKey()]}
-            items={teacherMenuItems}
-            onClick={handleTeacherMenuClick}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              background: 'transparent',
-              borderBottom: 'none',
-              lineHeight: '64px',
-            }}
-            theme="dark"
-          />
-        )}
-
-        {/* 学生导航菜单 */}
-        {isStudent() && (
-          <Menu
-            mode="horizontal"
-            selectedKeys={[getStudentSelectedKey()]}
-            items={studentMenuItems}
-            onClick={handleStudentMenuClick}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              background: 'transparent',
-              borderBottom: 'none',
-              lineHeight: '64px',
-            }}
-            theme="dark"
-          />
-        )}
-
-        {/* 家长导航菜单 */}
-        {isParent() && (
-          <Menu
-            mode="horizontal"
-            selectedKeys={[location.pathname]}
-            items={parentMenuItems}
-            onClick={handleParentMenuClick}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              background: 'transparent',
-              borderBottom: 'none',
-              lineHeight: '64px',
-            }}
+            selectedKeys={navigation.selectedKeys}
+            items={navigation.items}
+            onClick={handleNavigationClick}
             theme="dark"
           />
         )}
 
         {/* 右侧区域：通知铃铛和用户菜单 */}
-        <Space style={{ marginLeft: 'auto' }} size="middle">
+        <Space className="app-header-user" size="middle">
           {/* 通知铃铛 */}
           <NotificationBell />
 
@@ -415,19 +348,37 @@ const MainLayout: React.FC = () => {
             menu={{ items: userMenuItems, onClick: handleMenuClick }}
             placement="bottomRight"
           >
-            <Space style={{ color: 'white', cursor: 'pointer' }}>
+            <Space className="app-user-menu-trigger">
               <Avatar icon={<UserOutlined />} />
-              <ColoredName name={user?.realName || user?.username || '用户'} />
+              <span className="app-user-name">
+                <ColoredName name={user?.realName || user?.username || '用户'} />
+              </span>
             </Space>
           </Dropdown>
         </Space>
       </Header>
-      <Content style={{ padding: '24px', background: '#f0f2f5' }}>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', minHeight: '100%' }}>
+      {navigation && (
+        <Drawer
+          title="功能导航"
+          placement="left"
+          open={mobileNavigationOpen}
+          onClose={() => setMobileNavigationOpen(false)}
+          width={280}
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={navigation.selectedKeys}
+            items={navigation.items}
+            onClick={handleNavigationClick}
+          />
+        </Drawer>
+      )}
+      <Content className="app-content">
+        <div className="app-page-surface">
           <Outlet />
         </div>
       </Content>
-      <Footer style={{ textAlign: 'center', background: '#f0f2f5', color: '#6b7280' }}>
+      <Footer className="app-footer">
         贵阳市教育局 ©2024 小学生测评服务平台
       </Footer>
     </Layout>

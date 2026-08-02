@@ -5646,6 +5646,7 @@ COMMENT ON VIEW v_pending_teaching_classes IS '待审批教学班视图 - 显示
 \i migrations/031_judge_system.sql
 \i migrations/032_update_question_bank_view.sql
 \i migrations/033_fix_code_submissions.sql
+\i migrations/056_add_user_token_version.sql
 
 -- =====================================================
 -- 编程题判题系统 完成

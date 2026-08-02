@@ -50,14 +50,29 @@ class RedisQueue {
    * Disconnect from Redis
    */
   async disconnect() {
-    if (this.client) {
-      await this.client.quit();
-    }
-    if (this.subscriber) {
-      await this.subscriber.quit();
-    }
+    if (!this.connected) return;
+
+    // Mark the shared queue as disconnected before awaiting network I/O so
+    // overlapping shutdown handlers cannot close the same clients twice.
     this.connected = false;
-    logger.info('Redis queue disconnected');
+
+    const client = this.client;
+    const subscriber = this.subscriber;
+    this.client = null;
+    this.subscriber = null;
+
+    try {
+      if (client) {
+        await client.quit();
+      }
+      if (subscriber) {
+        await subscriber.quit();
+      }
+      logger.info('Redis queue disconnected');
+    } catch (err) {
+      logger.error('Failed to disconnect Redis queue', { error: err.message });
+      throw err;
+    }
   }
 
   /**

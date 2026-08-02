@@ -7,7 +7,7 @@ const logger = require('./utils/logger');
 const { startAutoSubmitCron, stopAutoSubmitCron } = require('./services/autoSubmitService');
 const { startEscalationCron, stopEscalationCron } = require('./services/registrationEscalationService');
 const { startLeaderboardCron, stopLeaderboardCron } = require('./services/points/leaderboardCron');
-const { startDailyQuestionCron } = require('./services/recommend/dailyQuestionCron');
+const { startDailyQuestionCron, stopDailyQuestionCron } = require('./services/recommend/dailyQuestionCron');
 
 // Load environment variables based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' 
@@ -159,8 +159,13 @@ app.use((err, req, res, _next) => {
     ip: req.ip
   });
   
-  res.status(err.status || 500).json({
-    message: err.message || '服务器内部错误',
+  const status = err.status || 500;
+  const message = status >= 500 && process.env.NODE_ENV === 'production'
+    ? '服务器内部错误，请稍后重试'
+    : (err.message || '服务器内部错误');
+
+  res.status(status).json({
+    message,
     ...(process.env.NODE_ENV === 'development' && { 
       stack: err.stack,
       details: err.details
@@ -178,6 +183,7 @@ app.use((req, res) => {
 let autoSubmitTask = null;
 let registrationEscalationTask = null;
 let leaderboardTask = null;
+let dailyQuestionTask = null;
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
@@ -191,6 +197,9 @@ process.on('SIGTERM', () => {
   }
   if (leaderboardTask) {
     stopLeaderboardCron(leaderboardTask);
+  }
+  if (dailyQuestionTask) {
+    stopDailyQuestionCron(dailyQuestionTask);
   }
   server.close(() => {
     logger.info('Process terminated');
@@ -209,6 +218,9 @@ process.on('SIGINT', () => {
   }
   if (leaderboardTask) {
     stopLeaderboardCron(leaderboardTask);
+  }
+  if (dailyQuestionTask) {
+    stopDailyQuestionCron(dailyQuestionTask);
   }
   server.close(() => {
     logger.info('Process terminated');
@@ -237,7 +249,7 @@ const server = app.listen(PORT, async () => {
   console.log('⏰ Leaderboard generation cron job started (runs hourly at 5th minute)');
 
   // Start daily question warmup cron job (D3)
-  startDailyQuestionCron();
+  dailyQuestionTask = startDailyQuestionCron();
   console.log('📅 Daily question cron job started (runs daily at 03:07)');
 
   // Initialize achievement detector

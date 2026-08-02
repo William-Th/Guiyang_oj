@@ -10,6 +10,7 @@
 const cron = require('node-cron');
 const { query } = require('../database/connection');
 const logger = require('../utils/logger');
+const { runWithAdvisoryLock } = require('./distributedLock');
 
 /**
  * Auto-submit expired student activities
@@ -113,7 +114,7 @@ function startAutoSubmitCron() {
   // Schedule cron job to run every minute
   const task = cron.schedule('* * * * *', async () => {
     logger.debug('Auto-submit cron job triggered');
-    await autoSubmitExpiredActivities();
+    await runWithAdvisoryLock('auto-submit-expired-activities', autoSubmitExpiredActivities);
   }, {
     scheduled: true,
     timezone: 'Asia/Shanghai'
@@ -143,7 +144,7 @@ function stopAutoSubmitCron(task) {
  */
 async function triggerManualAutoSubmit() {
   logger.info('Manual auto-submit triggered');
-  await autoSubmitExpiredActivities();
+  await runWithAdvisoryLock('auto-submit-expired-activities', autoSubmitExpiredActivities);
 }
 
 module.exports = {

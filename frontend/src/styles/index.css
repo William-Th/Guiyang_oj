@@ -19,6 +19,66 @@ body {
   min-height: 100vh;
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  background: var(--bohe-gradient) !important;
+  padding: 0 var(--bohe-space-6) !important;
+  box-shadow: 0 2px 8px rgba(77, 152, 153, 0.3);
+}
+
+.app-brand {
+  color: #fff;
+  font-size: var(--bohe-font-size-xl);
+  font-weight: 600;
+  margin-right: var(--bohe-space-12);
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+.app-desktop-navigation {
+  flex: 1;
+  min-width: 0;
+  background: transparent !important;
+  border-bottom: 0 !important;
+  line-height: 64px;
+}
+
+.app-mobile-navigation-trigger {
+  display: none;
+  color: #fff !important;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.app-header-user {
+  margin-left: auto;
+  color: #fff;
+}
+
+.app-user-menu-trigger {
+  color: #fff;
+  cursor: pointer;
+}
+
+.app-content {
+  padding: var(--bohe-space-6);
+  background: var(--bohe-bg-layout);
+}
+
+.app-page-surface {
+  min-height: 100%;
+  padding: var(--bohe-space-6);
+  background: var(--bohe-bg-primary);
+  border-radius: var(--bohe-radius-lg);
+}
+
+.app-footer {
+  text-align: center;
+  background: var(--bohe-bg-layout) !important;
+  color: var(--bohe-text-secondary) !important;
+}
+
 /* ===== 薄荷品牌全局样式 ===== */
 
 /* 选中文字颜色 */
@@ -50,10 +110,65 @@ body {
    F4 移动端响应式适配（D2 学生端手机刷题）
    ============================================================ */
 @media (max-width: 768px) {
+  .app-header {
+    padding: 0 var(--bohe-space-2) !important;
+    gap: var(--bohe-space-1);
+    overflow: hidden;
+    flex-wrap: nowrap;
+  }
+
+  .app-brand {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    margin-right: 0;
+    overflow: hidden;
+    font-size: var(--bohe-font-size-base);
+    text-overflow: ellipsis;
+  }
+
+  .app-desktop-navigation {
+    display: none !important;
+  }
+
+  .app-mobile-navigation-trigger {
+    display: inline-flex;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .app-header-user {
+    flex: 0 0 auto;
+    margin-left: auto;
+    gap: var(--bohe-space-2) !important;
+  }
+
+  .app-header .ant-space {
+    flex-wrap: nowrap;
+  }
+
+  .app-user-menu-trigger {
+    gap: 0 !important;
+  }
+
+  .app-user-name {
+    display: none;
+  }
+
+  .app-content,
+  .app-page-surface {
+    padding: var(--bohe-space-2);
+  }
+
+  .app-page-surface {
+    background: transparent;
+  }
+
   /* 页面整体内边距收紧 */
   .ant-layout-content,
   main {
-    padding: 12px !important;
+    padding: 8px !important;
   }
 
   /* 页面容器通用内边距 */
@@ -80,6 +195,27 @@ body {
     margin-bottom: 12px !important;
   }
 
+  .ant-card-head,
+  .ant-card-body {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .ant-card-head-wrapper {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ant-card-extra {
+    max-width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .ant-card-extra > .ant-space {
+    max-width: 100%;
+  }
+
   /* 表格横向滚动（关键：移动端表格可滑动） */
   .ant-table-wrapper {
     overflow-x: auto;
@@ -87,6 +223,62 @@ body {
   }
   .ant-table-content {
     overflow-x: auto !important;
+  }
+
+  .ant-table-wrapper .ant-table-cell {
+    padding: 12px 10px !important;
+  }
+
+  .ant-table-wrapper .ant-table-thead > tr > th {
+    min-width: 96px;
+    white-space: nowrap;
+  }
+
+  .ant-table-wrapper .ant-table-tbody > tr > td {
+    min-width: 96px;
+    vertical-align: middle;
+  }
+
+  .ant-table-wrapper .ant-table-cell .ant-space {
+    flex-wrap: nowrap;
+  }
+
+  .ant-table-wrapper .ant-table-cell .ant-btn {
+    white-space: nowrap;
+  }
+
+  /* 固定操作列会覆盖窄屏主体内容，移动端恢复为普通滚动列 */
+  .ant-table-cell-fix-left,
+  .ant-table-cell-fix-right {
+    position: static !important;
+  }
+
+  .ant-table-cell-fix-left-first::after,
+  .ant-table-cell-fix-left-last::after,
+  .ant-table-cell-fix-right-first::after,
+  .ant-table-cell-fix-right-last::after {
+    display: none !important;
+  }
+
+  .ant-table-pagination.ant-pagination {
+    justify-content: center;
+    width: 100%;
+    margin: 16px 0 4px !important;
+  }
+
+  .ant-pagination-options {
+    display: none !important;
+  }
+
+  .activity-title-cell {
+    min-width: 0;
+  }
+
+  .activity-title-text {
+    display: block;
+    font-weight: 500;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
   /* Tabs 标签可横向滚动 */
@@ -128,4 +320,3 @@ body {
     font-size: 14px !important;
   }
 }
-

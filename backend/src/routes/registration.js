@@ -9,7 +9,39 @@ const { pool } = require('../database/connection');
 const bcrypt = require('bcryptjs');
 const ConfigService = require('../services/configService');
 const logger = require('../utils/logger');
-const { authMiddleware } = require('../middleware/auth');
+const User = require('../models/User');
+const { authMiddleware, requireAdmin } = require('../middleware/auth');
+
+const SCHOOL_SCOPED_ADMIN_ROLES = [
+  'school_admin',
+  'municipal_school_admin',
+  'base_school_admin'
+];
+
+async function canManageRegistration(user, request) {
+  if (['system_admin', 'municipal_admin'].includes(user.role)) {
+    return true;
+  }
+
+  const permissions = await User.getAdminPermissions(user.id);
+  if (!permissions) {
+    return false;
+  }
+
+  if (user.role === 'district_admin') {
+    return Number(permissions.district_id) === Number(request.district_id);
+  }
+
+  if (SCHOOL_SCOPED_ADMIN_ROLES.includes(user.role) && permissions.school_id) {
+    const schoolResult = await pool.query(
+      'SELECT code FROM schools WHERE id = $1',
+      [permissions.school_id]
+    );
+    return schoolResult.rows[0]?.code === request.school_code;
+  }
+
+  return false;
+}
 
 /**
  * POST /api/registration/student
@@ -322,7 +354,7 @@ router.get('/status/:phone', async (req, res) => {
  * 获取待审核申请列表（管理员用）
  * 需要认证中间件
  */
-router.get('/admin/requests', authMiddleware, async (req, res) => {
+router.get('/admin/requests', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const { status = 'pending', page = 1, limit = 20, search } = req.query;
     const offset = (page - 1) * limit;
@@ -344,7 +376,7 @@ router.get('/admin/requests', authMiddleware, async (req, res) => {
     }
 
     // 校级管理员只能看到自己学校的注册申请
-    if (role === 'school_admin') {
+    if (SCHOOL_SCOPED_ADMIN_ROLES.includes(role)) {
       // 查询管理员所属学校
       const adminPermResult = await pool.query(
         'SELECT school_id FROM admin_permissions WHERE user_id = $1',
@@ -402,6 +434,12 @@ router.get('/admin/requests', authMiddleware, async (req, res) => {
 
       whereClause += ' AND (submitted_at + INTERVAL \'3 days\' < CURRENT_TIMESTAMP OR last_escalated_at + INTERVAL \'3 days\' < CURRENT_TIMESTAMP)';
     }
+    else if (!['municipal_admin', 'system_admin'].includes(role)) {
+      return res.status(403).json({
+        success: false,
+        message: '没有注册申请管理权限'
+      });
+    }
     // 市级/系统管理员可以看到所有申请
 
     const result = await pool.query(
@@ -447,7 +485,7 @@ router.get('/admin/requests', authMiddleware, async (req, res) => {
  * 批准注册申请（管理员用）
  * 需要认证中间件
  */
-router.post('/admin/requests/:id/approve', async (req, res) => {
+router.post('/admin/requests/:id/approve', authMiddleware, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { comment } = req.body;
 
@@ -471,6 +509,11 @@ router.post('/admin/requests/:id/approve', async (req, res) => {
     }
 
     const request = requestResult.rows[0];
+
+    if (!await canManageRegistration(req.user, request)) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ success: false, message: '无权审核该注册申请' });
+    }
 
     if (request.status !== 'pending') {
       await client.query('ROLLBACK');
@@ -539,7 +582,7 @@ router.post('/admin/requests/:id/approve', async (req, res) => {
            reviewed_by = $2,
            review_comment = $3
        WHERE id = $4`,
-      [studentUserId, null, comment || '申请已批准', id]
+      [studentUserId, req.user.id, comment || '申请已批准', id]
     );
 
     // 7. 记录审核日志
@@ -548,7 +591,7 @@ router.post('/admin/requests/:id/approve', async (req, res) => {
       [
         id,
         'approved',
-        null, // TODO: 从JWT获取管理员ID
+        req.user.id,
         request.current_reviewer_level,
         comment || '注册申请已批准，学生账号已创建',
         JSON.stringify({
@@ -597,7 +640,7 @@ router.post('/admin/requests/:id/approve', async (req, res) => {
  * 拒绝注册申请（管理员用）
  * 需要认证中间件
  */
-router.post('/admin/requests/:id/reject', async (req, res) => {
+router.post('/admin/requests/:id/reject', authMiddleware, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { comment } = req.body;
 
@@ -624,6 +667,10 @@ router.post('/admin/requests/:id/reject', async (req, res) => {
 
     const request = requestResult.rows[0];
 
+    if (!await canManageRegistration(req.user, request)) {
+      return res.status(403).json({ success: false, message: '无权审核该注册申请' });
+    }
+
     if (request.status !== 'pending') {
       return res.status(400).json({
         success: false,
@@ -639,7 +686,7 @@ router.post('/admin/requests/:id/reject', async (req, res) => {
            reviewed_by = $1,
            review_comment = $2
        WHERE id = $3`,
-      [null, comment, id] // TODO: 从JWT获取管理员ID
+      [req.user.id, comment, id]
     );
 
     // 3. 记录审核日志
@@ -648,7 +695,7 @@ router.post('/admin/requests/:id/reject', async (req, res) => {
       [
         id,
         'rejected',
-        null, // TODO: 从JWT获取管理员ID
+        req.user.id,
         request.current_reviewer_level,
         comment,
         null
@@ -682,7 +729,7 @@ router.post('/admin/requests/:id/reject', async (req, res) => {
  * GET /api/registration/admin/requests/:id/history
  * 查看审核历史（管理员用）
  */
-router.get('/admin/requests/:id/history', async (req, res) => {
+router.get('/admin/requests/:id/history', authMiddleware, requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -697,6 +744,10 @@ router.get('/admin/requests/:id/history', async (req, res) => {
         success: false,
         message: '申请记录不存在'
       });
+    }
+
+    if (!await canManageRegistration(req.user, requestResult.rows[0])) {
+      return res.status(403).json({ success: false, message: '无权查看该注册申请' });
     }
 
     // 2. 获取审核历史日志

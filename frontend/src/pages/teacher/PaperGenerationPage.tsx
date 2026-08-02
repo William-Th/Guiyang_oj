@@ -68,6 +68,9 @@ interface Question {
   knowledge_points: string[];
   subject: string;
   grade: string;
+  options?: QuestionOption[] | string;
+  correct_answer?: unknown;
+  image_url?: string;
 }
 
 interface ActivityQuestion {
@@ -81,7 +84,35 @@ interface ActivityQuestion {
   difficulty: string;
   level: string;
   knowledge_points: string[];
+  subject?: string;
+  grade?: string;
+  suggested_score?: number;
+  options?: QuestionOption[] | string;
+  correct_answer?: unknown;
+  image_url?: string;
 }
+
+type QuestionOption = string | {
+  label?: string;
+  content?: string;
+  left?: string;
+  right?: string;
+};
+
+interface QuestionTypeInfo {
+  color: string;
+  text: string;
+  order: number;
+}
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return fallback;
+  }
+
+  const response = (error as { response?: { data?: { message?: unknown } } }).response;
+  return typeof response?.data?.message === 'string' ? response.data.message : fallback;
+};
 
 interface PaperStats {
   activity_id: number;
@@ -143,6 +174,8 @@ const PaperGenerationPage: React.FC = () => {
     if (activityId) {
       loadData();
     }
+    // 初始数据只随活动切换加载；筛选条件由“搜索/重置”按钮显式触发。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityId]);
 
   const loadData = async () => {
@@ -154,8 +187,8 @@ const PaperGenerationPage: React.FC = () => {
         loadActivityPaper(),
         loadPaperStats(),
       ]);
-    } catch (error) {
-      console.error('Load data error:', error);
+    } catch {
+      message.error('加载试卷数据失败');
     } finally {
       setLoading(false);
     }
@@ -165,8 +198,8 @@ const PaperGenerationPage: React.FC = () => {
     try {
       const response = await activityApi.getActivity(activityId);
       setActivity(response.activity);
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '加载活动信息失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '加载活动信息失败'));
     }
   };
 
@@ -174,8 +207,8 @@ const PaperGenerationPage: React.FC = () => {
     try {
       const response = await activityApi.getAvailableQuestions(activityId, filters);
       setAvailableQuestions(response.questions || []);
-    } catch (error: any) {
-      console.error('Load available questions error:', error);
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '加载可用题目失败'));
     }
   };
 
@@ -183,8 +216,8 @@ const PaperGenerationPage: React.FC = () => {
     try {
       const response = await activityApi.getActivityPaper(activityId);
       setSelectedQuestions(response.questions || []);
-    } catch (error: any) {
-      console.error('Load activity paper error:', error);
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '加载试卷题目失败'));
     }
   };
 
@@ -192,13 +225,13 @@ const PaperGenerationPage: React.FC = () => {
     try {
       const response = await activityApi.getActivityPaperStats(activityId);
       setPaperStats(response.stats);
-    } catch (error: any) {
-      console.error('Load paper stats error:', error);
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '加载试卷统计失败'));
     }
   };
 
   // Filter handlers
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -232,8 +265,8 @@ const PaperGenerationPage: React.FC = () => {
         message.success('题目添加成功');
       }
       await loadData();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '添加题目失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '添加题目失败'));
     } finally {
       setAddingQuestion(false);
     }
@@ -265,8 +298,8 @@ const PaperGenerationPage: React.FC = () => {
 
       setSelectedRowKeys([]);
       await loadData();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '批量添加题目失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '批量添加题目失败'));
     } finally {
       setAddingQuestion(false);
     }
@@ -288,8 +321,8 @@ const PaperGenerationPage: React.FC = () => {
       message.success('分值更新成功');
       setEditingScoreId(null);
       await loadData();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '更新分值失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '更新分值失败'));
     }
   };
 
@@ -304,8 +337,8 @@ const PaperGenerationPage: React.FC = () => {
       await activityApi.removeQuestionFromActivity(activityId, questionId);
       message.success('题目移除成功');
       await loadData();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '移除题目失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '移除题目失败'));
     }
   };
 
@@ -315,8 +348,8 @@ const PaperGenerationPage: React.FC = () => {
       const response = await activityApi.clearActivityPaper(activityId);
       message.success(`已清空试卷，移除了 ${response.removed} 道题目`);
       await loadData();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '清空试卷失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '清空试卷失败'));
     }
   };
 
@@ -361,8 +394,8 @@ const PaperGenerationPage: React.FC = () => {
           ),
         });
       }
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '验证试卷失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '验证试卷失败'));
     }
   };
 
@@ -395,8 +428,8 @@ const PaperGenerationPage: React.FC = () => {
 
       setSelectedPaperRowKeys([]);
       await loadData();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '批量删除题目失败');
+    } catch (error: unknown) {
+      message.error(getApiErrorMessage(error, '批量删除题目失败'));
     }
   };
 
@@ -594,7 +627,7 @@ const PaperGenerationPage: React.FC = () => {
       matching: { color: 'magenta', text: '匹配题', order: 7 },
     };
 
-    const groups: Record<string, { questions: Question[]; info: any }> = {};
+    const groups: Record<string, { questions: Question[]; info: QuestionTypeInfo }> = {};
 
     // Initialize all type groups
     Object.keys(typeMap).forEach(type => {
@@ -1115,63 +1148,61 @@ const PaperGenerationPage: React.FC = () => {
           <div>
             <Descriptions bordered column={2} size="small">
               <Descriptions.Item label="题目编号" span={2}>
-                {(previewQuestion as any).question_code}
+                {previewQuestion.question_code}
               </Descriptions.Item>
               <Descriptions.Item label="题型">
-                {getTypeTag((previewQuestion as any).type)}
+                {getTypeTag(previewQuestion.type)}
               </Descriptions.Item>
               <Descriptions.Item label="难度">
-                {getDifficultyTag((previewQuestion as any).difficulty)}
+                {getDifficultyTag(previewQuestion.difficulty)}
               </Descriptions.Item>
               <Descriptions.Item label="级别">
-                {(previewQuestion as any).level}
+                {previewQuestion.level}
               </Descriptions.Item>
               <Descriptions.Item label="科目">
-                {(previewQuestion as any).subject}
+                {previewQuestion.subject}
               </Descriptions.Item>
               <Descriptions.Item label="年级">
-                {(previewQuestion as any).grade}
+                {previewQuestion.grade}
               </Descriptions.Item>
               <Descriptions.Item label="建议分值">
-                {(previewQuestion as any).suggested_score}
+                {previewQuestion.suggested_score}
               </Descriptions.Item>
-              {(previewQuestion as any).knowledge_points && (
+              {previewQuestion.knowledge_points && (
                 <Descriptions.Item label="知识点" span={2}>
-                  {Array.isArray((previewQuestion as any).knowledge_points)
-                    ? (previewQuestion as any).knowledge_points.join(', ')
-                    : (previewQuestion as any).knowledge_points}
+                  {previewQuestion.knowledge_points.join(', ')}
                 </Descriptions.Item>
               )}
               <Descriptions.Item label="题目内容" span={2}>
                 <div style={{ whiteSpace: 'pre-wrap' }}>
-                  {(previewQuestion as any).content}
+                  {previewQuestion.content}
                 </div>
-                {(previewQuestion as any).image_url && (
+                {previewQuestion.image_url && (
                   <div style={{ marginTop: 8 }}>
                     <Image
-                      src={(previewQuestion as any).image_url}
+                      src={previewQuestion.image_url}
                       alt="题目图片"
                       style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
                     />
                   </div>
                 )}
               </Descriptions.Item>
-              {(previewQuestion as any).options && (
+              {previewQuestion.options && (
                 <Descriptions.Item label="选项" span={2}>
                   <div>
-                    {Array.isArray((previewQuestion as any).options)
-                      ? (previewQuestion as any).options.map((opt: string, idx: number) => (
+                    {Array.isArray(previewQuestion.options)
+                      ? previewQuestion.options.map((opt: QuestionOption, idx: number) => (
                           <div key={idx}>
                             {optionText(opt, idx)}
                           </div>
                         ))
-                      : (previewQuestion as any).options}
+                      : previewQuestion.options}
                   </div>
                 </Descriptions.Item>
               )}
-              {(previewQuestion as any).correct_answer && (
+              {previewQuestion.correct_answer != null && (
                 <Descriptions.Item label="正确答案" span={2}>
-                  <Tag color="green">{formatCorrectAnswer((previewQuestion as any).correct_answer)}</Tag>
+                  <Tag color="green">{formatCorrectAnswer(previewQuestion.correct_answer)}</Tag>
                 </Descriptions.Item>
               )}
             </Descriptions>
@@ -1264,10 +1295,10 @@ const PaperGenerationPage: React.FC = () => {
                         </div>
 
                         {/* Options for single/multiple choice */}
-                        {(question.type === 'single' || question.type === 'multiple') && (question as any).options && (
+                        {(question.type === 'single' || question.type === 'multiple') && question.options && (
                           <div style={{ marginLeft: 30, marginTop: 8 }}>
-                            {Array.isArray((question as any).options)
-                              ? (question as any).options.map((opt: string, optIdx: number) => (
+                            {Array.isArray(question.options)
+                              ? question.options.map((opt: QuestionOption, optIdx: number) => (
                                   <div key={optIdx} style={{ marginBottom: 4 }}>
                                     {optionText(opt, optIdx)}
                                   </div>

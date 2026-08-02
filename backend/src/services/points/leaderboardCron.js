@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const leaderboardService = require('./LeaderboardService');
 const logger = require('../../utils/logger');
+const { runWithAdvisoryLock } = require('../distributedLock');
 
 /**
  * 排行榜定时任务
@@ -19,8 +20,12 @@ function startLeaderboardCron() {
   cronTask = cron.schedule(schedule, async () => {
     try {
       logger.info('Running scheduled leaderboard generation');
-      await leaderboardService.generateAllLeaderboards();
-      logger.info('Scheduled leaderboard generation completed');
+      const ran = await runWithAdvisoryLock('leaderboard-generation', () =>
+        leaderboardService.generateAllLeaderboards()
+      );
+      if (ran) {
+        logger.info('Scheduled leaderboard generation completed');
+      }
     } catch (error) {
       logger.error('Leaderboard generation failed:', error);
     }

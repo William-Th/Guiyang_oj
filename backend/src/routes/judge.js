@@ -8,9 +8,47 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const { authMiddleware } = require('../middleware/auth');
 const TestCase = require('../models/TestCase');
+const User = require('../models/User');
+const { query } = require('../database/connection');
 
 // Judge service URL (internal Docker network)
 const JUDGE_SERVICE_URL = process.env.JUDGE_SERVICE_URL || 'http://judge-service:3002';
+
+async function authorizeSubmissionAccess(req, res, next) {
+  const submissionId = Number(req.params.submissionId);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    return res.status(400).json({ success: false, message: '无效的提交记录ID' });
+  }
+
+  try {
+    const result = await query(
+      `SELECT cs.student_id, a.created_by
+       FROM code_submissions cs
+       LEFT JOIN student_activities sa ON sa.id = cs.student_activity_id
+       LEFT JOIN activities a ON a.id = sa.activity_id
+       WHERE cs.id = $1`,
+      [submissionId]
+    );
+    const submission = result.rows[0];
+
+    if (!submission) {
+      return res.status(404).json({ success: false, message: '提交记录不存在' });
+    }
+
+    const canAccess = submission.student_id === req.user.id
+      || (req.user.role === 'teacher' && submission.created_by === req.user.id)
+      || ['system_admin', 'municipal_admin'].includes(req.user.role);
+
+    if (!canAccess) {
+      return res.status(403).json({ success: false, message: '无权查看该提交记录' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Judge submission authorization error:', error);
+    res.status(500).json({ success: false, message: '提交记录权限校验失败' });
+  }
+}
 
 /**
  * Forward request to judge service
@@ -101,7 +139,7 @@ router.post('/run', authMiddleware, async (req, res) => {
  * GET /api/judge/status/:submissionId
  * Get submission status and results
  */
-router.get('/status/:submissionId', authMiddleware, async (req, res) => {
+router.get('/status/:submissionId', authMiddleware, authorizeSubmissionAccess, async (req, res) => {
   const { submissionId } = req.params;
   await forwardToJudgeService(`/api/judge/status/${submissionId}`, 'GET', null, res);
 });
@@ -110,7 +148,7 @@ router.get('/status/:submissionId', authMiddleware, async (req, res) => {
  * GET /api/judge/submission/:submissionId
  * Get full submission details
  */
-router.get('/submission/:submissionId', authMiddleware, async (req, res) => {
+router.get('/submission/:submissionId', authMiddleware, authorizeSubmissionAccess, async (req, res) => {
   const { submissionId } = req.params;
   await forwardToJudgeService(`/api/judge/submission/${submissionId}`, 'GET', null, res);
 });
@@ -142,7 +180,7 @@ router.get('/languages', async (req, res) => {
  */
 router.get('/queue/stats', authMiddleware, async (req, res) => {
   // Check if user is admin
-  if (req.user.role !== 'admin') {
+  if (!User.isAdminRole(req.user.role)) {
     return res.status(403).json({
       success: false,
       message: 'Admin access required'

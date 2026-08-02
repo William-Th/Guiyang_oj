@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Select, Tabs } from 'antd';
+import { Card, Table, Tag, Button, Space, message, Select, Tabs, Grid } from 'antd';
 import { PlayCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
@@ -55,6 +55,8 @@ const PracticeCenterPage: React.FC = () => {
   const [completedPractices, setCompletedPractices] = useState<HistoryActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(initialTab);
+  const screens = Grid.useBreakpoint();
+  const isMobile = screens.md === false;
   const [filters, setFilters] = useState<{
     subject?: string;
     grade?: string;
@@ -145,10 +147,17 @@ const PracticeCenterPage: React.FC = () => {
 
   const columns = [
     {
-      title: '练习名称', dataIndex: 'title', key: 'title', width: 200,
+      title: '练习名称', dataIndex: 'title', key: 'title', width: isMobile ? undefined : 200,
       render: (title: string, record: Practice) => (
-        <Space>
-          <span>{title}</span>
+        <Space direction={isMobile ? 'vertical' : 'horizontal'} size={4} className="activity-title-cell">
+          <span className="activity-title-text">{title}</span>
+          {isMobile && (
+            <Space size={4} wrap>
+              {getSubjectTag(record.subject)}
+              <Tag>{record.grade}</Tag>
+              {getAbilityLevelTag(record.ability_level)}
+            </Space>
+          )}
           {record.my_status === 'submitted' || record.my_status === 'graded' ? (
             <Tag color="success" icon={<TrophyOutlined />}>已完成</Tag>
           ) : record.my_status === 'in_progress' ? (
@@ -164,7 +173,8 @@ const PracticeCenterPage: React.FC = () => {
     { title: '时长', dataIndex: 'duration', key: 'duration', width: 100, render: (d: number | null) => d != null ? `${d}分钟` : '-' },
     { title: '总分', dataIndex: 'total_score', key: 'total_score', width: 80 },
     {
-      title: '操作', key: 'action', width: 150, fixed: 'right' as const,
+      title: '操作', key: 'action', width: isMobile ? 112 : 150,
+      fixed: isMobile ? undefined : 'right' as const,
       render: (_: any, record: Practice) => {
         if (record.my_status === 'graded' || record.my_status === 'submitted') {
           return (
@@ -183,6 +193,16 @@ const PracticeCenterPage: React.FC = () => {
       },
     },
   ];
+
+  const availableColumns = isMobile
+    ? columns.filter((column) => column.key === 'title' || column.key === 'action')
+    : columns;
+
+  const pagination = {
+    simple: isMobile,
+    showSizeChanger: !isMobile,
+    showTotal: isMobile ? undefined : (total: number) => `共 ${total} 个练习`,
+  };
 
   return (
     <div>
@@ -210,10 +230,11 @@ const PracticeCenterPage: React.FC = () => {
             key: 'available',
             label: `可用练习 (${practices.length})`,
             children: (
-              <Table columns={columns} dataSource={practices} rowKey="id" scroll={{ x: 1200 }}
+              <Table columns={availableColumns} dataSource={practices} rowKey="id"
+                scroll={isMobile ? undefined : { x: 1200 }}
                 loading={loading}
                 locale={{ emptyText: '暂无可用练习' }}
-                pagination={{ showSizeChanger: true, showTotal: (total) => `共 ${total} 个练习` }} />
+                pagination={pagination} />
             ),
           },
           {
@@ -228,7 +249,21 @@ const PracticeCenterPage: React.FC = () => {
 
   function renderCompletedTable() {
     const completedColumns = [
-      { title: '练习名称', dataIndex: 'title', key: 'title', width: 200 },
+      {
+        title: '练习名称', dataIndex: 'title', key: 'title', width: isMobile ? undefined : 200,
+        render: (title: string, record: HistoryActivity) => (
+          <Space direction={isMobile ? 'vertical' : 'horizontal'} size={4} className="activity-title-cell">
+            <span className="activity-title-text">{title}</span>
+            {isMobile && (
+              <Space size={4} wrap>
+                {getSubjectTag(record.subject)}
+                {record.grade && <Tag>{record.grade}</Tag>}
+                <Tag color="success">{Number(record.score || 0).toFixed(1)} 分</Tag>
+              </Space>
+            )}
+          </Space>
+        ),
+      },
       { title: '科目', dataIndex: 'subject', key: 'subject', width: 100, render: (s: string) => getSubjectTag(s) },
       { title: '年级', dataIndex: 'grade', key: 'grade', width: 100, render: (g: string) => g || '-' },
       {
@@ -262,7 +297,8 @@ const PracticeCenterPage: React.FC = () => {
         },
       },
       {
-        title: '操作', key: 'action', width: 120, fixed: 'right' as const,
+        title: '操作', key: 'action', width: isMobile ? 112 : 120,
+        fixed: isMobile ? undefined : 'right' as const,
         render: (_: any, record: HistoryActivity) => (
           <Button size="small" type="primary" icon={<TrophyOutlined />}
             onClick={() => goResult(record.id)}>
@@ -272,11 +308,16 @@ const PracticeCenterPage: React.FC = () => {
       },
     ];
 
+    const visibleCompletedColumns = isMobile
+      ? completedColumns.filter((column) => column.key === 'title' || column.key === 'action')
+      : completedColumns;
+
     return (
-      <Table columns={completedColumns} dataSource={completedPractices} rowKey="id" scroll={{ x: 1100 }}
+      <Table columns={visibleCompletedColumns} dataSource={completedPractices} rowKey="id"
+        scroll={isMobile ? undefined : { x: 1100 }}
         loading={loading}
         locale={{ emptyText: '暂无已完成的练习，快去练习吧！' }}
-        pagination={{ showSizeChanger: true, showTotal: (total) => `共 ${total} 个练习` }} />
+        pagination={pagination} />
     );
   }
 };

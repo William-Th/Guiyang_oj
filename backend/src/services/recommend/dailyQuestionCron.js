@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const DailyQuestionService = require('./DailyQuestionService');
 const logger = require('../../utils/logger');
+const { runWithAdvisoryLock } = require('../distributedLock');
 
 /**
  * 每日推题定时任务（D3）
@@ -16,8 +17,13 @@ function startDailyQuestionCron() {
   cronTask = cron.schedule(schedule, async () => {
     try {
       logger.info('Running scheduled daily question warmup');
-      const n = await DailyQuestionService.warmupRecentStudents();
-      logger.info(`Daily question warmup completed: ${n} students`);
+      let warmedStudents = 0;
+      const ran = await runWithAdvisoryLock('daily-question-warmup', async () => {
+        warmedStudents = await DailyQuestionService.warmupRecentStudents();
+      });
+      if (ran) {
+        logger.info(`Daily question warmup completed: ${warmedStudents} students`);
+      }
     } catch (error) {
       logger.error('Daily question warmup failed:', error);
     }

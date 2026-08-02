@@ -5670,6 +5670,7 @@ COMMENT ON VIEW v_pending_teaching_classes IS '待审批教学班视图 - 显示
 \i migrations/052_virtual_shop.sql
 \i migrations/053_student_streaks.sql
 \i migrations/054_parent_role.sql
+\i migrations/056_add_user_token_version.sql
 -- =====================================================
 -- 阶段一/二/三/四功能 完成
 -- =====================================================

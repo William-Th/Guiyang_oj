@@ -3,7 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { generateToken, generateRefreshToken } = require('../utils/jwt');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 const logger = require('../utils/logger');
 const EventEmitter = require('../services/EventEmitter');
 
@@ -124,7 +124,8 @@ router.post('/login', [
     const tokenPayload = {
       userId: user.id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      tokenVersion: user.token_version
     };
 
     const token = generateToken(tokenPayload);
@@ -154,7 +155,7 @@ router.post('/login', [
 });
 
 // Register endpoint
-router.post('/register', [
+router.post('/register', authMiddleware, requireRole(['system_admin']), [
   body('username').isLength({ min: 3 }).withMessage('用户名至少3个字符'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
   body('role').isIn(['student', 'teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'])
@@ -261,11 +262,16 @@ router.post('/refresh', [
     if (!user) {
       return res.status(401).json({ message: '无效的刷新令牌' });
     }
+
+    if (user.status !== 'active' || decoded.tokenVersion !== user.token_version) {
+      return res.status(401).json({ message: '刷新令牌已失效，请重新登录' });
+    }
     
     const tokenPayload = {
       userId: user.id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      tokenVersion: user.token_version
     };
     
     const newToken = generateToken(tokenPayload);
@@ -282,10 +288,15 @@ router.post('/refresh', [
 });
 
 // Logout endpoint
-router.post('/logout', authMiddleware, (req, res) => {
-  // TODO: Add token to blacklist in Redis
-  logger.info('User logged out', { userId: req.user.id });
-  res.json({ message: '退出登录成功' });
+router.post('/logout', authMiddleware, async (req, res) => {
+  try {
+    await User.incrementTokenVersion(req.user.id);
+    logger.info('User logged out and sessions revoked', { userId: req.user.id });
+    res.json({ message: '退出登录成功' });
+  } catch (error) {
+    logger.error('Logout error:', error);
+    res.status(500).json({ message: '退出登录失败，请稍后重试' });
+  }
 });
 
 module.exports = router;

@@ -235,9 +235,25 @@ class User {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await query(
-      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      `UPDATE users
+       SET password = $1,
+           token_version = token_version + 1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2`,
       [hashedPassword, userId]
     );
+  }
+
+  static async incrementTokenVersion(userId) {
+    const result = await query(
+      `UPDATE users
+       SET token_version = token_version + 1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING token_version`,
+      [userId]
+    );
+    return result.rows[0]?.token_version;
   }
 
   static async checkUsernameExists(username) {
