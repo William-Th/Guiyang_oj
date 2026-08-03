@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Descriptions, Badge, Button, Spin, Alert, Typography, Space } from 'antd';
+import { Card, Descriptions, Badge, Button, Spin, Alert, Typography, Space, Input, message } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import api from '@/services/api';
@@ -9,8 +9,6 @@ const { Title, Paragraph, Text } = Typography;
 
 interface RegistrationStatus {
   id: number;
-  phone: string;
-  real_name: string;
   school_name: string;
   grade: string;
   status: string;
@@ -27,17 +25,22 @@ const RegisterStatusPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<RegistrationStatus | null>(null);
   const [error, setError] = useState<string>('');
+  const storedCode = phone ? sessionStorage.getItem(`registration-inquiry:${phone}`) || '' : '';
+  const [inquiryCode, setInquiryCode] = useState<string>(storedCode);
+  const [draftCode, setDraftCode] = useState<string>(storedCode);
 
   useEffect(() => {
     const fetchStatus = async () => {
-      if (!phone) {
-        setError('未提供手机号');
+      if (!phone || !inquiryCode) {
+        setError(!phone ? '未提供手机号' : '请输入提交申请时获得的查询码');
         setLoading(false);
         return;
       }
 
       try {
-        const response = await api.get(`/registration/status/${phone}`);
+        setLoading(true);
+        setError('');
+        const response = await api.post('/registration/status', { phone, inquiryCode });
         if (response.data.success) {
           setStatus(response.data.data);
         } else {
@@ -45,7 +48,7 @@ const RegisterStatusPage: React.FC = () => {
         }
       } catch (error: any) {
         if (error.response?.status === 404) {
-          setError('未找到注册申请记录，请确认手机号是否正确');
+          setError('手机号或查询码不正确');
         } else {
           setError(error.response?.data?.message || '查询失败');
         }
@@ -55,7 +58,17 @@ const RegisterStatusPage: React.FC = () => {
     };
 
     fetchStatus();
-  }, [phone]);
+  }, [phone, inquiryCode]);
+
+  const handleQuery = () => {
+    if (!phone || draftCode.trim().length < 20) {
+      message.warning('请输入完整的注册查询码');
+      return;
+    }
+    const code = draftCode.trim();
+    sessionStorage.setItem(`registration-inquiry:${phone}`, code);
+    setInquiryCode(code);
+  };
 
   // 获取审核层级名称
   const getReviewerLevelName = (level: number) => {
@@ -125,7 +138,18 @@ const RegisterStatusPage: React.FC = () => {
             showIcon
             style={{ marginBottom: '16px' }}
           />
-          <Space>
+          {phone && (
+            <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+              <Input.Password
+                value={draftCode}
+                onChange={(event) => setDraftCode(event.target.value)}
+                onPressEnter={handleQuery}
+                placeholder="请输入提交申请时获得的查询码"
+              />
+              <Button type="primary" block onClick={handleQuery}>重新查询</Button>
+            </Space>
+          )}
+          <Space wrap>
             <Button onClick={() => navigate('/register')}>
               返回注册
             </Button>
@@ -154,7 +178,7 @@ const RegisterStatusPage: React.FC = () => {
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <Title level={2}>注册申请状态</Title>
             <Paragraph type="secondary">
-              手机号：{status.phone}
+              手机号：{phone ? phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '-'}
             </Paragraph>
           </div>
 
@@ -255,8 +279,6 @@ const RegisterStatusPage: React.FC = () => {
           <div>
             <Title level={4}>申请详情</Title>
             <Descriptions bordered column={2}>
-              <Descriptions.Item label="姓名">{status.real_name}</Descriptions.Item>
-              <Descriptions.Item label="手机号">{status.phone}</Descriptions.Item>
               <Descriptions.Item label="学校">{status.school_name}</Descriptions.Item>
               <Descriptions.Item label="年级">{status.grade}</Descriptions.Item>
               <Descriptions.Item label="提交时间" span={2}>

@@ -2,6 +2,21 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const StudentPoints = require('../models/StudentPoints');
+const { pool } = require('../database/connection');
+const { authorizeStudentAccess, getStudentQueryScope } = require('../services/studentAccessControl');
+
+async function getAuthorizedStudent(req, res, identifier, options) {
+  const access = await authorizeStudentAccess(req.user, identifier, options);
+  if (!access.student) {
+    res.status(404).json({ success: false, message: 'Student not found' });
+    return null;
+  }
+  if (!access.allowed) {
+    res.status(403).json({ success: false, message: 'Access denied' });
+    return null;
+  }
+  return access.student;
+}
 
 /**
  * 获取学生积分账户
@@ -9,36 +24,10 @@ const StudentPoints = require('../models/StudentPoints');
  */
 router.get('/account/:studentId', authMiddleware, async (req, res) => {
   try {
-    const { studentId } = req.params;
-    const inputId = parseInt(studentId);
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
-    // 查询student记录（支持user_id或student_id）
-    const { pool } = require('../database/connection');
-    const studentQuery = await pool.query(
-      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
-      [inputId]
-    );
-
-    if (studentQuery.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
-    }
-
-    const student = studentQuery.rows[0];
-    const actualStudentId = student.id;
-    const actualUserId = student.user_id;
-
-    // 权限验证：学生只能查看自己的积分
-    if (req.user.role === 'student' && req.user.id !== actualUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    const account = await StudentPoints.getPointsAccount(actualStudentId);
+    const account = await StudentPoints.getPointsAccount(student.student_id);
 
     if (!account) {
       return res.status(404).json({
@@ -67,35 +56,9 @@ router.get('/account/:studentId', authMiddleware, async (req, res) => {
  */
 router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
   try {
-    const { studentId } = req.params;
     const { transactionType, type, startDate, endDate, limit, offset } = req.query;
-    const inputId = parseInt(studentId);
-
-    // 查询student记录（支持user_id或student_id）
-    const { pool } = require('../database/connection');
-    const studentQuery = await pool.query(
-      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
-      [inputId]
-    );
-
-    if (studentQuery.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
-    }
-
-    const student = studentQuery.rows[0];
-    const actualStudentId = student.id;
-    const actualUserId = student.user_id;
-
-    // 权限验证：学生只能查看自己的积分交易历史
-    if (req.user.role === 'student' && req.user.id !== actualUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
     const filters = {};
     if (transactionType) filters.transactionType = transactionType;
@@ -106,8 +69,8 @@ router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
     if (offset) filters.offset = parseInt(offset);
 
     const [transactions, total] = await Promise.all([
-      StudentPoints.getTransactionHistory(actualStudentId, filters),
-      StudentPoints.countTransactionHistory(actualStudentId, filters)
+      StudentPoints.getTransactionHistory(student.student_id, filters),
+      StudentPoints.countTransactionHistory(student.student_id, filters)
     ]);
 
     res.json({
@@ -131,31 +94,10 @@ router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
  */
 router.get('/summary/:studentId', authMiddleware, async (req, res) => {
   try {
-    const { studentId } = req.params;
-    const inputId = parseInt(studentId);
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
-    const { pool } = require('../database/connection');
-    const studentQuery = await pool.query(
-      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
-      [inputId]
-    );
-
-    if (studentQuery.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
-    }
-
-    const student = studentQuery.rows[0];
-    if (req.user.role === 'student' && req.user.id !== student.user_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    const summary = await StudentPoints.getSummary(student.id);
+    const summary = await StudentPoints.getSummary(student.student_id);
 
     res.json({
       success: true,
@@ -177,14 +119,6 @@ router.get('/summary/:studentId', authMiddleware, async (req, res) => {
  */
 router.post('/add', authMiddleware, async (req, res) => {
   try {
-    // 只允许管理员或教师调用
-    if (!['admin', 'teacher'].includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
     const { studentId, points, transactionType, sourceId, sourceType, description, expiresAt } = req.body;
 
     if (!studentId || !points || !transactionType) {
@@ -201,6 +135,12 @@ router.post('/add', authMiddleware, async (req, res) => {
       });
     }
 
+    if (['student', 'parent'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    const student = await getAuthorizedStudent(req, res, studentId, { write: true });
+    if (!student) return;
+
     const metadata = {
       sourceId,
       sourceType,
@@ -209,7 +149,7 @@ router.post('/add', authMiddleware, async (req, res) => {
     };
 
     const transaction = await StudentPoints.addPoints(
-      parseInt(studentId),
+      student.student_id,
       parseInt(points),
       transactionType,
       metadata
@@ -235,20 +175,39 @@ router.post('/add', authMiddleware, async (req, res) => {
  */
 router.get('/leaderboard', authMiddleware, async (req, res) => {
   try {
-    const { type, scope, limit } = req.query;
-
+    const { type, scope: requestedScope, limit } = req.query;
     const leaderboardType = type || 'total';
-    const leaderboardLimit = limit ? parseInt(limit) : 100;
-
-    const leaderboard = await StudentPoints.getLeaderboard(
-      leaderboardType,
-      scope,
-      leaderboardLimit
+    const leaderboardLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 100);
+    const params = [leaderboardType];
+    let scopeFilter = '';
+    if (requestedScope) {
+      params.push(requestedScope);
+      scopeFilter = ` AND l.scope = $${params.length}`;
+    }
+    const accessScope = await getStudentQueryScope(req.user, {
+      studentAlias: 's',
+      firstParam: params.length + 1
+    });
+    if (!accessScope.allowed) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    params.push(...accessScope.params);
+    params.push(leaderboardLimit);
+    const result = await pool.query(
+      `SELECT l.student_id, l.student_name, l.school_name, l.class_name,
+              l.points, l.rank, l.rank_change, l.period_start, l.period_end
+         FROM leaderboards l
+         JOIN students s ON s.id = l.student_id
+        WHERE l.leaderboard_type = $1${scopeFilter}
+          AND ${accessScope.sql}
+        ORDER BY l.rank ASC
+        LIMIT $${params.length}`,
+      params
     );
 
     res.json({
       success: true,
-      data: leaderboard
+      data: result.rows
     });
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
@@ -272,7 +231,9 @@ router.get('/streak', authMiddleware, async (req, res) => {
     if (req.query.studentId) {
       studentId = parseInt(req.query.studentId, 10);
     }
-    const streak = await StreakService.get(studentId);
+    const student = await getAuthorizedStudent(req, res, studentId);
+    if (!student) return;
+    const streak = await StreakService.get(student.student_id);
     res.json({ success: true, data: streak });
   } catch (error) {
     console.error('Error fetching streak:', error);

@@ -6,6 +6,15 @@ const School = require('../models/School');
 const { authMiddleware, requireRole, requireAdmin } = require('../middleware/auth');
 const { getClient, query } = require('../database/connection');
 const logger = require('../utils/logger');
+const {
+  SCHOOL_ADMIN_ROLES,
+  isAdminRole,
+  isGlobalAdmin,
+  canAssignRole,
+  getAdminScope,
+  assertManageableUser,
+  scopeAllowsAssignment
+} = require('../services/adminAuthorization');
 
 // Get current user profile (with role-specific details)
 router.get('/profile', authMiddleware, async (req, res) => {
@@ -98,6 +107,11 @@ router.put('/profile/student', [
 
     const { realName, phone, email, schoolId, grade, class: className, guardianName, guardianPhone } = req.body;
     const userId = req.user.id;
+
+    if (schoolId !== undefined) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ message: '学生不能自行变更所属学校，请联系管理员处理' });
+    }
 
     // Update users table
     const userFields = [];
@@ -215,6 +229,11 @@ router.put('/profile/teacher', [
     const { realName, phone, email, schoolId, subjects, title } = req.body;
     const userId = req.user.id;
 
+    if (schoolId !== undefined) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ message: '教师不能自行变更所属学校，请联系管理员处理' });
+    }
+
     // Update users table
     const userFields = [];
     const userValues = [];
@@ -319,6 +338,9 @@ router.get('/all', [
     // 系统管理员和市级总管理员可以看到所有用户
     if (req.user.role === 'system_admin' || req.user.role === 'municipal_admin') {
       users = await User.findAll(filters);
+      if (req.user.role === 'municipal_admin') {
+        users = users.filter(user => !['system_admin', 'municipal_admin'].includes(user.role));
+      }
     }
     // 区级管理员只能看到该区域内的老师和学生
     else if (req.user.role === 'district_admin') {
@@ -365,14 +387,28 @@ router.post('/create', [
   }
 
   try {
-    const { username, password, role, realName, phone, email } = req.body;
+    const { username, password, role, realName, phone, email, schoolId, districtId, permissionScope } = req.body;
 
-    // 权限检查：只有市级管理员和系统管理员才能创建市直属学校管理员
-    if (role === 'municipal_school_admin') {
-      if (req.user.role !== 'municipal_admin' && req.user.role !== 'system_admin') {
-        return res.status(403).json({
-          message: '权限不足：只有市级管理员才能创建市直属学校管理员账号'
-        });
+    if (!canAssignRole(req.user.role, role)) {
+      return res.status(403).json({ message: '权限不足：不能创建该角色账号' });
+    }
+
+    const scopedAdmin = !isGlobalAdmin(req.user.role);
+    if (scopedAdmin) {
+      if (!['student', 'teacher'].includes(role) || !schoolId) {
+        return res.status(403).json({ message: '范围管理员只能在本范围学校创建学生或教师账号' });
+      }
+      if (!await scopeAllowsAssignment(req.user, { schoolId })) {
+        return res.status(403).json({ message: '指定学校超出当前管理员的管理范围' });
+      }
+    }
+
+    if (isAdminRole(role)) {
+      if (SCHOOL_ADMIN_ROLES.includes(role) && !schoolId) {
+        return res.status(400).json({ message: '校级管理员必须指定管理学校' });
+      }
+      if (role === 'district_admin' && !districtId) {
+        return res.status(400).json({ message: '区级管理员必须指定管理区域' });
       }
     }
 
@@ -391,7 +427,19 @@ router.post('/create', [
       email: email || null
     };
 
-    const newUser = await User.create(userData);
+    const newUser = isAdminRole(role)
+      ? await User.createAdmin(userData, { schoolId, districtId, permissionScope: permissionScope || {} })
+      : await User.create(userData);
+
+    if (scopedAdmin) {
+      const profileTable = role === 'student' ? 'students' : 'teachers';
+      try {
+        await query(`INSERT INTO ${profileTable} (user_id, school_id) VALUES ($1, $2)`, [newUser.id, schoolId]);
+      } catch (profileError) {
+        await User.deleteUser(newUser.id);
+        throw profileError;
+      }
+    }
 
     logger.info('New user created by admin', {
       createdBy: req.user.id,
@@ -437,6 +485,15 @@ router.put('/:id', [
     const existingUser = await User.findById(userId);
     if (!existingUser) {
       return res.status(404).json({ message: '用户不存在' });
+    }
+
+    const authorization = await assertManageableUser(req.user, userId);
+    if (!authorization.allowed) {
+      return res.status(403).json({ message: '目标用户超出当前管理员的管理范围' });
+    }
+
+    if (role && (!isGlobalAdmin(req.user.role) || !canAssignRole(req.user.role, role))) {
+      return res.status(403).json({ message: '权限不足：不能将用户调整为该角色' });
     }
 
     const userData = {
@@ -485,6 +542,11 @@ router.put('/:id/reset-password', [
       return res.status(404).json({ message: '用户不存在' });
     }
 
+    const authorization = await assertManageableUser(req.user, userId);
+    if (!authorization.allowed) {
+      return res.status(403).json({ message: '目标用户超出当前管理员的管理范围' });
+    }
+
     await User.updatePassword(userId, newPassword);
 
     logger.info('Password reset by admin', {
@@ -517,6 +579,11 @@ router.delete('/:id', [
       return res.status(404).json({ message: '用户不存在' });
     }
 
+    const authorization = await assertManageableUser(req.user, userId);
+    if (!authorization.allowed) {
+      return res.status(403).json({ message: '目标用户超出当前管理员的管理范围' });
+    }
+
     await User.deleteUser(userId);
 
     logger.info('User deleted by admin', {
@@ -535,26 +602,17 @@ router.delete('/:id', [
 // Get all students (admin and teacher)
 router.get('/students', [
   authMiddleware,
-  requireRole(['system_admin', 'municipal_admin', 'district_admin', 'school_admin', 'teacher'])
+  requireRole(['system_admin', 'municipal_admin', 'district_admin', 'school_admin', 'base_school_admin', 'municipal_school_admin', 'teacher'])
 ], async (req, res) => {
   try {
     const filters = { role: 'student' };
 
     // 区级管理员和校级管理员只能看到本区/本校学生
-    if (req.user.role === 'district_admin' || req.user.role === 'school_admin') {
-      const permResult = await query(
-        'SELECT district_id, school_id FROM admin_permissions WHERE user_id = $1',
-        [req.user.id]
-      );
-      if (permResult.rows.length > 0) {
-        const perm = permResult.rows[0];
-        if (perm.district_id) {
-          filters.district_id = perm.district_id;
-        }
-        if (perm.school_id) {
-          filters.school_id = perm.school_id;
-        }
-      }
+    if (req.user.role === 'district_admin' || SCHOOL_ADMIN_ROLES.includes(req.user.role)) {
+      const scope = await getAdminScope(req.user);
+      if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+      if (scope.type === 'district') filters.district_id = scope.id;
+      if (scope.type === 'school') filters.school_id = scope.id;
     }
     // 教师只能看到本校学生
     if (req.user.role === 'teacher') {
@@ -564,6 +622,8 @@ router.get('/students', [
       );
       if (teacherResult.rows.length > 0) {
         filters.school_id = teacherResult.rows[0].school_id;
+      } else {
+        return res.status(403).json({ message: '未找到教师所属学校信息' });
       }
     }
 
@@ -589,7 +649,12 @@ router.get('/teachers', [
   requireAdmin
 ], async (req, res) => {
   try {
-    const teachers = await User.findAll({ role: 'teacher' });
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    let teachers;
+    if (scope.type === 'global') teachers = await User.findAll({ role: 'teacher' });
+    else if (scope.type === 'district') teachers = await User.findByDistrict(scope.id, { role: 'teacher' });
+    else teachers = await User.findBySchool(scope.id, { role: 'teacher' });
     res.json({ teachers });
   } catch (error) {
     logger.error('Get teachers error:', error);
@@ -637,6 +702,11 @@ router.delete('/student/:userId', [
 
     if (existingUser.role !== 'student') {
       return res.status(400).json({ message: '该用户不是学生账号' });
+    }
+
+    const authorization = await assertManageableUser(req.user, userId);
+    if (!authorization.allowed) {
+      return res.status(403).json({ message: '目标学生超出当前管理员的管理范围' });
     }
 
     // Delete with proper foreign key handling
@@ -691,6 +761,11 @@ router.delete('/teacher/:userId', [
 
     if (existingUser.role !== 'teacher') {
       return res.status(400).json({ message: '该用户不是教师账号' });
+    }
+
+    const authorization = await assertManageableUser(req.user, userId);
+    if (!authorization.allowed) {
+      return res.status(403).json({ message: '目标教师超出当前管理员的管理范围' });
     }
 
     // Delete with proper foreign key handling

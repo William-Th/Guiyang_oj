@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const {
+  isAdminRole,
+  isGlobalAdmin,
+  getAdminScope,
+  SCHOOL_ADMIN_ROLES
+} = require('../services/adminAuthorization');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -49,29 +55,13 @@ const requireRole = (roles) => {
   };
 };
 
-// 新增：要求最低权限级别
-const requireMinLevel = (minLevel) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Authentication required.' });
-    }
-
-    const userLevel = User.getRoleLevel(req.user.role);
-    if (userLevel < minLevel) {
-      return res.status(403).json({ message: 'Access denied. Insufficient permissions.' });
-    }
-
-    next();
-  };
-};
-
 // 新增：要求管理员角色
 const requireAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required.' });
   }
 
-  if (!User.isAdminRole(req.user.role)) {
+  if (!isAdminRole(req.user.role)) {
     return res.status(403).json({ message: 'Access denied. Admin role required.' });
   }
 
@@ -86,40 +76,44 @@ const requireManagementScope = (scopeType) => {
         return res.status(401).json({ message: 'Authentication required.' });
       }
 
-      // 系统总管理员和市级总管理员有所有权限
-      if (req.user.role === 'system_admin' || req.user.role === 'municipal_admin') {
+      if (!isAdminRole(req.user.role)) {
+        return res.status(403).json({ message: 'Access denied. Admin role required.' });
+      }
+
+      // 系统总管理员和市级总管理员是明确的全局角色。
+      if (isGlobalAdmin(req.user.role)) {
         return next();
       }
 
-      // 获取管理员权限信息
-      const permissions = await User.getAdminPermissions(req.user.id);
-      if (!permissions) {
+      // 范围管理员缺少 admin_permissions 或必需范围时默认拒绝。
+      const scope = await getAdminScope(req.user);
+      if (!scope) {
         return res.status(403).json({ message: 'Access denied. No management permissions found.' });
       }
 
       // 根据不同的管理范围类型检查权限
       switch (scopeType) {
       case 'school':
-        if (req.user.role === 'school_admin' && permissions.school_id) {
-          req.managementScope = { type: 'school', id: permissions.school_id };
+        if (SCHOOL_ADMIN_ROLES.includes(req.user.role) && scope.type === 'school') {
+          req.managementScope = scope;
           return next();
         }
         break;
       case 'district':
-        if (req.user.role === 'district_admin' && permissions.district_id) {
-          req.managementScope = { type: 'district', id: permissions.district_id };
+        if (req.user.role === 'district_admin' && scope.type === 'district') {
+          req.managementScope = scope;
           return next();
         }
         break;
       case 'municipal_school':
-        if (req.user.role === 'municipal_school_admin') {
-          req.managementScope = { type: 'municipal_school' };
+        if (req.user.role === 'municipal_school_admin' && scope.type === 'school') {
+          req.managementScope = scope;
           return next();
         }
         break;
       case 'base_school':
-        if (req.user.role === 'base_school_admin' && permissions.school_id) {
-          req.managementScope = { type: 'base_school', id: permissions.school_id };
+        if (req.user.role === 'base_school_admin' && scope.type === 'school') {
+          req.managementScope = scope;
           return next();
         }
         break;
@@ -164,7 +158,6 @@ const optionalAuth = async (req, res, next) => {
 module.exports = {
   authMiddleware,
   requireRole,
-  requireMinLevel,
   requireAdmin,
   requireManagementScope,
   optionalAuth

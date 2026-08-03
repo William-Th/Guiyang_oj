@@ -2,9 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
-const { authMiddleware, requireAdmin, requireMinLevel } = require('../middleware/auth');
+const { authMiddleware, requireAdmin, requireRole } = require('../middleware/auth');
 const logger = require('../utils/logger');
 const { query } = require('../database/connection');
+const {
+  SCHOOL_ADMIN_ROLES,
+  getAdminScope,
+  getUserResource,
+  canManageUser,
+  canViewAdmin,
+  scopeAllowsAssignment,
+  userScopePredicate
+} = require('../services/adminAuthorization');
 
 // Get all admin users
 router.get('/admins', [
@@ -13,6 +22,9 @@ router.get('/admins', [
 ], async (req, res) => {
   try {
     const { role } = req.query;
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const scopeFilter = userScopePredicate(scope, 'u', 1);
 
     // Build query to get all admin users with their permissions
     let queryText = `
@@ -24,12 +36,16 @@ router.get('/admins', [
       LEFT JOIN schools s ON ap.school_id = s.id
       LEFT JOIN districts d ON ap.district_id = d.id
       WHERE u.role IN ('school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin')
+        AND ${scopeFilter.sql}
     `;
 
-    const params = [];
+    const params = [...scopeFilter.params];
+    if (req.user.role === 'municipal_admin') {
+      queryText += ' AND u.role <> \'municipal_admin\'';
+    }
     if (role) {
       params.push(role);
-      queryText += ' AND u.role = $1';
+      queryText += ` AND u.role = $${params.length}`;
     }
 
     queryText += ' ORDER BY u.created_at DESC';
@@ -53,6 +69,12 @@ router.get('/admins/:id', [
 ], async (req, res) => {
   try {
     const adminId = req.params.id;
+
+    const target = await getUserResource(adminId);
+    if (!target) return res.status(404).json({ message: '管理员不存在' });
+    if (!await canViewAdmin(req.user, target)) {
+      return res.status(403).json({ message: '目标管理员超出当前管理范围' });
+    }
 
     const result = await query(`
       SELECT u.id, u.username, u.role, u.real_name, u.phone, u.email, u.status, u.created_at,
@@ -79,7 +101,7 @@ router.get('/admins/:id', [
 // Create new admin user with permissions
 router.post('/admins', [
   authMiddleware,
-  requireMinLevel(7), // Only municipal_admin (level 7) can create admins
+  requireRole(['system_admin', 'municipal_admin']),
   body('username').isLength({ min: 3 }).withMessage('用户名至少3个字符'),
   body('password').isLength({ min: 6 }).withMessage('密码至少6个字符'),
   body('role').isIn(['school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin'])
@@ -115,7 +137,7 @@ router.post('/admins', [
       permissionScope: permissionScope || {}
     };
 
-    if (role === 'school_admin' || role === 'base_school_admin') {
+    if (SCHOOL_ADMIN_ROLES.includes(role)) {
       if (!schoolId) {
         return res.status(400).json({ message: '校级管理员必须指定管理的学校' });
       }
@@ -125,6 +147,14 @@ router.post('/admins', [
         return res.status(400).json({ message: '区级管理员必须指定管理的区域' });
       }
       adminData.districtId = districtId;
+    }
+
+    if (role === 'municipal_admin' && req.user.role !== 'system_admin') {
+      return res.status(403).json({ message: '只有系统管理员可以创建市级管理员' });
+    }
+
+    if (!await scopeAllowsAssignment(req.user, { schoolId, districtId })) {
+      return res.status(403).json({ message: '指定管理范围超出当前管理员权限' });
     }
 
     const userData = {
@@ -170,7 +200,7 @@ router.post('/admins', [
 // Update admin permissions
 router.put('/admins/:id/permissions', [
   authMiddleware,
-  requireMinLevel(7), // Only municipal_admin can update permissions
+  requireRole(['system_admin', 'municipal_admin']),
   body('schoolId').optional().isInt().withMessage('学校ID必须是整数'),
   body('districtId').optional().isInt().withMessage('区域ID必须是整数'),
   body('permissionScope').optional().isObject().withMessage('权限范围必须是对象')
@@ -194,9 +224,25 @@ router.put('/admins/:id/permissions', [
       return res.status(400).json({ message: '该用户不是管理员角色' });
     }
 
+    const target = await getUserResource(adminId);
+    if (!await canManageUser(req.user, target)) {
+      return res.status(403).json({ message: '目标管理员超出当前管理员权限' });
+    }
+
     // Prevent admin from modifying their own permissions
     if (adminId == req.user.id) {
       return res.status(400).json({ message: '不能修改自己的权限' });
+    }
+
+    if (SCHOOL_ADMIN_ROLES.includes(admin.role) && schoolId === null) {
+      return res.status(400).json({ message: '校级管理员必须保留管理学校' });
+    }
+    if (admin.role === 'district_admin' && districtId === null) {
+      return res.status(400).json({ message: '区级管理员必须保留管理区域' });
+    }
+    if ((schoolId !== undefined || districtId !== undefined)
+      && !await scopeAllowsAssignment(req.user, { schoolId, districtId })) {
+      return res.status(403).json({ message: '指定管理范围超出当前管理员权限' });
     }
 
     // Check if permission record exists
@@ -275,7 +321,7 @@ router.put('/admins/:id/permissions', [
 // Delete admin permissions (without deleting the user)
 router.delete('/admins/:id/permissions', [
   authMiddleware,
-  requireMinLevel(7)
+  requireRole(['system_admin', 'municipal_admin'])
 ], async (req, res) => {
   try {
     const adminId = req.params.id;
@@ -283,6 +329,13 @@ router.delete('/admins/:id/permissions', [
     // Prevent admin from deleting their own permissions
     if (adminId == req.user.id) {
       return res.status(400).json({ message: '不能删除自己的权限' });
+    }
+
+
+    const target = await getUserResource(adminId);
+    if (!target) return res.status(404).json({ message: '管理员不存在' });
+    if (!await canManageUser(req.user, target)) {
+      return res.status(403).json({ message: '目标管理员超出当前管理员权限' });
     }
 
     const result = await query(
@@ -312,11 +365,23 @@ router.get('/schools', [
   requireAdmin
 ], async (req, res) => {
   try {
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const params = [];
+    let where = '';
+    if (scope.type === 'school') {
+      params.push(scope.id);
+      where = 'WHERE id = $1';
+    } else if (scope.type === 'district') {
+      params.push(scope.id);
+      where = 'WHERE district_id = $1';
+    }
     const result = await query(`
       SELECT id, name, code, district, type, district_id
       FROM schools
+      ${where}
       ORDER BY name ASC
-    `);
+    `, params);
 
     res.json({ schools: result.rows });
   } catch (error) {
@@ -331,11 +396,23 @@ router.get('/districts', [
   requireAdmin
 ], async (req, res) => {
   try {
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const params = [];
+    let where = '';
+    if (scope.type === 'district') {
+      params.push(scope.id);
+      where = 'WHERE id = $1';
+    } else if (scope.type === 'school') {
+      params.push(scope.id);
+      where = 'WHERE id = (SELECT district_id FROM schools WHERE id = $1)';
+    }
     const result = await query(`
       SELECT id, name, code, level
       FROM districts
+      ${where}
       ORDER BY name ASC
-    `);
+    `, params);
 
     res.json({ districts: result.rows });
   } catch (error) {
@@ -350,20 +427,26 @@ router.get('/stats', [
   requireAdmin
 ], async (req, res) => {
   try {
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const scopeFilter = userScopePredicate(scope, 'u', 1);
+    const municipalBoundary = req.user.role === 'municipal_admin' ? ' AND u.role <> \'municipal_admin\'' : '';
     const stats = await query(`
       SELECT
-        role,
+        u.role,
         COUNT(*) as count
-      FROM users
-      WHERE role IN ('school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin')
-      GROUP BY role
-    `);
+      FROM users u
+      WHERE u.role IN ('school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin')
+        AND ${scopeFilter.sql}${municipalBoundary}
+      GROUP BY u.role
+    `, scopeFilter.params);
 
     const totalAdmins = await query(`
       SELECT COUNT(*) as total
-      FROM users
-      WHERE role IN ('school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin')
-    `);
+      FROM users u
+      WHERE u.role IN ('school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin')
+        AND ${scopeFilter.sql}${municipalBoundary}
+    `, scopeFilter.params);
 
     res.json({
       total: parseInt(totalAdmins.rows[0].total),
@@ -381,22 +464,32 @@ router.get('/dashboard/stats', [
   requireAdmin
 ], async (req, res) => {
   try {
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const studentScope = userScopePredicate(scope, 'u', 1);
+    const creatorScope = userScopePredicate(scope, 'creator', 1);
+    const participantScope = userScopePredicate(scope, 'participant', 1);
+
     // Total students count
     const studentCount = await query(`
-      SELECT COUNT(*) as count FROM users WHERE role = 'student'
-    `);
+      SELECT COUNT(*) as count FROM users u WHERE u.role = 'student' AND ${studentScope.sql}
+    `, studentScope.params);
 
     // Total exams count
     const examCount = await query(`
-      SELECT COUNT(*) as count FROM activities
-    `);
+      SELECT COUNT(*) as count FROM activities a
+      JOIN users creator ON creator.id = a.created_by
+      WHERE ${creatorScope.sql}
+    `, creatorScope.params);
 
     // This month exams count
     const thisMonthExams = await query(`
       SELECT COUNT(*) as count
-      FROM activities
-      WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
-    `);
+      FROM activities a
+      JOIN users creator ON creator.id = a.created_by
+      WHERE DATE_TRUNC('month', a.created_at) = DATE_TRUNC('month', CURRENT_DATE)
+        AND ${creatorScope.sql}
+    `, creatorScope.params);
 
     // Online teachers count (teachers who have logged in within last 7 days)
     const onlineTeachers = await query(`
@@ -406,23 +499,26 @@ router.get('/dashboard/stats', [
       WHERE u.role IN ('teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin')
       AND al.action = 'login'
       AND al.created_at >= NOW() - INTERVAL '7 days'
-    `);
+      AND ${studentScope.sql}
+    `, studentScope.params);
 
     // Recent exams with statistics
     const recentExams = await query(`
       SELECT
         a.id,
         a.title as name,
-        COUNT(DISTINCT sa.student_id) as participants,
-        ROUND(AVG(sa.score), 1) as avg_score,
+        COUNT(DISTINCT sa.student_id) FILTER (WHERE ${participantScope.sql}) as participants,
+        ROUND(AVG(sa.score) FILTER (WHERE ${participantScope.sql}), 1) as avg_score,
         TO_CHAR(a.start_time, 'YYYY-MM-DD') as date
       FROM activities a
+      JOIN users creator ON creator.id = a.created_by
       LEFT JOIN student_activities sa ON a.id = sa.activity_id AND sa.status = 'completed'
-      WHERE a.status IN ('published', 'ongoing', 'finished')
+      LEFT JOIN users participant ON participant.id = sa.student_id
+      WHERE a.status IN ('published', 'ongoing', 'finished') AND ${creatorScope.sql}
       GROUP BY a.id, a.title, a.start_time
       ORDER BY a.start_time DESC
       LIMIT 10
-    `);
+    `, creatorScope.params);
 
     res.json({
       totalStudents: parseInt(studentCount.rows[0].count),
@@ -449,6 +545,13 @@ router.get('/dashboard/workflows', [
   requireAdmin
 ], async (req, res) => {
   try {
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const reviewerScope = userScopePredicate(scope, 'reviewer', 1);
+    const creatorScope = userScopePredicate(scope, 'creator', 1);
+    const registrationWhere = scope.type === 'global'
+      ? { sql: 'TRUE', params: [] }
+      : { sql: scope.type === 'school' ? 'srr.school_id = $1' : 'srr.district_id = $1', params: [scope.id] };
     // 查询各模块的待处理数量
     // 注：question_drafts 与 certificates 表均无 status 列。
     //   - 题目审核状态走 question_reviews 流程表（status: pending/approved/rejected）
@@ -459,11 +562,11 @@ router.get('/dashboard/workflows', [
       activitiesOngoing
     ] = await Promise.all([
       // 待审核的学生注册
-      query('SELECT COUNT(*) as count FROM student_registration_requests WHERE status = \'pending\''),
+      query(`SELECT COUNT(*) as count FROM student_registration_requests srr WHERE srr.status = 'pending' AND ${registrationWhere.sql}`, registrationWhere.params),
       // 待审核的题目（走 question_reviews 流程表）
-      query('SELECT COUNT(*) as count FROM question_reviews WHERE status = \'pending\''),
+      query(`SELECT COUNT(*) as count FROM question_reviews qr JOIN users reviewer ON reviewer.id = qr.reviewer_id WHERE qr.status = 'pending' AND ${reviewerScope.sql}`, reviewerScope.params),
       // 进行中的活动
-      query('SELECT COUNT(*) as count FROM activities WHERE status IN (\'published\', \'ongoing\')')
+      query(`SELECT COUNT(*) as count FROM activities a JOIN users creator ON creator.id = a.created_by WHERE a.status IN ('published', 'ongoing') AND ${creatorScope.sql}`, creatorScope.params)
     ]);
 
     const workflows = [];
@@ -520,6 +623,16 @@ router.get('/dashboard/region-stats', [
   requireAdmin
 ], async (req, res) => {
   try {
+    const scope = await getAdminScope(req.user);
+    if (!scope) return res.status(403).json({ message: '未找到有效的管理权限信息' });
+    const userFilter = userScopePredicate(scope, 'u', 1);
+    const creatorFilter = userScopePredicate(scope, 'creator', 1);
+    const schoolWhere = scope.type === 'global'
+      ? { sql: 'TRUE', params: [] }
+      : { sql: scope.type === 'school' ? 'sc.id = $1' : 'sc.district_id = $1', params: [scope.id] };
+    const registrationWhere = scope.type === 'global'
+      ? { sql: 'TRUE', params: [] }
+      : { sql: scope.type === 'school' ? 'srr.school_id = $1' : 'srr.district_id = $1', params: [scope.id] };
     const [
       schoolCount,
       teacherCount,
@@ -527,11 +640,11 @@ router.get('/dashboard/region-stats', [
       activeExams,
       pendingApprovals
     ] = await Promise.all([
-      query('SELECT COUNT(*) as count FROM schools'),
-      query('SELECT COUNT(*) as count FROM users WHERE role IN (\'teacher\', \'school_admin\', \'district_admin\', \'municipal_school_admin\', \'base_school_admin\', \'municipal_admin\', \'system_admin\')'),
-      query('SELECT COUNT(*) as count FROM users WHERE role = \'student\' AND status = \'active\''),
-      query('SELECT COUNT(*) as count FROM activities WHERE status IN (\'published\', \'ongoing\')'),
-      query('SELECT COUNT(*) as count FROM student_registration_requests WHERE status = \'pending\'')
+      query(`SELECT COUNT(*) as count FROM schools sc WHERE ${schoolWhere.sql}`, schoolWhere.params),
+      query(`SELECT COUNT(*) as count FROM users u WHERE u.role IN ('teacher', 'school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin') AND ${userFilter.sql}`, userFilter.params),
+      query(`SELECT COUNT(*) as count FROM users u WHERE u.role = 'student' AND u.status = 'active' AND ${userFilter.sql}`, userFilter.params),
+      query(`SELECT COUNT(*) as count FROM activities a JOIN users creator ON creator.id = a.created_by WHERE a.status IN ('published', 'ongoing') AND ${creatorFilter.sql}`, creatorFilter.params),
+      query(`SELECT COUNT(*) as count FROM student_registration_requests srr WHERE srr.status = 'pending' AND ${registrationWhere.sql}`, registrationWhere.params)
     ]);
 
     res.json({
@@ -570,6 +683,24 @@ router.post('/parent-links', authMiddleware, requireAdmin, async (req, res) => {
     if (!s.rows[0] || s.rows[0].role !== 'student') {
       return res.status(400).json({ success: false, error: 'studentUserId 不是学生角色' });
     }
+    const student = await getUserResource(studentUserId);
+    if (!await canManageUser(req.user, student)) {
+      return res.status(403).json({ success: false, error: '目标学生超出当前管理员的管理范围' });
+    }
+    const scope = await getAdminScope(req.user);
+    if (scope.type !== 'global') {
+      const outsideColumn = scope.type === 'school' ? 'st.school_id' : 'sc.district_id';
+      const outsideLinks = await query(`
+        SELECT 1 FROM parent_student_relations psr
+        JOIN students st ON st.user_id = psr.student_user_id
+        LEFT JOIN schools sc ON sc.id = st.school_id
+        WHERE psr.parent_user_id = $1 AND ${outsideColumn} <> $2
+        LIMIT 1
+      `, [parentUserId, scope.id]);
+      if (outsideLinks.rows.length > 0) {
+        return res.status(403).json({ success: false, error: '该家长已关联其他管理范围的学生' });
+      }
+    }
     const ParentGuard = require('../models/ParentGuard');
     const link = await ParentGuard.link(parentUserId, studentUserId, relation);
     res.status(201).json({ success: true, data: link, message: '家长-学生关联已建立' });
@@ -583,6 +714,11 @@ router.post('/parent-links', authMiddleware, requireAdmin, async (req, res) => {
 router.delete('/parent-links', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const { parentUserId, studentUserId } = req.body;
+    const student = await getUserResource(studentUserId);
+    if (!student) return res.status(404).json({ success: false, error: '学生不存在' });
+    if (!await canManageUser(req.user, student)) {
+      return res.status(403).json({ success: false, error: '目标学生超出当前管理员的管理范围' });
+    }
     const ParentGuard = require('../models/ParentGuard');
     const removed = await ParentGuard.unlink(parentUserId, studentUserId);
     if (!removed) {

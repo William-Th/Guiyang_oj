@@ -31,16 +31,14 @@ router.post('/login', [
     
     if (!user) {
       logger.warn('Login attempt with invalid credentials', { username, loginType });
-      return res.status(401).json({ 
-        message: loginType === 'idCard' ? '身份证号不存在' : '用户名不存在' 
-      });
+      return res.status(401).json({ message: '用户名或密码错误' });
     }
 
     // Validate password
     const isValidPassword = await User.validatePassword(password, user.password);
     if (!isValidPassword) {
       logger.warn('Login attempt with wrong password', { username: user.username });
-      return res.status(401).json({ message: '密码错误' });
+      return res.status(401).json({ message: '用户名或密码错误' });
     }
 
     // Update last login

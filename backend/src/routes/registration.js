@@ -7,6 +7,8 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../database/connection');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const ConfigService = require('../services/configService');
 const logger = require('../utils/logger');
 const User = require('../models/User');
@@ -17,6 +19,24 @@ const SCHOOL_SCOPED_ADMIN_ROLES = [
   'municipal_school_admin',
   'base_school_admin'
 ];
+
+function createInquiryCode() {
+  const code = crypto.randomBytes(24).toString('base64url');
+  const hash = crypto.createHash('sha256').update(code).digest('hex');
+  return { code, hash };
+}
+
+function hashInquiryCode(code) {
+  return crypto.createHash('sha256').update(String(code)).digest('hex');
+}
+
+const registrationStatusLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: '查询过于频繁，请稍后再试' }
+});
 
 async function canManageRegistration(user, request) {
   if (['system_admin', 'municipal_admin'].includes(user.role)) {
@@ -29,15 +49,13 @@ async function canManageRegistration(user, request) {
   }
 
   if (user.role === 'district_admin') {
-    return Number(permissions.district_id) === Number(request.district_id);
+    return permissions.district_id != null && request.district_id != null
+      && Number(permissions.district_id) === Number(request.district_id);
   }
 
   if (SCHOOL_SCOPED_ADMIN_ROLES.includes(user.role) && permissions.school_id) {
-    const schoolResult = await pool.query(
-      'SELECT code FROM schools WHERE id = $1',
-      [permissions.school_id]
-    );
-    return schoolResult.rows[0]?.code === request.school_code;
+    return request.school_id != null
+      && Number(permissions.school_id) === Number(request.school_id);
   }
 
   return false;
@@ -180,14 +198,15 @@ router.post('/student', async (req, res) => {
     const districtId = districtResult.rows[0]?.id || null;
     const schoolId = schoolResult.rows[0]?.id || null;
 
-    // 8. 创建注册申请记录
+    // 8. 创建注册申请记录。查询码仅本次返回，数据库只保存不可逆摘要。
+    const inquiryCode = createInquiryCode();
     const insertResult = await pool.query(
       `INSERT INTO student_registration_requests (
         phone, real_name, birth_date, id_card_last4,
         district_id, district_code, district_name,
         school_id, school_code, school_name, grade,
-        status, current_reviewer_level
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        status, current_reviewer_level, inquiry_code_hash
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING id`,
       [
         phone,
@@ -202,7 +221,8 @@ router.post('/student', async (req, res) => {
         school.name,
         grade || null,
         'pending',
-        2 // 初始审核层级为校级管理员
+        2, // 初始审核层级为校级管理员
+        inquiryCode.hash
       ]
     );
 
@@ -217,14 +237,12 @@ router.post('/student', async (req, res) => {
         null, // 学生自己提交，没有操作人
         0,    // 系统级别
         `学生${realName}提交注册申请`,
-        JSON.stringify({ phone, school: school.name })
+        JSON.stringify({ school: school.name })
       ]
     );
 
     logger.info('Student registration request submitted', {
       requestId,
-      phone,
-      realName,
       school: school.name
     });
 
@@ -233,7 +251,8 @@ router.post('/student', async (req, res) => {
       message: '注册申请已提交，请等待学校管理员审核',
       data: {
         id: requestId,
-        estimatedReviewTime: '3个工作日内'
+        estimatedReviewTime: '3个工作日内',
+        inquiryCode: inquiryCode.code
       }
     });
   } catch (error) {
@@ -296,29 +315,36 @@ router.get('/config/schools/:districtCode', (req, res) => {
 });
 
 /**
- * GET /api/registration/status/:phone
- * 查询注册申请状态（学生用）
+ * POST /api/registration/status
+ * 使用手机号和随机查询码查询注册申请状态（学生用）
  */
-router.get('/status/:phone', async (req, res) => {
+router.post('/status', registrationStatusLimiter, async (req, res) => {
   try {
-    const { phone } = req.params;
+    const { phone, inquiryCode } = req.body || {};
+
+    if (!phone || !/^1[3-9]\d{9}$/.test(phone) || typeof inquiryCode !== 'string' || inquiryCode.length < 20) {
+      return res.status(404).json({
+        success: false,
+        message: '申请信息或查询码不正确'
+      });
+    }
 
     const result = await pool.query(
       `SELECT
-        id, phone, real_name, school_name, grade,
+        id, school_name, grade,
         status, current_reviewer_level,
         submitted_at, reviewed_at, review_comment
       FROM student_registration_requests
-      WHERE phone = $1
+      WHERE phone = $1 AND inquiry_code_hash = $2
       ORDER BY submitted_at DESC
       LIMIT 1`,
-      [phone]
+      [phone, hashInquiryCode(inquiryCode)]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: '未找到注册申请记录'
+        message: '申请信息或查询码不正确'
       });
     }
 
@@ -339,7 +365,7 @@ router.get('/status/:phone', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching registration status', {
       error: error.message,
-      phone: req.params.phone
+      requestPath: 'registration-status'
     });
 
     res.status(500).json({
@@ -356,7 +382,9 @@ router.get('/status/:phone', async (req, res) => {
  */
 router.get('/admin/requests', authMiddleware, requireAdmin, async (req, res) => {
   try {
-    const { status = 'pending', page = 1, limit = 20, search } = req.query;
+    const { status = 'pending', search } = req.query;
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 20, 1), 100);
     const offset = (page - 1) * limit;
 
     // 从JWT token获取管理员信息
@@ -392,22 +420,11 @@ router.get('/admin/requests', authMiddleware, requireAdmin, async (req, res) => 
 
       const schoolId = adminPermResult.rows[0].school_id;
 
-      // 获取学校代码
-      const schoolResult = await pool.query(
-        'SELECT code FROM schools WHERE id = $1',
-        [schoolId]
-      );
-
-      if (schoolResult.rows.length === 0) {
-        return res.status(403).json({
-          success: false,
-          message: '学校信息不存在'
-        });
+      if (schoolId == null) {
+        return res.status(403).json({ success: false, message: '未找到学校权限信息' });
       }
-
-      const schoolCode = schoolResult.rows[0].code;
-      whereClause += ` AND school_code = $${paramIndex}`;
-      queryParams.push(schoolCode);
+      whereClause += ` AND school_id = $${paramIndex}`;
+      queryParams.push(schoolId);
       paramIndex++;
     }
     // 区级管理员只能看到本区已超时3天的申请
@@ -606,7 +623,7 @@ router.post('/admin/requests/:id/approve', authMiddleware, requireAdmin, async (
     logger.info('Registration request approved', {
       requestId: id,
       studentUserId,
-      phone: request.phone
+      schoolCode: request.school_code
     });
 
     res.json({
@@ -704,7 +721,6 @@ router.post('/admin/requests/:id/reject', authMiddleware, requireAdmin, async (r
 
     logger.info('Registration request rejected', {
       requestId: id,
-      phone: request.phone,
       reason: comment
     });
 
@@ -764,7 +780,17 @@ router.get('/admin/requests/:id/history', authMiddleware, requireAdmin, async (r
     res.json({
       success: true,
       data: {
-        request: requestResult.rows[0],
+        request: {
+          id: requestResult.rows[0].id,
+          school_name: requestResult.rows[0].school_name,
+          district_name: requestResult.rows[0].district_name,
+          grade: requestResult.rows[0].grade,
+          status: requestResult.rows[0].status,
+          current_reviewer_level: requestResult.rows[0].current_reviewer_level,
+          submitted_at: requestResult.rows[0].submitted_at,
+          reviewed_at: requestResult.rows[0].reviewed_at,
+          review_comment: requestResult.rows[0].review_comment
+        },
         history: historyResult.rows
       }
     });

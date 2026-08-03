@@ -1,22 +1,23 @@
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: guiyang_oj_postgres
     environment:
-      POSTGRES_DB: guiyang_oj
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: ${POSTGRES_DB:-guiyang_oj}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local environment}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      # - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-guiyang_oj}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - guiyang_network
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: guiyang_oj_redis
@@ -25,10 +26,14 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - guiyang_network
 
-  # Backend API Service
   backend:
     build:
       context: ./backend
@@ -40,18 +45,20 @@ services:
       NODE_ENV: development
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: guiyang_oj
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
+      DB_NAME: ${POSTGRES_DB:-guiyang_oj}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local environment}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: mgJr+op91DSZOG17gWx2sPYTdbk09DC0AdE7YCtyMtgtVuk/osI14+KW+v3Os3UkfJgp3L5nwmZJugQauLv14g==
-      JWT_REFRESH_SECRET: QGVhyNuSuMkl+MO88NAEDZ/yCqXqJWcHzrIoyCTHJX3ukBcTmNDtQHbTYLu2SEDziRA3dmvVM2uhED0O0eGFOQ==
-      SESSION_SECRET: 5NaIDq0BGigN3x2FBTkfvfqDtvohHigZmjdss/jGXAQ=
-      ALLOWED_ORIGINS: http://localhost:3100,http://localhost:8080,http://localhost,http://127.0.0.1:3100,http://127.0.0.1:8080,http://127.0.0.1
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your local environment}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in your local environment}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in your local environment}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3100,http://localhost:8080,http://127.0.0.1:3100,http://127.0.0.1:8080}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend:/app
       - ./config:/app/config
@@ -59,7 +66,6 @@ services:
     networks:
       - guiyang_network
 
-  # Frontend Service
   frontend:
     build:
       context: ./frontend
@@ -71,42 +77,38 @@ services:
       VITE_API_URL: /
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     networks:
       - guiyang_network
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: guiyang_oj_nginx
     ports:
       - "8080:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - frontend
       - backend
     networks:
       - guiyang_network
 
-  # pgAdmin (Optional - for database management)
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: guiyang_oj_pgadmin
+    profiles: ["tools"]
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@guiyang.edu
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.invalid}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in your local environment}
     ports:
       - "5051:80"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - guiyang_network
 
-  # Judge Service - Code execution and judging
   judge-service:
     build:
       context: ./judge-service
@@ -119,9 +121,9 @@ services:
       PORT: 3002
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: guiyang_oj
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
+      DB_NAME: ${POSTGRES_DB:-guiyang_oj}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local environment}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SANDBOX_IMAGE: guiyang_oj_sandbox:latest
@@ -130,11 +132,12 @@ services:
       COMPILE_TIMEOUT: 10000
       RUN_TIMEOUT: 2000
       MEMORY_LIMIT: 268435456
-      # Use Docker named volume for sandbox temp directory
       SANDBOX_TEMP_DIR: /judge-sandbox
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - judge_sandbox:/judge-sandbox

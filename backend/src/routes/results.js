@@ -5,18 +5,23 @@ const { query } = require('../database/connection');
 const StudentExam = require('../models/StudentExam');
 const Answer = require('../models/Answer');
 const Activity = require('../models/Activity');
+const {
+  authorizeStudentAccess,
+  getStudentQueryScope
+} = require('../services/studentAccessControl');
 
 // Get exam results for a student
 router.get('/student/:studentId', authMiddleware, async (req, res) => {
   try {
-    const { studentId } = req.params;
-
-    // Verify user can access this data
-    if (req.user.role !== 'admin' && req.user.role !== 'teacher' && req.user.id !== parseInt(studentId)) {
+    const access = await authorizeStudentAccess(req.user, req.params.studentId);
+    if (!access.student) {
+      return res.status(404).json({ message: '学生不存在' });
+    }
+    if (!access.allowed) {
       return res.status(403).json({ message: '没有权限访问此数据' });
     }
 
-    const results = await StudentExam.getStudentExamHistory(studentId);
+    const results = await StudentExam.getStudentExamHistory(access.student.student_id);
     res.json({ results });
   } catch (error) {
     console.error('Get student results error:', error);
@@ -28,10 +33,16 @@ router.get('/student/:studentId', authMiddleware, async (req, res) => {
 router.get('/exam/:examId', authMiddleware, async (req, res) => {
   try {
     const { examId } = req.params;
-    const studentId = req.user.id;
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: '没有权限访问此数据' });
+    }
+    const access = await authorizeStudentAccess(req.user, req.user.id);
+    if (!access.allowed || !access.student) {
+      return res.status(403).json({ message: '没有权限访问此数据' });
+    }
 
     // Get student exam record
-    const studentExam = await StudentExam.findByStudentAndExam(studentId, examId);
+    const studentExam = await StudentExam.findByStudentAndExam(access.student.student_id, examId);
     if (!studentExam) {
       return res.status(404).json({ message: '未找到考试记录' });
     }
@@ -98,6 +109,11 @@ router.get('/exam/:examId/statistics', authMiddleware, async (req, res) => {
   try {
     const { examId } = req.params;
 
+    const scope = await getStudentQueryScope(req.user, { firstParam: 2 });
+    if (!scope.allowed) {
+      return res.status(403).json({ message: '没有权限查看该活动统计' });
+    }
+
     // 获取活动的统计信息
     const statsResult = await query(`
       SELECT
@@ -108,9 +124,11 @@ router.get('/exam/:examId/statistics', authMiddleware, async (req, res) => {
         COUNT(*) FILTER (WHERE sa.score >= a.total_score * 0.9) as excellent_count,
         COUNT(*) FILTER (WHERE sa.score >= a.total_score * 0.6) as pass_count
       FROM student_activities sa
+      JOIN students s ON s.id = sa.student_id
       JOIN activities a ON sa.activity_id = a.id
       WHERE sa.activity_id = $1 AND sa.status = 'completed'
-    `, [examId]);
+        AND ${scope.sql}
+    `, [examId, ...scope.params]);
 
     const stats = statsResult.rows[0];
     res.json({
@@ -250,6 +268,7 @@ router.post('/certificate', authMiddleware, async (req, res) => {
 router.get('/certificate/:examId/download', authMiddleware, async (req, res) => {
   try {
     const { examId } = req.params;
+
     const userId = req.user.id;
 
     // 查询证书+学生+活动信息
@@ -301,6 +320,11 @@ router.get('/export/:examId', authMiddleware, async (req, res) => {
   try {
     const { examId } = req.params;
 
+    const scope = await getStudentQueryScope(req.user, { firstParam: 2 });
+    if (!scope.allowed) {
+      return res.status(403).json({ message: '没有权限导出该活动成绩' });
+    }
+
     // 查询该活动的所有学生成绩
     const result = await query(`
       SELECT
@@ -315,9 +339,9 @@ router.get('/export/:examId', authMiddleware, async (req, res) => {
       JOIN students s ON sa.student_id = s.id
       JOIN users u ON s.user_id = u.id
       JOIN activities a ON sa.activity_id = a.id
-      WHERE sa.activity_id = $1
+      WHERE sa.activity_id = $1 AND ${scope.sql}
       ORDER BY sa.score DESC
-    `, [examId]);
+    `, [examId, ...scope.params]);
 
     res.json({
       success: true,

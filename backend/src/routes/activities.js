@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult, param } = require('express-validator');
-const { authMiddleware, requireRole, optionalAuth } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 const {
   requireActivityPermission,
   validateAbilityLevel,
@@ -15,6 +15,59 @@ const logger = require('../utils/logger');
 const { query } = require('../database/connection');
 const multer = require('multer');
 const XLSX = require('xlsx');
+const {
+  getActorScope,
+  canManageActivity,
+  canReadActivity,
+  canStudentParticipate,
+  canAccessQuestion,
+  filterQuestionsForActor
+} = require('../services/teachingAccessControl');
+
+async function requireActivityManager(req, res, next) {
+  try {
+    const activity = await Activity.findById(req.params.id);
+    if (!activity) return res.status(404).json({ success: false, message: '活动不存在' });
+    if (!await canManageActivity(req.user, activity)) {
+      return res.status(403).json({ success: false, message: '您没有权限管理此活动' });
+    }
+    req.activity = activity;
+    next();
+  } catch (error) {
+    logger.error('Activity scope check error:', error);
+    res.status(500).json({ success: false, message: '活动权限检查失败' });
+  }
+}
+
+async function validateCreationScope(req, res, next) {
+  try {
+    const actor = await getActorScope(req.user);
+    if (!actor) return res.status(403).json({ success: false, message: '用户缺少有效的教学管理范围' });
+    const audienceSchools = req.body.targetAudience?.schools || req.body.target_audience?.schools || [];
+    if (actor.level === 'school' && audienceSchools.some(id => Number(id) !== actor.schoolId)) {
+      return res.status(403).json({ success: false, message: '目标学校超出您的管理范围' });
+    }
+    if (actor.level === 'district' && audienceSchools.length > 0) {
+      const schools = await query('SELECT id FROM schools WHERE district_id = $1 AND id = ANY($2::int[])',
+        [actor.districtId, audienceSchools.map(Number)]);
+      if (schools.rows.length !== new Set(audienceSchools.map(Number)).size) {
+        return res.status(403).json({ success: false, message: '目标学校超出您的管理区县' });
+      }
+    }
+    next();
+  } catch (error) {
+    logger.error('Creation scope check error:', error);
+    res.status(500).json({ success: false, message: '活动范围检查失败' });
+  }
+}
+
+async function filterActivitiesForStudent(user, candidates) {
+  const visibility = await Promise.all(candidates.map(async activity => {
+    const fullActivity = await Activity.findById(activity.id);
+    return { activity, allowed: await canStudentParticipate(user, fullActivity) };
+  }));
+  return visibility.filter(item => item.allowed).map(item => item.activity);
+}
 
 // C2 导入成绩文件上传（内存存储，5MB 上限）
 const importUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -45,7 +98,8 @@ router.get('/practice', authMiddleware, async (req, res) => {
     if (ability_level) filters.ability_level = ability_level;
 
     // Get available practices for the student
-    const activities = await Activity.getAvailableForStudent(req.user.id, filters);
+    const candidates = await Activity.getAvailableForStudent(req.user.id, filters);
+    const activities = await filterActivitiesForStudent(req.user, candidates);
 
     res.json({
       success: true,
@@ -83,7 +137,8 @@ router.get('/assessments', authMiddleware, async (req, res) => {
     if (ability_level) filters.ability_level = ability_level;
 
     // Get available assessments for the student
-    const activities = await Activity.getAvailableForStudent(req.user.id, filters);
+    const candidates = await Activity.getAvailableForStudent(req.user.id, filters);
+    const activities = await filterActivitiesForStudent(req.user, candidates);
 
     res.json({
       success: true,
@@ -104,7 +159,7 @@ router.get('/assessments', authMiddleware, async (req, res) => {
 // ========================================
 
 // Get all available activities
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { subject, grade, status, type, ability_level, scope } = req.query;
     const filters = {};
@@ -118,7 +173,8 @@ router.get('/', optionalAuth, async (req, res) => {
 
     // If user is a student, get available activities for them
     if (req.user && req.user.role === 'student') {
-      const activities = await Activity.getAvailableForStudent(req.user.id, filters);
+      const candidates = await Activity.getAvailableForStudent(req.user.id, filters);
+      const activities = await filterActivitiesForStudent(req.user, candidates);
       return res.json({
         success: true,
         activities,
@@ -132,8 +188,12 @@ router.get('/', optionalAuth, async (req, res) => {
       filters.type = 'practice'; // Teachers can only see practice activities
     }
 
-    // For admins, show all activities
-    const activities = await Activity.findAll(filters);
+    const candidates = await Activity.findAll(filters);
+    const access = await Promise.all(candidates.map(async activity => ({
+      activity,
+      allowed: await canReadActivity(req.user, activity)
+    })));
+    const activities = access.filter(item => item.allowed).map(item => item.activity);
     res.json({
       success: true,
       activities,
@@ -226,7 +286,12 @@ router.get('/admin/assessments', [
     if (status) filters.status = status;
     if (scope) filters.scope = scope;
 
-    const assessments = await Activity.findAll(filters);
+    const candidates = await Activity.findAll(filters);
+    const access = await Promise.all(candidates.map(async activity => ({
+      activity,
+      allowed: await canManageActivity(req.user, activity)
+    })));
+    const assessments = access.filter(item => item.allowed).map(item => item.activity);
 
     res.json({
       success: true,
@@ -244,7 +309,8 @@ router.get('/admin/assessments', [
 
 // Get activity details
 router.get('/:id', [
-  param('id').isInt().withMessage('Invalid activity ID')
+  param('id').isInt().withMessage('Invalid activity ID'),
+  authMiddleware
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -263,6 +329,10 @@ router.get('/:id', [
         success: false,
         message: '活动不存在'
       });
+    }
+
+    if (!await canReadActivity(req.user, activity)) {
+      return res.status(403).json({ success: false, message: '您无权查看此活动' });
     }
 
     res.json({
@@ -305,6 +375,10 @@ router.get('/:id/eligibility', [
 
     // Check eligibility
     const eligibility = await Activity.checkStudentEligibility(id, req.user.id);
+    if (!await canStudentParticipate(req.user, activity)) {
+      eligibility.eligible = false;
+      eligibility.reason = '您不在此活动的参与范围内';
+    }
 
     res.json({
       success: true,
@@ -348,6 +422,10 @@ router.get('/:id/statistics', [
         success: false,
         message: '活动不存在'
       });
+    }
+
+    if (!await canManageActivity(req.user, activity)) {
+      return res.status(403).json({ success: false, message: '您无权查看此活动统计' });
     }
 
     // Get statistics
@@ -403,6 +481,10 @@ router.get('/:id/participants', [
       });
     }
 
+    if (!await canManageActivity(req.user, activity)) {
+      return res.status(403).json({ success: false, message: '您无权查看此活动参与者' });
+    }
+
     const participants = await Activity.getParticipants(activityId);
 
     res.json({
@@ -439,6 +521,15 @@ router.get('/:id/questions', [
 
   try {
     const { id } = req.params;
+    const activityRecord = await Activity.findById(id);
+    if (!activityRecord) return res.status(404).json({ success: false, message: '活动不存在' });
+    if (req.user.role === 'student') {
+      if (!await canStudentParticipate(req.user, activityRecord)) {
+        return res.status(403).json({ success: false, message: '您不在此活动的参与范围内' });
+      }
+    } else if (!await canManageActivity(req.user, activityRecord)) {
+      return res.status(403).json({ success: false, message: '您无权查看此活动题目' });
+    }
     const activity = await Activity.findByIdWithQuestions(id);
 
     if (!activity) {
@@ -473,6 +564,7 @@ router.get('/:id/questions', [
 router.post('/practice', [
   authMiddleware,
   requireActivityPermission('practice'),
+  validateCreationScope,
   validatePracticeScopePermission,
   validateAbilityLevel,
   body('title').notEmpty().withMessage('活动标题不能为空'),
@@ -533,6 +625,7 @@ router.post('/practice', [
 router.post('/assessment', [
   authMiddleware,
   requireActivityPermission('assessment'),
+  validateCreationScope,
   validateAbilityLevel,
   body('title').notEmpty().withMessage('活动标题不能为空'),
   body('subject').notEmpty().withMessage('活动科目不能为空'),
@@ -612,6 +705,10 @@ router.post('/:id/start', [
         success: false,
         message: '活动不存在'
       });
+    }
+
+    if (!await canStudentParticipate(req.user, activity)) {
+      return res.status(403).json({ success: false, message: '您不在此活动的参与范围内' });
     }
 
     if (activity.status !== 'ongoing' && activity.status !== 'published') {
@@ -748,6 +845,16 @@ router.post('/:id/submit', [
       });
     }
 
+    const uniqueQuestionIds = [...new Set(answers.map(item => Number(item.questionId)))];
+    const allowedQuestions = await query(`
+      SELECT COUNT(DISTINCT question_id)::int AS count
+      FROM activity_questions
+      WHERE activity_id = $1 AND question_id = ANY($2::int[])
+    `, [id, uniqueQuestionIds]);
+    if (Number(allowedQuestions.rows[0].count) !== uniqueQuestionIds.length) {
+      return res.status(400).json({ success: false, message: '答案中包含不属于此活动的题目' });
+    }
+
     // Save answers
     const savedAnswers = await Answer.saveAnswers(studentActivity.id, answers);
 
@@ -835,6 +942,10 @@ router.post('/:id/register', [
       });
     }
 
+    if (!await canStudentParticipate(req.user, activity)) {
+      return res.status(403).json({ success: false, message: '您不在此活动的参与范围内' });
+    }
+
     if (activity.status !== 'published') {
       return res.status(400).json({
         success: false,
@@ -909,11 +1020,7 @@ router.put('/:id/status', [
       });
     }
 
-    // Check permissions: only creator or admin can update status
-    const isCreator = activity.created_by === req.user.id;
-    const isAdmin = ['system_admin', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin'].includes(req.user.role);
-
-    if (!isCreator && !isAdmin) {
+    if (!await canManageActivity(req.user, activity)) {
       return res.status(403).json({
         success: false,
         message: '您没有权限修改此活动状态'
@@ -1008,11 +1115,7 @@ router.put('/:id', [
       });
     }
 
-    // Check permissions: only creator or admin can update
-    const isCreator = activity.created_by === req.user.id;
-    const isAdmin = ['system_admin', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin'].includes(req.user.role);
-
-    if (!isCreator && !isAdmin) {
+    if (!await canManageActivity(req.user, activity)) {
       return res.status(403).json({
         success: false,
         message: '您没有权限修改此活动'
@@ -1100,11 +1203,7 @@ router.delete('/:id', [
       });
     }
 
-    // Check permissions: only creator or admin can delete
-    const isCreator = activity.created_by === req.user.id;
-    const isAdmin = ['system_admin', 'school_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin'].includes(req.user.role);
-
-    if (!isCreator && !isAdmin) {
+    if (!await canManageActivity(req.user, activity)) {
       return res.status(403).json({
         success: false,
         message: '您没有权限删除此活动'
@@ -1158,6 +1257,7 @@ router.delete('/:id', [
 router.post('/admin/assessment', [
   authMiddleware,
   requireActivityPermission('assessment'),
+  validateCreationScope,
   validateAbilityLevel,
   body('title').notEmpty().withMessage('活动标题不能为空'),
   body('subject').notEmpty().withMessage('活动科目不能为空'),
@@ -1222,7 +1322,7 @@ router.post('/admin/assessment', [
 const PaperGenerationService = require('../services/paperGenerationService');
 
 // Get available questions for an activity
-router.get('/:id/available-questions', authMiddleware, async (req, res) => {
+router.get('/:id/available-questions', authMiddleware, requireActivityManager, async (req, res) => {
   try {
     const activityId = parseInt(req.params.id);
     const filters = {
@@ -1237,6 +1337,8 @@ router.get('/:id/available-questions', authMiddleware, async (req, res) => {
     Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
 
     const result = await PaperGenerationService.getAvailableQuestions(activityId, filters, req.user);
+    result.questions = await filterQuestionsForActor(req.user, result.questions);
+    result.totalAvailable = result.questions.length;
 
     res.json({
       success: true,
@@ -1252,7 +1354,7 @@ router.get('/:id/available-questions', authMiddleware, async (req, res) => {
 });
 
 // Get activity paper (all questions with details)
-router.get('/:id/paper', authMiddleware, async (req, res) => {
+router.get('/:id/paper', authMiddleware, requireActivityManager, async (req, res) => {
   try {
     const activityId = parseInt(req.params.id);
     const result = await PaperGenerationService.getActivityPaper(activityId, req.user);
@@ -1271,7 +1373,7 @@ router.get('/:id/paper', authMiddleware, async (req, res) => {
 });
 
 // Get activity paper statistics
-router.get('/:id/paper/stats', authMiddleware, async (req, res) => {
+router.get('/:id/paper/stats', authMiddleware, requireActivityManager, async (req, res) => {
   try {
     const activityId = parseInt(req.params.id);
     const stats = await PaperGenerationService.getActivityPaperStats(activityId, req.user);
@@ -1292,6 +1394,7 @@ router.get('/:id/paper/stats', authMiddleware, async (req, res) => {
 // Add a question to activity
 router.post('/:id/questions',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     body('questionId').isInt().withMessage('Question ID is required and must be an integer'),
@@ -1310,6 +1413,10 @@ router.post('/:id/questions',
 
       const activityId = parseInt(req.params.id);
       const { questionId, score } = req.body;
+      const question = await require('../models/QuestionBank').findById(questionId);
+      if (!question || !await canAccessQuestion(req.user, question)) {
+        return res.status(403).json({ success: false, message: '题目不在您的题库管理范围内' });
+      }
 
       const addedQuestion = await PaperGenerationService.addQuestionToActivity(
         activityId,
@@ -1336,6 +1443,7 @@ router.post('/:id/questions',
 // Add multiple questions to activity (batch)
 router.post('/:id/questions/batch',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     body('questions').isArray({ min: 1 }).withMessage('Questions must be a non-empty array'),
@@ -1354,6 +1462,13 @@ router.post('/:id/questions/batch',
 
       const activityId = parseInt(req.params.id);
       const { questions } = req.body;
+
+      for (const item of questions) {
+        const question = await require('../models/QuestionBank').findById(item.questionId);
+        if (!question || !await canAccessQuestion(req.user, question)) {
+          return res.status(403).json({ success: false, message: `题目 ${item.questionId} 不在您的题库管理范围内` });
+        }
+      }
 
       const result = await PaperGenerationService.addQuestionsToActivity(activityId, questions, req.user);
 
@@ -1376,6 +1491,7 @@ router.post('/:id/questions/batch',
 // Batch remove questions from activity (MUST be before single remove to avoid route conflicts)
 router.delete('/:id/questions/batch',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     body('questionIds').isArray({ min: 1 }).withMessage('Question IDs must be a non-empty array')
@@ -1451,6 +1567,7 @@ router.delete('/:id/questions/batch',
 // Remove a question from activity
 router.delete('/:id/questions/:questionId',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     param('questionId').isInt().withMessage('Question ID must be an integer')
@@ -1488,6 +1605,7 @@ router.delete('/:id/questions/:questionId',
 // Update question properties in activity
 router.put('/:id/questions/:questionId',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     param('questionId').isInt().withMessage('Question ID must be an integer'),
@@ -1533,6 +1651,7 @@ router.put('/:id/questions/:questionId',
 // Reorder questions in activity
 router.put('/:id/questions/reorder',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer'),
     body('orders').isArray({ min: 1 }).withMessage('Orders must be a non-empty array'),
@@ -1573,6 +1692,7 @@ router.put('/:id/questions/reorder',
 // Clear all questions from activity
 router.delete('/:id/paper',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer')
   ],
@@ -1609,6 +1729,7 @@ router.delete('/:id/paper',
 // Validate activity paper
 router.get('/:id/paper/validate',
   authMiddleware,
+  requireActivityManager,
   [
     param('id').isInt().withMessage('Activity ID must be an integer')
   ],
@@ -1661,7 +1782,7 @@ router.get('/import-grades/template', authMiddleware, (req, res) => {
 // ============================================================================
 // C2: 组卷导出 PDF
 // ============================================================================
-router.get('/:id/paper/pdf', authMiddleware, async (req, res) => {
+router.get('/:id/paper/pdf', authMiddleware, requireActivityManager, async (req, res) => {
   try {
     const PaperExportService = require('../services/paperExportService');
     await PaperExportService.exportPaperPDF(parseInt(req.params.id, 10), req.user, res);
@@ -1676,7 +1797,7 @@ router.get('/:id/paper/pdf', authMiddleware, async (req, res) => {
 // ============================================================================
 // C2: 导入成绩（Excel：学号 / 姓名 / 总分），适用于虚拟练习
 // ============================================================================
-router.post('/:id/import-grades', authMiddleware, importUpload.single('file'), async (req, res) => {
+router.post('/:id/import-grades', authMiddleware, requireActivityManager, importUpload.single('file'), async (req, res) => {
   try {
     const activityId = parseInt(req.params.id, 10);
     if (!req.file) {
@@ -1686,12 +1807,6 @@ router.post('/:id/import-grades', authMiddleware, importUpload.single('file'), a
     const activity = await Activity.findById(activityId);
     if (!activity) {
       return res.status(404).json({ success: false, message: '活动不存在' });
-    }
-
-    // 权限：创建者 / 教师 / 管理员
-    const adminRoles = ['school_admin', 'district_admin', 'municipal_school_admin', 'base_school_admin', 'municipal_admin', 'system_admin'];
-    if (activity.created_by !== req.user.id && req.user.role !== 'teacher' && !adminRoles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: '无权导入成绩' });
     }
 
     const wb = XLSX.read(req.file.buffer, { type: 'buffer' });

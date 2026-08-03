@@ -3,6 +3,22 @@ const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const DailyTask = require('../models/DailyTask');
 const logger = require('../utils/logger');
+const { authorizeStudentAccess } = require('../services/studentAccessControl');
+
+const TASK_ADMIN_ROLES = new Set(['system_admin', 'municipal_admin']);
+
+async function getAuthorizedStudent(req, res, identifier, options) {
+  const access = await authorizeStudentAccess(req.user, identifier, options);
+  if (!access.student) {
+    res.status(404).json({ success: false, message: '学生不存在' });
+    return null;
+  }
+  if (!access.allowed) {
+    res.status(403).json({ success: false, message: '权限不足' });
+    return null;
+  }
+  return access.student;
+}
 
 /**
  * GET /api/daily-tasks
@@ -81,7 +97,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     // Check admin permission
-    if (req.user.role !== 'admin') {
+    if (!TASK_ADMIN_ROLES.has(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: '权限不足，仅管理员可创建任务'
@@ -173,7 +189,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     // Check admin permission
-    if (req.user.role !== 'admin') {
+    if (!TASK_ADMIN_ROLES.has(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: '权限不足，仅管理员可更新任务'
@@ -227,7 +243,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     // Check admin permission
-    if (req.user.role !== 'admin') {
+    if (!TASK_ADMIN_ROLES.has(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: '权限不足，仅管理员可删除任务'
@@ -283,25 +299,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
  */
 router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
   try {
-    const studentId = parseInt(req.params.studentId);
     const { category, periodStart, periodEnd } = req.query;
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
-    if (isNaN(studentId)) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的学生ID'
-      });
-    }
-
-    // Check permission - students can only view their own progress
-    if (req.user.role === 'student' && req.user.id !== studentId) {
-      return res.status(403).json({
-        success: false,
-        message: '权限不足，只能查看自己的任务进度'
-      });
-    }
-
-    const progress = await DailyTask.getStudentTaskProgress(studentId, {
+    const progress = await DailyTask.getStudentTaskProgress(student.student_id, {
       category: category || null,
       periodStart: periodStart || null,
       periodEnd: periodEnd || null
@@ -350,16 +352,11 @@ router.post('/:taskId/progress', authMiddleware, async (req, res) => {
       });
     }
 
-    // Check permission - students can only update their own progress
-    if (req.user.role === 'student' && req.user.id !== studentId) {
-      return res.status(403).json({
-        success: false,
-        message: '权限不足，只能更新自己的任务进度'
-      });
-    }
+    const student = await getAuthorizedStudent(req, res, studentId, { write: true });
+    if (!student) return;
 
     const updatedProgress = await DailyTask.updateTaskProgress(
-      studentId,
+      student.student_id,
       taskId,
       incrementValue,
       periodStart,
@@ -367,7 +364,7 @@ router.post('/:taskId/progress', authMiddleware, async (req, res) => {
     );
 
     logger.info('Task progress updated', {
-      studentId,
+      studentId: student.student_id,
       taskId,
       incrementValue,
       isCompleted: updatedProgress.is_completed
@@ -395,23 +392,9 @@ router.post('/:taskId/progress', authMiddleware, async (req, res) => {
  */
 router.get('/student/:studentId/current', authMiddleware, async (req, res) => {
   try {
-    const studentId = parseInt(req.params.studentId);
     const { category } = req.query;
-
-    if (isNaN(studentId)) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的学生ID'
-      });
-    }
-
-    // Check permission
-    if (req.user.role === 'student' && req.user.id !== studentId) {
-      return res.status(403).json({
-        success: false,
-        message: '权限不足'
-      });
-    }
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
     // Calculate current period dates
     const now = new Date();
@@ -424,7 +407,7 @@ router.get('/student/:studentId/current', authMiddleware, async (req, res) => {
     });
 
     // Get student's progress for current period
-    const progress = await DailyTask.getStudentTaskProgress(studentId, {
+    const progress = await DailyTask.getStudentTaskProgress(student.student_id, {
       category: category || null,
       periodStart: currentDate,
       periodEnd: null

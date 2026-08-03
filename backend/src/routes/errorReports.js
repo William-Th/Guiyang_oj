@@ -3,6 +3,14 @@ const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const ErrorReport = require('../models/ErrorReport');
 const QuestionBank = require('../models/QuestionBank');
+const { canManageQuestion } = require('../services/teachingAccessControl');
+
+async function canHandleQuestion(user, question) {
+  if (!user || !question) return false;
+  if (Number(question.created_by) === Number(user.id) ||
+      Number(question.reviewer_id) === Number(user.id)) return true;
+  return canManageQuestion(user, question);
+}
 
 /**
  * 题目纠错流程（C5）
@@ -25,7 +33,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const question = await QuestionBank.findById(questionId);
-    if (!question) {
+    if (!question || question.status !== 'published' || question.is_hidden) {
       return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
@@ -70,7 +78,17 @@ router.get('/', authMiddleware, async (req, res) => {
       limit: Math.min(parseInt(limit, 10) || 20, 100),
       offset: parseInt(offset, 10) || 0
     });
-    res.json({ success: true, data: list });
+    let scopedList;
+    if (req.user.role === 'student') {
+      scopedList = list.filter(report => Number(report.reporter_id) === Number(req.user.id));
+    } else {
+      const decisions = await Promise.all(list.map(async report => {
+        const question = await QuestionBank.findById(report.question_id);
+        return canHandleQuestion(req.user, question);
+      }));
+      scopedList = list.filter((_report, index) => decisions[index]);
+    }
+    res.json({ success: true, data: scopedList });
   } catch (error) {
     console.error('Error listing error reports:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -99,7 +117,7 @@ router.post('/:id/handle', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, error: '纠错记录不存在' });
     }
     const question = await QuestionBank.findById(report.question_id);
-    if (!ErrorReport.canHandle(question, req.user)) {
+    if (!await canHandleQuestion(req.user, question)) {
       return res.status(403).json({ success: false, error: '无权处理该纠错' });
     }
 

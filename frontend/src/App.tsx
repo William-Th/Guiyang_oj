@@ -47,6 +47,8 @@ import TeachingClassForm from './pages/teacher/TeachingClassForm';
 import TeachingClassStudents from './pages/teacher/TeachingClassStudents';
 import NotificationCenterPage from './pages/common/NotificationCenterPage';
 import CodeJudgeTestPage from './pages/CodeJudgeTestPage';
+import RoleRoute from './components/common/RoleRoute';
+import { ADMIN_ROLES } from './auth/roles';
 
 const App: React.FC = () => {
   return (
@@ -66,87 +68,86 @@ const App: React.FC = () => {
             <Route path="notifications" element={<NotificationCenterPage />} />
             <Route path="code-judge-test" element={<CodeJudgeTestPage />} />
 
-            {/* 管理员路由 - 导航在Header中 */}
-            <Route path="admin">
-              <Route index element={<Navigate to="/admin/home" replace />} />
-              <Route path="home" element={<AdminHome />} />
-              <Route path="overview" element={<AdminOverview />} />
-              <Route path="question-bank">
-                <Route index element={<QuestionBankMain />} />
-                <Route path="create" element={<QuestionFormPage />} />
-                <Route path="edit/:id" element={<QuestionFormPage />} />
-              </Route>
-              <Route path="users" element={<UserManagement />} />
-              <Route path="permissions" element={<PermissionManagement />} />
-              <Route path="approval-center" element={<ApprovalCenter />} />
-              <Route path="question-governance" element={<QuestionGovernancePage />} />
-              <Route path="achievements" element={<AchievementManagementPage />} />
-            </Route>
-
-            {/* 学生路由 */}
-            <Route path="student">
-              <Route path="practice" element={<PracticeCenterPage />} />
-              <Route path="practice/:id" element={<TakeActivityPage />} />
-              <Route path="assessments" element={<AssessmentCenterPage />} />
-              <Route path="assessment/:id" element={<TakeActivityPage />} />
-              {/* 统一答题界面路由 - 支持练习和测评 */}
-              <Route path="activity/:id" element={<TakeActivityPage />} />
-              {/* 活动结果页面 */}
-              <Route path="results/:id" element={<ActivityResultPage />} />
-              <Route path="achievements" element={<AchievementPage />} />
-              <Route path="points" element={<PointsPage />} />
-              <Route path="statistics" element={<MyStatistics />} />
-              <Route path="registrations" element={<MyRegistrationsPage />} />
-              <Route path="growth" element={<GrowthCenterPage />} />
-              <Route path="wrong-questions" element={<WrongQuestionsPage />} />
-              <Route path="smart-practice" element={<SmartPracticePage />} />
-              <Route path="shop" element={<ShopPage />} />
-            </Route>
-
-            {/* 教师路由 - 题库管理 */}
-            <Route path="teacher">
-              <Route path="question-bank">
-                <Route index element={<QuestionBankMain />} />
-                <Route path="create" element={<QuestionFormPage />} />
-                <Route path="edit/:id" element={<QuestionFormPage />} />
-              </Route>
-              <Route path="activities">
-                <Route index element={<ActivityListPage />} />
-                <Route path="create/:type?" element={<ActivityFormPage />} />
-                <Route path="edit/:id" element={<ActivityFormPage />} />
-                <Route path=":id" element={<ActivityDetailPage />} />
-                <Route path=":id/paper" element={<PaperGenerationPage />} />
-              </Route>
-              <Route path="review-workbench" element={<ReviewWorkbench />} />
-              <Route path="error-reports" element={<ErrorReportsPage />} />
-              <Route path="grading">
-                <Route index element={<GradingListPage />} />
-                <Route path=":id" element={<GradingDetailPage />} />
-              </Route>
-              <Route path="data-analytics" element={<DataAnalytics />} />
-              {/* 教学班管理路由 */}
-              <Route path="teaching-classes">
-                <Route index element={<TeachingClassList />} />
-                <Route path="create" element={<TeachingClassForm />} />
-                <Route path=":id" element={<TeachingClassDetail />} />
-                <Route path=":id/edit" element={<TeachingClassForm />} />
-                <Route path=":id/students" element={<TeachingClassStudents />} />
+            <Route element={<RoleRoute roles={ADMIN_ROLES} />}>
+              <Route path="admin">
+                <Route index element={<Navigate to="/admin/home" replace />} />
+                <Route path="home" element={<AdminHome />} />
+                <Route path="overview" element={<AdminOverview />} />
+                <Route path="question-bank">
+                  <Route index element={<QuestionBankMain />} />
+                  <Route path="create" element={<QuestionFormPage />} />
+                  <Route path="edit/:id" element={<QuestionFormPage />} />
+                </Route>
+                <Route path="users" element={<UserManagement />} />
+                <Route path="permissions" element={<PermissionManagement />} />
+                <Route path="approval-center" element={<ApprovalCenter />} />
+                <Route path="question-governance" element={<QuestionGovernancePage />} />
+                <Route path="achievements" element={<AchievementManagementPage />} />
+                <Route path="assessments">
+                  <Route index element={<AssessmentManagementPage />} />
+                  <Route path="create/:type?" element={<ActivityFormPage />} />
+                  <Route path="edit/:id" element={<ActivityFormPage />} />
+                  <Route path=":id" element={<ActivityDetailPage />} />
+                  <Route path=":id/paper" element={<PaperGenerationPage />} />
+                </Route>
               </Route>
             </Route>
 
-            {/* 管理员路由 - 测评管理 */}
-            <Route path="admin/assessments">
-              <Route index element={<AssessmentManagementPage />} />
-              <Route path="create/:type?" element={<ActivityFormPage />} />
-              <Route path="edit/:id" element={<ActivityFormPage />} />
-              <Route path=":id" element={<ActivityDetailPage />} />
-              <Route path=":id/paper" element={<PaperGenerationPage />} />
+            <Route element={<RoleRoute roles={['student']} />}>
+              <Route path="student">
+                <Route path="practice" element={<PracticeCenterPage />} />
+                <Route path="practice/:id" element={<TakeActivityPage />} />
+                <Route path="assessments" element={<AssessmentCenterPage />} />
+                <Route path="assessment/:id" element={<TakeActivityPage />} />
+                <Route path="activity/:id" element={<TakeActivityPage />} />
+                <Route path="results/:id" element={<ActivityResultPage />} />
+                <Route path="achievements" element={<AchievementPage />} />
+                <Route path="points" element={<PointsPage />} />
+                <Route path="statistics" element={<MyStatistics />} />
+                <Route path="registrations" element={<MyRegistrationsPage />} />
+                <Route path="growth" element={<GrowthCenterPage />} />
+                <Route path="wrong-questions" element={<WrongQuestionsPage />} />
+                <Route path="smart-practice" element={<SmartPracticePage />} />
+                <Route path="shop" element={<ShopPage />} />
+              </Route>
             </Route>
 
-            {/* 家长路由 */}
-            <Route path="parent">
-              <Route index element={<ParentDashboard />} />
-              <Route path="dashboard" element={<ParentDashboard />} />
+            <Route element={<RoleRoute roles={['teacher']} />}>
+              <Route path="teacher">
+                <Route path="question-bank">
+                  <Route index element={<QuestionBankMain />} />
+                  <Route path="create" element={<QuestionFormPage />} />
+                  <Route path="edit/:id" element={<QuestionFormPage />} />
+                </Route>
+                <Route path="activities">
+                  <Route index element={<ActivityListPage />} />
+                  <Route path="create/:type?" element={<ActivityFormPage />} />
+                  <Route path="edit/:id" element={<ActivityFormPage />} />
+                  <Route path=":id" element={<ActivityDetailPage />} />
+                  <Route path=":id/paper" element={<PaperGenerationPage />} />
+                </Route>
+                <Route path="review-workbench" element={<ReviewWorkbench />} />
+                <Route path="error-reports" element={<ErrorReportsPage />} />
+                <Route path="grading">
+                  <Route index element={<GradingListPage />} />
+                  <Route path=":id" element={<GradingDetailPage />} />
+                </Route>
+                <Route path="data-analytics" element={<DataAnalytics />} />
+                <Route path="teaching-classes">
+                  <Route index element={<TeachingClassList />} />
+                  <Route path="create" element={<TeachingClassForm />} />
+                  <Route path=":id" element={<TeachingClassDetail />} />
+                  <Route path=":id/edit" element={<TeachingClassForm />} />
+                  <Route path=":id/students" element={<TeachingClassStudents />} />
+                </Route>
+              </Route>
+            </Route>
+
+            <Route element={<RoleRoute roles={['parent']} />}>
+              <Route path="parent">
+                <Route index element={<ParentDashboard />} />
+                <Route path="dashboard" element={<ParentDashboard />} />
+              </Route>
             </Route>
           </Route>
         </Routes>

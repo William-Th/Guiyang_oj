@@ -12,6 +12,20 @@ const AssessmentRegistration = require('../models/AssessmentRegistration');
 const Activity = require('../models/Activity');
 const { query } = require('../database/connection');
 const notificationService = require('../services/NotificationService');
+const { canManageActivity } = require('../services/teachingAccessControl');
+
+async function requireManagedActivity(req, res, activityId) {
+  const activity = await Activity.findById(activityId);
+  if (!activity) {
+    res.status(404).json({ success: false, message: '活动不存在' });
+    return null;
+  }
+  if (!await canManageActivity(req.user, activity)) {
+    res.status(403).json({ success: false, message: '无权管理该活动的报名数据' });
+    return null;
+  }
+  return activity;
+}
 
 // ============================================
 // 测评点管理API (管理员)
@@ -106,11 +120,14 @@ router.post('/activities/:activityId/locations',
       if (activity.type !== 'assessment') {
         return res.status(400).json({ success: false, message: '只有测评类型的活动可以添加测评点' });
       }
+      if (!await canManageActivity(req.user, activity)) {
+        return res.status(403).json({ success: false, message: '无权管理该活动的测评点' });
+      }
 
       const location = await AssessmentLocation.create({
         activity_id: activityId,
         ...req.body,
-        created_by: req.user.userId
+        created_by: req.user.id
       });
 
       // 自动设置活动需要测评点
@@ -159,11 +176,14 @@ router.post('/activities/:activityId/locations/batch',
       if (activity.type !== 'assessment') {
         return res.status(400).json({ success: false, message: '只有测评类型的活动可以添加测评点' });
       }
+      if (!await canManageActivity(req.user, activity)) {
+        return res.status(403).json({ success: false, message: '无权管理该活动的测评点' });
+      }
 
       const createdLocations = await AssessmentLocation.bulkCreate(
         activityId,
         locations,
-        req.user.userId
+        req.user.id
       );
 
       // 自动设置活动需要测评点
@@ -202,6 +222,7 @@ router.put('/locations/:id',
       if (!location) {
         return res.status(404).json({ success: false, message: '测评点不存在' });
       }
+      if (!await requireManagedActivity(req, res, location.activity_id)) return;
 
       const updated = await AssessmentLocation.update(req.params.id, req.body);
 
@@ -236,6 +257,7 @@ router.delete('/locations/:id',
       if (!location) {
         return res.status(404).json({ success: false, message: '测评点不存在' });
       }
+      if (!await requireManagedActivity(req, res, location.activity_id)) return;
 
       await AssessmentLocation.delete(req.params.id);
 
@@ -264,6 +286,8 @@ router.get('/activities/:activityId/locations/statistics',
       if (!errors.isEmpty()) {
         return res.status(400).json({ success: false, errors: errors.array() });
       }
+
+      if (!await requireManagedActivity(req, res, req.params.activityId)) return;
 
       const statistics = await AssessmentLocation.getStatistics(req.params.activityId);
 
@@ -299,7 +323,7 @@ router.get('/activities/:activityId/registration/eligibility',
 
       const eligibility = await AssessmentRegistration.checkEligibility(
         req.params.activityId,
-        req.user.userId
+        req.user.id
       );
 
       // 如果需要测评点，获取可用的测评点
@@ -338,7 +362,7 @@ router.post('/activities/:activityId/register',
       }
 
       const activityId = parseInt(req.params.activityId);
-      const studentId = req.user.userId;
+      const studentId = req.user.id;
       const { location_id } = req.body;
 
       // 检查资格
@@ -414,7 +438,7 @@ router.post('/activities/:activityId/register/cancel',
       }
 
       const activityId = parseInt(req.params.activityId);
-      const studentId = req.user.userId;
+      const studentId = req.user.id;
       const { reason } = req.body;
 
       // 查找报名记录
@@ -452,7 +476,7 @@ router.get('/assessments/my-registrations',
     try {
       const { status, upcoming, limit, offset } = req.query;
 
-      const registrations = await AssessmentRegistration.findByStudentId(req.user.userId, {
+      const registrations = await AssessmentRegistration.findByStudentId(req.user.id, {
         status,
         upcoming: upcoming === 'true',
         limit: limit ? parseInt(limit) : null,
@@ -487,7 +511,7 @@ router.get('/activities/:activityId/my-registration',
 
       const registration = await AssessmentRegistration.findByActivityAndStudent(
         req.params.activityId,
-        req.user.userId
+        req.user.id
       );
 
       res.json({
@@ -520,6 +544,8 @@ router.get('/activities/:activityId/registrations',
       if (!errors.isEmpty()) {
         return res.status(400).json({ success: false, errors: errors.array() });
       }
+
+      if (!await requireManagedActivity(req, res, req.params.activityId)) return;
 
       const { status, location_id, school_id, grade, page, page_size, search } = req.query;
 
@@ -564,6 +590,7 @@ router.get('/activities/:activityId/registrations/statistics',
       }
 
       const activityId = req.params.activityId;
+      if (!await requireManagedActivity(req, res, activityId)) return;
 
       const [overall, byLocation, bySchool] = await Promise.all([
         AssessmentRegistration.getStatistics(activityId),
@@ -604,6 +631,15 @@ router.post('/activities/:activityId/registrations/batch',
       }
 
       const { action, registration_ids, reason } = req.body;
+      if (!await requireManagedActivity(req, res, req.params.activityId)) return;
+
+      const scopedRegistrations = await query(
+        'SELECT id FROM assessment_registrations WHERE activity_id = $1 AND id = ANY($2::int[])',
+        [req.params.activityId, registration_ids]
+      );
+      if (scopedRegistrations.rows.length !== registration_ids.length) {
+        return res.status(403).json({ success: false, message: '报名记录不属于当前活动' });
+      }
 
       let status;
       switch (action) {
@@ -621,7 +657,7 @@ router.post('/activities/:activityId/registrations/batch',
       const updatedCount = await AssessmentRegistration.bulkUpdateStatus(
         registration_ids,
         status,
-        { reviewedBy: req.user.userId, reason }
+        { reviewedBy: req.user.id, reason }
       );
 
       // 批量发送通知（异步，不阻塞响应）
@@ -680,12 +716,13 @@ router.delete('/registrations/:id',
       if (!registration) {
         return res.status(404).json({ success: false, message: '报名记录不存在' });
       }
+      if (!await requireManagedActivity(req, res, registration.activity_id)) return;
 
       const cancelReason = req.body.reason || '管理员取消';
 
       await AssessmentRegistration.cancel(req.params.id, {
         reason: cancelReason,
-        cancelledBy: req.user.userId
+        cancelledBy: req.user.id
       });
 
       // 发送取消通知（异步，不阻塞响应）
@@ -714,7 +751,7 @@ router.get('/assessments/available',
   async (req, res) => {
     try {
       const { subject, grade: _grade, ability_level, page, page_size } = req.query;
-      const studentId = req.user.userId;
+      const studentId = req.user.id;
 
       // 获取学生信息
       const studentResult = await query(`

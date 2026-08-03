@@ -19,6 +19,11 @@ const { body, param, validationResult } = require('express-validator');
 const logger = require('../utils/logger');
 const AutoGradingService = require('../services/autoGradingService');
 const EventEmitter = require('../services/EventEmitter');
+const { ADMIN_ROLES, canManageActivity } = require('../services/teachingAccessControl');
+
+function isGraderRole(role) {
+  return role === 'teacher' || ADMIN_ROLES.has(role);
+}
 
 // ============================================================================
 // 1. 获取待评卷列表
@@ -26,7 +31,7 @@ const EventEmitter = require('../services/EventEmitter');
 router.get('/pending', authMiddleware, async (req, res) => {
   try {
     // Only teacher and admin can access
-    if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+    if (!isGraderRole(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: '权限不足'
@@ -139,7 +144,7 @@ router.get('/student-activity/:id',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!isGraderRole(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -147,7 +152,6 @@ router.get('/student-activity/:id',
       }
 
       const studentActivityId = parseInt(req.params.id);
-      const teacherId = req.user.id;
 
       // Get student activity details and verify ownership
       const saResult = await query(`
@@ -176,7 +180,10 @@ router.get('/student-activity/:id',
       const studentActivity = saResult.rows[0];
 
       // Verify the teacher owns this activity
-      if (studentActivity.created_by !== teacherId && !req.user.role.includes('admin')) {
+      if (!await canManageActivity(req.user, {
+        id: studentActivity.activity_id,
+        created_by: studentActivity.created_by
+      })) {
         return res.status(403).json({
           success: false,
           message: '无权查看此答题记录'
@@ -317,7 +324,7 @@ router.put('/answers/:id',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!isGraderRole(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -334,7 +341,8 @@ router.put('/answers/:id',
           a.id,
           a.student_exam_id,
           aq.score as max_score,
-          act.created_by
+          act.created_by,
+          act.id AS activity_id
         FROM answers a
         JOIN student_activities sa ON a.student_exam_id = sa.id
         JOIN activities act ON sa.activity_id = act.id
@@ -352,7 +360,10 @@ router.put('/answers/:id',
       const answer = verifyResult.rows[0];
 
       // Verify ownership
-      if (answer.created_by !== teacherId && !req.user.role.includes('admin')) {
+      if (!await canManageActivity(req.user, {
+        id: answer.activity_id,
+        created_by: answer.created_by
+      })) {
         return res.status(403).json({
           success: false,
           message: '无权评分此题'
@@ -424,7 +435,7 @@ router.put('/batch',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!isGraderRole(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -450,7 +461,8 @@ router.put('/batch',
               a.id,
               a.student_exam_id,
               aq.score as max_score,
-              act.created_by
+              act.created_by,
+              act.id AS activity_id
             FROM answers a
             JOIN student_activities sa ON a.student_exam_id = sa.id
             JOIN activities act ON sa.activity_id = act.id
@@ -469,7 +481,10 @@ router.put('/batch',
           const answer = verifyResult.rows[0];
 
           // Verify ownership
-          if (answer.created_by !== teacherId && !req.user.role.includes('admin')) {
+          if (!await canManageActivity(req.user, {
+            id: answer.activity_id,
+            created_by: answer.created_by
+          })) {
             results.failed.push({
               answerId,
               error: '无权评分此题'
@@ -565,7 +580,7 @@ router.post('/student-activity/:id/complete',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!isGraderRole(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -580,7 +595,8 @@ router.post('/student-activity/:id/complete',
         SELECT
           sa.id,
           sa.grading_status,
-          a.created_by
+          a.created_by,
+          a.id AS activity_id
         FROM student_activities sa
         JOIN activities a ON sa.activity_id = a.id
         WHERE sa.id = $1
@@ -595,7 +611,10 @@ router.post('/student-activity/:id/complete',
 
       const studentActivity = verifyResult.rows[0];
 
-      if (studentActivity.created_by !== teacherId && !req.user.role.includes('admin')) {
+      if (!await canManageActivity(req.user, {
+        id: studentActivity.activity_id,
+        created_by: studentActivity.created_by
+      })) {
         return res.status(403).json({
           success: false,
           message: '无权完成此评卷'
@@ -718,7 +737,7 @@ router.get('/stats/:activityId',
       }
 
       // Only teacher and admin can access
-      if (!['teacher', 'school_admin', 'district_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (!isGraderRole(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: '权限不足'
@@ -726,7 +745,6 @@ router.get('/stats/:activityId',
       }
 
       const activityId = parseInt(req.params.activityId);
-      const teacherId = req.user.id;
 
       // Verify ownership
       const activityResult = await query(`
@@ -740,7 +758,7 @@ router.get('/stats/:activityId',
         });
       }
 
-      if (activityResult.rows[0].created_by !== teacherId && !req.user.role.includes('admin')) {
+      if (!await canManageActivity(req.user, activityResult.rows[0])) {
         return res.status(403).json({
           success: false,
           message: '无权查看此统计'

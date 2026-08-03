@@ -26,6 +26,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { logout } from '@/store/authSlice';
 import type { MenuProps } from 'antd';
+import { isAdminRole, PERMISSION_ADMIN_ROLES } from '@/auth/roles';
 
 const { Header, Content, Footer } = Layout;
 
@@ -33,21 +34,16 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, token, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [mobileNavigationOpen, setMobileNavigationOpen] = React.useState(false);
 
   // 身份验证守卫：同步判断，未登录直接重定向，避免首次渲染闪现内容（修复 BUG-001）
-  const token = localStorage.getItem('token');
-  if (!token || !user) {
+  if (!isAuthenticated || !token || !user) {
     return <Navigate to="/login" replace />;
   }
 
   // 检查是否为管理员角色
-  const isAdmin = () => {
-    const adminRoles = ['school_admin', 'district_admin', 'municipal_school_admin',
-      'base_school_admin', 'municipal_admin', 'system_admin'];
-    return user && adminRoles.includes(user.role);
-  };
+  const isAdmin = () => isAdminRole(user.role);
 
   // 检查是否为教师角色
   const isTeacher = () => {
@@ -85,8 +81,9 @@ const MainLayout: React.FC = () => {
 
   // 检查是否有权限管理权限（区级及以上管理员）
   const hasPermissionManagementAccess = () => {
-    const allowedRoles = ['district_admin', 'municipal_admin', 'system_admin'];
-    return user && allowedRoles.includes(user.role);
+    return PERMISSION_ADMIN_ROLES.includes(
+      user.role as (typeof PERMISSION_ADMIN_ROLES)[number]
+    );
   };
 
   // 管理员导航菜单项

@@ -12,6 +12,12 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const {
+  getActorScope,
+  canAccessQuestion,
+  canManageQuestion,
+  filterQuestionsForActor
+} = require('../services/teachingAccessControl');
 
 // Configure multer for file uploads
 const upload = multer({
@@ -145,23 +151,21 @@ router.get('/bank', authMiddleware, async (req, res) => {
       offset: parseInt(req.query.offset) || 0
     };
 
-    // 构建用户信息（用于权限控制）
-    const User = require('../models/User');
-    const userDetail = await User.getDetailedProfile(req.user.id);
-
+    const actor = await getActorScope(req.user);
+    if (!actor) return res.status(403).json({ success: false, error: '用户缺少有效的题库访问范围' });
     const userInfo = {
-      userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
-      districtId: userDetail.district_id || userDetail.teacher?.district_id,
-      districtCode: userDetail.district_code || userDetail.teacher?.district_code,
-      schoolId: userDetail.school_id || userDetail.teacher?.school_id,
+      userRole: req.user.role,
+      districtId: actor.districtId,
+      schoolId: actor.schoolId,
       userId: req.user.id // A2 隐藏题库可见性判断
     };
 
     // 查询题目列表（带权限控制）
-    const [questions, total] = await Promise.all([
-      QuestionBank.findAll(filters, userInfo),
-      QuestionBank.countAll(filters, userInfo)
+    const [candidates] = await Promise.all([
+      QuestionBank.findAll(filters, userInfo)
     ]);
+    const questions = await filterQuestionsForActor(req.user, candidates);
+    const total = questions.length;
 
     // A5 使用统计：附加正确率与换题告警
     const USAGE_ALERT_THRESHOLD = 500;       // 使用次数超此值建议换题（可配置）
@@ -205,19 +209,13 @@ router.get('/bank', authMiddleware, async (req, res) => {
 // Get user's available scopes
 router.get('/my-scopes', authMiddleware, async (req, res) => {
   try {
-    // 🔧 使用 User.getDetailedProfile 获取用户详细信息
-    const User = require('../models/User');
-    const userDetail = await User.getDetailedProfile(req.user.id);
-
+    const actor = await getActorScope(req.user);
+    if (!actor) return res.status(403).json({ success: false, error: '用户缺少有效的题库访问范围' });
     const userInfo = {
-      userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
-      districtId: userDetail.district_id || userDetail.teacher?.district_id || userDetail.admin?.district_id,
-      districtCode: userDetail.district_code || userDetail.teacher?.district_code || userDetail.admin?.district_code,
-      schoolId: userDetail.school_id || userDetail.teacher?.school_id || userDetail.admin?.school_id
+      userRole: req.user.role,
+      districtId: actor.districtId,
+      schoolId: actor.schoolId
     };
-
-    // 🔧 调试日志：查看学校管理员的信息
-    console.log('[DEBUG] /my-scopes userInfo:', JSON.stringify(userInfo, null, 2));
 
     const scopes = await QuestionBank.getAvailableScopes(userInfo);
 
@@ -244,7 +242,13 @@ router.get('/bank/search', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: '请输入搜索关键词' });
     }
 
-    const questions = await QuestionBank.searchQuestions(q, { subject, grade });
+    const actor = await getActorScope(req.user);
+    if (!actor) return res.status(403).json({ success: false, error: '用户缺少有效的题库访问范围' });
+    const candidates = await QuestionBank.findAll(
+      { search: q, subject, grade, limit: 100 },
+      { userRole: req.user.role, districtId: actor.districtId, schoolId: actor.schoolId, userId: req.user.id }
+    );
+    const questions = await filterQuestionsForActor(req.user, candidates);
     res.json({ success: true, data: questions });
   } catch (error) {
     console.error('Error searching questions:', error);
@@ -283,6 +287,10 @@ router.get('/bank/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
+    if (!await canAccessQuestion(req.user, question)) {
+      return res.status(403).json({ success: false, error: '题目不在您的题库范围内' });
+    }
+
     res.json({ success: true, data: question });
   } catch (error) {
     console.error('Error fetching question:', error);
@@ -297,6 +305,10 @@ router.get('/bank/code/:code', authMiddleware, async (req, res) => {
 
     if (!question) {
       return res.status(404).json({ success: false, error: '题目不存在' });
+    }
+
+    if (!await canAccessQuestion(req.user, question)) {
+      return res.status(403).json({ success: false, error: '题目不在您的题库范围内' });
     }
 
     res.json({ success: true, data: question });
@@ -326,6 +338,10 @@ router.post('/bank', authMiddleware, async (req, res) => {
 
     if (!isTeacherOrAdmin) {
       return res.status(403).json({ success: false, error: '无权限：只有教师和管理员可以创建题目' });
+    }
+
+    if (!await getActorScope(req.user)) {
+      return res.status(403).json({ success: false, error: '用户缺少有效的题库管理范围' });
     }
 
     const questionData = {
@@ -365,11 +381,7 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
-    // Check permission: system_admin can update all, others can only update their own questions
-    const isSystemAdmin = req.user.role === 'system_admin';
-    const isCreator = existingQuestion.created_by === req.user.id;
-
-    if (!isSystemAdmin && !isCreator) {
+    if (!await canManageQuestion(req.user, existingQuestion)) {
       return res.status(403).json({
         success: false,
         error: '无权限：您只能更新自己创建的题目。系统管理员可以更新所有题目。'
@@ -410,6 +422,10 @@ router.post('/bank/:id/withdraw', authMiddleware, async (req, res) => {
     const record = await QuestionBank.findById(id);
     if (!record) {
       return res.status(404).json({ success: false, error: '发布记录不存在' });
+    }
+
+    if (!await canManageQuestion(req.user, record)) {
+      return res.status(403).json({ success: false, error: '题目不在您的题库管理范围内' });
     }
 
     if (record.status !== 'published') {
@@ -465,9 +481,7 @@ router.put('/bank/:id/hidden', authMiddleware, async (req, res) => {
     }
 
     // 权限：市级及以上管理员，或创建者/审核人
-    const role = req.user.role;
-    const canManageHidden = role === 'system_admin' || role === 'municipal_admin' ||
-      question.created_by === req.user.id || question.reviewer_id === req.user.id;
+    const canManageHidden = await canManageQuestion(req.user, question) || question.reviewer_id === req.user.id;
     if (!canManageHidden) {
       return res.status(403).json({ success: false, error: '无权设置该题目的隐藏状态' });
     }
@@ -593,11 +607,7 @@ router.delete('/bank/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, error: '题目不存在' });
     }
 
-    // Check permission: system_admin can delete all, others can only delete their own questions
-    const isSystemAdmin = req.user.role === 'system_admin';
-    const isCreator = existingQuestion.created_by === req.user.id;
-
-    if (!isSystemAdmin && !isCreator) {
+    if (!await canManageQuestion(req.user, existingQuestion)) {
       return res.status(403).json({
         success: false,
         error: '无权限：您只能删除自己创建的题目。系统管理员可以删除所有题目。'
@@ -752,21 +762,20 @@ router.get('/export', authMiddleware, async (req, res) => {
       offset: 0
     };
 
-    // 构建用户信息（用于权限控制）
-    const User = require('../models/User');
-    const userDetail = await User.getDetailedProfile(req.user.id);
-
+    const actor = await getActorScope(req.user);
+    if (!actor) return res.status(403).json({ success: false, error: '用户缺少有效的题库访问范围' });
     const userInfo = {
-      userRole: userDetail.admin?.permission_type || userDetail.role || 'teacher',
-      districtId: userDetail.district_id || userDetail.teacher?.district_id,
-      districtCode: userDetail.district_code || userDetail.teacher?.district_code,
-      schoolId: userDetail.school_id || userDetail.teacher?.school_id
+      userRole: req.user.role,
+      districtId: actor.districtId,
+      schoolId: actor.schoolId,
+      userId: req.user.id
     };
 
     // 查询题目列表（带权限控制）
-    const [questions] = await Promise.all([
+    const [candidates] = await Promise.all([
       QuestionBank.findAll(filters, userInfo)
     ]);
+    const questions = await filterQuestionsForActor(req.user, candidates);
 
     if (!questions || questions.length === 0) {
       return res.status(404).json({ success: false, error: '没有符合条件的题目' });

@@ -4,6 +4,20 @@ const { authMiddleware } = require('../middleware/auth');
 const Achievement = require('../models/Achievement');
 const achievementService = require('../services/achievement/AchievementService');
 const { quickConfigs } = require('../services/achievement/templates/achievementTemplates');
+const { authorizeStudentAccess } = require('../services/studentAccessControl');
+
+async function getAuthorizedStudent(req, res, identifier, options) {
+  const access = await authorizeStudentAccess(req.user, identifier, options);
+  if (!access.student) {
+    res.status(404).json({ success: false, message: 'Student not found' });
+    return null;
+  }
+  if (!access.allowed) {
+    res.status(403).json({ success: false, message: 'Access denied' });
+    return null;
+  }
+  return access.student;
+}
 
 /**
  * 生成唯一的成就编码
@@ -82,36 +96,10 @@ router.get('/:id(\\d+)', authMiddleware, async (req, res) => {
  */
 router.get('/student/:studentId', authMiddleware, async (req, res) => {
   try {
-    const { studentId } = req.params;
-    const inputId = parseInt(studentId);
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
-    // 查询student记录（支持user_id或student_id）
-    const { pool } = require('../database/connection');
-    const studentQuery = await pool.query(
-      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
-      [inputId]
-    );
-
-    if (studentQuery.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
-    }
-
-    const student = studentQuery.rows[0];
-    const actualStudentId = student.id;
-    const actualUserId = student.user_id;
-
-    // 权限验证：学生只能查看自己的成就
-    if (req.user.role === 'student' && req.user.id !== actualUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    const achievements = await Achievement.getStudentAchievements(actualStudentId);
+    const achievements = await Achievement.getStudentAchievements(student.student_id);
     res.json({
       success: true,
       data: achievements
@@ -132,36 +120,10 @@ router.get('/student/:studentId', authMiddleware, async (req, res) => {
  */
 router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
   try {
-    const { studentId } = req.params;
-    const inputId = parseInt(studentId);
+    const student = await getAuthorizedStudent(req, res, req.params.studentId);
+    if (!student) return;
 
-    // 查询student记录（支持user_id或student_id）
-    const { pool } = require('../database/connection');
-    const studentQuery = await pool.query(
-      'SELECT id, user_id FROM students WHERE id = $1 OR user_id = $1',
-      [inputId]
-    );
-
-    if (studentQuery.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
-    }
-
-    const student = studentQuery.rows[0];
-    const actualStudentId = student.id;
-    const actualUserId = student.user_id;
-
-    // 权限验证：学生只能查看自己的成就进度
-    if (req.user.role === 'student' && req.user.id !== actualUserId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    const progress = await Achievement.getStudentProgress(actualStudentId);
+    const progress = await Achievement.getStudentProgress(student.student_id);
     res.json({
       success: true,
       data: progress
@@ -182,9 +144,7 @@ router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
  */
 router.post('/award', authMiddleware, async (req, res) => {
   try {
-    // 只允许管理员调用
-    const allowedRoles = ['system_admin', 'municipal_admin', 'school_admin', 'teacher'];
-    if (!allowedRoles.includes(req.user.role)) {
+    if (['student', 'parent'].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Admin only.'
@@ -200,25 +160,12 @@ router.post('/award', authMiddleware, async (req, res) => {
       });
     }
 
-    // 将user_id转换为student_id（如果需要）
-    const { pool } = require('../database/connection');
-    const studentCheck = await pool.query(
-      'SELECT id FROM students WHERE id = $1 OR user_id = $1',
-      [parseInt(studentId)]
-    );
-
-    if (studentCheck.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
-    }
-
-    const actualStudentId = studentCheck.rows[0].id;
+    const student = await getAuthorizedStudent(req, res, studentId, { write: true });
+    if (!student) return;
 
     // 使用Service层授予成就（自动添加积分）
     const result = await achievementService.awardAchievement(
-      actualStudentId,
+      student.student_id,
       parseInt(achievementId)
     );
 
@@ -247,7 +194,7 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
 
-    const result = await achievementService.createAchievement(req.body, req.user.userId);
+    const result = await achievementService.createAchievement(req.body, req.user.id);
 
     res.status(201).json({
       success: true,
@@ -346,7 +293,7 @@ router.post('/template/:templateName', authMiddleware, async (req, res) => {
     const result = await achievementService.createFromTemplate(
       templateName,
       params,
-      req.user.userId
+      req.user.id
     );
 
     res.status(201).json({
@@ -394,7 +341,7 @@ router.post('/quick/:configName', authMiddleware, async (req, res) => {
     const achievementData = configFunc(...Object.values(params));
 
     // 创建成就
-    const result = await achievementService.createAchievement(achievementData, req.user.userId);
+    const result = await achievementService.createAchievement(achievementData, req.user.id);
 
     res.status(201).json({
       success: true,
@@ -434,7 +381,7 @@ router.post('/bulk', authMiddleware, async (req, res) => {
       });
     }
 
-    const results = await achievementService.bulkImport(achievements, req.user.userId);
+    const results = await achievementService.bulkImport(achievements, req.user.id);
 
     res.json({
       success: true,

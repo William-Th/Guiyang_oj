@@ -25,7 +25,7 @@ router.get('/',
     try {
       const { type, is_read, page = 1, page_size = 20 } = req.query;
 
-      const result = await Notification.findByUserId(req.user.userId, {
+      const result = await Notification.findByUserId(req.user.id, {
         type,
         is_read: is_read === 'true' ? true : (is_read === 'false' ? false : undefined),
         page: parseInt(page),
@@ -51,9 +51,9 @@ router.get('/unread-count',
   authMiddleware,
   async (req, res) => {
     try {
-      const notificationCount = await Notification.getUnreadCount(req.user.userId);
+      const notificationCount = await Notification.getUnreadCount(req.user.id);
       const announcementCount = await Announcement.getUnreadCount({
-        id: req.user.userId,
+        id: req.user.id,
         role: req.user.role
       });
 
@@ -89,7 +89,7 @@ router.put('/batch-read',
 
       const count = await Notification.markBatchAsRead(
         req.body.notification_ids,
-        req.user.userId
+        req.user.id
       );
 
       res.json({ success: true, count });
@@ -110,7 +110,7 @@ router.put('/read-all',
   async (req, res) => {
     try {
       const { type } = req.body;
-      const count = await Notification.markAllAsRead(req.user.userId, type);
+      const count = await Notification.markAllAsRead(req.user.id, type);
       res.json({ success: true, count });
     } catch (error) {
       console.error('Mark all as read error:', error);
@@ -136,7 +136,7 @@ router.put('/:id/read',
 
       const notification = await Notification.markAsRead(
         parseInt(req.params.id),
-        req.user.userId
+        req.user.id
       );
 
       if (!notification) {
@@ -168,7 +168,7 @@ router.delete('/batch',
 
       const count = await Notification.deleteBatch(
         req.body.notification_ids,
-        req.user.userId
+        req.user.id
       );
 
       res.json({ success: true, count });
@@ -188,7 +188,7 @@ router.delete('/read',
   authMiddleware,
   async (req, res) => {
     try {
-      const count = await Notification.deleteAllRead(req.user.userId);
+      const count = await Notification.deleteAllRead(req.user.id);
       res.json({ success: true, count });
     } catch (error) {
       console.error('Delete all read error:', error);
@@ -214,7 +214,7 @@ router.delete('/:id',
 
       const deleted = await Notification.delete(
         parseInt(req.params.id),
-        req.user.userId
+        req.user.id
       );
 
       if (!deleted) {
@@ -244,7 +244,7 @@ router.get('/announcements',
       const { page = 1, page_size = 10, include_read = 'true' } = req.query;
 
       const result = await Announcement.findForUser(
-        { id: req.user.userId, role: req.user.role },
+        { id: req.user.id, role: req.user.role },
         {
           page: parseInt(page),
           page_size: parseInt(page_size),
@@ -269,7 +269,7 @@ router.get('/announcements/popup',
   async (req, res) => {
     try {
       const announcements = await Announcement.findPopupForUser({
-        id: req.user.userId,
+        id: req.user.id,
         role: req.user.role
       });
 
@@ -331,7 +331,7 @@ router.put('/announcements/:id/read',
 
       const success = await Announcement.markAsRead(
         parseInt(req.params.id),
-        req.user.userId
+        req.user.id
       );
 
       res.json({ success });
@@ -391,7 +391,7 @@ router.post('/admin/announcements',
 
       const announcement = await Announcement.create({
         ...req.body,
-        created_by: req.user.userId
+        created_by: req.user.id
       });
 
       res.status(201).json({ success: true, announcement });

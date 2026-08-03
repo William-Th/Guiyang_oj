@@ -25,11 +25,29 @@ const PORT = process.env.PORT || 3001;
 app.set('trust proxy', true);
 
 // Validate required environment variables
-const requiredEnvVars = ['JWT_SECRET', 'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+const requiredEnvVars = [
+  'JWT_SECRET',
+  'JWT_REFRESH_SECRET',
+  'SESSION_SECRET',
+  'DB_HOST',
+  'DB_NAME',
+  'DB_USER',
+  'DB_PASSWORD'
+];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   logger.error('Missing required environment variables:', missingEnvVars);
+  process.exit(1);
+}
+
+const signingSecrets = [
+  process.env.JWT_SECRET,
+  process.env.JWT_REFRESH_SECRET,
+  process.env.SESSION_SECRET
+];
+if (signingSecrets.some(secret => secret.length < 32) || new Set(signingSecrets).size !== signingSecrets.length) {
+  logger.error('JWT and session secrets must be distinct and at least 32 characters long');
   process.exit(1);
 }
 

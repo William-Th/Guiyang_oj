@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { UserRole } from '@/types/user';
 
 interface User {
   id: string
   username: string
-  role: 'student' | 'teacher' | 'admin' | 'school_admin' | 'district_admin' | 'municipal_school_admin' | 'base_school_admin' | 'municipal_admin' | 'system_admin' | 'parent'
+  role: UserRole
   realName?: string
   school?: string
   grade?: string

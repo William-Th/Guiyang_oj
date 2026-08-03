@@ -3,6 +3,12 @@ const router = express.Router();
 const TeachingClass = require('../models/TeachingClass');
 const { authMiddleware } = require('../middleware/auth');
 const { query } = require('../database/connection');
+const {
+  getActorScope,
+  canAccessTeachingClass,
+  canManageTeachingClass,
+  canManageActivity
+} = require('../services/teachingAccessControl');
 
 /**
  * Teaching Class Routes
@@ -45,7 +51,9 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
 
-    // For school scope, use user's school if not provided
+    // Bind the class scope to the authenticated actor. Client supplied IDs may
+    // narrow a global administrator's request, but can never widen local scope.
+    const actorScope = await getActorScope(req.user);
     let finalSchoolId = school_id;
     let finalDistrictId = district_id;
 
@@ -71,6 +79,25 @@ router.post('/', authMiddleware, async (req, res) => {
         });
       }
       finalDistrictId = districtResult.district_id;
+    }
+
+    if (actorScope?.level === 'school') {
+      if (scope !== 'school' || (finalSchoolId && Number(finalSchoolId) !== actorScope.schoolId)) {
+        return res.status(403).json({ success: false, error: '教学班范围超出您的学校管理范围' });
+      }
+      finalSchoolId = actorScope.schoolId;
+      finalDistrictId = actorScope.districtId;
+    } else if (actorScope?.level === 'district') {
+      if (scope === 'municipal' || (finalDistrictId && Number(finalDistrictId) !== actorScope.districtId)) {
+        return res.status(403).json({ success: false, error: '教学班范围超出您的区县管理范围' });
+      }
+      finalDistrictId = actorScope.districtId;
+      if (finalSchoolId) {
+        const school = await query('SELECT district_id FROM schools WHERE id = $1', [finalSchoolId]);
+        if (!school.rows[0] || Number(school.rows[0].district_id) !== actorScope.districtId) {
+          return res.status(403).json({ success: false, error: '学校不属于您的管理区县' });
+        }
+      }
     }
 
     const teachingClass = await TeachingClass.create({
@@ -118,11 +145,17 @@ router.get('/', authMiddleware, async (req, res) => {
     if (visibility.teacher_user_id) {
       filters.teacher_user_id = visibility.teacher_user_id;
     }
-    if (visibility.school_id && !filters.school_id) {
+    if (visibility.created_by) {
+      filters.created_by = visibility.created_by;
+    }
+    if (visibility.school_id) {
       filters.school_id = visibility.school_id;
     }
-    if (visibility.district_id && !filters.district_id) {
+    if (visibility.district_id) {
       filters.district_id = visibility.district_id;
+    }
+    if (visibility.deny) {
+      return res.status(403).json({ success: false, error: '用户缺少有效的教学管理范围' });
     }
 
     filters.limit = parseInt(limit);
@@ -166,6 +199,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
         success: false,
         error: '教学班不存在'
       });
+    }
+
+    if (!await canAccessTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权查看此教学班' });
     }
 
     // Get additional data
@@ -213,8 +250,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    // Only creator can update
-    if (teachingClass.created_by !== req.user.id) {
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
       return res.status(403).json({
         success: false,
         error: '只有创建者可以更新此教学班'
@@ -259,8 +295,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    // Only creator can delete
-    if (teachingClass.created_by !== req.user.id) {
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
       return res.status(403).json({
         success: false,
         error: '只有创建者可以删除此教学班'
@@ -300,8 +335,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
       });
     }
 
-    // Only creator can submit
-    if (teachingClass.created_by !== req.user.id) {
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
       return res.status(403).json({
         success: false,
         error: '只有创建者可以提交此教学班进行审批'
@@ -479,6 +513,12 @@ router.get('/:id/students', authMiddleware, async (req, res) => {
     const { id } = req.params;
     const { include_inactive } = req.query;
 
+    const teachingClass = await TeachingClass.findById(id);
+    if (!teachingClass) return res.status(404).json({ success: false, error: '教学班不存在' });
+    if (!await canAccessTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权查看此教学班学生' });
+    }
+
     const students = await TeachingClass.getStudents(id, include_inactive !== 'true');
 
     res.json({
@@ -516,6 +556,10 @@ router.post('/:id/students', authMiddleware, async (req, res) => {
         success: false,
         error: '教学班不存在'
       });
+    }
+
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权管理此教学班学生' });
     }
 
     // Check if teaching class is approved
@@ -574,6 +618,10 @@ router.post('/:id/students/batch', authMiddleware, async (req, res) => {
       });
     }
 
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权管理此教学班学生' });
+    }
+
     if (teachingClass.status !== 'approved') {
       return res.status(400).json({
         success: false,
@@ -620,6 +668,12 @@ router.delete('/:id/students/:studentId', authMiddleware, async (req, res) => {
   try {
     const { id, studentId } = req.params;
 
+    const teachingClass = await TeachingClass.findById(id);
+    if (!teachingClass) return res.status(404).json({ success: false, error: '教学班不存在' });
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权管理此教学班学生' });
+    }
+
     await TeachingClass.removeStudent(id, parseInt(studentId));
 
     res.json({
@@ -644,6 +698,11 @@ router.delete('/:id/students/:studentId', authMiddleware, async (req, res) => {
 router.get('/:id/activities', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const teachingClass = await TeachingClass.findById(id);
+    if (!teachingClass) return res.status(404).json({ success: false, error: '教学班不存在' });
+    if (!await canAccessTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权查看此教学班活动' });
+    }
     const activities = await TeachingClass.getActivities(id);
 
     res.json({
@@ -683,6 +742,16 @@ router.post('/:id/activities', authMiddleware, async (req, res) => {
       });
     }
 
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权管理此教学班活动' });
+    }
+
+    const activityResult = await query('SELECT * FROM activities WHERE id = $1', [activity_id]);
+    if (!activityResult.rows[0]) return res.status(404).json({ success: false, error: '活动不存在' });
+    if (!await canManageActivity(req.user, activityResult.rows[0])) {
+      return res.status(403).json({ success: false, error: '只能关联您有权管理的活动' });
+    }
+
     if (teachingClass.status !== 'approved') {
       return res.status(400).json({
         success: false,
@@ -716,6 +785,12 @@ router.delete('/:id/activities/:activityId', authMiddleware, async (req, res) =>
   try {
     const { id, activityId } = req.params;
 
+    const teachingClass = await TeachingClass.findById(id);
+    if (!teachingClass) return res.status(404).json({ success: false, error: '教学班不存在' });
+    if (!await canManageTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权管理此教学班活动' });
+    }
+
     await TeachingClass.removeActivity(id, parseInt(activityId));
 
     res.json({
@@ -738,6 +813,11 @@ router.delete('/:id/activities/:activityId', authMiddleware, async (req, res) =>
 router.get('/:id/statistics', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const teachingClass = await TeachingClass.findById(id);
+    if (!teachingClass) return res.status(404).json({ success: false, error: '教学班不存在' });
+    if (!await canAccessTeachingClass(req.user, teachingClass)) {
+      return res.status(403).json({ success: false, error: '您无权查看此教学班统计' });
+    }
     const statistics = await TeachingClass.getStatistics(id);
 
     res.json({
@@ -759,78 +839,25 @@ router.get('/:id/statistics', authMiddleware, async (req, res) => {
  * Check if user can create teaching class of given scope
  */
 async function canCreateTeachingClass(user, scope) {
-  // Teachers can only create school level
-  if (user.role === 'teacher') {
-    return scope === 'school';
-  }
-
-  // Admin permissions check
-  if (user.role === 'admin') {
-    const adminInfo = await getAdminInfo(user.id);
-    if (!adminInfo) return false;
-
-    switch (scope) {
-    case 'school':
-      return true; // All admins can create school level
-    case 'district':
-      return ['district', 'municipal'].includes(adminInfo.level);
-    case 'municipal':
-      return adminInfo.level === 'municipal';
-    default:
-      return false;
-    }
-  }
-
-  return false;
+  const actor = await getActorScope(user);
+  if (!actor) return false;
+  if (user.role === 'teacher') return scope === 'school';
+  if (actor.level === 'school') return scope === 'school';
+  if (actor.level === 'district') return scope === 'school' || scope === 'district';
+  return actor.level === 'municipal' && ['school', 'district', 'municipal'].includes(scope);
 }
 
 /**
  * Get admin information for a user
  */
 async function getAdminInfo(userId) {
-  // Check teacher_permissions table for admin permissions
-  const sql = `
-    SELECT
-      tp.scope_level,
-      tp.school_id,
-      tp.district_id,
-      CASE
-        WHEN tp.scope_level = 'municipal' THEN 'municipal'
-        WHEN tp.scope_level = 'district' THEN 'district'
-        WHEN tp.scope_level = 'school' THEN 'school'
-        ELSE NULL
-      END AS level
-    FROM teacher_permissions tp
-    WHERE tp.user_id = $1
-      AND tp.is_active = TRUE
-      AND (tp.expires_at IS NULL OR tp.expires_at > CURRENT_TIMESTAMP)
-    ORDER BY
-      CASE tp.scope_level
-        WHEN 'municipal' THEN 1
-        WHEN 'district' THEN 2
-        WHEN 'school' THEN 3
-        ELSE 4
-      END
-    LIMIT 1
-  `;
-
-  const result = await query(sql, [userId]);
-
-  if (result.rows.length > 0) {
-    return {
-      level: result.rows[0].level,
-      school_id: result.rows[0].school_id,
-      district_id: result.rows[0].district_id
-    };
-  }
-
-  // Check users table for system_admin
   const userResult = await query('SELECT role FROM users WHERE id = $1', [userId]);
-  if (userResult.rows.length > 0 && userResult.rows[0].role === 'admin') {
-    return { level: 'municipal', school_id: null, district_id: null };
-  }
-
-  return null;
+  const role = userResult.rows[0]?.role;
+  if (!['system_admin', 'municipal_admin', 'district_admin', 'school_admin',
+    'base_school_admin', 'municipal_school_admin'].includes(role)) return null;
+  const actor = await getActorScope({ id: userId, role });
+  if (!actor) return null;
+  return { level: actor.level, school_id: actor.schoolId || null, district_id: actor.districtId || null };
 }
 
 /**
@@ -848,19 +875,20 @@ async function canApproveTeachingClass(adminInfo, teachingClass) {
 
   // School admin can only approve their school's classes
   if (adminInfo.level === 'school' && adminInfo.school_id) {
-    return teachingClass.school_id === adminInfo.school_id;
+    return Number(teachingClass.school_id) === Number(adminInfo.school_id);
   }
 
   // District admin can only approve their district's classes
   if (adminInfo.level === 'district' && adminInfo.district_id) {
-    if (teachingClass.district_id === adminInfo.district_id) return true;
+    if (Number(teachingClass.district_id) === Number(adminInfo.district_id)) return true;
     // Check if school belongs to district
     if (teachingClass.school_id) {
       const schoolResult = await query(
         'SELECT district_id FROM schools WHERE id = $1',
         [teachingClass.school_id]
       );
-      return schoolResult.rows.length > 0 && schoolResult.rows[0].district_id === adminInfo.district_id;
+      return schoolResult.rows.length > 0 &&
+        Number(schoolResult.rows[0].district_id) === Number(adminInfo.district_id);
     }
   }
 
@@ -876,26 +904,15 @@ async function canApproveTeachingClass(adminInfo, teachingClass) {
  * Get visible teaching classes based on user role
  */
 async function getVisibleTeachingClasses(user) {
-  if (user.role === 'admin') {
-    const adminInfo = await getAdminInfo(user.id);
-    if (adminInfo) {
-      if (adminInfo.level === 'municipal') {
-        return {}; // Can see all
-      }
-      if (adminInfo.level === 'district') {
-        return { district_id: adminInfo.district_id };
-      }
-      if (adminInfo.level === 'school') {
-        return { school_id: adminInfo.school_id };
-      }
-    }
-  }
-
   if (user.role === 'teacher') {
     return { teacher_user_id: user.id };
   }
-
-  return { created_by: user.id };
+  const actor = await getActorScope(user);
+  if (!actor) return { deny: true };
+  if (actor.level === 'municipal') return {};
+  if (actor.level === 'district') return { district_id: actor.districtId };
+  if (actor.level === 'school' && user.role !== 'student') return { school_id: actor.schoolId };
+  return { deny: true };
 }
 
 /**

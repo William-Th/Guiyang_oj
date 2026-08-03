@@ -8,7 +8,15 @@ import { Timestamps } from './common';
 /**
  * User role types
  */
-export type UserRole = 'student' | 'teacher' | 'admin' | 'super_admin' | 'parent';
+export type AdminRole =
+  | 'school_admin'
+  | 'district_admin'
+  | 'municipal_school_admin'
+  | 'base_school_admin'
+  | 'municipal_admin'
+  | 'system_admin';
+
+export type UserRole = 'student' | 'teacher' | 'parent' | AdminRole;
 
 /**
  * Permission scope for hierarchical permissions
@@ -69,7 +77,7 @@ export interface Teacher extends User {
  * Admin-specific information
  */
 export interface Admin extends User {
-  role: 'admin' | 'super_admin';
+  role: AdminRole;
   admin_id?: number;
   permission_scope?: PermissionScope;
   scope_value?: string;  // e.g., district name, school ID

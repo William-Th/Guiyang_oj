@@ -2,41 +2,33 @@ const express = require('express');
 const router = express.Router();
 const TeacherPermission = require('../models/TeacherPermission');
 const { authMiddleware } = require('../middleware/auth');
+const {
+  getAdminScope,
+  getUserResource,
+  canManageUser,
+  scopeAllowsAssignment
+} = require('../services/adminAuthorization');
 
 // 仅管理员可以访问权限管理API
 const adminOnly = async (req, res, next) => {
-  const User = require('../models/User');
-
-  // 系统管理员和市级总管理员有所有权限
-  if (req.user.role === 'system_admin' || req.user.role === 'municipal_admin') {
-    req.canManageAll = true;
-    return next();
-  }
-
-  // 区级管理员和校级管理员只能管理自己范围内的权限
-  if (req.user.role === 'district_admin' || req.user.role === 'school_admin' ||
-      req.user.role === 'base_school_admin' || req.user.role === 'municipal_school_admin') {
-    const permissions = await User.getAdminPermissions(req.user.id);
-    if (!permissions) {
-      return res.status(403).json({
-        success: false,
-        error: '未找到管理权限'
-      });
-    }
-    req.managementScope = {
-      role: req.user.role,
-      schoolId: permissions.school_id,
-      districtId: permissions.district_id
-    };
-    req.canManageAll = false;
-    return next();
-  }
-
-  return res.status(403).json({
-    success: false,
-    error: '只有管理员可以管理权限'
-  });
+  const scope = await getAdminScope(req.user);
+  if (!scope) return res.status(403).json({ success: false, error: '未找到有效的管理权限' });
+  req.adminScope = scope;
+  req.canManageAll = scope.type === 'global';
+  req.managementScope = scope.type === 'global' ? null : {
+    role: req.user.role,
+    schoolId: scope.type === 'school' ? scope.id : null,
+    districtId: scope.type === 'district' ? scope.id : null
+  };
+  return next();
 };
+
+async function canAccessTargetUser(req, userId, allowSelf = false) {
+  if (allowSelf && Number(req.user.id) === Number(userId)) return true;
+  const target = await getUserResource(userId);
+  if (!target) return false;
+  return canManageUser(req.user, target);
+}
 
 // 获取所有权限列表
 router.get('/', authMiddleware, adminOnly, async (req, res) => {
@@ -69,10 +61,7 @@ router.get('/user/:userId', authMiddleware, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // 只有管理员或用户自己可以查看权限
-    if (req.user.role !== 'system_admin' &&
-        req.user.role !== 'municipal_admin' &&
-        req.user.id !== parseInt(userId)) {
+    if (!await canAccessTargetUser(req, userId, true)) {
       return res.status(403).json({
         success: false,
         error: '您没有权限查看该用户的权限'
@@ -106,6 +95,17 @@ router.post('/grant', authMiddleware, adminOnly, async (req, res) => {
         success: false,
         error: 'user_id, permission_type, and subjects are required'
       });
+    }
+
+    const target = await getUserResource(user_id);
+    if (!target || target.role !== 'teacher') {
+      return res.status(400).json({ success: false, error: '目标用户不是教师或不存在' });
+    }
+    if (!await canManageUser(req.user, target)) {
+      return res.status(403).json({ success: false, error: '目标教师超出当前管理员的管理范围' });
+    }
+    if ((school_id || district_id) && !await scopeAllowsAssignment(req.user, { schoolId: school_id, districtId: district_id })) {
+      return res.status(403).json({ success: false, error: '指定权限范围超出当前管理员的管理范围' });
     }
 
     // 验证权限类型
@@ -238,6 +238,10 @@ router.post('/revoke', authMiddleware, adminOnly, async (req, res) => {
       });
     }
 
+    if (!await canAccessTargetUser(req, user_id)) {
+      return res.status(403).json({ success: false, error: '目标教师超出当前管理员的管理范围' });
+    }
+
     const permission = await TeacherPermission.revoke(user_id, permission_type);
 
     if (!permission) {
@@ -264,6 +268,10 @@ router.post('/check', authMiddleware, async (req, res) => {
         success: false,
         error: 'user_id and permission_type are required'
       });
+    }
+
+    if (!await canAccessTargetUser(req, user_id, true)) {
+      return res.status(403).json({ success: false, error: '您没有权限检查该用户的权限' });
     }
 
     const hasPermission = await TeacherPermission.hasPermission(
@@ -356,6 +364,10 @@ router.delete('/:permissionId', authMiddleware, adminOnly, async (req, res) => {
         success: false,
         error: '权限不存在'
       });
+    }
+
+    if (!await canAccessTargetUser(req, permission.user_id)) {
+      return res.status(403).json({ success: false, error: '该权限记录超出当前管理员的管理范围' });
     }
 
     // 检查权限是否已失效
@@ -472,6 +484,14 @@ router.post('/batch-delete', authMiddleware, adminOnly, async (req, res) => {
           results.failed.push({
             id: permissionId,
             reason: 'Permission not found'
+          });
+          continue;
+        }
+
+        if (!await canAccessTargetUser(req, permission.user_id)) {
+          results.failed.push({
+            id: permissionId,
+            reason: 'Permission is outside the administrator scope'
           });
           continue;
         }

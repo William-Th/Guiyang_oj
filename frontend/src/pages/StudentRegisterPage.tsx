@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Select, DatePicker, message, Space, Typography, Alert, ConfigProvider } from 'antd';
+import { Form, Input, Button, Card, Select, DatePicker, message, Space, Typography, Alert, ConfigProvider, Modal } from 'antd';
 import { UserOutlined, PhoneOutlined, IdcardOutlined, BankOutlined, BookOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
@@ -97,13 +97,21 @@ const StudentRegisterPage: React.FC = () => {
         message.success(response.data.message || '注册申请提交成功');
 
         // 显示申请ID和预计审核时间
-        const { id, estimatedReviewTime } = response.data.data;
-        message.info(`申请ID: ${id}，预计${estimatedReviewTime}完成审核`, 5);
-
-        // 3秒后跳转到状态查询页面
-        setTimeout(() => {
-          navigate(`/register-status/${values.phone}`);
-        }, 3000);
+        const { id, estimatedReviewTime, inquiryCode } = response.data.data;
+        sessionStorage.setItem(`registration-inquiry:${values.phone}`, inquiryCode);
+        Modal.success({
+          title: '请保存注册查询码',
+          width: 520,
+          content: (
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Text>申请ID：{id}，预计{estimatedReviewTime}完成审核。</Text>
+              <Text>查询码仅在本次提交后显示，请妥善保存：</Text>
+              <Text code copyable>{inquiryCode}</Text>
+            </Space>
+          ),
+          okText: '已保存，查看状态',
+          onOk: () => navigate(`/register-status/${values.phone}`)
+        });
       } else {
         message.error(response.data.message || '提交失败');
       }
@@ -147,7 +155,7 @@ const StudentRegisterPage: React.FC = () => {
               <li>请确保填写的信息真实准确</li>
               <li>手机号将用于接收审核通知和登录账号</li>
               <li>审核通过后，初始密码为：身份证后4位 + 出生年月日（如：12342015年05月15日）</li>
-              <li>提交后可使用手机号查询审核状态</li>
+              <li>提交后需使用手机号和随机查询码查询审核状态</li>
             </ul>
           }
           type="info"

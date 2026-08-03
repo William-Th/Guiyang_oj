@@ -1,7 +1,9 @@
 /**
  * Activity Permission Middleware
  * Handles role-based permissions for activity creation and management
- */
+*/
+
+const { canManageActivity } = require('../services/teachingAccessControl');
 
 /**
  * Role hierarchy for activity permissions:
@@ -68,19 +70,12 @@ function canCreateActivity(user, activityType) {
  * @param {Object} activity - Activity object with created_by field
  * @returns {boolean} Whether the user can edit the activity
  */
-function canEditActivity(user, activity) {
+async function canEditActivity(user, activity) {
   if (!user || !activity) {
     return false;
   }
 
-  // Creator can always edit their own activities
-  if (activity.created_by === user.id) {
-    return true;
-  }
-
-  // High-level admins can edit any activity
-  const adminRoles = ['system_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin'];
-  return adminRoles.includes(user.role);
+  return canManageActivity(user, activity);
 }
 
 /**
@@ -89,7 +84,7 @@ function canEditActivity(user, activity) {
  * @param {Object} activity - Activity object
  * @returns {boolean} Whether the user can delete the activity
  */
-function canDeleteActivity(user, activity) {
+async function canDeleteActivity(user, activity) {
   if (!user || !activity) {
     return false;
   }
@@ -99,14 +94,7 @@ function canDeleteActivity(user, activity) {
     return false;
   }
 
-  // Creator can delete their own draft activities
-  if (activity.created_by === user.id && activity.status === 'draft') {
-    return true;
-  }
-
-  // High-level admins can delete any draft activity
-  const adminRoles = ['system_admin', 'district_admin', 'base_school_admin', 'municipal_school_admin', 'municipal_admin'];
-  return adminRoles.includes(user.role) && activity.status === 'draft';
+  return activity.status === 'draft' && canManageActivity(user, activity);
 }
 
 /**
@@ -287,7 +275,7 @@ function validateAbilityLevel(req, res, next) {
 /**
  * Middleware to check edit permission for an activity
  */
-function requireEditPermission(req, res, next) {
+async function requireEditPermission(req, res, next) {
   const activity = req.activity; // Should be set by previous middleware
 
   if (!activity) {
@@ -297,7 +285,7 @@ function requireEditPermission(req, res, next) {
     });
   }
 
-  if (!canEditActivity(req.user, activity)) {
+  if (!await canEditActivity(req.user, activity)) {
     return res.status(403).json({
       success: false,
       message: '您没有权限编辑此活动',
@@ -311,7 +299,7 @@ function requireEditPermission(req, res, next) {
 /**
  * Middleware to check delete permission for an activity
  */
-function requireDeletePermission(req, res, next) {
+async function requireDeletePermission(req, res, next) {
   const activity = req.activity; // Should be set by previous middleware
 
   if (!activity) {
@@ -321,7 +309,7 @@ function requireDeletePermission(req, res, next) {
     });
   }
 
-  if (!canDeleteActivity(req.user, activity)) {
+  if (!await canDeleteActivity(req.user, activity)) {
     if (['published', 'ongoing'].includes(activity.status)) {
       return res.status(403).json({
         success: false,
