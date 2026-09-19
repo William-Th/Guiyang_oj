@@ -325,7 +325,14 @@ class Activity {
       WHERE a.status IN ('published', 'ongoing')
         AND (sa.id IS NULL OR sa.status = 'registered' OR (a.allow_retake = true AND sa.attempt_number < a.max_attempts))
         ${additionalWhere}
-      ORDER BY a.start_time ASC
+      ORDER BY
+        CASE
+          WHEN (a.start_time IS NULL OR a.start_time <= NOW())
+               AND (a.end_time IS NULL OR a.end_time >= NOW()) THEN 0
+          WHEN a.start_time > NOW() THEN 1
+          ELSE 2
+        END,
+        a.created_at DESC
     `, params);
 
     return result.rows;
