@@ -354,10 +354,11 @@ const ActivityFormPage: React.FC = () => {
           <Form.Item
             label="能力等级"
             name="abilityLevel"
+            rules={[{ required: true, message: '请选择能力等级' }]}
             help="L1-L7，能力等级根据所选科目显示相应描述"
           >
             <Select
-              placeholder={selectedSubject ? '请选择能力等级（可选）' : '请先选择科目'}
+              placeholder={selectedSubject ? '请选择能力等级' : '请先选择科目'}
               id="abilityLevel"
               allowClear
               virtual={false}

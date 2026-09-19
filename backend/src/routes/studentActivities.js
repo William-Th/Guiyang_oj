@@ -451,6 +451,21 @@ router.post('/:id/start',
         });
       }
 
+      // 时间闸门：未开始/已结束的活动不允许新的作答（进行中的答题不受影响，见上方 continue 分支）
+      const now = Date.now();
+      if (activity.start_time && new Date(activity.start_time).getTime() > now) {
+        return res.status(400).json({
+          success: false,
+          message: '活动尚未开始'
+        });
+      }
+      if (activity.end_time && new Date(activity.end_time).getTime() < now) {
+        return res.status(400).json({
+          success: false,
+          message: '活动已结束'
+        });
+      }
+
       // Check max attempts
       const attemptNumber = existingResult.rows.length > 0 ? existingResult.rows[0].attempt_number + 1 : 1;
 

@@ -334,16 +334,19 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // 验证点（按产品现状）：后端列表按 start_time 过滤，未开始的活动不出现在学生列表中
+    // 验证点：点击开始 → 后端时间闸门拒绝（活动尚未开始）
     const rowsBeforeStart = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle });
-    await page.waitForTimeout(1000);
-    const visibleCount = await rowsBeforeStart.count();
-    if (visibleCount > 0) {
+    if (await rowsBeforeStart.count() > 0) {
       const startButton = rowsBeforeStart.first().locator('button').filter({ hasText: /开始/ });
-      const startBtnCount = await startButton.count();
-      console.log(`[PTL006] 列表中出现未开始活动（${visibleCount} 行），开始按钮数量: ${startBtnCount}`);
+      await startButton.click();
+      await page.waitForURL(/\/student\/assessment\//, { timeout: 10000, waitUntil: 'domcontentloaded' });
+      const gateShown = await page.evaluate(() => document.body.textContent.includes('活动尚未开始')).catch(() => false);
+      // 后端时间闸门 400 后前端立即返回列表，提示为瞬时；软校验记录即可
+      expect(gateShown || !page.url().includes('/student/assessment/')).toBeTruthy();
+      console.log(gateShown ? '✅ PTL006: 时间闸门提示已显示' : 'ℹ️  PTL006: 已离开答题页（访问控制生效）');
     } else {
-      console.log('✅ PTL006: 未开始活动未出现在学生列表（按 start_time 过滤）');
+      // 列表按 start_time 过滤未显示该活动，同样视为隔离生效
+      console.log('✅ PTL006: 未开始活动未出现在学生列表');
     }
 
     console.log('✅ PTL006: 活动未开始时的访问控制验证完成');
