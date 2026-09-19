@@ -31,7 +31,7 @@ test.describe('Smoke Tests - 冒烟测试', () => {
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // 验证登录成功 - 跳转到首页
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL('/');
 
     // 验证首页基本元素显示
@@ -54,7 +54,7 @@ test.describe('Smoke Tests - 冒烟测试', () => {
     await page.locator(SELECTORS.LOGIN.SUBMIT_BUTTON).last().click();
 
     // 验证登录成功
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL('/');
 
     // 验证首页基本元素显示
@@ -92,7 +92,7 @@ test.describe('Smoke Tests - 冒烟测试', () => {
     await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, TEST_CONFIG.STUDENT.password);
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证主要布局
     await expect(page.locator('.ant-layout')).toBeVisible();
@@ -112,7 +112,7 @@ test.describe('Smoke Tests - 冒烟测试', () => {
     await page.locator(SELECTORS.LOGIN.USERNAME_INPUT).last().fill(TEST_CONFIG.TEACHER.username);
     await page.locator(SELECTORS.LOGIN.PASSWORD_INPUT).last().fill(TEST_CONFIG.TEACHER.password);
     await page.locator(SELECTORS.LOGIN.SUBMIT_BUTTON).last().click();
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证主要布局
     await expect(page.locator('.ant-layout')).toBeVisible();
@@ -128,7 +128,7 @@ test.describe('Smoke Tests - 冒烟测试', () => {
     await page.locator(SELECTORS.LOGIN.USERNAME_INPUT).last().fill(TEST_CONFIG.ADMIN.username);
     await page.locator(SELECTORS.LOGIN.PASSWORD_INPUT).last().fill(TEST_CONFIG.ADMIN.password);
     await page.locator(SELECTORS.LOGIN.SUBMIT_BUTTON).last().click();
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证主要布局
     await expect(page.locator('.ant-layout')).toBeVisible();
@@ -147,7 +147,7 @@ test.describe('Smoke Tests - Activity 活动管理冒烟测试', () => {
     await page.locator(SELECTORS.LOGIN.USERNAME_INPUT).last().fill(TEST_CONFIG.TEACHER.username);
     await page.locator(SELECTORS.LOGIN.PASSWORD_INPUT).last().fill(TEST_CONFIG.TEACHER.password);
     await page.locator(SELECTORS.LOGIN.SUBMIT_BUTTON).last().click();
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 查找并点击活动管理菜单
     const activityMenu = page.locator('a:has-text("活动管理"), .ant-menu-item:has-text("活动管理")').first();
@@ -155,7 +155,7 @@ test.describe('Smoke Tests - Activity 活动管理冒烟测试', () => {
     await activityMenu.click();
 
     // 验证成功跳转到活动管理页面
-    await page.waitForURL(/\/teacher\/activities/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/teacher\/activities/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证页面基本元素
     await expect(page.locator('.ant-layout')).toBeVisible();

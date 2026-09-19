@@ -28,7 +28,7 @@ async function loginAsStudent(page: Page) {
   await page.click('button[type="submit"]');
 
   // Wait for successful login and redirect
-  await page.waitForURL('/', { timeout: 15000 });
+  await page.waitForURL('/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 }
 
 /**
@@ -57,7 +57,7 @@ test.describe('Achievement UI Tests', () => {
     await navigateToAchievementPage(page);
 
     // 验证页面标题
-    await expect(page.locator('text=/我的成就|成就/')).toBeVisible();
+    await expect(page.locator('text=/我的成就|成就/').first()).toBeVisible();
 
     // 验证统计卡片存在（使用更宽松的匹配）
     const statsCards = page.locator('.ant-statistic');
@@ -73,7 +73,7 @@ test.describe('Achievement UI Tests', () => {
     } else {
       console.log('⚠️  ACH101: No statistics cards found, checking page structure...');
       // 验证至少页面已加载
-      await expect(page.locator('text=/我的成就|成就/')).toBeVisible();
+      await expect(page.locator('text=/我的成就|成就/').first()).toBeVisible();
       console.log('✅ ACH101: Page loaded but statistics may not be populated yet');
     }
   });
@@ -103,8 +103,8 @@ test.describe('Achievement UI Tests', () => {
 
     // 验证标签页存在
     await expect(page.locator('text=/全部成就/')).toBeVisible();
-    await expect(page.locator('text=/已获得/')).toBeVisible();
-    await expect(page.locator('text=/未获得/')).toBeVisible();
+    await expect(page.locator('text=/已获得/').first()).toBeVisible();
+    await expect(page.locator('text=/未获得/').first()).toBeVisible();
 
     // 验证成就卡片存在（至少有一个成就）
     const achievementCards = page.locator('.ant-card').filter({
@@ -133,9 +133,7 @@ test.describe('Achievement UI Tests', () => {
     await page.waitForTimeout(500);
 
     // 查找未获得的成就卡片
-    const lockedCards = page.locator('.achievement-card.locked').or(
-      page.locator('.ant-card').filter({ has: page.locator('.ant-progress') })
-    );
+    const lockedCards = page.locator('.achievement-card.locked:visible');
 
     const lockedCount = await lockedCards.count();
     console.log(`📊 Found ${lockedCount} locked achievements`);
@@ -176,9 +174,7 @@ test.describe('Achievement UI Tests', () => {
     await navigateToAchievementPage(page);
 
     // 等待成就卡片加载
-    const achievementCard = page.locator('.achievement-card').or(
-      page.locator('.ant-card').filter({ has: page.locator('text=/积分|奖励/') })
-    ).first();
+    const achievementCard = page.locator('.achievement-card:visible').first();
 
     const hasCard = await achievementCard.count() > 0;
     if (!hasCard) {
@@ -196,9 +192,9 @@ test.describe('Achievement UI Tests', () => {
     const modal = page.locator('.ant-modal').filter({ hasText: /成就详情|详情/ });
     await expect(modal).toBeVisible({ timeout: 5000 });
 
-    // 验证模态框内容
-    await expect(modal.locator('text=/成就详情|详情/')).toBeVisible();
-    await expect(modal.locator('text=/奖励|积分/')).toBeVisible();
+    // 验证模态框内容（奖励/积分多次出现，取第一个）
+    await expect(modal.locator('text=/成就详情|详情/').first()).toBeVisible();
+    await expect(modal.locator('text=/奖励|积分/').first()).toBeVisible();
 
     // 关闭模态框
     const closeButton = modal.locator('.ant-modal-close').or(
@@ -225,9 +221,7 @@ test.describe('Achievement UI Tests', () => {
     await page.waitForTimeout(500);
 
     // 查找有进度的成就卡片
-    const lockedCard = page.locator('.achievement-card.locked').or(
-      page.locator('.ant-card').filter({ has: page.locator('.ant-progress') })
-    ).first();
+    const lockedCard = page.locator('.achievement-card.locked:visible').first();
 
     const hasLockedCard = await lockedCard.count() > 0;
     if (!hasLockedCard) {

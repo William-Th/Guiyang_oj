@@ -4,13 +4,13 @@ import { test, expect } from '@playwright/test';
  * 组卷功能回归测试
  * 测试ID: PAP101 - PAP110
  *
- * 完整测试组卷功能的各个方�?
- * - 组卷页面访问和统计信�?
+ * 完整测试组卷功能的各个方面:
+ * - 组卷页面访问和统计信息
  * - 题目筛选和搜索
- * - 添加题目（单个和批量�?
+ * - 添加题目（单个和批量）
  * - 题目预览
- * - 编辑题目属�?
- * - 移除题目（单个和批量删除�?
+ * - 编辑题目属性
+ * - 移除题目（单个和批量删除）
  * - 验证试卷
  * - 清空试卷
  */
@@ -30,39 +30,39 @@ async function loginAsTeacher(page: any) {
   // Use .last() to click the teacher tab's submit button
   await page.locator('button[type="submit"]').last().click();
 
-  await page.waitForURL('/', { timeout: 30000 });
+  await page.waitForURL('/', { timeout: 30000, waitUntil: 'domcontentloaded' });
 }
 
 // 导航到现有活动的组卷页面 - 使用与冒烟测试相同的策略
-// 优先查找草稿状态的活动以支持编辑操�?
+// 优先查找草稿状态的活动以支持编辑操作
 async function navigateToPaperGeneration(page: any, requireDraft = false) {
   // 导航到活动管理页面 - 菜单项是menuitem角色
   const activityMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await expect(activityMenu).toBeVisible({ timeout: 5000 });
   await activityMenu.click();
-  await page.waitForURL(/\/teacher\/activities/);
+  await page.waitForURL(/\/teacher\/activities/, { waitUntil: 'domcontentloaded' });
 
   // 等待活动列表加载
   await page.waitForLoadState('networkidle');
 
-  // 查找活动�?
+  // 查找活动行
   const activityRows = page.locator('.ant-table-tbody tr[data-row-key]');
   await expect(activityRows.first()).toBeAttached({ timeout: 5000 });
 
   let targetRow;
   if (requireDraft) {
-    // 查找草稿状态的活动（包�?草稿"标签�?
+    // 查找草稿状态的活动（包含"草稿"标签）
     const draftRows = activityRows.filter({ hasText: '草稿' });
     const draftCount = await draftRows.count();
 
     if (draftCount > 0) {
       targetRow = draftRows.first();
     } else {
-      // 如果没有草稿，抛出错误，因为测试需要草稿才能运�?
+      // 如果没有草稿，抛出错误，因为测试需要草稿才能运行
       throw new Error('没有找到草稿状态的活动，无法执行需要编辑权限的测试');
     }
   } else {
-    // 不要求草稿，使用第一个活�?
+    // 不要求草稿，使用第一个活动
     targetRow = activityRows.first();
   }
 
@@ -70,7 +70,7 @@ async function navigateToPaperGeneration(page: any, requireDraft = false) {
   await viewButton.click();
 
   // 等待详情页URL变化
-  await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000 });
+  await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // 等待并点击组卷按钮
@@ -79,7 +79,7 @@ async function navigateToPaperGeneration(page: any, requireDraft = false) {
   await paperButton.click();
 
   // 验证进入组卷页面
-  await page.waitForURL(/\/activities\/\d+\/paper/);
+  await page.waitForURL(/\/activities\/\d+\/paper/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 }
 
@@ -107,7 +107,7 @@ test.describe('组卷功能 - 回归测试', () => {
     await page.locator('h3:has-text("可用题目")').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
 
-    // 选择题型筛�?(使用索引选择第一个Select - 题型筛�?
+    // 选择题型筛选 (使用索引选择第一个Select - 题型筛选)
     const filterSection = page.locator('h3:has-text("可用题目")').locator('..').locator('..');
     const typeSelect = filterSection.locator('.ant-select').first();
     await typeSelect.click();
@@ -119,8 +119,8 @@ test.describe('组卷功能 - 回归测试', () => {
     await searchButton.click();
     await page.waitForLoadState('networkidle');
 
-    // 验证筛选执行完成（等待网络请求完成即可，不验证具体结果�?
-    // 因为筛选可能返回空结果或其他题型，取决于数据库状�?
+    // 验证筛选执行完成（等待网络请求完成即可，不验证具体结果）
+    // 因为筛选可能返回空结果或其他题型，取决于数据库状态
     const availableTable = page.locator('.ant-table-tbody').nth(1);
     await expect(availableTable).toBeAttached();
 
@@ -140,14 +140,14 @@ test.describe('组卷功能 - 回归测试', () => {
     const count = await availableRows.count();
 
     if (count > 0) {
-      // 点击第一道题的添加按�?
+      // 点击第一道题的添加按钮
       const addButton = availableRows.first().locator('button:has-text("添加")');
       await addButton.evaluate((btn: HTMLElement) => btn.click());
 
       // 等待弹窗
       await expect(page.locator('.ant-modal:has-text("添加题目")')).toBeVisible();
 
-      // 填写分�?
+      // 填写分值
       const scoreInput = page.locator('.ant-modal input[type="number"]');
       await scoreInput.fill('10');
 
@@ -158,7 +158,7 @@ test.describe('组卷功能 - 回归测试', () => {
       // 等待成功提示
       await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 3000 });
 
-      // 验证题目已添加到已选题�?
+      // 验证题目已添加到已选题目
       await page.waitForLoadState('networkidle');
       const selectedTable = page.locator('.ant-table-tbody').first();
       const selectedRows = selectedTable.locator('tr[data-row-key]');
@@ -187,7 +187,7 @@ test.describe('组卷功能 - 回归测试', () => {
       // 等待成功提示
       await expect(page.locator('.ant-message')).toBeVisible({ timeout: 3000 });
 
-      // 验证题目已添�?
+      // 验证题目已添加
       await page.waitForLoadState('networkidle');
       const selectedTable = page.locator('.ant-table-tbody').first();
       const selectedRows = selectedTable.locator('tr[data-row-key]');
@@ -199,7 +199,7 @@ test.describe('组卷功能 - 回归测试', () => {
     // 导航到现有活动的组卷页面
     await navigateToPaperGeneration(page);
 
-    // 点击第一道题的预览按�?
+    // 点击第一道题的预览按钮
     const availableTable = page.locator('.ant-table-tbody').nth(1);
     const previewButton = availableTable.locator('button:has-text("预览")').first();
 
@@ -330,7 +330,7 @@ test.describe('组卷功能 - 回归测试', () => {
     const validateButton = page.locator('button:has-text("验证试卷")');
     await validateButton.click();
 
-    // 验证模态框显示（空试卷应该验证失败�?
+    // 验证模态框显示（空试卷应该验证失败）
     await expect(page.locator('.ant-modal')).toBeVisible({ timeout: 3000 });
   });
 
@@ -338,7 +338,7 @@ test.describe('组卷功能 - 回归测试', () => {
     // 导航到现有活动的组卷页面
     await navigateToPaperGeneration(page);
 
-    // 先添加几道题�?
+    // 先添加几道题目
     const availableTable = page.locator('.ant-table-tbody').nth(1);
     const checkboxes = availableTable.locator('input[type="checkbox"]');
     const count = await checkboxes.count();
@@ -362,7 +362,7 @@ test.describe('组卷功能 - 回归测试', () => {
       // 等待成功提示
       await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 3000 });
 
-      // 验证试卷已清�?
+      // 验证试卷已清空
       await page.waitForLoadState('networkidle');
       const selectedTable = page.locator('.ant-table-tbody').first();
       const selectedCount = await selectedTable.locator('tr[data-row-key]').count();
@@ -371,16 +371,16 @@ test.describe('组卷功能 - 回归测试', () => {
   });
 
   test('PAP110 - 批量删除题目功能', async ({ page }) => {
-    // 导航到现有活动的组卷页面（需要草稿状态以支持删除功能�?
+    // 导航到现有活动的组卷页面（需要草稿状态以支持删除功能）
     await navigateToPaperGeneration(page, true);
 
-    // 先添加至�?道题目用于测试批量删�?
+    // 先添加至少3道题目用于测试批量删除
     const availableTable = page.locator('.ant-table-tbody').nth(1);
     const checkboxes = availableTable.locator('input[type="checkbox"]');
     const count = await checkboxes.count();
 
     if (count >= 3) {
-      // 批量添加3道题�?
+      // 批量添加3道题目
       await checkboxes.nth(0).check();
       await checkboxes.nth(1).check();
       await checkboxes.nth(2).check();
@@ -390,7 +390,7 @@ test.describe('组卷功能 - 回归测试', () => {
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(1000); // 等待题目添加完成
 
-      // 等待已选题目表格加�?
+      // 等待已选题目表格加载
       const selectedTable = page.locator('.ant-table-tbody').first();
       await expect(selectedTable.locator('tr[data-row-key]').first()).toBeAttached({ timeout: 5000 });
       await page.waitForTimeout(500);
@@ -399,13 +399,13 @@ test.describe('组卷功能 - 回归测试', () => {
       const initialCount = await selectedTable.locator('tr[data-row-key]').count();
       expect(initialCount).toBeGreaterThanOrEqual(3);
 
-      // 在已选题目表格中勾选前2道题�?
+      // 在已选题目表格中勾选前2道题目
       const selectedCheckboxes = selectedTable.locator('input[type="checkbox"]');
       await selectedCheckboxes.nth(0).check();
       await selectedCheckboxes.nth(1).check();
       await page.waitForTimeout(300);
 
-      // 点击批量删除按钮 - 验证按钮显示选中的题目数�?
+      // 点击批量删除按钮 - 验证按钮显示选中的题目数量
       const batchDeleteButton = page.locator('button').filter({ hasText: /批\s*量\s*删\s*除/ });
       await expect(batchDeleteButton).toBeVisible({ timeout: 5000 });
 
@@ -425,7 +425,7 @@ test.describe('组卷功能 - 回归测试', () => {
       // 等待成功提示
       await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 3000 });
 
-      // 验证题目已删�?- 等待表格更新
+      // 验证题目已删除 - 等待表格更新
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(500);
       const newCount = await selectedTable.locator('tr[data-row-key]').count();

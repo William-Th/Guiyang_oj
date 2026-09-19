@@ -31,7 +31,7 @@ test.describe('题库管理页面加载测试', () => {
     await activeTabPane.locator('button[type="submit"]').click();
 
     // 等待登录成功 - 教师登录后跳转到首页
-    await page.waitForURL('/', { timeout: 15000 });
+    await page.waitForURL('/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 
     // 2. 通过点击导航到题库管理页面（菜单项是menuitem角色）
     const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
@@ -39,7 +39,7 @@ test.describe('题库管理页面加载测试', () => {
     await questionBankLink.click();
 
     // 等待URL变化到题库管理页面
-    await page.waitForURL(/\/teacher\/question-bank/);
+    await page.waitForURL(/\/teacher\/question-bank/, { waitUntil: 'domcontentloaded' });
 
     // 3. 验证页面加载成功 - 应该看到筛选区域
     await expect(page.locator('text=筛选：')).toBeAttached({ timeout: 5000 });
@@ -121,14 +121,14 @@ test.describe('题库管理页面加载测试', () => {
     await activeTabPane.locator('button[type="submit"]').click();
 
     // 等待登录成功
-    await page.waitForURL('/', { timeout: 15000 });
+    await page.waitForURL('/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 
     // 2. 通过点击导航到题库管理页面（菜单项是menuitem角色）
     const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
     await expect(questionBankLink).toBeVisible({ timeout: 5000 });
     await questionBankLink.click();
 
-    await page.waitForURL(/\/teacher\/question-bank/);
+    await page.waitForURL(/\/teacher\/question-bank/, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('text=筛选：')).toBeAttached({ timeout: 5000 });
 
     // 3. 刷新页面

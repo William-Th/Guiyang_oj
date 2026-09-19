@@ -22,7 +22,7 @@ async function loginAsTeacher(page: any) {
   // Use .last() to click the teacher tab's submit button
   await page.locator('button[type="submit"]').last().click();
 
-  await page.waitForURL('/', { timeout: 30000 });
+  await page.waitForURL('/', { timeout: 30000, waitUntil: 'domcontentloaded' });
 }
 
 test.describe('组卷功能 - 冒烟测试', () => {
@@ -33,7 +33,7 @@ test.describe('组卷功能 - 冒烟测试', () => {
     const activityMenu = page.getByRole('menuitem', { name: /活动管理/ });
     await expect(activityMenu).toBeVisible({ timeout: 5000 });
     await activityMenu.click();
-    await page.waitForURL(/\/teacher\/activities/);
+    await page.waitForURL(/\/teacher\/activities/, { waitUntil: 'domcontentloaded' });
 
     // 等待活动列表加载
     await page.waitForLoadState('networkidle');
@@ -61,7 +61,7 @@ test.describe('组卷功能 - 冒烟测试', () => {
     await viewButton.click();
 
     // 等待详情页URL变化
-    await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000 });
+    await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // 等待并点击组卷按钮(use regex to handle potential spaces between characters)
@@ -70,7 +70,7 @@ test.describe('组卷功能 - 冒烟测试', () => {
     await paperButton.click();
 
     // 验证进入组卷页面
-    await page.waitForURL(/\/activities\/\d+\/paper/);
+    await page.waitForURL(/\/activities\/\d+\/paper/, { waitUntil: 'domcontentloaded' });
 
     // 验证页面标题
     await expect(page.locator('.ant-card-head-title')).toContainText('组卷管理');
@@ -90,7 +90,7 @@ test.describe('组卷功能 - 冒烟测试', () => {
     const activityMenu = page.getByRole('menuitem', { name: /活动管理/ });
     await expect(activityMenu).toBeVisible({ timeout: 5000 });
     await activityMenu.click();
-    await page.waitForURL(/\/teacher\/activities/);
+    await page.waitForURL(/\/teacher\/activities/, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000); // 等待表格数据加载
 
@@ -112,13 +112,13 @@ test.describe('组卷功能 - 冒烟测试', () => {
     await viewButton.click();
 
     // 等待详情页URL变化
-    await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000 });
+    await page.waitForURL(/\/teacher\/activities\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     const paperButton = page.locator('button').filter({ hasText: /组\s*卷/ });
     await expect(paperButton).toBeVisible({ timeout: 10000 });
     await paperButton.click();
-    await page.waitForURL(/\/activities\/\d+\/paper/);
+    await page.waitForURL(/\/activities\/\d+\/paper/, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // 获取当前已选题目数量

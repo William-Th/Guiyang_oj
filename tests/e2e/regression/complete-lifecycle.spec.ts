@@ -23,6 +23,7 @@ const testData = {
 };
 
 test.describe.serial('Complete Question Lifecycle - Simplified', () => {
+  test.setTimeout(90000);
 
   test('QBC101 - 创建题目', async ({ browser }) => {
     console.log('\n=== QBC101: 创建题目 ===');
@@ -36,28 +37,32 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000);
 
-      // 选择题目类型（单选）
-      const typeSelect = page.locator('select[name="type"], #type').first();
-      if (await typeSelect.count() > 0) {
-        await typeSelect.selectOption({ label: '单选' });
+      // 选择题目类型（antd Select）
+      const typeWrapper = page.locator('.ant-select:has(#type)').first();
+      if (await typeWrapper.count() > 0) {
+        await typeWrapper.click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '单选题' }).first().click();
       }
 
       // 选择科目
-      const subjectSelect = page.locator('select[name="subject"], #subject').first();
-      if (await subjectSelect.count() > 0) {
-        await subjectSelect.selectOption({ label: '数学' });
+      const subjectWrapper = page.locator('.ant-select:has(#subject)').first();
+      if (await subjectWrapper.count() > 0) {
+        await subjectWrapper.click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
       }
 
       // 选择年级
-      const gradeSelect = page.locator('select[name="grade"], #grade').first();
-      if (await gradeSelect.count() > 0) {
-        await gradeSelect.selectOption({ index: 0 }); // 选择第一个选项
+      const gradeWrapper = page.locator('.ant-select:has(#grade)').first();
+      if (await gradeWrapper.count() > 0) {
+        await gradeWrapper.click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first().click();
       }
 
       // 选择级别
-      const levelSelect = page.locator('select[name="level"], #level').first();
-      if (await levelSelect.count() > 0) {
-        await levelSelect.selectOption({ label: 'L4 - 中等' });
+      const levelWrapper = page.locator('.ant-select:has(#level)').first();
+      if (await levelWrapper.count() > 0) {
+        await levelWrapper.click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: 'L4' }).first().click();
       }
 
       // 输入题目内容
@@ -170,9 +175,10 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       await titleInput.fill(testData.activity.title);
 
       // 选择科目
-      const subjectSelect = page.locator('select[name="subject"], #subject').first();
-      if (await subjectSelect.count() > 0) {
-        await subjectSelect.selectOption({ label: '数学' });
+      const subjectWrapper = page.locator('.ant-select:has(#subject)').first();
+      if (await subjectWrapper.count() > 0) {
+        await subjectWrapper.click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
       }
 
       // 选择年级

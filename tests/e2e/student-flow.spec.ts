@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { STORAGE_STATE, TEST_TIMEOUTS } from './test-config';
 
 test.describe('Student User Flow', () => {
-  test.use({ storageState: STORAGE_STATE });
+  test.use({ storageState: STORAGE_STATE.STUDENT });
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -24,7 +24,7 @@ test.describe('Student User Flow', () => {
   test('考试列表页面功能', async ({ page }) => {
     // Navigate to exams list
     await page.click('text=考试列表');
-    await page.waitForURL('/exams', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/exams', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // Check page loads correctly
     await expect(page).toHaveURL('/exams');
@@ -42,7 +42,7 @@ test.describe('Student User Flow', () => {
   test('成绩查询页面功能', async ({ page }) => {
     // Navigate to results page
     await page.click('text=成绩查询');
-    await page.waitForURL('/results', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/results', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // Check page loads correctly
     await expect(page).toHaveURL('/results');
@@ -54,7 +54,7 @@ test.describe('Student User Flow', () => {
   test('个人信息页面功能', async ({ page }) => {
     // Navigate to profile page
     await page.click('text=个人信息');
-    await page.waitForURL('/profile', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/profile', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // Check page loads correctly
     await expect(page).toHaveURL('/profile');
@@ -102,7 +102,7 @@ test.describe('Student User Flow', () => {
       await logoutElement.click();
 
       // Should redirect to login page
-      await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION });
+      await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL('/login');
     } else {
       // If no logout button found, check if user dropdown exists
@@ -123,7 +123,7 @@ test.describe('Student User Flow', () => {
             const logoutInDropdown = page.locator('text=退出登录, text=注销, text=登出');
             if (await logoutInDropdown.isVisible({ timeout: 2000 })) {
               await logoutInDropdown.click();
-              await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION });
+              await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
               await expect(page).toHaveURL('/login');
               return;
             }

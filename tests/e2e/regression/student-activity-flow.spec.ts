@@ -18,7 +18,7 @@ import { STORAGE_STATE, TEST_TIMEOUTS } from '../test-config';
  */
 
 test.describe('Regression Tests - Student Activity Flow 学生答题流程', () => {
-  test.use({ storageState: STORAGE_STATE });
+  test.use({ storageState: STORAGE_STATE.STUDENT });
 
   // 共享变量
   let activityId: string;
@@ -36,7 +36,7 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
     await practiceMenu.click();
 
     // 等待页面加载
-    await page.waitForURL(/\/student\/practice/);
+    await page.waitForURL(/\/student\/practice/, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // 验证页面标题

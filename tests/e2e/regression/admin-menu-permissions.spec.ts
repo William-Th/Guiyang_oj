@@ -23,7 +23,7 @@ async function loginAsSchoolAdmin(page: Page) {
 
   // 提交登录
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   await page.waitForLoadState('networkidle');
 
@@ -44,7 +44,7 @@ async function loginAsDistrictAdmin(page: Page) {
 
   // 提交登录
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   await page.waitForLoadState('networkidle');
 
@@ -65,7 +65,7 @@ async function loginAsMunicipalAdmin(page: Page) {
 
   // 提交登录
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   await page.waitForLoadState('networkidle');
 

@@ -144,7 +144,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await submitButton.click();
 
       // 验证成功并返回列表
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
 
       // 验证活动出现在列表中
@@ -183,14 +183,14 @@ test.describe('Regression Tests - Activity Management', () => {
 
       const submitButton = page.locator('button').filter({ hasText: /创\s*建/ });
       await submitButton.click();
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1000);
 
       // 查找刚创建的活动并查看详情
       const targetRow = page.locator('.ant-table-tbody tr').filter({ hasText: testTitle }).first();
       const viewButton = targetRow.locator('button:has-text("查看")');
       await viewButton.click();
-      await page.waitForURL(/\/activities\/\d+/);
+      await page.waitForURL(/\/activities\/\d+/, { waitUntil: 'domcontentloaded' });
 
       // 验证详情页面元素
       await expect(page.locator('text=基本信息')).toBeVisible();
@@ -226,7 +226,7 @@ test.describe('Regression Tests - Activity Management', () => {
 
       const submitButton = page.locator('button').filter({ hasText: /创\s*建/ });
       await submitButton.click();
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1000);
 
       // 查找刚创建的草稿活动并编辑
@@ -238,7 +238,7 @@ test.describe('Regression Tests - Activity Management', () => {
 
       // 使用 evaluate 绕过可见性检查（虚拟滚动问题）
       await editButton.evaluate((button: HTMLElement) => button.click());
-      await page.waitForURL(/\/activities\/edit\/\d+/, { timeout: 10000 });
+      await page.waitForURL(/\/activities\/edit\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
 
       // 修改标题和描述
       const newTitle = `${originalTitle} - 已编辑`;
@@ -254,7 +254,7 @@ test.describe('Regression Tests - Activity Management', () => {
       // 保存修改 - 使用 primary 按钮定位
       const saveButton = page.locator('button.ant-btn-primary').filter({ hasText: /保\s*存/ });
       await saveButton.click();
-      await page.waitForURL(/\/teacher\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/teacher\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
 
       // 验证修改后的标题出现在列表中
@@ -285,7 +285,7 @@ test.describe('Regression Tests - Activity Management', () => {
 
       const submitButton = page.locator('button').filter({ hasText: /创\s*建/ });
       await submitButton.click();
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1000);
 
       // 查找刚创建的草稿活动并发布
@@ -332,7 +332,7 @@ test.describe('Regression Tests - Activity Management', () => {
 
       const submitButton = page.locator('button').filter({ hasText: /创\s*建/ });
       await submitButton.click();
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1000);
 
       // 先发布活动
@@ -472,7 +472,7 @@ test.describe('Regression Tests - Activity Management', () => {
 
       const submitButton = page.locator('button').filter({ hasText: /创\s*建/ });
       await submitButton.click();
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1000);
 
       // 查找刚创建的活动并删除
@@ -515,12 +515,12 @@ test.describe('Regression Tests - Activity Management', () => {
       await navigateToActivities(page, true);
 
       // 检查是否有创建测评按钮（使用正则表达式容错空格）
-      const createAssessmentBtn = page.locator('button').filter({ hasText: /创\s*建\s*测\s*评/ });
+      const createAssessmentBtn = page.locator('button').filter({ hasText: /创\s*建/ });
 
       if (await createAssessmentBtn.count() > 0) {
         await createAssessmentBtn.click();
         // Admin uses different route: /admin/assessments/create
-        await page.waitForURL(/\/admin\/assessments\/create|\/activities\/create\/assessment/, { timeout: 10000 });
+        await page.waitForURL(/\/admin\/assessments\/create|\/activities\/create\/assessment/, { timeout: 10000, waitUntil: 'domcontentloaded' });
 
         // 验证页面加载完成（跳过测评说明验证，某些页面可能没有）
         await page.waitForSelector('input[placeholder="请输入活动标题"]', { timeout: 5000 });
@@ -568,7 +568,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await page.waitForLoadState('networkidle');
 
       // 检查是否有创建测评按钮（权限检查，使用正则表达式容错空格）
-      const createBtn = page.locator('button').filter({ hasText: /创\s*建\s*测\s*评/ });
+      const createBtn = page.locator('button').filter({ hasText: /创\s*建/ });
       if (await createBtn.count() === 0) {
         console.log('⚠ 当前管理员无创建测评权限，跳过测试');
         test.skip();
@@ -577,7 +577,7 @@ test.describe('Regression Tests - Activity Management', () => {
 
       await createBtn.click();
       // Admin uses different route: /admin/assessments/create
-      await page.waitForURL(/\/admin\/assessments\/create|\/activities\/create\/assessment/, { timeout: 10000 });
+      await page.waitForURL(/\/admin\/assessments\/create|\/activities\/create\/assessment/, { timeout: 10000, waitUntil: 'domcontentloaded' });
 
       // 验证页面加载完成
       await page.waitForSelector('input[placeholder="请输入活动标题"]', { timeout: 5000 });
@@ -632,7 +632,7 @@ test.describe('Regression Tests - Activity Management', () => {
       await navigateToActivities(page);
 
       // 验证教师不能看到创建测评按钮
-      const createAssessmentBtn = page.locator('button:has-text("创建测评")');
+      const createAssessmentBtn = page.locator('button:has-text("创建活动")');
       const btnCount = await createAssessmentBtn.count();
 
       if (btnCount === 0) {

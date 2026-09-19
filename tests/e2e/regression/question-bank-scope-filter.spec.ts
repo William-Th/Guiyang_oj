@@ -24,7 +24,7 @@ async function loginAsYunyanTeacher(page: Page) {
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   await page.waitForLoadState('networkidle');
 
@@ -43,7 +43,7 @@ async function loginAsSchoolAdmin(page: Page) {
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   await page.waitForLoadState('networkidle');
 
@@ -55,7 +55,7 @@ async function navigateToQuestionBank(page: Page) {
   const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
   await expect(questionBankLink).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
   await questionBankLink.click();
-  await page.waitForURL(/\/teacher\/question-bank/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\/teacher\/question-bank/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
   console.log('✅ 已导航到题库管理页面');
 }
@@ -243,7 +243,7 @@ test.describe('Regression Tests - 题库范围筛选和审核人加载', () => {
 
     if (await profileLink.isVisible({ timeout: 3000 })) {
       await profileLink.click();
-      await page.waitForURL(/\/profile/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+      await page.waitForURL(/\/profile/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(1000);
 

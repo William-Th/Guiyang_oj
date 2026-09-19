@@ -96,7 +96,7 @@ test.describe('Regression Tests - 编程题答题流程 [学生]', () => {
   test('COD003 - 学生访问练习页面', async ({ page }) => {
     console.log('=== COD003 测试开始：学生访问练习页面 ===');
 
-    await page.goto('/student/activities/practice');
+    await page.goto('/student/practice');
     await page.waitForLoadState('networkidle');
     console.log('已导航到学生练习页面');
 
@@ -117,7 +117,7 @@ test.describe('Regression Tests - 编程题答题流程 [学生]', () => {
   test('COD004 - 学生访问历史记录', async ({ page }) => {
     console.log('=== COD004 测试开始：学生访问历史记录 ===');
 
-    await page.goto('/student/history');
+    await page.goto('/student/results');
     await page.waitForLoadState('networkidle');
     console.log('已导航到学生历史记录页面');
 

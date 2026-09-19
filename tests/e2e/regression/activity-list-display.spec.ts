@@ -21,7 +21,7 @@ async function loginAsTeacher(page: Page) {
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
   await page.waitForLoadState('networkidle');
 
@@ -33,7 +33,7 @@ async function navigateToActivityList(page: Page) {
   const activityLink = page.getByRole('menuitem', { name: /活动管理/ });
   await expect(activityLink).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
   await activityLink.click();
-  await page.waitForURL(/\/teacher\/activities/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\/teacher\/activities/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(1000);
   console.log('✅ 已导航到活动管理页面');

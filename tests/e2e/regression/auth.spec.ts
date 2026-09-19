@@ -18,18 +18,18 @@ test.describe('Regression Tests - 认证模块', () => {
   // R001 - 学生登录正常流程
   test('R001 - 学生使用正确凭证登录成功', async ({ page }) => {
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, TEST_CONFIG.STUDENT.idCard);
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, TEST_CONFIG.STUDENT.password);
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL('/');
   });
 
   // R002 - 学生登录异常场景
   test('R002 - 学生使用错误密码登录失败', async ({ page }) => {
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, TEST_CONFIG.STUDENT.idCard);
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, 'wrongpassword123');
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
@@ -43,14 +43,14 @@ test.describe('Regression Tests - 认证模块', () => {
   });
 
   // R003 - 身份证号格式验证
-  test('R003 - 学生使用无效身份证号格式', async ({ page }) => {
+  test('R003 - 学生使用无效手机号格式', async ({ page }) => {
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, '123456');
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, '123456');
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, TEST_CONFIG.STUDENT.password);
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // 应显示格式验证错误
-    await expect(page.locator('text=请输入正确的身份证号')).toBeVisible();
+    await expect(page.locator('text=请输入正确的手机号格式')).toBeVisible();
   });
 
   // R004 - 空字段验证
@@ -59,7 +59,7 @@ test.describe('Regression Tests - 认证模块', () => {
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // 应显示必填字段错误
-    await expect(page.locator('text=请输入身份证号')).toBeVisible();
+    await expect(page.locator('text=请输入手机号')).toBeVisible();
   });
 
   // R005 - 教师登录正常流程
@@ -70,7 +70,7 @@ test.describe('Regression Tests - 认证模块', () => {
     await page.locator(SELECTORS.LOGIN.PASSWORD_INPUT).last().fill(TEST_CONFIG.TEACHER.password);
     await page.locator(SELECTORS.LOGIN.SUBMIT_BUTTON).last().click();
 
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL('/');
   });
 
@@ -92,7 +92,7 @@ test.describe('Regression Tests - 认证模块', () => {
   test('R007 - 学生和教师入口切换正常', async ({ page }) => {
     // 默认在学生入口
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
-    await expect(page.locator(SELECTORS.LOGIN.ID_CARD_INPUT)).toBeVisible();
+    await expect(page.locator(SELECTORS.LOGIN.PHONE_INPUT)).toBeVisible();
 
     // 切换到教师入口
     await page.click(SELECTORS.LOGIN.TEACHER_TAB);
@@ -100,6 +100,6 @@ test.describe('Regression Tests - 认证模块', () => {
 
     // 切回学生入口
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
-    await expect(page.locator(SELECTORS.LOGIN.ID_CARD_INPUT)).toBeVisible();
+    await expect(page.locator(SELECTORS.LOGIN.PHONE_INPUT)).toBeVisible();
   });
 });

@@ -12,7 +12,7 @@ import { STORAGE_STATE, TEST_TIMEOUTS } from '../test-config';
  */
 
 test.describe('Regression Tests - 学生功能', () => {
-  test.use({ storageState: STORAGE_STATE });
+  test.use({ storageState: STORAGE_STATE.STUDENT });
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

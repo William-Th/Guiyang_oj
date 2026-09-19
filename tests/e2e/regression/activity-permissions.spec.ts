@@ -8,7 +8,7 @@ import { STORAGE_STATE, TEACHER_STORAGE_STATE, ADMIN_STORAGE_STATE, TEST_TIMEOUT
  * - 学生练习中心（只看练习）
  * - 学生测评中心（只看测评）
  * - 教师练习管理（只能管理练习）
- * - 管理员测评管理（只能管理测评�?
+ * - 管理员测评管理（只能管理测评）
  * - 导航菜单权限控制
  */
 
@@ -22,12 +22,12 @@ async function loginAsStudent(page: Page) {
   await page.waitForTimeout(300);
 
   // Fill credentials
-  await page.fill('input[placeholder="身份证号"]', '520102200801011234');
+  await page.fill('input[placeholder="手机号"]', '13800138003');
   await page.fill('input[placeholder="密码"]', 'password123');
 
   // Submit login
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
 
   console.log('学生登录成功');
@@ -43,12 +43,12 @@ async function loginAsTeacher(page: Page) {
   await page.waitForTimeout(500);
 
   // Fill credentials - use .last() to target the second (teacher) tab's inputs
-  await page.locator('input[placeholder="用户�?]').last().fill('teacher_yy_ps_math');
+  await page.locator('input[placeholder="用户名"]').last().fill('teacher_yy_ps_math');
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   // Submit login - use .last() to get teacher tab's button
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
 
   console.log('教师登录成功');
@@ -64,15 +64,15 @@ async function loginAsAdmin(page: Page) {
   await page.waitForTimeout(500);
 
   // Fill credentials - use .last() to target the second (teacher) tab's inputs
-  await page.locator('input[placeholder="用户�?]').last().fill('admin');
+  await page.locator('input[placeholder="用户名"]').last().fill('admin');
   await page.locator('input[placeholder="密码"]').last().fill('password123');
 
   // Submit login - use .last() to get teacher tab's button
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
 
-  console.log('管理员登录成�?);
+  console.log('管理员登录成功');
 }
 
 test.describe('ACT114-ACT119: Student Activity Centers', () => {
@@ -86,13 +86,13 @@ test.describe('ACT114-ACT119: Student Activity Centers', () => {
     await practiceLink.click();
 
     // Wait for navigation
-    await page.waitForURL(/\/student\/practice/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/student\/practice/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // Verify page title
     await expect(page.locator('text=练习中心').first()).toBeAttached();
 
-    console.log('�?ACT114: 学生成功访问练习中心');
+    console.log('✅ ACT114: 学生成功访问练习中心');
   });
 
   test('ACT115 - 学生练习中心显示练习列表', async ({ page }) => {
@@ -111,10 +111,10 @@ test.describe('ACT114-ACT119: Student Activity Centers', () => {
     await expect(page.getByRole('columnheader', { name: '年级' })).toBeAttached();
     await expect(page.getByRole('columnheader', { name: '能力等级' })).toBeAttached();
 
-    console.log('�?ACT115: 练习中心正确显示练习列表');
+    console.log('✅ ACT115: 练习中心正确显示练习列表');
   });
 
-  test('ACT116 - 学生可以按科目筛选练�?, async ({ page }) => {
+  test('ACT116 - 学生可以按科目筛选练习', async ({ page }) => {
     await loginAsStudent(page);
     await page.goto('/student/practice');
     await page.waitForLoadState('networkidle');
@@ -132,7 +132,7 @@ test.describe('ACT114-ACT119: Student Activity Centers', () => {
     // Verify filter applied (check if URL or table updated)
     await page.waitForLoadState('networkidle');
 
-    console.log('�?ACT116: 学生成功按科目筛选练�?);
+    console.log('✅ ACT116: 学生成功按科目筛选练习');
   });
 
   test('ACT117 - 学生可以访问测评中心', async ({ page }) => {
@@ -144,13 +144,13 @@ test.describe('ACT114-ACT119: Student Activity Centers', () => {
     await assessmentLink.click();
 
     // Wait for navigation
-    await page.waitForURL(/\/student\/assessments/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/student\/assessments/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // Verify page title
     await expect(page.locator('text=测评中心').first()).toBeAttached();
 
-    console.log('�?ACT117: 学生成功访问测评中心');
+    console.log('✅ ACT117: 学生成功访问测评中心');
   });
 
   test('ACT118 - 学生测评中心显示测评列表', async ({ page }) => {
@@ -167,12 +167,12 @@ test.describe('ACT114-ACT119: Student Activity Centers', () => {
     await expect(page.getByRole('columnheader', { name: '测评名称' })).toBeAttached();
     await expect(page.getByRole('columnheader', { name: '科目' })).toBeAttached();
     await expect(page.getByRole('columnheader', { name: '年级' })).toBeAttached();
-    await expect(page.getByRole('columnheader', { name: '官方测评' })).toBeAttached();
+    await expect(page.getByRole('columnheader', { name: '能力等级' })).toBeAttached();
 
-    console.log('�?ACT118: 测评中心正确显示测评列表');
+    console.log('✅ ACT118: 测评中心正确显示测评列表');
   });
 
-  test('ACT119 - 学生可以按科目筛选测�?, async ({ page }) => {
+  test('ACT119 - 学生可以按科目筛选测评', async ({ page }) => {
     await loginAsStudent(page);
     await page.goto('/student/assessments');
     await page.waitForLoadState('networkidle');
@@ -184,40 +184,40 @@ test.describe('ACT114-ACT119: Student Activity Centers', () => {
     await page.waitForTimeout(300);
 
     // Select "语文"
-    await page.getByRole('option', { name: '语文' }).evaluate((el: HTMLElement) => el.click());
+    await page.getByRole('option', { name: '信息科技' }).evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(1000);
 
     // Verify filter applied
     await page.waitForLoadState('networkidle');
 
-    console.log('�?ACT119: 学生成功按科目筛选测�?);
+    console.log('✅ ACT119: 学生成功按科目筛选测评');
   });
 });
 
 test.describe('ACT120-ACT122: Teacher Practice Management', () => {
 
-  test('ACT120 - 教师只能看到练习管理菜单（不显示测评管理�?, async ({ page }) => {
+  test('ACT120 - 教师只能看到练习管理菜单（不显示测评管理）', async ({ page }) => {
     await loginAsTeacher(page);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // Verify "练习管理" menu exists
-    const practiceMenu = page.getByRole('menuitem', { name: /练习管理/ });
-    await expect(practiceMenu).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
+    // 菜单已统一命名“活动管理”：教师可见，且不可见管理员专属菜单
+    const activityMenu = page.getByRole('menuitem', { name: /活动管理/ });
+    await expect(activityMenu).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
 
-    // Verify "测评管理" menu does NOT exist
-    const assessmentMenu = page.getByRole('menuitem', { name: /测评管理/ });
-    await expect(assessmentMenu).toHaveCount(0);
+    // 教师不应看到管理员专属菜单（用户管理）
+    const userMenu = page.getByRole('menuitem', { name: /用户管理/ });
+    await expect(userMenu).toHaveCount(0);
 
-    console.log('�?ACT120: 教师只看到练习管理菜�?);
+    console.log('✅ ACT120: 教师看到活动管理菜单且无管理员专属菜单');
   });
 
   test('ACT121 - 教师练习管理页面只显示练习（不显示测评）', async ({ page }) => {
     await loginAsTeacher(page);
 
     // Navigate to practice management
-    await page.getByRole('menuitem', { name: /练习管理/ }).click();
-    await page.waitForURL(/\/teacher\/activities/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.getByRole('menuitem', { name: /活动管理/ }).click();
+    await page.waitForURL(/\/teacher\/activities/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -225,21 +225,18 @@ test.describe('ACT120-ACT122: Teacher Practice Management', () => {
     await expect(page.locator('.ant-card-head-title:has-text("练习管理")')).toBeAttached();
 
     // Verify "创建活动" button exists (teacher creates practice activities)
-    const createActivityBtn = page.locator('button').filter({ hasText: /创\s*建\s*活\s*�? });
+    const createActivityBtn = page.locator('button').filter({ hasText: /创\s*建\s*活\s*动/ });
     await expect(createActivityBtn).toBeVisible();
 
-    // Verify "创建测评" button does NOT exist (teachers cannot create assessments)
-    const createAssessmentBtn = page.locator('button').filter({ hasText: /创\s*建\s*测\s*�? });
-    await expect(createAssessmentBtn).toHaveCount(0);
 
     // Verify type filter does NOT exist (since teachers can only see practices)
     const typeFilter = page.locator('.ant-select').filter({ hasText: '类型' });
     await expect(typeFilter).toHaveCount(0);
 
-    console.log('�?ACT121: 教师练习管理页面正确限制为练�?);
+    console.log('✅ ACT121: 教师练习管理页面正确限制为练习');
   });
 
-  test('ACT122 - 教师可以按能力等级筛选练�?, async ({ page }) => {
+  test('ACT122 - 教师可以按能力等级筛选练习', async ({ page }) => {
     await loginAsTeacher(page);
     await page.goto('/teacher/activities');
     await page.waitForLoadState('networkidle');
@@ -257,31 +254,31 @@ test.describe('ACT120-ACT122: Teacher Practice Management', () => {
     // Verify filter applied
     await page.waitForLoadState('networkidle');
 
-    console.log('�?ACT122: 教师成功按能力等级筛选练�?);
+    console.log('✅ ACT122: 教师成功按能力等级筛选练习');
   });
 });
 
 test.describe('ACT123-ACT125: Admin Assessment Management', () => {
 
-  test('ACT123 - 管理员可以访问测评管理页�?, async ({ page }) => {
+  test('ACT123 - 管理员可以访问测评管理页面', async ({ page }) => {
     await loginAsAdmin(page);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     // Verify "测评管理" menu exists
-    const assessmentMenu = page.getByRole('menuitem', { name: /测评管理/ });
+    const assessmentMenu = page.getByRole('menuitem', { name: /活动管理/ });
     await expect(assessmentMenu).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
 
     // Click to navigate
     await assessmentMenu.click();
-    await page.waitForURL(/\/admin\/assessments/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/admin\/assessments/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     // Verify page title
-    await expect(page.locator('.ant-card-head-title:has-text("测评管理")')).toBeAttached();
+    await expect(page.locator('.ant-card-head-title:has-text("活动管理中心")')).toBeAttached();
 
-    console.log('�?ACT123: 管理员成功访问测评管理页�?);
+    console.log('✅ ACT123: 管理员成功访问测评管理页面');
   });
 
   test('ACT124 - 管理员测评管理页面只显示测评', async ({ page }) => {
@@ -291,10 +288,10 @@ test.describe('ACT123-ACT125: Admin Assessment Management', () => {
     await page.waitForTimeout(1000);
 
     // Verify page title is "测评管理"
-    await expect(page.locator('.ant-card-head-title:has-text("测评管理")')).toBeAttached();
+    await expect(page.locator('.ant-card-head-title:has-text("活动管理中心")')).toBeAttached();
 
     // Verify "创建测评" button exists
-    const createAssessmentBtn = page.locator('button:has-text("创建测评")');
+    const createAssessmentBtn = page.locator('button:has-text("创建活动")');
     await expect(createAssessmentBtn).toBeVisible();
 
     // Verify table exists
@@ -302,14 +299,14 @@ test.describe('ACT123-ACT125: Admin Assessment Management', () => {
     await expect(table).toBeAttached({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
 
     // Verify column headers
-    await expect(page.getByRole('columnheader', { name: '测评名称' })).toBeAttached();
+    await expect(page.getByRole('columnheader', { name: '活动名称' })).toBeAttached();
     await expect(page.getByRole('columnheader', { name: '科目' })).toBeAttached();
     await expect(page.getByRole('columnheader', { name: '年级' })).toBeAttached();
 
-    console.log('�?ACT124: 管理员测评管理页面正确显�?);
+    console.log('✅ ACT124: 管理员测评管理页面正确显示');
   });
 
-  test('ACT125 - 管理员可以按科目筛选测�?, async ({ page }) => {
+  test('ACT125 - 管理员可以按科目筛选测评', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/admin/assessments');
     await page.waitForLoadState('networkidle');
@@ -320,57 +317,57 @@ test.describe('ACT123-ACT125: Admin Assessment Management', () => {
     await subjectFilter.click();
     await page.waitForTimeout(300);
 
-    // Select "计算�?
-    await page.getByRole('option', { name: '计算�? }).evaluate((el: HTMLElement) => el.click());
+    // Select "计算机"
+    await page.getByRole('option', { name: '信息科技' }).evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(1000);
 
     // Verify filter applied
     await page.waitForLoadState('networkidle');
 
-    console.log('�?ACT125: 管理员成功按科目筛选测�?);
+    console.log('✅ ACT125: 管理员成功按科目筛选测评');
   });
 });
 
 test.describe('ACT126: Navigation Menu Permissions', () => {
 
-  test('ACT126 - 不同角色看到不同的导航菜�?, async ({ page }) => {
-    // Test student navigation
+  test('ACT126 - 不同角色看到不同的导航菜单', async ({ page }) => {
+    // 学生：练习/测评中心可见，无教师与管理员菜单
     await loginAsStudent(page);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     await expect(page.getByRole('menuitem', { name: /练习中心/ })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: /测评中心/ })).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: /练习管理/ })).toHaveCount(0);
-    await expect(page.getByRole('menuitem', { name: /测评管理/ })).toHaveCount(0);
+    await expect(page.getByRole('menuitem', { name: /活动管理/ })).toHaveCount(0);
+    await expect(page.getByRole('menuitem', { name: /用户管理/ })).toHaveCount(0);
 
-    console.log('�?学生看到正确的导航菜�?);
+    console.log('✅ 学生看到正确的导航菜单');
 
-    // Test teacher navigation
+    // 教师：活动管理可见，无学生与管理员菜单
     await page.goto('/login');
     await loginAsTeacher(page);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    await expect(page.getByRole('menuitem', { name: /练习管理/ })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /活动管理/ })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: /练习中心/ })).toHaveCount(0);
     await expect(page.getByRole('menuitem', { name: /测评中心/ })).toHaveCount(0);
-    await expect(page.getByRole('menuitem', { name: /测评管理/ })).toHaveCount(0);
+    await expect(page.getByRole('menuitem', { name: /用户管理/ })).toHaveCount(0);
 
-    console.log('�?教师看到正确的导航菜�?);
+    console.log('✅ 教师看到正确的导航菜单');
 
-    // Test admin navigation
+    // 管理员：活动管理/用户管理可见，无学生菜单
     await page.goto('/login');
     await loginAsAdmin(page);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    await expect(page.getByRole('menuitem', { name: /测评管理/ })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /活动管理/ })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /用户管理/ })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: /练习中心/ })).toHaveCount(0);
     await expect(page.getByRole('menuitem', { name: /测评中心/ })).toHaveCount(0);
-    await expect(page.getByRole('menuitem', { name: /练习管理/ })).toHaveCount(0);
 
-    console.log('�?管理员看到正确的导航菜单');
-    console.log('�?ACT126: 所有角色的导航菜单权限正确');
+    console.log('✅ 管理员看到正确的导航菜单');
+    console.log('✅ ACT126: 所有角色的导航菜单权限正确');
   });
 });

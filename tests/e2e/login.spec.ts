@@ -23,14 +23,14 @@ test.describe('Login Page', () => {
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
 
     // Fill form with valid credentials
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, TEST_CONFIG.STUDENT.idCard);
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, TEST_CONFIG.STUDENT.password);
 
     // Submit form
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // Wait for navigation after successful login
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // Verify successful login by checking URL
     await expect(page).toHaveURL('/');
@@ -48,23 +48,23 @@ test.describe('Login Page', () => {
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // Wait for navigation after successful login
-    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // Verify successful login
     await expect(page).toHaveURL('/');
   });
 
-  test('学生登录验证 - 无效身份证号', async ({ page }) => {
+  test('学生登录验证 - 无效手机号', async ({ page }) => {
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
 
-    // Try with invalid ID card format
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, '123456');
+    // Try with invalid phone format
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, '123456');
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, 'password123');
 
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // Should show validation error
-    await expect(page.locator('text=请输入正确的身份证号')).toBeVisible();
+    await expect(page.locator('text=请输入正确的手机号格式')).toBeVisible();
   });
 
   test('登录验证 - 空字段', async ({ page }) => {
@@ -74,14 +74,14 @@ test.describe('Login Page', () => {
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
 
     // Should show required field errors
-    await expect(page.locator('text=请输入身份证号')).toBeVisible();
+    await expect(page.locator('text=请输入手机号')).toBeVisible();
   });
 
   test('错误凭据登录处理', async ({ page }) => {
     await page.click(SELECTORS.LOGIN.STUDENT_TAB);
 
     // Try with wrong credentials
-    await page.fill(SELECTORS.LOGIN.ID_CARD_INPUT, '520102200801011234');
+    await page.fill(SELECTORS.LOGIN.PHONE_INPUT, TEST_CONFIG.STUDENT.phone);
     await page.fill(SELECTORS.LOGIN.PASSWORD_INPUT, 'wrongpassword');
 
     await page.click(SELECTORS.LOGIN.SUBMIT_BUTTON);
@@ -101,7 +101,7 @@ test.describe('Login Page', () => {
       await expect(page.locator(SELECTORS.LOGIN.TEACHER_TAB)).toBeVisible();
 
       // Check form inputs are properly sized
-      const idCardInput = page.locator(SELECTORS.LOGIN.ID_CARD_INPUT);
+      const idCardInput = page.locator(SELECTORS.LOGIN.PHONE_INPUT);
       await page.click(SELECTORS.LOGIN.STUDENT_TAB);
       await expect(idCardInput).toBeVisible();
     }

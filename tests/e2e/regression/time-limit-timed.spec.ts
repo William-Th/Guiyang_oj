@@ -26,8 +26,8 @@ async function fillBasicActivityInfo(page: Page, title: string) {
     await page.waitForTimeout(300);
   }
 
-  await page.fill('input[placeholder="请输入活动标�?]', title);
-  await page.fill('textarea[placeholder="请输入活动描述（可选）"]', '时间限制功能测试 - 计时制模�?);
+  await page.fill('input[placeholder="请输入活动标题"]', title);
+  await page.fill('textarea[placeholder="请输入活动描述（可选）"]', '时间限制功能测试 - 计时制模式');
 
   // Select subject
   const subjectSelector = page.locator('#subject').locator('..');
@@ -40,7 +40,7 @@ async function fillBasicActivityInfo(page: Page, title: string) {
   const gradeSelector = page.locator('#grade').locator('..');
   await gradeSelector.click();
   await page.waitForTimeout(500);
-  await page.getByRole('option', { name: '五年�? }).evaluate((el: HTMLElement) => el.click());
+  await page.getByRole('option', { name: '五年级' }).evaluate((el: HTMLElement) => el.click());
   await page.waitForTimeout(300);
 }
 
@@ -49,12 +49,13 @@ async function fillBasicActivityInfo(page: Page, title: string) {
  */
 async function selectTimeLimitType(page: Page, type: 'unlimited' | 'scheduled' | 'timed') {
   const typeLabels = {
-    unlimited: '无限制（练习模式�?,
+    unlimited: '无限制（练习模式）',
     scheduled: '定时制（固定时间段）',
-    timed: '计时制（开始后计时�?,
+    timed: '计时制（开始后计时）',
   };
 
-  await page.click('text=时间限制类型');
+  const tlSelect = page.locator('.ant-form-item').filter({ has: page.locator('label:has-text("时间限制类型")') }).locator('.ant-select').first();
+  await tlSelect.click();
   await page.waitForTimeout(500);
   await page.getByRole('option', { name: typeLabels[type] }).evaluate((el: HTMLElement) => el.click());
   await page.waitForTimeout(500);
@@ -63,27 +64,27 @@ async function selectTimeLimitType(page: Page, type: 'unlimited' | 'scheduled' |
 /**
  * PTL008 - Create Timed Practice Activity
  */
-test('PTL008 - 创建计时制活�?, async ({ page }) => {
+test('PTL008 - 创建计时制活动', async ({ page }) => {
   // Login as teacher
   await loginAsTeacher(page, 'teacher_yy_ps_math', 'password123');
 
   // Navigate to practice management
-  const practiceMenu = page.getByRole('menuitem', { name: /练习管理/ });
+  const practiceMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await expect(practiceMenu).toBeVisible();
   await practiceMenu.click();
-  await page.waitForURL(/\/teacher\/activities/);
+  await page.waitForURL(/\/teacher\/activities/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Click create activity
-  const createButton = page.locator('button').filter({ hasText: /创\s*�?*活动/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await expect(createButton).toBeAttached({ timeout: 5000 });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/teacher\/activities\/create/);
+  await page.waitForURL(/\/teacher\/activities\/create/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Generate unique title
   const timestamp = Date.now();
-  const activityTitle = `[PTL008] 计时制练�?- ${timestamp}`;
+  const activityTitle = `[PTL008] 计时制练习 - ${timestamp}`;
 
   // Fill basic info
   await fillBasicActivityInfo(page, activityTitle);
@@ -106,42 +107,46 @@ test('PTL008 - 创建计时制活�?, async ({ page }) => {
   // Set duration to 30 minutes
   await page.fill('input[id="duration"]', '30');
 
+  // 关闭可能残留的 Picker 弹层，避免吞掉保存按钮的点击
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+
   // Fill score info
   await page.fill('input[id="totalScore"]', '50');
   await page.fill('input[id="passScore"]', '30');
 
   // Save activity
-  const saveButton = page.locator('button').filter({ hasText: /保\s*存|创\s*�? }).last();
+  const saveButton = page.locator('button').filter({ hasText: /保\s*存|创\s*建/ }).last();
   await saveButton.click();
 
   // Verify navigation
-  await page.waitForURL(/\/teacher\/activities$/, { timeout: 10000 });
+  await page.waitForURL(/\/teacher\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify activity in list
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle });
   await expect(activityRow).toBeAttached({ timeout: 5000 });
 
-  console.log(`�?PTL008: Created timed activity: ${activityTitle}`);
+  console.log(`✓ PTL008: Created timed activity: ${activityTitle}`);
 });
 
 /**
  * PTL009 - Student Starts Timed Activity and Sees Countdown
  */
-test('PTL009 - 学生开始计时制活动后倒计�?, async ({ page }) => {
+test('PTL009 - 学生开始计时制活动后倒计时', async ({ page }) => {
   // Create timed activity as teacher
   await loginAsTeacher(page, 'teacher_yy_ps_math', 'password123');
 
-  const practiceMenu = page.getByRole('menuitem', { name: /练习管理/ });
+  const practiceMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await practiceMenu.click();
-  await page.waitForURL(/\/teacher\/activities/);
+  await page.waitForURL(/\/teacher\/activities/, { waitUntil: 'domcontentloaded' });
 
-  const createButton = page.locator('button').filter({ hasText: /创\s*�?*活动/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/teacher\/activities\/create/);
+  await page.waitForURL(/\/teacher\/activities\/create/, { waitUntil: 'domcontentloaded' });
 
   const timestamp = Date.now();
-  const activityTitle = `[PTL009] 计时制练�?- ${timestamp}`;
+  const activityTitle = `[PTL009] 计时制练习 - ${timestamp}`;
 
   await fillBasicActivityInfo(page, activityTitle);
   await selectTimeLimitType(page, 'timed');
@@ -151,24 +156,24 @@ test('PTL009 - 学生开始计时制活动后倒计�?, async ({ page }) => {
   await page.fill('input[id="totalScore"]', '50');
   await page.fill('input[id="passScore"]', '30');
 
-  const saveButton = page.locator('button').filter({ hasText: /创\s*�? }).last();
+  const saveButton = page.locator('button').filter({ hasText: /创\s*建/ }).last();
   await saveButton.click();
-  await page.waitForURL(/\/teacher\/activities$/);
+  await page.waitForURL(/\/teacher\/activities$/, { waitUntil: 'domcontentloaded' });
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
-  const publishButton = activityRow.locator('button').filter({ hasText: /发\s*�? });
+  const publishButton = activityRow.locator('button').filter({ hasText: /发\s*布/ });
   await publishButton.evaluate((button: HTMLElement) => button.click());
   await page.waitForTimeout(1000);
 
   // Login as student
   await page.goto('/login');
-  await loginAsStudent(page, '520102200801011234', 'password123');
+  await loginAsStudent(page, '13800138003', 'password123');
 
   // Navigate to practice center
   const studentPracticeMenu = page.getByRole('menuitem', { name: /练习中心/ });
   await studentPracticeMenu.click();
-  await page.waitForURL(/\/student\/practice/);
+  await page.waitForURL(/\/student\/practice/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Record start time (before clicking start)
@@ -178,11 +183,11 @@ test('PTL009 - 学生开始计时制活动后倒计�?, async ({ page }) => {
   const practiceRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
   await expect(practiceRow).toBeAttached({ timeout: 5000 });
 
-  const startButton = practiceRow.locator('button').filter({ hasText: /开�? });
+  const startButton = practiceRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
 
   // Wait for activity page
-  await page.waitForURL(/\/student\/practice\/\d+/, { timeout: 10000 });
+  await page.waitForURL(/\/student\/practice\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify countdown timer is displayed
@@ -218,7 +223,7 @@ test('PTL009 - 学生开始计时制活动后倒计�?, async ({ page }) => {
   expect(totalMinutes2).toBeGreaterThanOrEqual(28);
   expect(totalMinutes2).toBeLessThanOrEqual(29);
 
-  console.log(`�?PTL009: Timed activity countdown working correctly`);
+  console.log(`✓ PTL009: Timed activity countdown working correctly`);
 });
 
 /**
@@ -226,20 +231,20 @@ test('PTL009 - 学生开始计时制活动后倒计�?, async ({ page }) => {
  *
  * Note: Uses short duration (2 minutes) for practical testing
  */
-test('PTL010 - 计时制活动超时自动提�?, async ({ page }) => {
+test('PTL010 - 计时制活动超时自动提交', async ({ page }) => {
   // Create timed activity with 2-minute duration
   await loginAsTeacher(page, 'teacher_yy_ps_math', 'password123');
 
-  const practiceMenu = page.getByRole('menuitem', { name: /练习管理/ });
+  const practiceMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await practiceMenu.click();
-  await page.waitForURL(/\/teacher\/activities/);
+  await page.waitForURL(/\/teacher\/activities/, { waitUntil: 'domcontentloaded' });
 
-  const createButton = page.locator('button').filter({ hasText: /创\s*�?*活动/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/teacher\/activities\/create/);
+  await page.waitForURL(/\/teacher\/activities\/create/, { waitUntil: 'domcontentloaded' });
 
   const timestamp = Date.now();
-  const activityTitle = `[PTL010] 计时制练�?- ${timestamp}`;
+  const activityTitle = `[PTL010] 计时制练习 - ${timestamp}`;
 
   await fillBasicActivityInfo(page, activityTitle);
   await selectTimeLimitType(page, 'timed');
@@ -249,29 +254,29 @@ test('PTL010 - 计时制活动超时自动提�?, async ({ page }) => {
   await page.fill('input[id="totalScore"]', '50');
   await page.fill('input[id="passScore"]', '30');
 
-  const saveButton = page.locator('button').filter({ hasText: /创\s*�? }).last();
+  const saveButton = page.locator('button').filter({ hasText: /创\s*建/ }).last();
   await saveButton.click();
-  await page.waitForURL(/\/teacher\/activities$/);
+  await page.waitForURL(/\/teacher\/activities$/, { waitUntil: 'domcontentloaded' });
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
-  const publishButton = activityRow.locator('button').filter({ hasText: /发\s*�? });
+  const publishButton = activityRow.locator('button').filter({ hasText: /发\s*布/ });
   await publishButton.evaluate((button: HTMLElement) => button.click());
   await page.waitForTimeout(1000);
 
   // Login as student
   await page.goto('/login');
-  await loginAsStudent(page, '520102200801011234', 'password123');
+  await loginAsStudent(page, '13800138003', 'password123');
 
   const studentPracticeMenu = page.getByRole('menuitem', { name: /练习中心/ });
   await studentPracticeMenu.click();
-  await page.waitForURL(/\/student\/practice/);
+  await page.waitForURL(/\/student\/practice/, { waitUntil: 'domcontentloaded' });
 
   // Start activity
   const practiceRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
-  const startButton = practiceRow.locator('button').filter({ hasText: /开�? });
+  const startButton = practiceRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
-  await page.waitForURL(/\/student\/practice\/\d+/);
+  await page.waitForURL(/\/student\/practice\/\d+/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify countdown shows 2 minutes
@@ -280,7 +285,7 @@ test('PTL010 - 计时制活动超时自动提�?, async ({ page }) => {
   console.log(`Initial countdown: ${initialTime}`);
 
   // Answer one question quickly
-  const firstQuestion = page.locator('.ant-card').filter({ hasText: /�?1 �? }).first();
+  const firstQuestion = page.locator('.activity-question-card').first();
   const firstOption = firstQuestion.locator('input[type="radio"]').first();
   await firstOption.check();
   await page.waitForTimeout(500);
@@ -306,14 +311,14 @@ test('PTL010 - 计时制活动超时自动提�?, async ({ page }) => {
 
   try {
     await expect(autoSubmitMessage).toBeVisible({ timeout: 5000 });
-    console.log(`�?PTL010: Auto-submit message displayed`);
+    console.log(`✓ PTL010: Auto-submit message displayed`);
   } catch {
     // May have navigated to results
-    await page.waitForURL(/\/student\/results\/\d+/, { timeout: 5000 });
-    console.log(`�?PTL010: Navigated to results after auto-submit`);
+    await page.waitForURL(/\/student\/results\/\d+/, { timeout: 5000, waitUntil: 'domcontentloaded' });
+    console.log(`✓ PTL010: Navigated to results after auto-submit`);
   }
 
   // Verify in database (auto-submit service should also catch it)
-  console.log('�?PTL010: Timed activity auto-submit test completed');
+  console.log('✓ PTL010: Timed activity auto-submit test completed');
   console.log('Note: Auto-submit cron job (every minute) will also detect expired activities');
 });

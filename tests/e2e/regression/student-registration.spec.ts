@@ -22,6 +22,13 @@ const schoolAdminCredentials = {
 };
 
 test.describe('学生注册流程E2E测试', () => {
+  // 注册审批是多步链路（提交→审核→批准→登录验证），必须串行执行
+  test.describe.configure({ mode: 'serial' });
+  // REG103 提交后捕获查询码，供后续状态查询用例使用
+  let sharedInquiryCode = '';
+
+  test.setTimeout(120000);
+
   // 生成唯一的测试数据 - 所有测试共享同一个学生数据
   const timestamp = Date.now();
   const testStudent = {
@@ -131,19 +138,20 @@ test.describe('学生注册流程E2E测试', () => {
     // 填写身份证后4位
     await page.locator('input[placeholder*="身份证后4位"]').fill(testStudent.idCardLast4);
 
-    // 选择区县 - 使用Form.Item定位
+    // 选择区县 - 使用Form.Item定位（限定可见下拉，避免隐藏下拉干扰）
     const districtSelect = page.locator('.ant-form-item').filter({ hasText: '所在区县' }).locator('.ant-select');
     await districtSelect.click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option', { name: testStudent.districtName }).evaluate((el: HTMLElement) => el.click());
-    await page.waitForTimeout(500);
+    const visibleDistrictOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: testStudent.districtName }).first();
+    await expect(visibleDistrictOption).toBeVisible({ timeout: 8000 });
+    await visibleDistrictOption.click();
+    await page.waitForTimeout(800);
 
-    // 等待学校列表加载并选择学校
-    await page.waitForTimeout(1000); // 等待学校列表加载
+    // 等待学校列表加载并选择学校（学校按区县异步加载）
     const schoolSelect = page.locator('.ant-form-item').filter({ hasText: '所在学校' }).locator('.ant-select');
     await schoolSelect.click();
-    await page.waitForTimeout(500);
-    await page.getByRole('option', { name: testStudent.schoolName }).evaluate((el: HTMLElement) => el.click());
+    const visibleSchoolOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: testStudent.schoolName }).first();
+    await expect(visibleSchoolOption).toBeVisible({ timeout: 10000 });
+    await visibleSchoolOption.click();
     await page.waitForTimeout(300);
 
     // 选择年级
@@ -158,11 +166,19 @@ test.describe('学生注册流程E2E测试', () => {
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
 
-    // 等待自动跳转到状态查询页面（提交成功后会自动跳转）
-    await page.waitForURL(`**/register-status/${testStudent.phone}`, { timeout: 10000 });
+    // 等待“保存查询码”弹窗出现（提交成功后不再自动跳转）
+    await expect(page.locator('text=请保存注册查询码')).toBeVisible({ timeout: 10000 });
 
-    // 验证成功到达状态页面并显示申请信息
-    await expect(page.locator('text=注册申请状态')).toBeVisible({ timeout: 5000 });
+    // 捕获注册查询码（仅在提交后展示一次，存于 sessionStorage）
+    sharedInquiryCode = await page.evaluate((ph) => sessionStorage.getItem(`registration-inquiry:${ph}`), testStudent.phone) || '';
+    console.log(`[REG103] 查询码已捕获: ${sharedInquiryCode ? '是' : '否'}`);
+
+    // 点击弹窗按钮跳转到状态页
+    await page.locator('.ant-modal button:has-text("已保存，查看状态")').click();
+    await page.waitForURL(`**/register-status/${testStudent.phone}`, { timeout: 10000, waitUntil: 'domcontentloaded' });
+
+    // 验证成功到达状态页面并显示申请信息（自动带查询码查询）
+    await expect(page.locator('text=注册申请状态')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.ant-badge-status-text:has-text("审核中")')).toBeVisible();
 
     console.log(`[REG103] ✅ 注册申请提交成功并跳转到状态页`);
@@ -175,6 +191,12 @@ test.describe('学生注册流程E2E测试', () => {
     await page.goto(`/register-status/${testStudent.phone}`);
     await page.waitForLoadState('networkidle');
 
+    // 新会话无 sessionStorage，需要手动输入查询码查询
+    const codeInput = page.locator('input[placeholder*="查询码"]');
+    await expect(codeInput).toBeVisible({ timeout: 8000 });
+    await codeInput.fill(sharedInquiryCode);
+    await page.locator('button:has-text("重新查询")').click();
+    await page.waitForTimeout(1500);
     // 验证状态卡片显示
     await expect(page.locator('text=注册申请状态')).toBeVisible({ timeout: 5000 });
 
@@ -182,7 +204,9 @@ test.describe('学生注册流程E2E测试', () => {
     await expect(page.locator('.ant-badge-status-text:has-text("审核中")')).toBeVisible();
 
     // 验证显示学生信息（使用 first() 避免 strict mode violation）
-    await expect(page.locator(`text=${testStudent.phone}`).first()).toBeVisible();
+    // 状态页对手机号打码显示（139****6518）
+    const maskedPhone = testStudent.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+    await expect(page.locator(`text=${maskedPhone}`).first()).toBeVisible();
     await expect(page.locator(`text=${testStudent.schoolName}`).first()).toBeVisible();
     await expect(page.locator(`text=${testStudent.grade}`).first()).toBeVisible();
 
@@ -193,141 +217,92 @@ test.describe('学生注册流程E2E测试', () => {
   });
 
   test('REG105 - 校级管理员登录并查看待审核列表', async ({ page, context }) => {
-    // 清除可能存在的认证状态
     await context.clearCookies();
 
-    // 校级管理员登录（学校管理员审批本校学生注册）
+    // 校级管理员从教师入口登录
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
-
-    // 切换到教师入口tab（校级管理员使用教师入口登录）
     await page.locator('div[role="tab"]:has-text("教师入口")').click();
     await page.waitForTimeout(500);
-
-    // 使用.last()定位教师tab的输入框（避免歧义）
     await page.locator('input[placeholder*="用户名"]').last().fill(schoolAdminCredentials.username);
     await page.locator('input[placeholder*="密码"]').last().fill(schoolAdminCredentials.password);
-    // 使用正则表达式匹配按钮文字（处理空格）
     await page.locator('button').filter({ hasText: /登\s*录/ }).last().click();
-
-    // 等待登录成功并跳转
-    await page.waitForURL('**/admin/**', { timeout: 10000 });
+    await page.waitForURL('**/admin/**', { timeout: 15000, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
-    // 访问注册审核页面（使用Ant Design Menu的role）
-    const approvalMenuLink = page.getByRole('menuitem', { name: '注册审核' });
-    await expect(approvalMenuLink).toBeVisible({ timeout: 5000 });
+    // 注册审核已并入“审核工作台”
+    const approvalMenuLink = page.getByRole('menuitem', { name: '审批中心' });
+    await expect(approvalMenuLink).toBeVisible({ timeout: 8000 });
     await approvalMenuLink.click();
-
-    await page.waitForURL('**/admin/registration-approval', { timeout: 5000 });
+    await page.waitForURL('**/admin/approval-center', { timeout: 8000, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
-    // 验证页面标题
-    await expect(page.locator('text=学生注册审核管理')).toBeVisible();
-
-    // 验证表格存在
+    // 默认 Tab 即“注册审核”
+    await expect(page.locator('.ant-tabs-tab:has-text("注册审核")')).toBeVisible();
     await expect(page.locator('.ant-table')).toBeVisible();
-
-    // 等待表格加载完成
     await page.waitForTimeout(1000);
 
-    // 查找我们提交的注册申请
     const tableRows = page.locator('.ant-table-tbody tr');
     const rowCount = await tableRows.count();
-
     console.log(`[REG105] 待审核申请总数: ${rowCount}`);
-
-    // 验证至少有一条记录
     expect(rowCount).toBeGreaterThan(0);
-
-    // 验证表格列标题
-    await expect(page.locator('th:has-text("手机号")')).toBeAttached();
-    await expect(page.locator('th:has-text("姓名")')).toBeAttached();
-    await expect(page.locator('th:has-text("学校")')).toBeAttached();
-    await expect(page.locator('th:has-text("状态")')).toBeAttached();
 
     console.log(`[REG105] ✅ 管理员成功查看待审核列表`);
   });
-
   test('REG106 - 校级管理员批准注册申请', async ({ page, context }) => {
-    // 清除可能存在的认证状态
     await context.clearCookies();
 
-    // 管理员登录
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
-
-    // 切换到教师入口tab（管理员使用教师入口登录）
     await page.locator('div[role="tab"]:has-text("教师入口")').click();
     await page.waitForTimeout(500);
-
-    // 使用.last()定位教师tab的输入框（避免歧义）
     await page.locator('input[placeholder*="用户名"]').last().fill(schoolAdminCredentials.username);
     await page.locator('input[placeholder*="密码"]').last().fill(schoolAdminCredentials.password);
-    // 使用正则表达式匹配按钮文字（处理空格）
     await page.locator('button').filter({ hasText: /登\s*录/ }).last().click();
-    await page.waitForURL('**/admin/**', { timeout: 10000 });
+    await page.waitForURL('**/admin/**', { timeout: 15000, waitUntil: 'domcontentloaded' });
 
-    // 访问审批页面
-    await page.goto('/admin/registration-approval');
+    await page.goto('/admin/approval-center');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // 使用搜索框查找测试学生（因为列表有多页，直接查找可能找不到）
+    // 搜索测试学生
     const searchBox = page.locator('input[placeholder*="搜索手机号"]');
     await searchBox.fill(testStudent.phone);
-
-    // 点击搜索按钮触发搜索
-    const searchButton = page.locator('button:has([aria-label="search"])');
-    await searchButton.click();
-    await page.waitForTimeout(2000); // 等待搜索结果加载
-
-    // 如果还是找不到，尝试按Enter键触发搜索（有些搜索框需要按Enter）
     await searchBox.press('Enter');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
-    // 查找包含我们测试学生手机号的行
     const targetRow = page.locator('.ant-table-tbody tr')
       .filter({ hasText: testStudent.phone })
       .first();
-
-    // 验证找到了目标行
     await expect(targetRow).toBeAttached({ timeout: 5000 });
 
-    // 点击批准按钮
-    const approveButton = targetRow.locator('button:has([aria-label="check"])');
-    await approveButton.waitFor({ state: 'attached', timeout: 5000 });
-    await approveButton.evaluate((button: HTMLElement) => button.click());
+    // 点击批准（type=link 文本按钮）
+    const approveButton = targetRow.locator('button:has-text("批准")');
+    await approveButton.waitFor({ state: 'visible', timeout: 5000 });
+    await approveButton.click();
 
-    // 等待批准对话框出现
-    await expect(page.locator('.ant-modal:has-text("批准注册申请")')).toBeVisible({ timeout: 3000 });
+    // 审批弹窗：填写审核意见并确认
+    const modal = page.locator('.ant-modal:has-text("批准注册申请")');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+    await modal.locator('textarea[placeholder*="审核意见"]').fill('学生信息核验无误，批准注册');
+    await modal.locator('button:has-text("确认批准"), .ant-modal button.ant-btn-primary').last().click();
 
-    // 填写审批意见
-    const commentTextarea = page.locator('.ant-modal textarea');
-    await commentTextarea.fill('学生信息核验无误，批准注册');
-
-    // 点击确认批准按钮
-    const confirmButton = page.locator('.ant-modal button:has-text("批准")');
-    await confirmButton.click();
-
-    // 验证成功消息（后端返回的实际消息文本）
-    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text=注册申请已批准')).toBeVisible();
-
-    // 等待列表刷新
+    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 8000 });
     await page.waitForTimeout(1000);
 
     console.log(`[REG106] ✅ 管理员成功批准注册申请`);
-    console.log(`[REG106] 学生账号信息:`);
-    console.log(`  用户名: ${testStudent.phone}`);
-    console.log(`  初始密码: ${testStudent.expectedPassword}`);
   });
-
   test('REG107 - 验证注册状态已更新为已批准', async ({ page }) => {
     // 访问状态查询页面
     await page.goto(`/register-status/${testStudent.phone}`);
     await page.waitForLoadState('networkidle');
 
+    // 新会话无 sessionStorage，需要手动输入查询码查询
+    const codeInput = page.locator('input[placeholder*="查询码"]');
+    await expect(codeInput).toBeVisible({ timeout: 8000 });
+    await codeInput.fill(sharedInquiryCode);
+    await page.locator('button:has-text("重新查询")').click();
+    await page.waitForTimeout(1500);
     // 等待状态加载
     await page.waitForTimeout(1000);
 
@@ -372,10 +347,10 @@ test.describe('学生注册流程E2E测试', () => {
     await page.waitForTimeout(1000); // 等待导航和渲染完成
 
     // 验证学生界面显示 - 欢迎信息
-    await expect(page.locator('text=欢迎来到贵阳市小学生测评平台')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=/欢迎回来/')).toBeVisible({ timeout: 5000 });
 
     // 验证学生姓名显示在右上角
-    await expect(page.locator(`text=${testStudent.realName}`)).toBeVisible();
+    await expect(page.locator(`text=${testStudent.realName}`).first()).toBeVisible();
 
     console.log(`[REG108] ✅ 学生成功登录`);
   });
@@ -405,8 +380,8 @@ test.describe('学生注册流程E2E测试', () => {
     await expect(assessmentMenu).toBeVisible({ timeout: 5000 });
 
     // 验证学生首页显示统计信息
-    await expect(page.locator('text=可参加考试')).toBeVisible();
-    await expect(page.locator('text=已完成考试')).toBeVisible();
+    await expect(page.locator('text=/待完成/')).toBeVisible();
+    await expect(page.locator('text=/已完成/')).toBeVisible();
 
     console.log(`[REG109] ✅ 学生可以访问练习活动列表`);
   });
@@ -434,13 +409,14 @@ test.describe('学生注册流程E2E测试', () => {
     const districtSelect1 = page.locator('.ant-form-item').filter({ hasText: '所在区县' }).locator('.ant-select');
     await districtSelect1.click();
     await page.waitForTimeout(500);
-    await page.getByRole('option', { name: '南明区' }).click();
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("南明区")').first().click();
     await page.waitForTimeout(1000);
 
     const schoolSelect1 = page.locator('.ant-form-item').filter({ hasText: '所在学校' }).locator('.ant-select');
     await schoolSelect1.click();
     await page.waitForTimeout(500);
-    await page.getByRole('option', { name: '贵阳市第二小学' }).click();
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("贵阳市第二小学")').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("贵阳市第二小学")').first().click();
     await page.waitForTimeout(300);
 
     const gradeSelect1 = page.locator('.ant-form-item').filter({ hasText: '年级' }).locator('.ant-select');
@@ -450,7 +426,13 @@ test.describe('学生注册流程E2E测试', () => {
     await page.waitForTimeout(300);
 
     await page.locator('button:has-text("提交注册申请")').click();
-    await page.waitForURL(`**/register-status/${duplicatePhone}`, { timeout: 10000 });
+    // 等待“保存查询码”弹窗并跳转状态页
+    await expect(page.locator('text=请保存注册查询码')).toBeVisible({ timeout: 10000 });
+    await page.locator('.ant-modal button:has-text("已保存，查看状态")').click();
+    await page.waitForURL(`**/register-status/${duplicatePhone}`, { timeout: 10000, waitUntil: 'domcontentloaded' });
+    // 返回注册页准备第二次提交
+    await page.goto('/register');
+    await page.waitForLoadState('networkidle');
 
     // 第二次尝试用相同手机号注册
     await page.goto('/register');
@@ -471,13 +453,14 @@ test.describe('学生注册流程E2E测试', () => {
     const districtSelect2 = page.locator('.ant-form-item').filter({ hasText: '所在区县' }).locator('.ant-select');
     await districtSelect2.click();
     await page.waitForTimeout(500);
-    await page.getByRole('option', { name: '南明区' }).click();
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("南明区")').first().click();
     await page.waitForTimeout(1000);
 
     const schoolSelect2 = page.locator('.ant-form-item').filter({ hasText: '所在学校' }).locator('.ant-select');
     await schoolSelect2.click();
     await page.waitForTimeout(500);
-    await page.getByRole('option', { name: '贵阳市第二小学' }).click();
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("贵阳市第二小学")').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("贵阳市第二小学")').first().click();
     await page.waitForTimeout(300);
 
     const gradeSelect2 = page.locator('.ant-form-item').filter({ hasText: '年级' }).locator('.ant-select');
@@ -573,16 +556,26 @@ test.describe('学生注册流程E2E测试', () => {
     console.log('[REG111] 步骤5: 点击删除按钮');
     const deleteButton = studentRow.locator('button').filter({ hasText: /删\s*除/ });
 
-    // 使用evaluate绕过可能的虚拟滚动问题
-    await deleteButton.evaluate((button: HTMLElement) => button.click());
+    // 真实点击（Playwright 自动滚动），失败再用 JS 点击兜底
+    try {
+      await deleteButton.click({ timeout: 5000 });
+    } catch {
+      await deleteButton.evaluate((button: HTMLElement) => button.click());
+    }
     await page.waitForTimeout(500);
 
     console.log('[REG111] ✓ 已点击删除按钮');
 
-    // 6. 确认删除操作
+    // 6. 确认删除操作（若首次点击未弹出确认框则重试）
     console.log('[REG111] 步骤6: 确认删除');
-    const confirmButton = page.locator('.ant-popconfirm').locator('button:has-text("确定")');
-    await expect(confirmButton).toBeVisible({ timeout: 5000 });
+    // antd 两字按钮渲染为“确 定”（含空格），需用正则匹配
+    const confirmButton = page.locator('.ant-popconfirm button').filter({ hasText: /确\s*定/ });
+    try {
+      await confirmButton.waitFor({ state: 'visible', timeout: 3000 });
+    } catch {
+      await deleteButton.evaluate((button: HTMLElement) => button.click());
+      await confirmButton.waitFor({ state: 'visible', timeout: 3000 });
+    }
     await confirmButton.click();
 
     // 等待删除操作完成

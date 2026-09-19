@@ -15,7 +15,7 @@ async function loginAsStudent(page: Page) {
   await page.fill('input[placeholder="手机号"]', STUDENT.username);
   await page.fill('input[placeholder="密码"]', STUDENT.password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: 15000 });
+  await page.waitForURL('/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 }
 
 test('Debug: Capture console messages on achievement page', async ({ page }) => {

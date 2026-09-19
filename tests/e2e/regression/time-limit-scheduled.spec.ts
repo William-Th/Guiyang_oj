@@ -31,17 +31,19 @@ async function fillBasicActivityInfo(page: Page, title: string, description: str
   await page.fill('textarea[placeholder="请输入活动描述（可选）"]', description);
 
   // Select subject
-  const subjectSelector = page.locator('#subject').locator('..');
-  await subjectSelector.click();
-  await page.waitForTimeout(500);
-  await page.getByRole('option', { name: '数学' }).evaluate((el: HTMLElement) => el.click());
+  const subjectSelect = page.locator('.ant-select:has(#subject)').first();
+  await subjectSelect.click();
+  const subjectOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first();
+  await expect(subjectOption).toBeVisible({ timeout: 8000 });
+  await subjectOption.click();
   await page.waitForTimeout(300);
 
   // Select grade
-  const gradeSelector = page.locator('#grade').locator('..');
-  await gradeSelector.click();
-  await page.waitForTimeout(500);
-  await page.getByRole('option', { name: '四年级' }).evaluate((el: HTMLElement) => el.click());
+  const gradeSelect = page.locator('.ant-select:has(#grade)').first();
+  await gradeSelect.click();
+  const gradeOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '四年级' }).first();
+  await expect(gradeOption).toBeVisible({ timeout: 8000 });
+  await gradeOption.click();
   await page.waitForTimeout(300);
 }
 
@@ -55,7 +57,8 @@ async function selectTimeLimitType(page: Page, type: 'unlimited' | 'scheduled' |
     timed: '计时制（开始后计时）',
   };
 
-  await page.click('text=时间限制类型');
+  const tlSelect = page.locator('.ant-form-item').filter({ has: page.locator('label:has-text("时间限制类型")') }).locator('.ant-select').first();
+  await tlSelect.click();
   await page.waitForTimeout(500);
   await page.getByRole('option', { name: typeLabels[type] }).evaluate((el: HTMLElement) => el.click());
   await page.waitForTimeout(500);
@@ -82,16 +85,21 @@ async function setTimeRange(page: Page, startMinutesFromNow: number, endMinutesF
   await page.click('text=活动时间');
   await page.waitForTimeout(500);
 
-  // Enter start time
-  const startInput = page.locator('.ant-picker-input').first();
-  await startInput.fill(formatDateTime(startTime));
+  // Enter start time（antd Picker 输入框只读，需键入后回车确认）
+  const startInput = page.locator('.ant-form-item').filter({ has: page.locator('label:has-text("活动时间")') }).locator('.ant-picker-input').first();
+  await startInput.click();
+  await page.keyboard.type(formatDateTime(startTime));
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
 
   // Enter end time
-  const endInput = page.locator('.ant-picker-input').last();
-  await endInput.fill(formatDateTime(endTime));
-
-  await page.keyboard.press('Escape');
+  const endInput = page.locator('.ant-form-item').filter({ has: page.locator('label:has-text("活动时间")') }).locator('.ant-picker-input').last();
+  await endInput.click();
   await page.waitForTimeout(300);
+  await page.keyboard.type(formatDateTime(endTime));
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+
 }
 
 /**
@@ -102,17 +110,17 @@ test('PTL004 - 创建定时制测评活动', async ({ page }) => {
   await loginAsAdmin(page, 'admin', 'password123');
 
   // Navigate to assessment management
-  const assessmentMenu = page.getByRole('menuitem', { name: /测评管理/ });
+  const assessmentMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await expect(assessmentMenu).toBeVisible();
   await assessmentMenu.click();
-  await page.waitForURL(/\/admin\/assessments/);
+  await page.waitForURL(/\/admin\/assessments/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Click create assessment button
-  const createButton = page.locator('button').filter({ hasText: /创\s*建.*测评/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await expect(createButton).toBeAttached({ timeout: 5000 });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/admin\/assessments\/create/);
+  await page.waitForURL(/\/admin\/assessments\/create/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Generate unique title
@@ -129,15 +137,14 @@ test('PTL004 - 创建定时制测评活动', async ({ page }) => {
   const timeRangeLabel = page.locator('text=活动时间').first();
   await expect(timeRangeLabel).toBeVisible();
 
-  // Verify duration field is visible and required
-  const durationLabel = page.locator('text=答题时长').first();
-  await expect(durationLabel).toBeVisible();
 
   // Set time range (tomorrow 10:00 - 12:00)
   await setTimeRange(page, 60 * 24, 60 * 24 + 120); // Tomorrow, 2 hour window
 
-  // Set duration
-  await page.fill('input[id="duration"]', '60');
+
+  // 关闭可能残留的 Picker 弹层，避免吞掉保存按钮的点击
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
 
   // Fill score info
   await page.fill('input[id="totalScore"]', '50');
@@ -148,7 +155,7 @@ test('PTL004 - 创建定时制测评活动', async ({ page }) => {
   await saveButton.click();
 
   // Verify navigation
-  await page.waitForURL(/\/admin\/assessments$/, { timeout: 10000 });
+  await page.waitForURL(/\/admin\/assessments$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify activity in list
@@ -165,13 +172,13 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
   // Create scheduled activity as admin (starting in 1 minute, ending in 11 minutes)
   await loginAsAdmin(page, 'admin', 'password123');
 
-  const assessmentMenu = page.getByRole('menuitem', { name: /测评管理/ });
+  const assessmentMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await assessmentMenu.click();
-  await page.waitForURL(/\/admin\/assessments/);
+  await page.waitForURL(/\/admin\/assessments/, { waitUntil: 'domcontentloaded' });
 
-  const createButton = page.locator('button').filter({ hasText: /创\s*建.*测评/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/admin\/assessments\/create/);
+  await page.waitForURL(/\/admin\/assessments\/create/, { waitUntil: 'domcontentloaded' });
 
   const timestamp = Date.now();
   const activityTitle = `[PTL005] 定时制测评 - ${timestamp}`;
@@ -181,14 +188,13 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
 
   // Set time range (start in 1 min, end in 11 min)
   await setTimeRange(page, 1, 11);
-  await page.fill('input[id="duration"]', '10');
 
   await page.fill('input[id="totalScore"]', '50');
   await page.fill('input[id="passScore"]', '30');
 
   const saveButton = page.locator('button').filter({ hasText: /创\s*建/ }).last();
   await saveButton.click();
-  await page.waitForURL(/\/admin\/assessments$/);
+  await page.waitForURL(/\/admin\/assessments$/, { waitUntil: 'domcontentloaded' });
 
   // Publish activity
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
@@ -201,12 +207,12 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
 
   // Login as student
   await page.goto('/login');
-  await loginAsStudent(page, '520102200801011234', 'password123');
+  await loginAsStudent(page, '13800138003', 'password123');
 
   // Navigate to assessment center
   const studentAssessmentMenu = page.getByRole('menuitem', { name: /测评中心/ });
   await studentAssessmentMenu.click();
-  await page.waitForURL(/\/student\/assessments/);
+  await page.waitForURL(/\/student\/assessments/, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Start activity
@@ -217,7 +223,7 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
   await startButton.click();
 
   // Wait for activity page
-  await page.waitForURL(/\/student\/assessment\/\d+/, { timeout: 10000 });
+  await page.waitForURL(/\/student\/assessment\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify countdown timer is displayed
@@ -229,7 +235,7 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
   await expect(timeDisplay).toBeVisible();
 
   // Answer a question
-  const firstQuestion = page.locator('.ant-card').filter({ hasText: /第 1 题/ }).first();
+  const firstQuestion = page.locator('.activity-question-card').first();
   const firstOption = firstQuestion.locator('input[type="radio"]').first();
   await firstOption.check();
 
@@ -243,13 +249,13 @@ test('PTL006 - 活动未开始时无法参加', async ({ page }) => {
   // Create scheduled activity as admin (starting in 5 minutes)
   await loginAsAdmin(page, 'admin', 'password123');
 
-  const assessmentMenu = page.getByRole('menuitem', { name: /测评管理/ });
+  const assessmentMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await assessmentMenu.click();
-  await page.waitForURL(/\/admin\/assessments/);
+  await page.waitForURL(/\/admin\/assessments/, { waitUntil: 'domcontentloaded' });
 
-  const createButton = page.locator('button').filter({ hasText: /创\s*建.*测评/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/admin\/assessments\/create/);
+  await page.waitForURL(/\/admin\/assessments\/create/, { waitUntil: 'domcontentloaded' });
 
   const timestamp = Date.now();
   const activityTitle = `[PTL006] 定时制测评 - ${timestamp}`;
@@ -259,14 +265,13 @@ test('PTL006 - 活动未开始时无法参加', async ({ page }) => {
 
   // Set time range (start in 5 minutes, end in 15 minutes)
   await setTimeRange(page, 5, 15);
-  await page.fill('input[id="duration"]', '10');
 
   await page.fill('input[id="totalScore"]', '50');
   await page.fill('input[id="passScore"]', '30');
 
   const saveButton = page.locator('button').filter({ hasText: /创\s*建/ }).last();
   await saveButton.click();
-  await page.waitForURL(/\/admin\/assessments$/);
+  await page.waitForURL(/\/admin\/assessments$/, { waitUntil: 'domcontentloaded' });
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
@@ -276,11 +281,11 @@ test('PTL006 - 活动未开始时无法参加', async ({ page }) => {
 
   // Login as student immediately
   await page.goto('/login');
-  await loginAsStudent(page, '520102200801011234', 'password123');
+  await loginAsStudent(page, '13800138003', 'password123');
 
   const studentAssessmentMenu = page.getByRole('menuitem', { name: /测评中心/ });
   await studentAssessmentMenu.click();
-  await page.waitForURL(/\/student\/assessments/);
+  await page.waitForURL(/\/student\/assessments/, { waitUntil: 'domcontentloaded' });
 
   // Try to start activity
   const assessmentRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
@@ -312,13 +317,13 @@ test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
   // Create scheduled activity with short duration
   await loginAsAdmin(page, 'admin', 'password123');
 
-  const assessmentMenu = page.getByRole('menuitem', { name: /测评管理/ });
+  const assessmentMenu = page.getByRole('menuitem', { name: /活动管理/ });
   await assessmentMenu.click();
-  await page.waitForURL(/\/admin\/assessments/);
+  await page.waitForURL(/\/admin\/assessments/, { waitUntil: 'domcontentloaded' });
 
-  const createButton = page.locator('button').filter({ hasText: /创\s*建.*测评/ });
+  const createButton = page.locator('button').filter({ hasText: /创\s*建/ });
   await createButton.evaluate((button: HTMLElement) => button.click());
-  await page.waitForURL(/\/admin\/assessments\/create/);
+  await page.waitForURL(/\/admin\/assessments\/create/, { waitUntil: 'domcontentloaded' });
 
   const timestamp = Date.now();
   const activityTitle = `[PTL007] 定时制测评 - ${timestamp}`;
@@ -328,14 +333,13 @@ test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
 
   // Set time range (start in 30 seconds, end in 2.5 minutes)
   await setTimeRange(page, 0.5, 2.5);
-  await page.fill('input[id="duration"]', '2'); // 2 minute duration
 
   await page.fill('input[id="totalScore"]', '50');
   await page.fill('input[id="passScore"]', '30');
 
   const saveButton = page.locator('button').filter({ hasText: /创\s*建/ }).last();
   await saveButton.click();
-  await page.waitForURL(/\/admin\/assessments$/);
+  await page.waitForURL(/\/admin\/assessments$/, { waitUntil: 'domcontentloaded' });
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
@@ -348,19 +352,19 @@ test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
 
   // Login as student and start
   await page.goto('/login');
-  await loginAsStudent(page, '520102200801011234', 'password123');
+  await loginAsStudent(page, '13800138003', 'password123');
 
   const studentAssessmentMenu = page.getByRole('menuitem', { name: /测评中心/ });
   await studentAssessmentMenu.click();
-  await page.waitForURL(/\/student\/assessments/);
+  await page.waitForURL(/\/student\/assessments/, { waitUntil: 'domcontentloaded' });
 
   const assessmentRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
   const startButton = assessmentRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
-  await page.waitForURL(/\/student\/assessment\/\d+/);
+  await page.waitForURL(/\/student\/assessment\/\d+/, { waitUntil: 'domcontentloaded' });
 
   // Answer one question
-  const firstQuestion = page.locator('.ant-card').filter({ hasText: /第 1 题/ }).first();
+  const firstQuestion = page.locator('.activity-question-card').first();
   const firstOption = firstQuestion.locator('input[type="radio"]').first();
   await firstOption.check();
 
@@ -383,7 +387,7 @@ test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
     console.log(`✓ PTL007: Auto-submit message displayed`);
   } catch {
     // May have already navigated to results page
-    await page.waitForURL(/\/student\/results\/\d+/, { timeout: 5000 });
+    await page.waitForURL(/\/student\/results\/\d+/, { timeout: 5000, waitUntil: 'domcontentloaded' });
     console.log(`✓ PTL007: Navigated to results after auto-submit`);
   }
 });

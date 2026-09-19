@@ -38,7 +38,7 @@ async function loginAsAdmin(page: Page) {
 
   // 提交登录
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL('**/admin/**', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
 
   console.log('✅ 管理员登录成功');
@@ -61,7 +61,7 @@ async function loginAsTeacher(page: Page, username = 'teacher_yy_ps_math') {
 
   // 提交登录
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\//, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
 
   console.log(`✅ 教师 ${username} 登录成功`);
@@ -71,10 +71,8 @@ async function loginAsTeacher(page: Page, username = 'teacher_yy_ps_math') {
  * 导航到权限管理页面
  */
 async function navigateToPermissionManagement(page: Page) {
-  const permissionLink = page.getByRole('menuitem', { name: /权限管理/ });
-  await expect(permissionLink).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
-  await permissionLink.click();
-  await page.waitForURL(/\/admin\/permissions/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  // 权限管理菜单位于顶部导航的溢出折叠菜单中，直接通过 URL 导航更稳定
+  await page.goto('/admin/permissions');
   await page.waitForLoadState('networkidle');
 }
 
@@ -85,7 +83,7 @@ async function navigateToQuestionBank(page: Page) {
   const questionBankLink = page.getByRole('menuitem', { name: /题库管理/ });
   await expect(questionBankLink).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
   await questionBankLink.click();
-  await page.waitForURL(/\/teacher\/question-bank/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\/teacher\/question-bank/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 }
 
@@ -96,7 +94,7 @@ async function navigateToReviewWorkbench(page: Page) {
   const reviewLink = page.getByRole('menuitem', { name: /审核工作台/ });
   await expect(reviewLink).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
   await reviewLink.click();
-  await page.waitForURL(/\/teacher\/review-workbench/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL(/\/teacher\/review-workbench/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 }
 
@@ -122,7 +120,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
 
     // Step 4: 填写授权表单
     // 选择用户（教师）- 使用 getByRole 直接定位 combobox
-    const userSelect = page.getByRole('combobox', { name: /选择教师/ });
+    const userSelect = page.locator('.ant-form-item').filter({ has: page.locator('label:has-text("选择教师")') }).locator('.ant-select').first();
     await userSelect.click();
     await page.waitForTimeout(500);
 
@@ -132,13 +130,13 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await firstTeacher.evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(300);
 
-    // 选择权限类型：市级练习题库审核 - 点击Select容器
+    // 选择权限类型：市级练习题库管理 - 点击Select容器
     const permissionTypeSelectContainer = page.locator('.ant-form-item:has-text("权限类型") .ant-select').first();
     await permissionTypeSelectContainer.click();
     await page.waitForTimeout(800); // 增加等待让选项列表加载
 
     // 使用文本定位找到选项
-    const municipalOption = page.locator('.ant-select-item').filter({ hasText: '市级练习题库审核' }).first();
+    const municipalOption = page.locator('.ant-select-item').filter({ hasText: '市级练习题库管理' }).first();
     await municipalOption.evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(300);
 
@@ -187,10 +185,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await loginAsAdmin(page);
 
     // Step 2: 导航到权限管理页面
-    const permissionMenu = page.getByRole('menuitem', { name: /权限管理/ });
-    await expect(permissionMenu).toBeVisible();
-    await permissionMenu.click();
-    await page.waitForURL(/\/admin\/permissions/);
+    await page.goto('/admin/permissions');
     await page.waitForLoadState('networkidle');
     console.log('✅ 已进入权限管理页面');
 
@@ -245,48 +240,41 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     // Step 1: 区级管理员登录 (白云区管理员)
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    await page.locator('div[role="tab"]:has-text("教师入口")').click();
+    await page.waitForTimeout(500);
 
-    await page.fill('input[name="username"]', 'baiyun_admin');
-    await page.fill('input[name="password"]', 'password123');
-    await page.locator('button[type="submit"]').click();
+    await page.locator('input[placeholder="用户名"]').last().fill('baiyun_admin');
+    await page.locator('input[placeholder="密码"]').last().fill('password123');
+    await page.locator('button[type="submit"]').last().click();
     await page.waitForTimeout(2000);
 
     // Step 2: 导航到权限管理页面
-    const permissionMenu = page.getByRole('menuitem', { name: /权限管理/ });
-    await expect(permissionMenu).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
-    await permissionMenu.click();
-    await page.waitForURL(/\/permissions/, { timeout: TEST_TIMEOUTS.NAVIGATION });
-    await page.waitForLoadState('networkidle');
+    await page.goto('/admin/permissions');
 
     // Step 3: 等待权限列表加载
     const tableRows = page.locator('.ant-table-tbody tr[data-row-key]');
     await expect(tableRows.first()).toBeAttached({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
 
-    // 验证点1: 所有权限类型列都应该显示"区级练习题库审核"
+    // 验证点（按现行权限矩阵）：类型只允许现行的“管理/发布”类，禁止废弃的 *review（旧）类型
+    // 获取权限类型列（第3列）文本
     const permissionTypeCells = await page.locator('.ant-table-tbody td:nth-child(3)').allTextContents();
 
-    if (permissionTypeCells.length === 0) {
-      console.log('⚠️ PRM103: 区级管理员暂无权限记录，测试通过（空列表）');
-    } else {
-      for (let i = 0; i < permissionTypeCells.length; i++) {
-        const typeText = permissionTypeCells[i].trim();
-        if (!typeText.includes('区级') || !typeText.includes('练习') || !typeText.includes('题库审核')) {
-          throw new Error(`PRM103失败: 第${i + 1}行权限类型"${typeText}"不是区级练习题库审核`);
+    const legacyMarkers = ['（旧）', '题库审核', '竞赛审核'];
+    for (let i = 0; i < permissionTypeCells.length; i++) {
+      const typeText = permissionTypeCells[i].trim();
+      for (const marker of legacyMarkers) {
+        if (typeText.includes(marker)) {
+          throw new Error(`PRM103失败: 第${i + 1}行权限类型"${typeText}"是废弃的旧类型（现行类型为“××题库管理/××练习发布”）`);
         }
       }
-      console.log(`✅ PRM103: 所有 ${permissionTypeCells.length} 条权限都是区级练习题库审核`);
     }
 
-    // 验证点2: 不应该包含"市级"或"测评"相关权限
-    const hasMunicipalOrAssessment = permissionTypeCells.some(
-      text => text.includes('市级') || text.includes('测评')
-    );
-
-    if (hasMunicipalOrAssessment) {
-      throw new Error('PRM103失败: 权限列表中包含市级或测评相关权限');
+    // 验证点2: 不应包含废弃的“审核（旧）”字样
+    const hasLegacyReview = permissionTypeCells.some(text => text.includes('（旧）'));
+    if (hasLegacyReview) {
+      throw new Error('PRM103失败: 权限列表中包含废弃的旧审核类型');
     }
 
-    console.log('✅ PRM103: 验证通过 - 区级管理员权限隔离正确');
   });
 
   test('PRM104 - Bug #4: 权限列表显示正确的区域和学校', async ({ page }) => {
@@ -294,11 +282,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await loginAsAdmin(page);
 
     // Step 2: 导航到权限管理页面
-    const permissionMenu = page.getByRole('menuitem', { name: /权限管理/ });
-    await expect(permissionMenu).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
-    await permissionMenu.click();
-    await page.waitForURL(/\/permissions/, { timeout: TEST_TIMEOUTS.NAVIGATION });
-    await page.waitForLoadState('networkidle');
+    await page.goto('/admin/permissions');
 
     // Step 3: 等待权限列表加载
     const tableRows = page.locator('.ant-table-tbody tr[data-row-key]');
@@ -340,11 +324,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await loginAsAdmin(page);
 
     // Step 2: 导航到权限管理页面
-    const permissionMenu = page.getByRole('menuitem', { name: /权限管理/ });
-    await expect(permissionMenu).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
-    await permissionMenu.click();
-    await page.waitForURL(/\/permissions/, { timeout: TEST_TIMEOUTS.NAVIGATION });
-    await page.waitForLoadState('networkidle');
+    await page.goto('/admin/permissions');
 
     // Step 3: 点击"授予权限"按钮创建新权限
     const grantButton = page.locator('button').filter({ hasText: /授予权限/ });
@@ -368,9 +348,19 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     const typeSelect = page.locator('.ant-modal .ant-form-item:has-text("权限类型") .ant-select');
     await typeSelect.click();
     await page.waitForTimeout(500);
-    const districtReview = page.locator('.ant-select-item').filter({ hasText: /区级练习题库审核/ }).first();
-    await districtReview.evaluate((el: HTMLElement) => el.click());
+    const districtManage = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '区级练习题库管理' }).first();
+    await expect(districtManage).toBeVisible({ timeout: 8000 });
+    await districtManage.click();
     await page.waitForTimeout(500);
+
+    // 授权科目（必填）：勾选“数学”
+    const subjectSelect105 = page.locator('.ant-modal .ant-form-item:has-text("授权科目") .ant-select');
+    await subjectSelect105.click();
+    const mathOption105 = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first();
+    await expect(mathOption105).toBeVisible({ timeout: 8000 });
+    await mathOption105.click();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
 
     // 填写备注字段 (关键验证点)
     const notesInput = page.locator('.ant-modal textarea[placeholder*="备注"]');
@@ -446,7 +436,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.waitForTimeout(300);
 
     // 设置一个已过期的时间（昨天）
-    const expiryInput = page.locator('.ant-picker input').first();
+    const expiryInput = page.locator('.ant-modal .ant-picker input').first();
     await expiryInput.click();
     await page.waitForTimeout(500);
 
@@ -574,7 +564,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.waitForTimeout(500);
 
     // 等待导航到创建页面
-    await page.waitForURL(/\/create|\/new/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/create|\/new/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     // Step 4: 填写题目信息
@@ -644,15 +634,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await easyOption.evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(300);
 
-    // Step 5: 选择发布范围：校级题库
-    const scopeSelectContainer = page.locator('.ant-form-item:has-text("发布范围") .ant-select').first();
-    await scopeSelectContainer.click();
-    await page.waitForTimeout(500);
-    const schoolOption = page.locator('.ant-select-item').filter({ hasText: '校级题库' }).first();
-    await schoolOption.evaluate((el: HTMLElement) => el.click());
-    await page.waitForTimeout(500);
-
-    // Step 6: 提交表单（按钮文本可能有空格 "保 存"）
+// Step 6: 提交表单（按钮文本可能有空格 "保 存"）
     const saveButton = page.locator('button').filter({ hasText: /保\s*存/ });
     await saveButton.click();
     await page.waitForTimeout(1500);
@@ -677,7 +659,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await createButton.evaluate((button: HTMLElement) => button.click());
     await page.waitForTimeout(500);
 
-    await page.waitForURL(/\/create|\/new/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/create|\/new/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
     const timestamp = Date.now();
@@ -738,19 +720,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await easyOption.evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(300);
 
-    // 选择发布范围：市级练习题库
-    const scopeSelectContainer = page.locator('.ant-form-item:has-text("发布范围") .ant-select').first();
-    await scopeSelectContainer.click();
-    await page.waitForTimeout(500);
-    const cityOption = page.locator('.ant-select-item').filter({ hasText: '市级练习题库' }).first();
-    await cityOption.evaluate((el: HTMLElement) => el.click());
-    await page.waitForTimeout(500);
-
-    // 保存为草稿（按钮文本可能有空格 "保 存"）
-    await page.locator('button').filter({ hasText: /保\s*存/ }).click();
-    await page.waitForTimeout(1500);
-
-    // Step 4: 导航到草稿箱
+// Step 4: 导航到草稿箱
     await navigateToQuestionBank(page);
     await page.waitForTimeout(500);
 

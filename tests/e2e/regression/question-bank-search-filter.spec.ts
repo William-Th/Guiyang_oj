@@ -438,7 +438,7 @@ test.describe('Regression Tests - 题库搜索筛选功能 [管理员]', () => {
     await page.waitForTimeout(500);
 
     // 选择"区级练习"
-    const districtOption = page.locator('.ant-select-item-option:has-text("区级练习")').first();
+    const districtOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("区级练习")').first();
     if (await districtOption.count() > 0) {
       await districtOption.click();
       await page.waitForTimeout(500);
@@ -455,7 +455,7 @@ test.describe('Regression Tests - 题库搜索筛选功能 [管理员]', () => {
       await districtSelect.first().click();
       await page.waitForTimeout(500);
 
-      const districtOption = page.locator('.ant-select-item-option').first();
+      const districtOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first();
       if (await districtOption.count() > 0) {
         const districtName = await districtOption.textContent();
         await districtOption.click();

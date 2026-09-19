@@ -10,7 +10,7 @@ export async function loginAsStudent(page: Page) {
   await page.fill('input[placeholder="身份证号"]', TEST_CONFIG.STUDENT.idCard);
   await page.fill('input[placeholder="密码"]', TEST_CONFIG.STUDENT.password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 }
 
 /**
@@ -22,7 +22,7 @@ export async function loginAsTeacher(page: Page) {
   await page.fill('input[placeholder="用户名"]', TEST_CONFIG.TEACHER.username);
   await page.fill('input[placeholder="密码"]', TEST_CONFIG.TEACHER.password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION });
+  await page.waitForURL('/', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 }
 
 /**
@@ -41,7 +41,7 @@ export async function logout(page: Page) {
       const element = page.locator(selector);
       if (await element.isVisible({ timeout: 2000 })) {
         await element.click();
-        await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION });
+        await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
         return;
       }
     } catch (e) {
@@ -60,7 +60,7 @@ export async function logout(page: Page) {
         const logoutInDropdown = page.locator('text=退出登录, text=注销, text=登出');
         if (await logoutInDropdown.isVisible({ timeout: 2000 })) {
           await logoutInDropdown.click();
-          await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION });
+          await page.waitForURL('/login', { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
           return;
         }
       }

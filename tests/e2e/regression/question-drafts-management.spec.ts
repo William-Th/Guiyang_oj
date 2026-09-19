@@ -63,38 +63,34 @@ test.describe('Regression Tests - 草稿管理功能 [教师]', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
-    // 选择题型
-    const typeSelect = page.locator('.ant-select-selector').first();
-    await typeSelect.click();
-    await page.waitForTimeout(500);
-    const singleOption = page.locator('.ant-select-item-option:has-text("单选题")').first();
-    if (await singleOption.count() > 0) {
-      await singleOption.click();
-    }
+    // 选择题型（判断题无需填写选项，可快速创建）
+    await page.click('.ant-select:has(#type)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("判断题")').first().click();
 
-    // 选择科目
-    const subjectSelects = page.locator('.ant-select-selector');
-    if (await subjectSelects.count() >= 2) {
-      await subjectSelects.nth(1).click();
-      await page.waitForTimeout(300);
-      await page.locator('.ant-select-item-option').first().click();
-    }
+    await page.click('.ant-select:has(#subject)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("数学")').first().click();
+
+    await page.click('.ant-select:has(#grade)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("一年级")').first().click();
 
     // 填写题目内容
     const content = `【QBDF302-${uniqueId}】这是一道测试题目用于验证草稿功能`;
-    const textarea = page.locator('textarea').first();
-    await textarea.fill(content);
-    console.log('已填写题目内容');
+    await page.fill('textarea#content', content);
+    await page.check('label:has-text("正确") input[type="radio"]');
 
-    // 选择难度
-    const difficultySelect = page.locator('.ant-select').filter({ hasText: /选择难度/ }).or(
-      page.locator('.ant-select-selector')
-    ).last();
-    if (await difficultySelect.count() > 0) {
-      await difficultySelect.click();
-      await page.waitForTimeout(300);
-      await page.locator('.ant-select-item-option:has-text("简单")').first().click();
-    }
+    await page.click('.ant-select:has(#level)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("L1")').first().click();
+
+    await page.click('.ant-select:has(#difficulty)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("简单")').first().click();
+
+    await page.fill('input#suggested_score', '5');
+    console.log('已填写题目内容');
 
     // 保存草稿
     const saveButton = page.locator('button[type="submit"], button:has-text("保存")').first();
@@ -213,20 +209,31 @@ test.describe('Regression Tests - 草稿管理功能 [教师]', () => {
 
     const uniqueId = generateId();
 
-    // 快速填写题目
-    const typeSelect = page.locator('.ant-select-selector').first();
-    await typeSelect.click();
-    await page.waitForTimeout(500);
-    await page.locator('.ant-select-item-option').first().click();
+    // 快速填写题目（判断题无需填写选项）
+    await page.click('.ant-select:has(#type)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("判断题")').first().click();
 
-    const subjectSelects = page.locator('.ant-select-selector');
-    if (await subjectSelectors.count() >= 2) {
-      await subjectSelectors.nth(1).click();
-      await page.waitForTimeout(300);
-      await page.locator('.ant-select-item-option').first().click();
-    }
+    await page.click('.ant-select:has(#subject)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("数学")').first().click();
 
-    await page.locator('textarea').fill(`【QBDF304-${uniqueId}】用于测试删除的草稿`);
+    await page.click('.ant-select:has(#grade)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("一年级")').first().click();
+
+    await page.fill('textarea#content', `【QBDF304-${uniqueId}】用于测试删除的草稿`);
+    await page.check('label:has-text("正确") input[type="radio"]');
+
+    await page.click('.ant-select:has(#level)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("L1")').first().click();
+
+    await page.click('.ant-select:has(#difficulty)');
+    await page.waitForTimeout(300);
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("简单")').first().click();
+
+    await page.fill('input#suggested_score', '5');
 
     const saveButton = page.locator('button[type="submit"], button:has-text("保存")').first();
     if (await saveButton.count() > 0) {
@@ -254,7 +261,7 @@ test.describe('Regression Tests - 草稿管理功能 [教师]', () => {
         page.locator('button.ant-btn-link-danger')
       );
       if (await deleteButton.count() > 0) {
-        await deleteButton.first().click();
+        await deleteButton.first().evaluate((button: HTMLElement) => button.click());
         await page.waitForTimeout(500);
 
         // 确认删除

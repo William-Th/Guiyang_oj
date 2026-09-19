@@ -36,9 +36,15 @@ test.describe('Regression Tests - 题库创建功能', () => {
     });
     const partialMatch = page.locator(`.ant-select-item-option:has-text("${optionText}")`);
 
-    const optionToClick = (await exactMatch.count()) > 0 ? exactMatch.first() : partialMatch.first();
-    await optionToClick.click();
-    await page.waitForTimeout(300);
+    for (let attempt = 0; attempt < 12; attempt++) {
+      if ((await exactMatch.count()) > 0) { await exactMatch.first().click(); await page.waitForTimeout(300); return; }
+      if ((await partialMatch.count()) > 0) { await partialMatch.first().click(); await page.waitForTimeout(300); return; }
+      const listHolder = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .rc-virtual-list-holder').first();
+      await listHolder.hover();
+      await page.mouse.wheel(0, 160);
+      await page.waitForTimeout(150);
+    }
+    throw new Error(`下拉框 #${fieldId} 未找到选项: ${optionText}`);
   };
 
   test.beforeEach(async ({ page }) => {
@@ -64,15 +70,11 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 填写题目内容
     await page.fill('textarea#content', '1 + 1 = ?');
 
-    // 填写选项
+    // 填写选项（表单初始即有4个选项框）
     const options = page.locator('input[placeholder="选项内容"]');
     await options.nth(0).fill('1');
     await options.nth(1).fill('2');
-
-    // 添加更多选项
-    await page.click('button:has-text("添加选项")');
     await options.nth(2).fill('3');
-    await page.click('button:has-text("添加选项")');
     await options.nth(3).fill('4');
 
     // 选择正确答案 (选项B)
@@ -115,24 +117,20 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 选择单选题类型
     await selectAntOption(page, 'type', '单选题');
 
-    // 初始应该有2个选项
+    // 初始应该有4个选项
     let options = page.locator('input[placeholder="选项内容"]');
-    expect(await options.count()).toBe(2);
+    expect(await options.count()).toBe(4);
 
     // 添加选项
     await page.click('button:has-text("添加选项")');
     await page.waitForTimeout(300);
-    expect(await options.count()).toBe(3);
-
-    await page.click('button:has-text("添加选项")');
-    await page.waitForTimeout(300);
-    expect(await options.count()).toBe(4);
+    expect(await options.count()).toBe(5);
 
     // 删除一个选项
     const deleteButton = page.locator('.anticon-minus-circle').first();
     await deleteButton.click();
     await page.waitForTimeout(300);
-    expect(await options.count()).toBe(3);
+    expect(await options.count()).toBe(4);
   });
 
   // R304 - 多选题创建功能
@@ -141,22 +139,16 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await selectAntOption(page, 'type', '多选题');
 
     // 基本信息
-    await selectAntOption(page, 'subject', '物理');
+    await selectAntOption(page, 'subject', '信息科技');
     await selectAntOption(page, 'grade', '八年级');
-    await page.fill('textarea#content', '以下哪些是基本物理量？');
+    await page.fill('textarea#content', '以下哪些属于计算机的输入设备？');
 
-    // 填写选项
+    // 填写选项（表单初始即有4个选项框）
     const options = page.locator('input[placeholder="选项内容"]');
-    await options.nth(0).fill('质量');
-    await options.nth(1).fill('长度');
-
-    await page.click('button:has-text("添加选项")');
-    await page.waitForTimeout(500);
-    await options.nth(2).fill('速度');
-
-    await page.click('button:has-text("添加选项")');
-    await page.waitForTimeout(500);
-    await options.nth(3).fill('时间');
+    await options.nth(0).fill('键盘');
+    await options.nth(1).fill('鼠标');
+    await options.nth(2).fill('显示器');
+    await options.nth(3).fill('打印机');
 
     // Wait for all checkboxes to be rendered (should have 4 options now)
     await page.waitForTimeout(1000);
@@ -196,7 +188,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.waitForTimeout(1000);
 
     // 基本信息
-    await selectAntOption(page, 'subject', '化学');
+    await selectAntOption(page, 'subject', '数学');
     await selectAntOption(page, 'grade', '九年级');
     await page.fill('textarea#content', '水的化学式是____，它由____元素组成。');
 
@@ -240,9 +232,9 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await selectAntOption(page, 'type', '判断题');
 
     // 基本信息
-    await selectAntOption(page, 'subject', '生物');
+    await selectAntOption(page, 'subject', '信息科技');
     await selectAntOption(page, 'grade', '七年级');
-    await page.fill('textarea#content', '细胞是生命活动的基本单位。');
+    await page.fill('textarea#content', 'CPU 是计算机的中央处理器。');
 
     // 选择正确答案 - 正确
     await page.check('label:has-text("正确") input[type="radio"]');
@@ -295,7 +287,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await selectAntOption(page, 'type', '编程题');
 
     // 基本信息
-    await selectAntOption(page, 'subject', '计算机');
+    await selectAntOption(page, 'subject', '信息科技');
     await selectAntOption(page, 'grade', '八年级');
     await page.fill('textarea#content', '编写一个函数，计算斐波那契数列的第n项。');
 

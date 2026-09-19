@@ -68,10 +68,10 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
       await navigateToActivities(page);
 
       // 验证页面标题
-      await expect(page.locator('text=我的活动')).toBeVisible();
+      await expect(page.locator('text=练习管理')).toBeVisible();
 
       // 验证创建按钮存在
-      await expect(page.locator('button:has-text("创建练习")')).toBeVisible();
+      await expect(page.locator('button:has-text("创建活动")')).toBeVisible();
 
       console.log('✓ 教师可以访问活动管理页面');
     });
@@ -85,8 +85,8 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
       await navigateToActivities(page);
 
       // 点击创建练习按钮
-      await page.click('button:has-text("创建练习")');
-      await page.waitForURL(/\/activities\/create\/practice/);
+      await page.click('button:has-text("创建活动")');
+      await page.waitForURL(/\/activities\/create\/practice/, { waitUntil: 'domcontentloaded' });
 
       // 填写活动表单
       await page.fill('input[placeholder="请输入活动标题"]', `Smoke测试-练习活动-${Date.now()}`);
@@ -143,7 +143,7 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
       await createButton.click();
 
       // 等待创建成功并跳转回列表页
-      await page.waitForURL(/\/activities$/, { timeout: 10000 });
+      await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
 
       // 验证成功消息
       await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
@@ -213,10 +213,10 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
       await page.waitForLoadState('networkidle');
 
       // 验证创建测评按钮存在
-      const createAssessmentBtn = page.locator('button:has-text("创建测评")');
+      const createAssessmentBtn = page.locator('button:has-text("创建活动")');
       if (await createAssessmentBtn.count() > 0) {
         await createAssessmentBtn.click();
-        await page.waitForURL(/\/activities\/create\/assessment/);
+        await page.waitForURL(/\/activities\/create\/assessment/, { waitUntil: 'domcontentloaded' });
 
         // 填写测评活动表单
         await page.fill('input[placeholder="请输入活动标题"]', `Smoke测试-测评活动-${Date.now()}`);
@@ -257,7 +257,7 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
         await page.click('button:has-text("创建")');
 
         // 等待创建成功
-        await page.waitForURL(/\/activities$/, { timeout: 10000 });
+        await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
         await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
 
         console.log('✓ 测评活动创建成功');

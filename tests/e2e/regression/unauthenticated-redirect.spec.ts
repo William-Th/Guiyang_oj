@@ -19,7 +19,7 @@ test.describe('Regression Tests - 未登录用户重定向', () => {
     await page.goto('/');
 
     // 等待重定向完成
-    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证已重定向到登录页
     await expect(page).toHaveURL(/\/login/);
@@ -34,7 +34,7 @@ test.describe('Regression Tests - 未登录用户重定向', () => {
     await page.goto('/');
 
     // 等待重定向完成
-    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证已重定向到登录页
     await expect(page).toHaveURL(/\/login/);
@@ -49,7 +49,7 @@ test.describe('Regression Tests - 未登录用户重定向', () => {
     await page.goto('/teacher/question-bank');
 
     // 等待重定向完成
-    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证已重定向到登录页
     await expect(page).toHaveURL(/\/login/);
@@ -61,7 +61,7 @@ test.describe('Regression Tests - 未登录用户重定向', () => {
     await page.goto('/admin/home');
 
     // 等待重定向完成
-    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证已重定向到登录页
     await expect(page).toHaveURL(/\/login/);
@@ -73,7 +73,7 @@ test.describe('Regression Tests - 未登录用户重定向', () => {
     await page.goto('/student/activities');
 
     // 等待重定向完成
-    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION });
+    await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
 
     // 验证已重定向到登录页
     await expect(page).toHaveURL(/\/login/);
