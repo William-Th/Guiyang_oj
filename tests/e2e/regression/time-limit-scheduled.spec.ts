@@ -334,16 +334,18 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // 验证点：点击开始 → 后端时间闸门拒绝（活动尚未开始）
+    // 验证点：进入答题页后，未开始的活动无法作答/提交（后端 start 闸门拒绝创建作答记录）
     const rowsBeforeStart = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle });
     if (await rowsBeforeStart.count() > 0) {
       const startButton = rowsBeforeStart.first().locator('button').filter({ hasText: /开始/ });
       await startButton.click();
-      await page.waitForURL(/\/student\/assessment\//, { timeout: 10000, waitUntil: 'domcontentloaded' });
-      const gateShown = await page.evaluate(() => document.body.textContent.includes('活动尚未开始')).catch(() => false);
-      // 后端时间闸门 400 后前端立即返回列表，提示为瞬时；软校验记录即可
-      expect(gateShown || !page.url().includes('/student/assessment/')).toBeTruthy();
-      console.log(gateShown ? '✅ PTL006: 时间闸门提示已显示' : 'ℹ️  PTL006: 已离开答题页（访问控制生效）');
+      await page.waitForTimeout(2500);
+
+      const submitBtn = page.locator('button').filter({ hasText: /提交答案/ });
+      const gateMsg = await page.evaluate(() => document.body.textContent.includes('活动尚未开始')).catch(() => false);
+      const submitDisabled = (await submitBtn.count()) > 0 && (await submitBtn.first().isDisabled().catch(() => false));
+      expect(submitDisabled || gateMsg).toBeTruthy();
+      console.log('✅ PTL006: 未开始活动的作答/提交被阻断（时间闸门生效）');
     } else {
       // 列表按 start_time 过滤未显示该活动，同样视为隔离生效
       console.log('✅ PTL006: 未开始活动未出现在学生列表');
@@ -358,6 +360,8 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
  * Note: This test uses a short duration (3 minutes) for practical testing
  */
 test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
+  // 需真实等待 2.5 分钟时间窗口关闭后自动提交
+  test.setTimeout(480000);
   // Create scheduled activity with short duration
   await loginAsAdmin(page, 'admin', 'password123');
 
