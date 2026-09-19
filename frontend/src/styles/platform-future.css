@@ -1,0 +1,462 @@
+/*
+ * 全平台明亮未来感视觉层。
+ * 仅调整共享布局与 Ant Design 外观，不改变页面业务结构。
+ */
+
+.app-shell {
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: var(--bohe-text-primary);
+  background:
+    radial-gradient(circle at 8% 8%, rgba(122, 201, 156, 0.18), transparent 28%),
+    radial-gradient(circle at 90% 4%, rgba(77, 152, 153, 0.14), transparent 26%),
+    var(--bohe-bg-secondary);
+}
+
+/* 顶部导航 */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  height: 72px;
+  min-height: 72px;
+  gap: var(--bohe-space-4);
+  align-items: center;
+  padding: 0 var(--bohe-space-8) !important;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+  background:
+    radial-gradient(circle at 72% 0%, rgba(255, 255, 255, 0.2), transparent 32%),
+    linear-gradient(120deg, var(--bohe-mint-900) 0%, var(--bohe-gradient-start) 56%, var(--bohe-gradient-end) 100%) !important;
+  box-shadow: 0 12px 32px rgba(20, 83, 45, 0.16);
+}
+
+.app-header::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: '';
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.24) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(90deg, transparent, #000 42%, transparent);
+}
+
+.app-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.app-brand {
+  display: inline-flex;
+  flex: 0 1 auto;
+  gap: var(--bohe-space-3);
+  align-items: center;
+  min-width: 0;
+  margin-right: var(--bohe-space-4);
+  color: #fff;
+  font-size: var(--bohe-font-size-lg);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.app-brand-mark {
+  display: inline-flex;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--bohe-mint-900);
+  font-size: var(--bohe-font-size-xl);
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: var(--bohe-radius-lg);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(20, 83, 45, 0.2);
+}
+
+.app-brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-desktop-navigation.ant-menu {
+  flex: 1;
+  min-width: 0;
+  height: 72px;
+  color: rgba(255, 255, 255, 0.82);
+  border: 0;
+  background: transparent !important;
+}
+
+.app-desktop-navigation.ant-menu-horizontal::after {
+  display: none;
+}
+
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item,
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-submenu {
+  display: inline-flex;
+  height: 48px;
+  min-height: 48px;
+  align-items: center;
+  padding-inline: var(--bohe-space-4);
+  margin-block: var(--bohe-space-3);
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-weight: 500;
+  border-radius: var(--bohe-radius-lg);
+}
+
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item::after,
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-submenu::after {
+  display: none;
+}
+
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item:hover,
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-submenu:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item-selected {
+  color: var(--bohe-mint-900) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 8px 20px rgba(20, 83, 45, 0.18);
+}
+
+.app-desktop-navigation .ant-menu-title-content,
+.app-desktop-navigation .anticon {
+  color: inherit;
+}
+
+.app-header-user {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: var(--bohe-space-1) var(--bohe-space-2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--bohe-radius-full);
+  background: rgba(20, 83, 45, 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.app-header-user :where(.ant-btn),
+.app-user-menu-trigger {
+  min-width: 44px;
+  min-height: 44px;
+  color: #fff !important;
+}
+
+.app-header-user :where(.ant-avatar) {
+  color: var(--bohe-mint-900);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.app-mobile-navigation-trigger {
+  border-radius: var(--bohe-radius-lg);
+}
+
+.app-mobile-navigation-trigger:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* 移动导航抽屉 */
+.app-mobile-navigation-drawer .ant-drawer-header {
+  color: #fff;
+  border-bottom: 0;
+  background: linear-gradient(135deg, var(--bohe-mint-900), var(--bohe-gradient-start));
+}
+
+.app-mobile-navigation-drawer .ant-drawer-title,
+.app-mobile-navigation-drawer .ant-drawer-close {
+  color: #fff;
+}
+
+.app-mobile-navigation-drawer .ant-drawer-body {
+  padding: var(--bohe-space-4);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(122, 201, 156, 0.2), transparent 32%),
+    var(--bohe-bg-secondary);
+}
+
+.app-mobile-navigation-drawer .ant-menu {
+  padding: var(--bohe-space-2);
+  border-radius: var(--bohe-radius-xl);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.app-mobile-navigation-drawer .ant-menu-item {
+  min-height: 48px;
+  line-height: 48px;
+  border-radius: var(--bohe-radius-lg);
+}
+
+/* 页面画布 */
+.app-content {
+  position: relative;
+  padding: var(--bohe-space-8);
+  background:
+    radial-gradient(circle at 7% 4%, rgba(122, 201, 156, 0.16), transparent 24%),
+    radial-gradient(circle at 94% 10%, rgba(147, 51, 234, 0.06), transparent 20%),
+    linear-gradient(180deg, var(--bohe-mint-50), var(--bohe-bg-secondary) 320px) !important;
+}
+
+.app-content::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(77, 152, 153, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77, 152, 153, 0.1) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, #000, transparent 56%);
+}
+
+.app-page-surface {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1600px;
+  min-height: calc(100vh - 216px);
+  padding: 0;
+  margin: 0 auto;
+  background: transparent;
+}
+
+.app-page-surface > :where(div, main, section):not(.student-home):not(.activity-workspace):not(.wrong-questions-page) {
+  position: relative;
+}
+
+/* 共享组件：使用 :where 保持低优先级，让专项页面可覆盖 */
+.app-shell .app-page-surface :where(.ant-card) {
+  border-color: rgba(77, 152, 153, 0.18);
+  border-radius: var(--bohe-radius-xl);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 36px rgba(77, 152, 153, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.app-shell .app-page-surface :where(.ant-card-hoverable:hover) {
+  border-color: var(--bohe-mint-300);
+  box-shadow: 0 20px 48px rgba(77, 152, 153, 0.14);
+  transform: translateY(-2px);
+}
+
+.app-shell .app-page-surface :where(.ant-card-head) {
+  min-height: 56px;
+  border-bottom-color: rgba(77, 152, 153, 0.14);
+  background: linear-gradient(90deg, rgba(240, 253, 244, 0.78), rgba(255, 255, 255, 0.4));
+}
+
+.app-shell .app-page-surface :where(.ant-card-head-title) {
+  color: var(--bohe-text-primary);
+  font-size: var(--bohe-font-size-base);
+  font-weight: 600;
+}
+
+.app-shell .app-page-surface :where(.ant-table-wrapper) {
+  overflow: hidden;
+  border: 1px solid rgba(77, 152, 153, 0.14);
+  border-radius: var(--bohe-radius-xl);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.app-shell .app-page-surface :where(.ant-table-thead > tr > th) {
+  color: var(--bohe-text-primary);
+  font-weight: 600;
+  background: linear-gradient(180deg, var(--bohe-mint-50), rgba(220, 252, 231, 0.52));
+}
+
+.app-shell .app-page-surface :where(.ant-table-tbody > tr > td) {
+  border-bottom-color: rgba(77, 152, 153, 0.1);
+}
+
+.app-shell .app-page-surface :where(.ant-tabs-nav) {
+  min-height: 52px;
+  padding: var(--bohe-space-1);
+  border: 1px solid rgba(77, 152, 153, 0.14);
+  border-radius: var(--bohe-radius-xl);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.app-shell .app-page-surface :where(.ant-tabs-nav::before) {
+  display: none;
+}
+
+.app-shell .app-page-surface :where(.ant-tabs-tab) {
+  min-height: 44px;
+  padding: var(--bohe-space-2) var(--bohe-space-4);
+  border-radius: var(--bohe-radius-lg);
+}
+
+.app-shell .app-page-surface :where(.ant-tabs-tab-active) {
+  background: var(--bohe-mint-50);
+}
+
+.app-shell .app-page-surface :where(.ant-tabs-ink-bar) {
+  height: 3px;
+  border-radius: var(--bohe-radius-full);
+  background: linear-gradient(90deg, var(--bohe-mint-600), var(--bohe-gradient-start));
+}
+
+.app-shell .app-page-surface :where(.ant-btn) {
+  min-height: 44px;
+  border-radius: var(--bohe-radius-lg);
+  font-weight: 500;
+}
+
+.app-shell .app-page-surface :where(.ant-btn-primary) {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--bohe-mint-600), var(--bohe-gradient-start));
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.18);
+}
+
+.app-shell .app-page-surface :where(.ant-btn-primary:hover) {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, var(--bohe-mint-700), var(--bohe-mint-600)) !important;
+  transform: translateY(-1px);
+}
+
+.app-shell .app-page-surface :where(.ant-input),
+.app-shell .app-page-surface :where(.ant-input-affix-wrapper),
+.app-shell .app-page-surface :where(.ant-select-selector),
+.app-shell .app-page-surface :where(.ant-picker) {
+  min-height: 44px;
+  border-color: var(--bohe-border-primary);
+  border-radius: var(--bohe-radius-lg) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+}
+
+.app-shell .app-page-surface :where(.ant-tag) {
+  min-height: 28px;
+  padding-inline: var(--bohe-space-3);
+  line-height: 26px;
+  border-radius: var(--bohe-radius-full);
+}
+
+.app-shell .app-page-surface :where(.ant-alert) {
+  border-radius: var(--bohe-radius-lg);
+}
+
+.app-shell .app-page-surface :where(.ant-statistic-title),
+.app-shell .app-page-surface :where(.ant-typography-secondary) {
+  color: var(--bohe-text-secondary);
+}
+
+.app-shell .app-page-surface :where(h1, h2, h3, h4).ant-typography {
+  color: var(--bohe-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.app-shell .app-page-surface :where(.ant-pagination-item-active) {
+  border-color: var(--bohe-mint-500);
+  background: var(--bohe-mint-50);
+}
+
+.app-shell .app-page-surface :where(.ant-empty) {
+  padding-block: var(--bohe-space-8);
+}
+
+.app-footer {
+  color: var(--bohe-text-secondary) !important;
+  border-top: 1px solid rgba(77, 152, 153, 0.12);
+  background: linear-gradient(180deg, var(--bohe-bg-secondary), var(--bohe-mint-50)) !important;
+}
+
+@media (max-width: 1280px) {
+  .app-header {
+    padding-inline: var(--bohe-space-4) !important;
+  }
+
+  .app-brand-name {
+    display: none;
+  }
+
+  .app-brand {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-content {
+    padding: var(--bohe-space-6);
+  }
+
+  .app-header-user {
+    border-color: transparent;
+    background: transparent;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    height: 64px;
+    min-height: 64px;
+    gap: var(--bohe-space-2);
+    padding: 0 var(--bohe-space-2) !important;
+  }
+
+  .app-brand {
+    flex: 1;
+    gap: var(--bohe-space-2);
+    margin: 0;
+  }
+
+  .app-brand-name {
+    display: block;
+    font-size: var(--bohe-font-size-base);
+  }
+
+  .app-brand-mark {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .app-content {
+    padding: var(--bohe-space-2);
+  }
+
+  .app-shell .app-page-surface :where(.ant-table-wrapper) {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .app-page-surface {
+    min-height: calc(100vh - 176px);
+  }
+
+  .app-shell .app-page-surface :where(.ant-card) {
+    border-radius: var(--bohe-radius-lg);
+  }
+
+  .app-shell .app-page-surface :where(.ant-card-head),
+  .app-shell .app-page-surface :where(.ant-card-body) {
+    padding-inline: var(--bohe-space-3);
+  }
+
+  .app-shell .app-page-surface :where(.ant-tabs-nav) {
+    border-radius: var(--bohe-radius-lg);
+  }
+
+  .app-footer {
+    padding: var(--bohe-space-4) var(--bohe-space-2) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *,
+  .app-shell *::before,
+  .app-shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

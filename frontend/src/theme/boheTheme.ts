@@ -66,14 +66,23 @@ const boheTheme: ThemeConfig = {
     // 高亮色（用于选中背景）
     colorHighlight: mintColors[100],
 
+    // 明亮未来感基础界面
+    colorBgLayout: '#f9fafb',
+    colorBgContainer: '#ffffff',
+    colorBgElevated: '#ffffff',
+    colorText: '#1f2937',
+    colorTextSecondary: '#6b7280',
+    colorBorder: '#d1d5db',
+    colorBorderSecondary: '#e5e7eb',
+
     // 字体
     fontFamily: mintFontStack,
     fontSize: 14,
 
     // 圆角
-    borderRadius: 8,
-    borderRadiusLG: 12,
-    borderRadiusSM: 6,
+    borderRadius: 12,
+    borderRadiusLG: 16,
+    borderRadiusSM: 8,
 
     // 间距（基于 4px 网格）
     padding: 16,
@@ -86,7 +95,7 @@ const boheTheme: ThemeConfig = {
     marginXS: 8,
 
     // 控件尺寸（确保最小触摸目标 44px）
-    controlHeight: 40,
+    controlHeight: 44,
     controlHeightLG: 48,
     controlHeightSM: 32,
 
@@ -110,6 +119,7 @@ const boheTheme: ThemeConfig = {
       itemSelectedBg: mintColors[50],
       itemSelectedColor: mintColors[700],
       itemHoverBg: mintColors[50],
+      itemBorderRadius: 12,
     },
     // 标签页
     Tabs: {
@@ -141,11 +151,14 @@ const boheTheme: ThemeConfig = {
     },
     // 卡片
     Card: {
-      borderRadiusLG: 12,
+      borderRadiusLG: 16,
+      headerBg: 'transparent',
     },
     // 表格
     Table: {
-      headerBg: '#fafafa',
+      headerBg: mintColors[50],
+      headerColor: '#374151',
+      headerSplitColor: '#dcfce7',
       rowHoverBg: mintColors[50],
     },
     // 输入框

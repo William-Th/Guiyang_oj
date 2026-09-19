@@ -16,8 +16,16 @@ import {
   Spin,
   Typography,
   Tabs,
+  List,
 } from 'antd';
-import { ReloadOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  DeleteOutlined,
+  ExperimentOutlined,
+  FireOutlined,
+  ReloadOutlined,
+  TrophyOutlined,
+} from '@ant-design/icons';
 import { wrongQuestionApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -98,9 +106,11 @@ const WrongQuestionsPage: React.FC = () => {
   const [redoing, setRedoing] = useState<WrongQuestion | null>(null);
   const [answer, setAnswer] = useState<any>('');
   const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const [l, s] = await Promise.all([
         wrongQuestionApi.list({ subject: subjectFilter, status: statusTab, limit: 100 }),
@@ -109,6 +119,7 @@ const WrongQuestionsPage: React.FC = () => {
       setList(l.data || []);
       setStats(s.data || { total: 0, bySubject: [] });
     } catch (e: any) {
+      setLoadError(true);
       message.error(e.response?.data?.error || '加载失败');
     } finally {
       setLoading(false);
@@ -182,13 +193,33 @@ const WrongQuestionsPage: React.FC = () => {
     });
   };
 
+  const renderActions = (question: WrongQuestion) => {
+    if (statusTab === 'removed') {
+      return <Text type="secondary">已移除</Text>;
+    }
+
+    return (
+      <Space className="wrong-question-card__actions" wrap>
+        <Button type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(question)}>
+          {statusTab === 'mastered' ? '再练一次' : '重新作答'}
+        </Button>
+        {statusTab === 'active' && (
+          <Button icon={<CheckOutlined />} onClick={() => handleMastered(question)}>标记掌握</Button>
+        )}
+        {statusTab === 'active' && (
+          <Button danger icon={<DeleteOutlined />} onClick={() => handleRemove(question)}>移除</Button>
+        )}
+      </Space>
+    );
+  };
+
   const columns: ColumnsType<WrongQuestion> = [
     {
       title: '题目',
       dataIndex: 'content',
       render: (c: string) => (
         <div
-          style={{ maxWidth: 400 }}
+          className="wrong-question-title"
           dangerouslySetInnerHTML={{ __html: c && c.length > 80 ? c.slice(0, 80) + '...' : c }}
         />
       ),
@@ -209,79 +240,130 @@ const WrongQuestionsPage: React.FC = () => {
     },
     {
       title: '操作',
-      width: 230,
-      render: (_: any, r: WrongQuestion) => {
-        // 已移除的题不可操作；已掌握的可重做复习；活跃的可重做/掌握/移除
-        if (statusTab === 'removed') {
-          return <Text type="secondary">已移除</Text>;
-        }
-        return (
-          <Space>
-            <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(r)}>
-              {statusTab === 'mastered' ? '练习' : '重做'}
-            </Button>
-            {statusTab === 'active' && (
-              <Button size="small" icon={<CheckOutlined />} onClick={() => handleMastered(r)}>掌握</Button>
-            )}
-            {statusTab === 'active' && (
-              <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleRemove(r)}>移除</Button>
-            )}
-          </Space>
-        );
-      },
+      width: 320,
+      render: (_: any, r: WrongQuestion) => renderActions(r),
     },
   ];
 
   return (
-    <div>
-      <Title level={3}>错题集</Title>
-      <Card style={{ marginBottom: 16 }}>
-        <Space>
-          <Text>科目筛选：</Text>
-          <Select
-            allowClear
-            showSearch
-            placeholder="全部科目"
-            style={{ width: 180 }}
-            value={subjectFilter}
-            onChange={setSubjectFilter}
-            options={SUBJECT_OPTIONS}
+    <main className="wrong-questions-page" aria-labelledby="wrong-questions-title">
+      <header className="wrong-questions-page__hero">
+        <div>
+          <span className="wrong-questions-page__eyebrow">
+            <ExperimentOutlined aria-hidden="true" /> 错题实验室
+          </span>
+          <Title id="wrong-questions-title" level={1}>错题巩固站</Title>
+          <Typography.Paragraph>
+            错题不是失败记录，而是下一次进步最清楚的线索。选择一道题，再试一次。
+          </Typography.Paragraph>
+        </div>
+        <div className="wrong-questions-page__hero-stat" aria-label="错题学习概览">
+          <div className="wrong-questions-page__metric">
+            <strong>{stats.byStatus?.active ?? 0}</strong>
+            <span><FireOutlined /> 待巩固</span>
+          </div>
+          <div className="wrong-questions-page__metric">
+            <strong>{stats.byStatus?.mastered ?? 0}</strong>
+            <span><TrophyOutlined /> 已掌握</span>
+          </div>
+        </div>
+      </header>
+
+      <Card className="wrong-questions-page__controls">
+        <div className="wrong-questions-page__toolbar">
+          <div className="wrong-questions-page__filter">
+            <Text>选择科目</Text>
+            <Select
+              allowClear
+              showSearch
+              placeholder="全部科目"
+              value={subjectFilter}
+              onChange={setSubjectFilter}
+              options={SUBJECT_OPTIONS}
+              aria-label="选择错题科目"
+            />
+          </div>
+          <Tabs
+            className="wrong-questions-page__tabs"
+            activeKey={statusTab}
+            onChange={(key) => setStatusTab(key)}
+            items={[
+              { key: 'active', label: `待巩固（${stats.byStatus?.active ?? 0}）` },
+              { key: 'mastered', label: `已掌握（${stats.byStatus?.mastered ?? 0}）` },
+              { key: 'removed', label: `已移除（${stats.byStatus?.removed ?? 0}）` },
+            ]}
           />
-        </Space>
+        </div>
       </Card>
-      <Tabs
-        activeKey={statusTab}
-        onChange={(k) => setStatusTab(k)}
-        style={{ marginBottom: 16 }}
-        items={[
-          { key: 'active', label: `活跃错题（${stats.byStatus?.active ?? 0}）` },
-          { key: 'mastered', label: `已掌握（${stats.byStatus?.mastered ?? 0}）` },
-          { key: 'removed', label: `已移除（${stats.byStatus?.removed ?? 0}）` },
-        ]}
-      />
-      <Card>
+
+      {loadError && (
+        <Alert
+          type="warning"
+          showIcon
+          message="错题暂时没有加载出来"
+          description="请检查网络连接后刷新页面。"
+          action={<Button onClick={() => void fetchData()}>重新加载</Button>}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      <Card className="wrong-questions-page__content">
         {loading ? (
-          <Spin />
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <Spin size="large" tip="正在整理错题..." />
+          </div>
         ) : list.length ? (
-          <Table
-            columns={columns}
-            dataSource={list}
-            rowKey="id"
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 900 }}
-          />
+          <>
+            <div className="wrong-questions-page__desktop-table">
+              <Table
+                columns={columns}
+                dataSource={list}
+                rowKey="id"
+                pagination={{ pageSize: 10 }}
+                scroll={{ x: 1040 }}
+              />
+            </div>
+            <List
+              className="wrong-questions-page__mobile-list"
+              dataSource={list}
+              pagination={{ pageSize: 6, size: 'small' }}
+              renderItem={(item) => (
+                <List.Item>
+                  <article className="wrong-question-card">
+                    <div className="wrong-question-card__meta">
+                      <Tag color="cyan">{item.subject}</Tag>
+                      <Tag color={difficultyMap[item.difficulty]?.color}>
+                        {difficultyMap[item.difficulty]?.text || item.difficulty}
+                      </Tag>
+                      <Tag>{TYPE_LABEL[item.type] || item.type}</Tag>
+                    </div>
+                    <div
+                      className="wrong-question-card__content"
+                      dangerouslySetInnerHTML={{ __html: item.content || '' }}
+                    />
+                    <div className="wrong-question-card__footer">
+                      <Text type="secondary">累计答错 {item.error_count} 次</Text>
+                      {renderActions(item)}
+                    </div>
+                  </article>
+                </List.Item>
+              )}
+            />
+          </>
         ) : (
-          <Empty description="暂无错题，继续加油！" />
+          <Empty description={statusTab === 'active' ? '当前没有待巩固的错题，继续保持' : '这个分类里暂时没有题目'} />
         )}
       </Card>
       <Modal
-        title="重做错题"
+        title="重新挑战这道题"
         open={!!redoing}
         onOk={handleRedo}
         onCancel={() => setRedoing(null)}
         confirmLoading={submitting}
-        okText="提交"
+        okText="提交答案"
         cancelText="取消"
+        width={680}
+        wrapClassName="wrong-question-redo-modal"
       >
         {redoing && (() => {
           const opts = normalizeOptions(redoing.options);
@@ -297,7 +379,7 @@ const WrongQuestionsPage: React.FC = () => {
                 {redoing.type && <Tag>{TYPE_LABEL[redoing.type] || redoing.type}</Tag>}
               </Space>
               <div
-                style={{ marginBottom: 16, fontSize: 16, lineHeight: 1.8 }}
+                className="wrong-question-redo-modal__content"
                 dangerouslySetInnerHTML={{ __html: redoing.content || '' }}
               />
               {unsupported ? (
@@ -345,7 +427,7 @@ const WrongQuestionsPage: React.FC = () => {
           );
         })()}
       </Modal>
-    </div>
+    </main>
   );
 };
 

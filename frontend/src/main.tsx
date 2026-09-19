@@ -6,6 +6,7 @@ import App from './App';
 import boheTheme from './theme/boheTheme';
 import './theme/variables.css';
 import './styles/index.css';
+import './styles/platform-future.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -15,7 +15,6 @@ import {
   Typography,
   Divider,
   Progress,
-  Affix,
   Image,
 } from 'antd';
 import {
@@ -31,7 +30,7 @@ import type { CodeQuestionData } from '../../components/CodeQuestion';
 import type { ActivityQuestion, StudentActivity } from '../../types/activity';
 
 const { TextArea } = Input;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 /**
  * LocalStorage helper functions for answer persistence
@@ -214,7 +213,7 @@ const TakeActivityPage: React.FC = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!hasStartedRef.current) return;
       e.preventDefault();
-      e.returnValue = '您还有未提交的答案，确定要离开吗？';
+      e.returnValue = '你还有未提交的答案，确定要离开吗？';
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -515,7 +514,7 @@ const TakeActivityPage: React.FC = () => {
       content: (
         <div>
           <p>
-            您已完成 {answeredCount} / {activity.questions.length} 题
+            你已完成 {answeredCount} / {activity.questions.length} 题
           </p>
           <p>提交后将无法再修改答案，确认提交吗？</p>
         </div>
@@ -574,7 +573,7 @@ const TakeActivityPage: React.FC = () => {
     return (
       <Alert
         message="活动不存在"
-        description="未找到该活动或您无权访问"
+        description="未找到该活动，或你暂时无法访问"
         type="error"
         showIcon
       />
@@ -629,89 +628,37 @@ const TakeActivityPage: React.FC = () => {
   const questionGroups = groupQuestionsByType();
 
   return (
-    <div style={{ display: 'flex', gap: '16px', padding: '24px', fontSize: '16px', overflowX: 'hidden' }}>
+    <main className="activity-workspace" aria-labelledby="activity-title">
       {/* Left Sidebar - Question Navigation */}
-      <Affix offsetTop={24}>
+      <aside className="activity-workspace__sidebar" aria-label="答题导航">
         <Card
-          title={<span style={{ fontSize: '15px', fontWeight: 'bold' }}>答题卡</span>}
-          style={{ width: 220, maxHeight: 'calc(100vh - 80px)', overflow: 'visible' }}
+          className="activity-question-nav"
+          title={<span className="activity-question-nav__title">答题卡</span>}
           size="small"
-          bodyStyle={{ padding: '12px' }}
         >
-          <div style={{ overflowX: 'hidden' }}>
+          <div>
             {Object.entries(questionGroups).map(([typeName, questions]) => (
-              <div key={typeName} style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 500 }}>
+              <div key={typeName} className="activity-question-nav__group">
+                <div className="activity-question-nav__group-label">
                   {typeName} ({questions.length})
                 </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: '6px'
-                }}>
+                <div className="activity-question-nav__grid">
                   {questions.map(({ question, index }) => {
                     const isAnswered = answeredQuestions.has(index);
                     const isCurrent = index === currentQuestionIndex;
-
-                    // Determine button style based on state
-                    // Use type="default" to avoid Ant Design overriding custom styles
-                    let buttonStyle: React.CSSProperties = {
-                      padding: '4px 8px',
-                      height: '36px',
-                      minWidth: 'unset',
-                      fontSize: '15px',
-                      fontWeight: isAnswered ? 'bold' : 'normal',
-                    };
-
-                    let buttonType: 'default' | 'dashed' = 'dashed';
-
-                    if (isCurrent && isAnswered) {
-                      // Current + Answered: 蓝色高亮（当前正在看这道题）
-                      buttonType = 'default';
-                      buttonStyle = {
-                        ...buttonStyle,
-                        backgroundColor: '#16a34a',
-                        borderColor: '#16a34a',
-                        color: '#fff',
-                        borderWidth: '2px',
-                        borderStyle: 'solid',
-                        fontWeight: 'bold',
-                        boxShadow: '0 2px 6px rgba(22, 119, 255, 0.4)',
-                      };
-                    } else if (isCurrent && !isAnswered) {
-                      // Current + Not Answered: 橙色边框提示（当前题待作答）
-                      buttonType = 'default';
-                      buttonStyle = {
-                        ...buttonStyle,
-                        backgroundColor: '#fff7e6',
-                        borderColor: '#fa8c16',
-                        color: '#fa8c16',
-                        borderWidth: '3px',
-                        borderStyle: 'solid',
-                        fontWeight: 'bold',
-                        boxShadow: '0 2px 6px rgba(250, 140, 22, 0.3)',
-                      };
-                    } else if (!isCurrent && isAnswered) {
-                      // Not Current + Answered: 绿色背景（已完成）
-                      buttonType = 'default';
-                      buttonStyle = {
-                        ...buttonStyle,
-                        backgroundColor: '#f6ffed',
-                        borderColor: '#b7eb8f',
-                        color: '#52c41a',
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                      };
-                    }
-                    // else: dashed (default for unanswered)
+                    const stateClass = isCurrent
+                      ? (isAnswered
+                        ? 'activity-question-nav__button--current'
+                        : 'activity-question-nav__button--current-pending')
+                      : (isAnswered ? 'activity-question-nav__button--answered' : '');
 
                     return (
                       <Button
                         key={question.id}
-                        size="small"
-                        type={buttonType}
+                        className={`activity-question-nav__button ${stateClass}`}
                         onClick={() => scrollToQuestion(index)}
-                        style={buttonStyle}
+                        aria-label={`第 ${index + 1} 题${isAnswered ? '，已作答' : '，未作答'}`}
+                        aria-current={isCurrent ? 'step' : undefined}
                       >
                         {getQuestionDisplayNumber(index)}
                       </Button>
@@ -722,44 +669,39 @@ const TakeActivityPage: React.FC = () => {
             ))}
           </div>
 
-          <Divider style={{ margin: '12px 0' }} />
+          <Divider />
 
-          <div style={{ fontSize: '13px', color: '#666', textAlign: 'center' }}>
-            <div style={{ marginBottom: '6px' }}>
-              <span style={{ color: '#52c41a', fontWeight: 'bold' }}>●</span> 已答 {answeredCount}
-            </div>
-            <div>
-              <span style={{ color: '#d9d9d9' }}>○</span> 未答 {activity.questions.length - answeredCount}
-            </div>
+          <div className="activity-question-nav__summary">
+            <span>已答 <strong>{answeredCount}</strong></span>
+            <span>未答 <strong>{activity.questions.length - answeredCount}</strong></span>
           </div>
         </Card>
-      </Affix>
+      </aside>
 
       {/* Main Content */}
-      <div style={{ flex: 1, marginLeft: 'auto', maxWidth: 1200, overflowX: 'hidden' }}>
+      <div className="activity-workspace__main">
         {/* Submit Button - Fixed at top */}
-        <Card style={{ marginBottom: 16 }}>
-          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+        <Card className="activity-hero-card">
+          <div className="activity-hero-card__content">
             <div>
-              <Title level={4} style={{ margin: 0 }}>
+              <Title id="activity-title" level={1}>
                 {activity.title}
               </Title>
               {activity.description && (
-                <Paragraph style={{ margin: 0, marginBottom: 8 }}>
+                <Paragraph className="activity-hero-card__description">
                   {activity.description}
                 </Paragraph>
               )}
-              <Space split={<Divider type="vertical" />}>
-                <Text>科目: {activity.subject}</Text>
-                <Text>年级: {activity.grade}</Text>
-                <Text>总分: {activity.total_score}</Text>
-                <Text>及格分: {activity.pass_score}</Text>
-              </Space>
+              <div className="activity-meta">
+                <span className="activity-meta__item">科目：{activity.subject}</span>
+                <span className="activity-meta__item">年级：{activity.grade}</span>
+                <span className="activity-meta__item">总分：{activity.total_score}</span>
+                <span className="activity-meta__item">及格分：{activity.pass_score}</span>
+              </div>
             </div>
-            <Space>
+            <div className="activity-hero-card__actions">
               <Button
                 type="default"
-                size="large"
                 onClick={() => navigate(-1)}
                 disabled={submitting}
               >
@@ -767,7 +709,6 @@ const TakeActivityPage: React.FC = () => {
               </Button>
               <Button
                 type="primary"
-                size="large"
                 icon={<CheckCircleOutlined />}
                 onClick={handleSubmit}
                 loading={submitting}
@@ -775,12 +716,12 @@ const TakeActivityPage: React.FC = () => {
               >
                 提交答案 ({answeredCount}/{activity.questions.length})
               </Button>
-            </Space>
-          </Space>
+            </div>
+          </div>
         </Card>
 
         {/* Time and Status Info */}
-        <Card style={{ marginBottom: 16 }}>
+        <Card className="activity-status-card">
           <Space direction="vertical" style={{ width: '100%' }} size="small">
             {/* Time limit info */}
             {deadline && (
@@ -795,7 +736,7 @@ const TakeActivityPage: React.FC = () => {
             {activity.time_limit_type === 'unlimited' && (
               <Alert
                 message="无时间限制"
-                description="您可以随时保存并继续答题"
+                description="你可以随时保存并继续答题"
                 type="info"
                 showIcon
               />
@@ -816,7 +757,7 @@ const TakeActivityPage: React.FC = () => {
             {hasLocalBackup && !networkError && (
               <Alert
                 message="答案已本地备份"
-                description="您的答案已自动保存到本地，即使刷新页面也不会丢失"
+                description="你的答案已自动保存到本地，即使刷新页面也不会丢失"
                 type="success"
                 showIcon
                 closable
@@ -866,16 +807,11 @@ const TakeActivityPage: React.FC = () => {
               }, 0);
 
               return (
-                <div key={typeName} style={{ marginBottom: 40 }}>
+                <section key={typeName} className="activity-section" aria-labelledby={`section-${groupIndex}`}>
                   {/* Type Section Header */}
-                  <div style={{
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    marginBottom: 20,
-                    paddingBottom: 10,
-                    borderBottom: '2px solid #e8e8e8'
-                  }}>
-                    {sectionLabel}、{typeName}（共{typeQuestionCount}题，共{typeTotalScore}分）
+                  <div className="activity-section__header" id={`section-${groupIndex}`}>
+                    <span className="activity-section__index">{sectionLabel}</span>
+                    <span>{typeName}（共 {typeQuestionCount} 题，共 {typeTotalScore} 分）</span>
                   </div>
 
                   {/* Questions in this type */}
@@ -888,28 +824,29 @@ const TakeActivityPage: React.FC = () => {
                         key={`card-${index}-${question.id}`}
                         ref={(el: any) => (questionRefs.current[index] = el)}
                         id={`question-${index}`}
-                        style={{ marginBottom: 24 }}
+                        className="activity-question-card"
                       >
                         {/* Question Header */}
-                        <div style={{ marginBottom: 12, fontSize: '16px' }}>
-                          <span style={{ fontWeight: 'bold' }}>
-                            {typeIndex + 1}. {question.content}
+                        <div className="activity-question-card__header">
+                          <span className="activity-question-card__number">{typeIndex + 1}</span>
+                          <span className="activity-question-card__content">
+                            {question.content}
                           </span>
-                          <span style={{ marginLeft: 12, color: '#999', fontSize: '14px' }}>
-                            ({typeof (question as any).max_score === 'string' ? (question as any).max_score : (question as any).max_score || question.score}分)
+                          <span className="activity-question-card__score">
+                            {typeof (question as any).max_score === 'string' ? (question as any).max_score : (question as any).max_score || question.score} 分
                           </span>
                           {answeredQuestions.has(index) && (
-                            <CheckOutlined style={{ color: '#52c41a', marginLeft: 8 }} />
+                            <CheckOutlined className="activity-question-card__complete" aria-label="已作答" />
                           )}
                         </div>
 
                         {/* 题目插图 */}
                         {(question as any).image_url && (
-                          <div style={{ margin: '8px 0 16px' }}>
+                          <div className="activity-question-card__image">
                             <Image
                               src={(question as any).image_url}
                               alt="题目图片"
-                              style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                              style={{ maxWidth: '100%', maxHeight: 300 }}
                             />
                           </div>
                         )}
@@ -922,13 +859,13 @@ const TakeActivityPage: React.FC = () => {
                             preserve={false}
                             style={{ marginBottom: 0, fontSize: '16px' }}
                           >
-                            <Radio.Group style={{ width: '100%' }}>
-                              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                            <Radio.Group className="activity-answer-options">
+                              <Space direction="vertical" style={{ width: '100%' }} size="middle">
                                 {question.options.map((option, optIndex) => (
                                   <Radio
                                     key={`${index}-${optIndex}`}
                                     value={String.fromCharCode(65 + optIndex)}
-                                    style={{ fontSize: '16px', lineHeight: '1.8' }}
+                                    className="activity-answer-option"
                                   >
                                     {optionText(option, optIndex)}
                                   </Radio>
@@ -946,13 +883,13 @@ const TakeActivityPage: React.FC = () => {
                             preserve={false}
                             style={{ marginBottom: 0, fontSize: '16px' }}
                           >
-                            <Checkbox.Group style={{ width: '100%' }}>
-                              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                            <Checkbox.Group className="activity-answer-options">
+                              <Space direction="vertical" style={{ width: '100%' }} size="middle">
                                 {question.options.map((option, optIndex) => (
                                   <Checkbox
                                     key={`${index}-${optIndex}`}
                                     value={String.fromCharCode(65 + optIndex)}
-                                    style={{ fontSize: '16px', lineHeight: '1.8' }}
+                                    className="activity-answer-option"
                                   >
                                     {optionText(option, optIndex)}
                                   </Checkbox>
@@ -970,10 +907,10 @@ const TakeActivityPage: React.FC = () => {
                             preserve={false}
                             style={{ marginBottom: 0, fontSize: '16px' }}
                           >
-                            <Radio.Group style={{ width: '100%' }}>
-                              <Space size="large">
-                                <Radio value="true" style={{ fontSize: '16px' }}>正确</Radio>
-                                <Radio value="false" style={{ fontSize: '16px' }}>错误</Radio>
+                            <Radio.Group className="activity-answer-options">
+                              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                                <Radio value="true" className="activity-answer-option">正确</Radio>
+                                <Radio value="false" className="activity-answer-option">错误</Radio>
                               </Space>
                             </Radio.Group>
                           </Form.Item>
@@ -1040,12 +977,12 @@ const TakeActivityPage: React.FC = () => {
                       </div>
                     );
                   })}
-                </div>
+                </section>
               );
             })}
         </Form>
       </div>
-    </div>
+    </main>
   );
 };
 

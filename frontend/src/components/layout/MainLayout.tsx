@@ -308,7 +308,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="app-shell">
       <Header className="app-header">
         {navigation && (
           <Button
@@ -320,8 +320,11 @@ const MainLayout: React.FC = () => {
           />
         )}
 
-        <div className="app-brand">
-          贵阳市小学生测评平台
+        <div className="app-brand" aria-label="贵阳市小学生测评平台">
+          <span className="app-brand-mark" aria-hidden="true">
+            <ThunderboltOutlined />
+          </span>
+          <span className="app-brand-name">贵阳市小学生测评平台</span>
         </div>
 
         {navigation && (
@@ -331,7 +334,6 @@ const MainLayout: React.FC = () => {
             selectedKeys={navigation.selectedKeys}
             items={navigation.items}
             onClick={handleNavigationClick}
-            theme="dark"
           />
         )}
 
@@ -356,6 +358,7 @@ const MainLayout: React.FC = () => {
       </Header>
       {navigation && (
         <Drawer
+          rootClassName="app-mobile-navigation-drawer"
           title="功能导航"
           placement="left"
           open={mobileNavigationOpen}

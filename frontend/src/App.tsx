@@ -33,6 +33,7 @@ import PointsPage from './pages/student/PointsPage';
 import MyStatistics from './pages/student/MyStatistics';
 import MyRegistrationsPage from './pages/student/MyRegistrationsPage';
 import GrowthCenterPage from './pages/student/GrowthCenterPage';
+import ResultsPage from './pages/ResultsPage';
 import ActivityResultPage from './pages/student/ActivityResultPage';
 import WrongQuestionsPage from './pages/student/WrongQuestionsPage';
 import SmartPracticePage from './pages/student/SmartPracticePage';
@@ -100,6 +101,7 @@ const App: React.FC = () => {
                 <Route path="assessments" element={<AssessmentCenterPage />} />
                 <Route path="assessment/:id" element={<TakeActivityPage />} />
                 <Route path="activity/:id" element={<TakeActivityPage />} />
+                <Route path="results" element={<ResultsPage />} />
                 <Route path="results/:id" element={<ActivityResultPage />} />
                 <Route path="achievements" element={<AchievementPage />} />
                 <Route path="points" element={<PointsPage />} />

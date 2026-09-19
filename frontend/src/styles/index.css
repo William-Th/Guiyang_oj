@@ -1,4 +1,5 @@
 @import '../theme/variables.css';
+@import './student-learning.css';
 
 * {
   margin: 0;
