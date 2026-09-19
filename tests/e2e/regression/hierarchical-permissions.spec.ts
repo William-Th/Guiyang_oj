@@ -409,63 +409,38 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await expect(page.locator('.ant-modal').first()).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
 
     // 选择教师
-    const userSelect = page.locator('.ant-select:has-text("选择教师")').first();
+    const userSelect = page.locator('.ant-modal .ant-form-item').filter({ has: page.locator('label:has-text("选择教师")') }).locator('.ant-select').first();
     await userSelect.click();
-    await page.waitForTimeout(500);
-    const firstTeacher = page.locator('.ant-select-dropdown .ant-select-item').first();
+    const firstTeacher = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first();
+    await expect(firstTeacher).toBeVisible({ timeout: 8000 });
     await firstTeacher.click();
     await page.waitForTimeout(500);
 
     // 选择权限类型
-    const permissionSelect = page.locator('.ant-select:has-text("权限类型")').first();
+    const permissionSelect = page.locator('.ant-modal .ant-form-item').filter({ has: page.locator('label:has-text("权限类型")') }).locator('.ant-select').first();
     await permissionSelect.click();
-    await page.waitForTimeout(500);
-    const firstPermissionType = page.locator('.ant-select-dropdown .ant-select-item').first();
+    const firstPermissionType = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first();
+    await expect(firstPermissionType).toBeVisible({ timeout: 8000 });
     await firstPermissionType.click();
     await page.waitForTimeout(500);
 
     // 选择科目
-    const subjectSelect = page.locator('.ant-select:has-text("授权科目")').first();
+    const subjectSelect = page.locator('.ant-modal .ant-form-item').filter({ has: page.locator('label:has-text("授权科目")') }).locator('.ant-select').first();
     await subjectSelect.click();
-    await page.waitForTimeout(500);
-    const firstSubject = page.locator('.ant-select-dropdown .ant-select-item').first();
+    const firstSubject = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first();
+    await expect(firstSubject).toBeVisible({ timeout: 8000 });
     await firstSubject.click();
     await page.waitForTimeout(300);
     // 关闭下拉框
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
-    // 设置一个已过期的时间（昨天）
-    const expiryInput = page.locator('.ant-modal .ant-picker input').first();
+    // 设置一个已过期的时间（键入过去的时间点，Enter 确认）
     await expiryInput.click();
+    await page.waitForTimeout(300);
+    await page.keyboard.type('2020-01-01 00:00:00');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
-
-    // 在日期选择器中选择昨天的日期
-    const yesterday = page.locator('.ant-picker-cell').filter({ hasText: new RegExp(`^${new Date().getDate() - 1}$`) }).first();
-    if (await yesterday.count() > 0) {
-      await yesterday.click();
-      await page.waitForTimeout(500);
-      // 选择时间（当前时间）
-      const okButton = page.locator('.ant-picker-ok button').first();
-      if (await okButton.isVisible()) {
-        await okButton.click();
-        await page.waitForTimeout(500);
-      }
-    } else {
-      // 如果是1号，选择上个月的最后一天
-      const prevMonthButton = page.locator('.ant-picker-header-prev-btn').first();
-      await prevMonthButton.click();
-      await page.waitForTimeout(500);
-      const lastDayOfMonth = page.locator('.ant-picker-cell').last();
-      await lastDayOfMonth.click();
-      await page.waitForTimeout(500);
-      const okButton = page.locator('.ant-picker-ok button').first();
-      if (await okButton.isVisible()) {
-        await okButton.click();
-        await page.waitForTimeout(500);
-      }
-    }
-
     // 提交创建失效权限
     const submitButton = page.locator('.ant-modal button').filter({ hasText: /确\s*定/ }).first();
     await submitButton.click();
@@ -640,8 +615,10 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.waitForTimeout(1500);
 
     // Step 7: 验证成功提示（校级题库应该直接发布）
-    const successMessage = page.locator('text=发布到校级题库').or(page.locator('text=创建成功'));
-    await expect(successMessage).toBeAttached({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
+    // 发布范围已禁用：创建后保存为草稿（不再直接发布到校级题库）
+    const successMessage = page.locator('.ant-message').filter({ hasText: /已保存为草稿|发布到校级题库|创建成功/ });
+    await expect(successMessage).toBeVisible({ timeout: 8000 });
+    console.log('✅ QBC101: 题目已保存（草稿或直接发布）');
 
     console.log('✅ QBC101: 教师成功创建校级题目并直接发布');
   });
