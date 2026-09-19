@@ -93,7 +93,7 @@ router.put('/profile/student', [
   body('grade').optional().isString().withMessage('年级格式不正确'),
   body('class').optional().isString().withMessage('班级格式不正确'),
   body('guardianName').optional().isString().withMessage('监护人姓名格式不正确'),
-  body('guardianPhone').optional().isMobilePhone('zh-CN').withMessage('监护人手机号格式不正确')
+  body('guardianPhone').optional({ values: 'falsy' }).isMobilePhone('zh-CN').withMessage('监护人手机号格式不正确')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -109,8 +109,13 @@ router.put('/profile/student', [
     const userId = req.user.id;
 
     if (schoolId !== undefined) {
-      await client.query('ROLLBACK');
-      return res.status(403).json({ message: '学生不能自行变更所属学校，请联系管理员处理' });
+      // 表单会原样回传 schoolId：与当前学校一致视为未变更，仅拒绝真正的变更
+      const currentSchool = await client.query('SELECT school_id FROM students WHERE user_id = $1', [userId]);
+      const currentSchoolId = currentSchool.rows[0]?.school_id ?? null;
+      if (Number(schoolId) !== Number(currentSchoolId)) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ message: '学生不能自行变更所属学校，请联系管理员处理' });
+      }
     }
 
     // Update users table
@@ -230,8 +235,13 @@ router.put('/profile/teacher', [
     const userId = req.user.id;
 
     if (schoolId !== undefined) {
-      await client.query('ROLLBACK');
-      return res.status(403).json({ message: '教师不能自行变更所属学校，请联系管理员处理' });
+      // 表单会原样回传 schoolId：与当前学校一致视为未变更，仅拒绝真正的变更
+      const currentSchool = await client.query('SELECT school_id FROM teachers WHERE user_id = $1', [userId]);
+      const currentSchoolId = currentSchool.rows[0]?.school_id ?? null;
+      if (Number(schoolId) !== Number(currentSchoolId)) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ message: '教师不能自行变更所属学校，请联系管理员处理' });
+      }
     }
 
     // Update users table
