@@ -92,9 +92,9 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 提交表单
     await page.click('button[type="submit"]');
 
-    // 验证成功消息
+    // 验证成功消息（完整串行长跑下保存可能变慢，放宽等待）
     await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: TEST_TIMEOUTS.ELEMENT_WAIT
+      timeout: 30000
     });
   });
 

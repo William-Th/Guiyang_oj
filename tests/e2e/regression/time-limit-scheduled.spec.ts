@@ -8,7 +8,7 @@
  * - PTL007: Auto-submit when end_time reached
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, APIRequestContext } from '@playwright/test';
 import { loginAsTeacher, loginAsAdmin, loginAsStudent } from '../../helpers/auth';
 
 // PTL005/007 需等待时间窗口开启（61 秒+），放宽单用例超时
@@ -128,6 +128,36 @@ async function setTimeRange(page: Page, startMinutesFromNow: number, endMinutesF
 }
 
 /**
+ * 通过 API 为活动挂一道已发布的单选题
+ * （PTL005/007 的答题断言依赖题目存在；已发布活动不能组卷，必须在发布前调用）
+ */
+async function attachSingleChoiceQuestion(request: APIRequestContext, activityId: number) {
+  const login = await request.post('/api/auth/login', {
+    data: { username: 'admin', password: 'password123' },
+  });
+  expect(login.ok()).toBeTruthy();
+  const { token } = await login.json();
+  expect(token).toBeTruthy();
+  const authHeader = { Authorization: `Bearer ${token}` };
+
+  const bankResponse = await request.get('/api/question-bank/bank', {
+    params: { subject: '数学', grade: '四年级', status: 'published', type: 'single', limit: '5' },
+    headers: authHeader,
+  });
+  expect(bankResponse.ok()).toBeTruthy();
+  const bank = await bankResponse.json();
+  const question = (bank.data || []).find((q: any) => q.id);
+  expect(question, '题库中需存在已发布的四年级数学单选题').toBeTruthy();
+
+  const attach = await request.post(`/api/activities/${activityId}/questions/batch`, {
+    data: { questions: [{ questionId: question.id }] },
+    headers: authHeader,
+  });
+  expect(attach.ok(), `挂题失败: ${await attach.text()}`).toBeTruthy();
+  console.log(`✓ 已为活动 ${activityId} 挂上单选题 ${question.id}`);
+}
+
+/**
  * PTL004 - Create Scheduled Assessment Activity
  */
 test('PTL004 - 创建定时制测评活动', async ({ page }) => {
@@ -203,7 +233,7 @@ test('PTL004 - 创建定时制测评活动', async ({ page }) => {
 /**
  * PTL005 - Student Takes Scheduled Activity (Within Time Window)
  */
-test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) => {
+test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page, request }) => {
   // Create scheduled activity as admin (starting in 1 minute, ending in 11 minutes)
   await loginAsAdmin(page, 'admin', 'password123');
 
@@ -245,6 +275,8 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
 
   // Publish activity
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
+  const activityId = Number(await activityRow.getAttribute('data-row-key'));
+  await attachSingleChoiceQuestion(request, activityId);
   const publishButton = activityRow.locator('button').filter({ hasText: /发\s*布/ });
   await publishButton.evaluate((button: HTMLElement) => button.click());
 
@@ -269,8 +301,8 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
   const startButton = assessmentRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
 
-  // Wait for activity page
-  await page.waitForURL(/\/student\/assessment\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
+  // Wait for activity page（测评中心「开始」跳转 /student/activity/:id）
+  await page.waitForURL(/\/student\/activity\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify countdown timer is displayed
@@ -334,22 +366,15 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // 验证点：进入答题页后，未开始的活动无法作答/提交（后端 start 闸门拒绝创建作答记录）
+    // 验证点：未开始的定时活动保持可见，「开始」按钮禁用并显示开始倒计时（产品决策：禁用+倒计时）
     const rowsBeforeStart = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle });
-    if (await rowsBeforeStart.count() > 0) {
-      const startButton = rowsBeforeStart.first().locator('button').filter({ hasText: /开始/ });
-      await startButton.click();
-      await page.waitForTimeout(2500);
-
-      const submitBtn = page.locator('button').filter({ hasText: /提交答案/ });
-      const gateMsg = await page.evaluate(() => document.body.textContent.includes('活动尚未开始')).catch(() => false);
-      const submitDisabled = (await submitBtn.count()) > 0 && (await submitBtn.first().isDisabled().catch(() => false));
-      expect(submitDisabled || gateMsg).toBeTruthy();
-      console.log('✅ PTL006: 未开始活动的作答/提交被阻断（时间闸门生效）');
-    } else {
-      // 列表按 start_time 过滤未显示该活动，同样视为隔离生效
-      console.log('✅ PTL006: 未开始活动未出现在学生列表');
-    }
+    await expect(rowsBeforeStart.first()).toBeAttached({ timeout: 5000 });
+    const startButton = rowsBeforeStart.first().locator('button').filter({ hasText: /开始/ });
+    await expect(startButton).toBeDisabled();
+    const countdown = rowsBeforeStart.first().locator('.start-countdown');
+    await expect(countdown).toContainText('距开始');
+    await expect(countdown).toContainText(/\d{2}:\d{2}:\d{2}/);
+    console.log('✅ PTL006: 未开始活动按钮禁用且显示倒计时（时间闸门生效）');
 
     console.log('✅ PTL006: 活动未开始时的访问控制验证完成');
   });
@@ -359,7 +384,7 @@ test('PTL005 - 学生在时间窗口内参加定时制活动', async ({ page }) 
  *
  * Note: This test uses a short duration (3 minutes) for practical testing
  */
-test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
+test('PTL007 - 定时制活动超时自动提交', async ({ page, request }) => {
   // 需真实等待 2.5 分钟时间窗口关闭后自动提交
   test.setTimeout(480000);
   // Create scheduled activity with short duration
@@ -403,6 +428,8 @@ test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
+  const activityId = Number(await activityRow.getAttribute('data-row-key'));
+  await attachSingleChoiceQuestion(request, activityId);
   const publishButton = activityRow.locator('button').filter({ hasText: /发\s*布/ });
   await publishButton.evaluate((button: HTMLElement) => button.click());
 
@@ -421,33 +448,27 @@ test('PTL007 - 定时制活动超时自动提交', async ({ page }) => {
   const assessmentRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
   const startButton = assessmentRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
-  await page.waitForURL(/\/student\/assessment\/\d+/, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(/\/student\/activity\/\d+/, { timeout: 15000, waitUntil: 'domcontentloaded' });
 
   // Answer one question
   const firstQuestion = page.locator('.activity-question-card').first();
   const firstOption = firstQuestion.locator('input[type="radio"]').first();
   await firstOption.check();
 
-  // Wait for countdown to show warning (less than 1 minute)
+  // 等待倒计时进入最后 1 分钟（「时间即将到！」为 antd Alert type="error"；条件等待替代盲等，免疫登录/加载耗时波动）
   console.log('Waiting for countdown warning...');
-  await page.waitForTimeout(70000); // Wait 70 seconds (should have ~20 seconds left)
+  const warningAlert = page.locator('.ant-alert:has-text("时间即将")');
+  await expect(warningAlert).toBeVisible({ timeout: 120000 });
 
-  // Verify warning appears
-  const warningAlert = page.locator('.ant-alert-warning:has-text("时间即将")');
-  await expect(warningAlert).toBeVisible({ timeout: 5000 });
-
-  // Wait for auto-submit
+  // 等待到点自动提交（到点后前端提示并跳转结果页）
   console.log('Waiting for auto-submit...');
-  await page.waitForTimeout(25000); // Wait remaining time
-
-  // Verify auto-submit message or navigation to results
   const autoSubmitMessage = page.locator('text=/时间已到|正在自动提交/');
   try {
-    await expect(autoSubmitMessage).toBeVisible({ timeout: 5000 });
+    await expect(autoSubmitMessage).toBeVisible({ timeout: 90000 });
     console.log(`✓ PTL007: Auto-submit message displayed`);
   } catch {
     // May have already navigated to results page
-    await page.waitForURL(/\/student\/results\/\d+/, { timeout: 5000, waitUntil: 'domcontentloaded' });
+    await page.waitForURL(/\/student\/results\/\d+/, { timeout: 15000, waitUntil: 'domcontentloaded' });
     console.log(`✓ PTL007: Navigated to results after auto-submit`);
   }
 });

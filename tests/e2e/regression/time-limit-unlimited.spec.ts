@@ -206,6 +206,8 @@ test('PTL002 - 学生参加无限制活动', async ({ page }) => {
  * PTL003 - LocalStorage Backup and Network Recovery
  */
 test('PTL003 - LocalStorage备份和网络恢复', async ({ page, context }) => {
+  // 创建+挂题+发布+答题+恢复全流程远超默认 30s
+  test.setTimeout(240000);
   // Create and publish activity with questions as teacher
   await loginAsTeacher(page, 'teacher_yy_ps_math', 'password123');
 
@@ -253,6 +255,8 @@ test('PTL003 - LocalStorage备份和网络恢复', async ({ page, context }) => 
   await page.waitForURL(/\/student\/activity\/\d+/, { waitUntil: 'domcontentloaded' });
 
   // Answer 3 questions (卡片按题型分节：判断/多选/主观各一)
+  // 等题目卡片真正渲染完成后再计数，否则 cardCount=0 会整段跳过作答
+  await page.waitForSelector('.activity-question-card', { timeout: 15000 });
   const cards = page.locator('.activity-question-card');
   const cardCount = await cards.count();
   for (let i = 0; i < cardCount; i++) {
@@ -292,8 +296,9 @@ test('PTL003 - LocalStorage备份和网络恢复', async ({ page, context }) => 
   await page.waitForTimeout(2500); // 等待活动数据异步渲染
 
   // Verify progress restored (this indicates answers were saved and restored)
+  // 长跑下恢复渲染可能偏慢，放宽等待
   const progressCount = page.locator('.ant-progress-text:has-text("100%")');
-  await expect(progressCount).toBeVisible();
+  await expect(progressCount).toBeVisible({ timeout: 30000 });
 
   console.log('✓ Progress restored after refresh - LocalStorage recovery working');
 

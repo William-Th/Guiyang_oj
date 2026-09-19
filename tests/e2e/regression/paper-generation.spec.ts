@@ -103,29 +103,31 @@ test.describe('组卷功能 - 回归测试', () => {
     // 导航到现有活动的组卷页面（需要草稿状态以支持筛选功能）
     await navigateToPaperGeneration(page, true);
 
-    // 滚动到"可用题目"部分
-    await page.locator('h3:has-text("可用题目")').scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
+    // 筛选区标题为「按题型选择题目」，筛选控件在其相邻 div 内
+    const filterHeading = page.locator('h3:has-text("按题型选择题目")');
+    await expect(filterHeading).toBeAttached({ timeout: 10000 });
+    await filterHeading.scrollIntoViewIfNeeded();
+    const filterArea = page.locator('h3:has-text("按题型选择题目") + div');
 
-    // 选择题型筛选 (使用索引选择第一个Select - 题型筛选)
-    const filterSection = page.locator('h3:has-text("可用题目")').locator('..').locator('..');
-    const typeSelect = filterSection.locator('.ant-select').first();
+    // 选择题型筛选 = 单选题
+    const typeSelect = filterArea.locator('.ant-select').first();
     await typeSelect.click();
     await page.waitForTimeout(300);
-    await page.getByRole('option', { name: '单选题' }).click();
+    await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '单选题' }).first().click();
+    await page.waitForTimeout(300);
 
     // 点击搜索按钮 (使用regex处理可能的文字间空格)
-    const searchButton = page.locator('button').filter({ hasText: /搜\s*索/ });
+    const searchButton = filterArea.locator('button').filter({ hasText: /搜\s*索/ });
     await searchButton.click();
     await page.waitForLoadState('networkidle');
 
     // 验证筛选执行完成（等待网络请求完成即可，不验证具体结果）
     // 因为筛选可能返回空结果或其他题型，取决于数据库状态
-    const availableTable = page.locator('.ant-table-tbody').nth(1);
+    const availableTable = page.locator('.ant-table-tbody').last();
     await expect(availableTable).toBeAttached();
 
     // 点击重置按钮 (使用regex处理可能的文字间空格)
-    const resetButton = page.locator('button').filter({ hasText: /重\s*置/ });
+    const resetButton = filterArea.locator('button').filter({ hasText: /重\s*置/ });
     await resetButton.click();
     await page.waitForLoadState('networkidle');
   });

@@ -91,21 +91,26 @@ test.describe('Student Statistics Page', () => {
   test('STA103: Ability radar chart loads', async ({ page }) => {
     // Navigate to statistics page
     await page.goto('http://localhost:8080/student/statistics');
+    await page.waitForLoadState('networkidle');
 
-    // Wait for charts to render
-    await page.waitForTimeout(3000);
+    // 雷达图位于「能力雷达图」Tab（recharts 渲染 SVG，非 echarts canvas）
+    const radarTab = page.locator('.ant-tabs-tab').filter({ hasText: '能力雷达图' });
+    await expect(radarTab).toBeVisible({ timeout: 10000 });
+    await radarTab.click();
+    await page.waitForTimeout(1000);
 
-    // Look for radar chart container or canvas
-    // Echarts typically renders to a canvas element
-    const chartContainers = page.locator('canvas, .echarts-container, [id*="chart"], [class*="radar"]');
+    // 活动面板内：有数据时渲染 recharts 图表；未选科目/无数据时显示空态
+    const activePane = page.locator('.ant-tabs-tabpane-active');
+    const hasEmpty = await activePane.locator('.ant-empty').count() > 0;
+    const charts = activePane.locator('.recharts-wrapper, .recharts-surface');
+    if (!hasEmpty) {
+      await expect(charts.first()).toBeAttached({ timeout: 10000 });
+    } else {
+      console.log('ℹ️  未选择科目或无能力数据，雷达图空态显示正常');
+    }
 
-    // Verify at least one chart element exists
-    await expect(chartContainers.first()).toBeAttached({ timeout: 10000 });
-
-    // Look for ability-related section header
+    // Verify ability-related section header exists (if implemented)
     const abilitySection = page.locator('text=/能力.*分析|能力.*统计|能力.*雷达/i');
-
-    // Verify section header exists (if implemented)
     const sectionCount = await abilitySection.count();
     if (sectionCount > 0) {
       await expect(abilitySection.first()).toBeAttached();

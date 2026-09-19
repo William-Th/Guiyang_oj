@@ -629,18 +629,15 @@ test.describe('Regression Tests - Activity Management', () => {
     test('ACT132 - 教师不能创建测评活动', async ({ page }) => {
       console.log('\n=== ACT132: 教师权限限制验证 ===');
 
-      await navigateToActivities(page);
+      // 教师的「创建活动」按钮用于创建练习（ACT102/ACT107 已验证），此处验证真正的边界：
+      // 教师直接访问测评创建路由时，页面显示「权限不足」
+      await page.goto('/teacher/activities/create/assessment');
+      await page.waitForLoadState('networkidle');
 
-      // 验证教师不能看到创建测评按钮
-      const createAssessmentBtn = page.locator('button:has-text("创建活动")');
-      const btnCount = await createAssessmentBtn.count();
+      await expect(page.locator('.ant-alert:has-text("权限不足")')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('button:has-text("返回活动列表")')).toBeVisible();
 
-      if (btnCount === 0) {
-        console.log('✓ 教师正确地没有创建测评权限');
-      } else {
-        console.log('⚠ 权限控制可能有问题 - 教师能看到创建测评按钮');
-        expect(btnCount).toBe(0);
-      }
+      console.log('✓ 教师访问测评创建页被拦截（权限不足）');
     });
   });
 });

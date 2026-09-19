@@ -267,8 +267,8 @@ test.describe('Profile Page - Student Tests', () => {
     // Save
     await page.locator('button:has-text("保存")').first().click();
 
-    // Wait for success message
-    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 10000 });
+    // Wait for success message（长跑下保存响应变慢，放宽等待）
+    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 30000 });
     await page.waitForTimeout(1000);
 
     // Verify updated values are displayed

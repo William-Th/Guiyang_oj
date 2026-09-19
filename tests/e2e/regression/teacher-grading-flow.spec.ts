@@ -172,18 +172,18 @@ test.describe('Regression Tests - Teacher Grading Flow 教师评卷流程', () =
     // 验证详情页元素
     await expect(page.locator('.ant-card-head-title:has-text("评卷详情")')).toBeAttached();
 
-    // 验证学生信息显示
-    const studentInfo = page.locator('.ant-descriptions-item').filter({ hasText: /学生姓名/ });
+    // 验证学生信息显示（antd v5 Descriptions 单元格类名为 ant-descriptions-item-label）
+    const studentInfo = page.locator('.ant-descriptions-item-label').filter({ hasText: /学生姓名/ });
     await expect(studentInfo).toBeAttached();
 
-    // 验证题目卡片存在
-    const questionCards = page.locator('.ant-card').filter({ has: page.locator('text=/第.*题/') });
+    // 验证题目卡片存在（每题卡片含「学生答案」标题）
+    const questionCards = page.locator('.ant-card').filter({ has: page.locator('text=学生答案') });
     const questionCount = await questionCards.count();
     console.log(`找到 ${questionCount} 道题目`);
     expect(questionCount).toBeGreaterThan(0);
 
-    // 验证保存和完成按钮存在
-    await expect(page.locator('button').filter({ hasText: /保\s*存/ })).toBeAttached();
+    // 验证保存和完成按钮存在（页面有「保存所有评分」与「保存本题评分」两个按钮）
+    await expect(page.locator('button').filter({ hasText: /保\s*存/ }).first()).toBeAttached();
     const completeButton = page.locator('button').filter({ hasText: /完\s*成.*评\s*卷/ }).first();
     await expect(completeButton).toBeAttached();
 

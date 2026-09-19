@@ -7,8 +7,37 @@
  * - PTL010: Auto-submit when time limit reached
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, APIRequestContext } from '@playwright/test';
 import { loginAsTeacher, loginAsStudent } from '../../helpers/auth';
+
+/**
+ * 通过 API 为活动挂一道已发布的单选题（已发布活动不能组卷，须在发布前调用）
+ */
+async function attachSingleChoiceQuestion(request: APIRequestContext, activityId: number, subject: string, grade: string) {
+  const login = await request.post('/api/auth/login', {
+    data: { username: 'admin', password: 'password123' },
+  });
+  expect(login.ok()).toBeTruthy();
+  const { token } = await login.json();
+  expect(token).toBeTruthy();
+  const authHeader = { Authorization: `Bearer ${token}` };
+
+  const bankResponse = await request.get('/api/question-bank/bank', {
+    params: { subject, grade, status: 'published', type: 'single', limit: '5' },
+    headers: authHeader,
+  });
+  expect(bankResponse.ok()).toBeTruthy();
+  const bank = await bankResponse.json();
+  const question = (bank.data || []).find((q: any) => q.id);
+  expect(question, `题库中需存在已发布的${grade}${subject}单选题`).toBeTruthy();
+
+  const attach = await request.post(`/api/activities/${activityId}/questions/batch`, {
+    data: { questions: [{ questionId: question.id }] },
+    headers: authHeader,
+  });
+  expect(attach.ok(), `挂题失败: ${await attach.text()}`).toBeTruthy();
+  console.log(`✓ 已为活动 ${activityId} 挂上单选题 ${question.id}`);
+}
 
 /**
  * Helper: Fill activity form with basic info
@@ -41,6 +70,13 @@ async function fillBasicActivityInfo(page: Page, title: string) {
   await gradeSelector.click();
   await page.waitForTimeout(500);
   await page.getByRole('option', { name: '五年级' }).evaluate((el: HTMLElement) => el.click());
+  await page.waitForTimeout(300);
+
+  // Select ability level（表单必填，不选会拦截保存）
+  const abilitySelector = page.locator('#abilityLevel').locator('..');
+  await abilitySelector.click();
+  await page.waitForTimeout(500);
+  await page.getByRole('option', { name: /L2/ }).first().evaluate((el: HTMLElement) => el.click());
   await page.waitForTimeout(300);
 }
 
@@ -133,7 +169,9 @@ test('PTL008 - 创建计时制活动', async ({ page }) => {
 /**
  * PTL009 - Student Starts Timed Activity and Sees Countdown
  */
-test('PTL009 - 学生开始计时制活动后倒计时', async ({ page }) => {
+test('PTL009 - 学生开始计时制活动后倒计时', async ({ page, request }) => {
+  // 创建+挂题+发布+双端登录流程超过默认 30s
+  test.setTimeout(180000);
   // Create timed activity as teacher
   await loginAsTeacher(page, 'teacher_yy_ps_math', 'password123');
 
@@ -162,6 +200,8 @@ test('PTL009 - 学生开始计时制活动后倒计时', async ({ page }) => {
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
+  const activityId = Number(await activityRow.getAttribute('data-row-key'));
+  await attachSingleChoiceQuestion(request, activityId, '信息科技', '五年级');
   const publishButton = activityRow.locator('button').filter({ hasText: /发\s*布/ });
   await publishButton.evaluate((button: HTMLElement) => button.click());
   await page.waitForTimeout(1000);
@@ -186,8 +226,8 @@ test('PTL009 - 学生开始计时制活动后倒计时', async ({ page }) => {
   const startButton = practiceRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
 
-  // Wait for activity page
-  await page.waitForURL(/\/student\/practice\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
+  // Wait for activity page（练习中心「开始练习」跳转 /student/activity/:id）
+  await page.waitForURL(/\/student\/(practice|activity)\/\d+/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify countdown timer is displayed
@@ -231,7 +271,9 @@ test('PTL009 - 学生开始计时制活动后倒计时', async ({ page }) => {
  *
  * Note: Uses short duration (2 minutes) for practical testing
  */
-test('PTL010 - 计时制活动超时自动提交', async ({ page }) => {
+test('PTL010 - 计时制活动超时自动提交', async ({ page, request }) => {
+  // 含约 2 分钟真实倒计时等待
+  test.setTimeout(300000);
   // Create timed activity with 2-minute duration
   await loginAsTeacher(page, 'teacher_yy_ps_math', 'password123');
 
@@ -260,6 +302,8 @@ test('PTL010 - 计时制活动超时自动提交', async ({ page }) => {
 
   // Publish
   const activityRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
+  const activityId = Number(await activityRow.getAttribute('data-row-key'));
+  await attachSingleChoiceQuestion(request, activityId, '信息科技', '五年级');
   const publishButton = activityRow.locator('button').filter({ hasText: /发\s*布/ });
   await publishButton.evaluate((button: HTMLElement) => button.click());
   await page.waitForTimeout(1000);
@@ -276,7 +320,7 @@ test('PTL010 - 计时制活动超时自动提交', async ({ page }) => {
   const practiceRow = page.locator('.ant-table-tbody tr').filter({ hasText: activityTitle }).first();
   const startButton = practiceRow.locator('button').filter({ hasText: /开始/ });
   await startButton.click();
-  await page.waitForURL(/\/student\/practice\/\d+/, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(/\/student\/(practice|activity)\/\d+/, { timeout: 15000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Verify countdown shows 2 minutes
@@ -292,7 +336,8 @@ test('PTL010 - 计时制活动超时自动提交', async ({ page }) => {
 
   // Wait for warning (less than 5 minutes remaining - should show immediately for 2min duration)
   console.log('Checking for warning alert...');
-  const warningAlert = page.locator('.ant-alert-warning');
+  // 页面可能同时存在多个 warning Alert（如网络提示），取倒计时相关的一个
+  const warningAlert = page.locator('.ant-alert-warning').first();
   await expect(warningAlert).toBeVisible({ timeout: 5000 });
 
   // Wait for critical warning (less than 1 minute)

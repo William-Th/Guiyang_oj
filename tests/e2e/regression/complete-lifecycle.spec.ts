@@ -25,6 +25,14 @@ const testData = {
 test.describe.serial('Complete Question Lifecycle - Simplified', () => {
   test.setTimeout(90000);
 
+  // 在「最近打开的下拉」中选择选项（antd 关闭动画期间旧下拉类名未更新，取可见项中的最后一个）
+  async function selectOpenDropdownOption(page: any, optionText: string) {
+    const option = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:visible')
+      .filter({ hasText: optionText }).last();
+    await option.click({ timeout: 10000 });
+    await page.waitForTimeout(300);
+  }
+
   test('QBC101 - 创建题目', async ({ browser }) => {
     console.log('\n=== QBC101: 创建题目 ===');
 
@@ -37,33 +45,37 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000);
 
-      // 选择题目类型（antd Select）
+      // 选择题目类型（antd Select，作用域限定当前打开的下拉）
       const typeWrapper = page.locator('.ant-select:has(#type)').first();
       if (await typeWrapper.count() > 0) {
         await typeWrapper.click();
-        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '单选题' }).first().click();
+        await page.waitForTimeout(400);
       }
+      await selectOpenDropdownOption(page, '单选题');
 
       // 选择科目
       const subjectWrapper = page.locator('.ant-select:has(#subject)').first();
       if (await subjectWrapper.count() > 0) {
         await subjectWrapper.click();
-        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
+        await page.waitForTimeout(400);
       }
+      await selectOpenDropdownOption(page, '数学');
 
       // 选择年级
       const gradeWrapper = page.locator('.ant-select:has(#grade)').first();
       if (await gradeWrapper.count() > 0) {
         await gradeWrapper.click();
-        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first().click();
+        await page.waitForTimeout(400);
       }
+      await selectOpenDropdownOption(page, '五年级');
 
       // 选择级别
       const levelWrapper = page.locator('.ant-select:has(#level)').first();
       if (await levelWrapper.count() > 0) {
         await levelWrapper.click();
-        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: 'L4' }).first().click();
+        await page.waitForTimeout(400);
       }
+      await selectOpenDropdownOption(page, 'L4');
 
       // 输入题目内容
       const contentInput = page.locator('textarea[name="content"], #content').first();
@@ -94,8 +106,8 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
         await explanationInput.fill('1加1等于2');
       }
 
-      // 保存草稿
-      const saveButton = page.locator('button:has-text("保存草稿"), button:has-text("保存")').first();
+      // 保存草稿（antd 两字按钮渲染为「保 存」）
+      const saveButton = page.locator('button').filter({ hasText: /保\s*存/ }).first();
       await saveButton.click();
       await page.waitForTimeout(3000);
 
@@ -106,7 +118,8 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       console.log(`有成功消息: ${hasSuccess}`);
 
     } finally {
-      await context.close();
+      // 页面可能在长跑下提前关闭，关闭失败不应掩盖真实结果
+      await context.close().catch(() => {});
     }
   });
 
@@ -154,14 +167,15 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       console.log('✓ R401: 提交审核操作完成');
 
     } finally {
-      await context.close();
+      // 页面可能在长跑下提前关闭，关闭失败不应掩盖真实结果
+      await context.close().catch(() => {});
     }
   });
 
   test('ACT101-ACT103 - 创建活动和组卷', async ({ browser }) => {
     console.log('\n=== ACT101-ACT103: 创建活动和组卷 ===');
 
-    const context = await browser.newContext({ storageState: STORAGE_STATE.ADMIN });
+    const context = await browser.newContext({ storageState: STORAGE_STATE.TEACHER });
     const page = await context.newPage();
 
     try {
@@ -178,13 +192,16 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       const subjectWrapper = page.locator('.ant-select:has(#subject)').first();
       if (await subjectWrapper.count() > 0) {
         await subjectWrapper.click();
-        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
+        await page.waitForTimeout(400);
+        await selectOpenDropdownOption(page, '数学');
       }
 
-      // 选择年级
-      const gradeSelect = page.locator('select[name="grade"], #grade').first();
-      if (await gradeSelect.count() > 0) {
-        await gradeSelect.selectOption({ index: 0 });
+      // 选择年级（antd Select）
+      const gradeWrapper = page.locator('.ant-select:has(#grade)').first();
+      if (await gradeWrapper.count() > 0) {
+        await gradeWrapper.click();
+        await page.waitForTimeout(400);
+        await selectOpenDropdownOption(page, '三年级');
       }
 
       // 设置总分和及格分
@@ -198,8 +215,8 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
         await passScoreInput.fill(String(testData.activity.passScore));
       }
 
-      // 保存
-      const saveButton = page.locator('button[type="submit"], button:has-text("保存")').first();
+      // 保存（antd 两字按钮渲染为「创 建」/「保 存」）
+      const saveButton = page.locator('button').filter({ hasText: /保\s*存|创\s*建/ }).first();
       await saveButton.click();
       await page.waitForTimeout(3000);
 
@@ -270,7 +287,8 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       console.log('✓ ACT103-ACT104: 组卷和发布完成');
 
     } finally {
-      await context.close();
+      // 页面可能在长跑下提前关闭，关闭失败不应掩盖真实结果
+      await context.close().catch(() => {});
     }
   });
 
@@ -350,7 +368,8 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       console.log('✓ STU203-STU206: 学生答题流程完成');
 
     } finally {
-      await context.close();
+      // 页面可能在长跑下提前关闭，关闭失败不应掩盖真实结果
+      await context.close().catch(() => {});
     }
   });
 

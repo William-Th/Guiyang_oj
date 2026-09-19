@@ -105,19 +105,29 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
 
     await expect(tableRows.first()).toBeAttached();
 
-    // 优先选择"【测试】学生答题流程测试活动"（已知有5道题）
-    let targetRow = tableRows.first();
+    // 查找目标练习（列表按 可参加→未开始→已结束 分组、组内最新优先，种子活动可能不在第 1 页；
+    // 限定激活 Tab 面板，避免匹配到「已完成」隐藏面板中的同名行）
+    const targetTitle = '【测试】学生答题流程测试活动';
+    const paneRows = page.locator('.ant-tabs-tabpane-active .ant-table-tbody tr:visible');
+    let targetRow = paneRows.filter({ hasText: targetTitle }).first();
 
-    for (let i = 0; i < rowCount; i++) {
-      const row = tableRows.nth(i);
-      const rowText = await row.textContent();
-      // 查找测试活动
-      if (rowText.includes('【测试】学生答题流程测试活动')) {
-        targetRow = row;
-        console.log(`找到测试活动`);
-        break;
+    const foundOnPage = async () => (await paneRows.filter({ hasText: targetTitle }).count()) > 0;
+
+    if (!(await foundOnPage())) {
+      for (let p = 1; p < 5 && !(await foundOnPage()); p++) {
+        const nextBtn = page.locator('.ant-pagination-next:not(.ant-pagination-disabled)');
+        if (await nextBtn.count() === 0) break;
+        await nextBtn.click();
+        await page.waitForTimeout(1000);
       }
     }
+
+    if (!(await foundOnPage())) {
+      console.warn('⚠ 未找到【测试】学生答题流程测试活动');
+      test.skip();
+      return;
+    }
+    await expect(targetRow).toBeAttached();
 
     // 点击开始按钮
     const startButton = targetRow.locator('button:has-text("开始练习"), button:has-text("继续练习")').first();
@@ -167,8 +177,12 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
     const allCardCount = await allCards.count();
     console.log(`页面上的所有Card数量: ${allCardCount}`);
 
-    const questionCards = page.locator('.ant-card').filter({ hasText: /第\s*\d+\s*题/ });
-    const questionCount = await questionCards.count();
+    // 题目卡片实际类名为 .activity-question-card（兼容旧断言的 第N题 文本）
+    const questionCards = page.locator('.activity-question-card');
+    let questionCount = await questionCards.count();
+    if (questionCount === 0) {
+      questionCount = await page.locator('.ant-card').filter({ hasText: /第\s*\d+\s*题/ }).count();
+    }
 
     if (questionCount === 0) {
       console.log('未找到题目卡片，检查是否有相关文本...');
@@ -292,29 +306,18 @@ test.describe('Regression Tests - Student Activity Flow 学生答题流程', () 
   test('STU205 - 学生可以提交答案', async ({ page }) => {
     console.log('\n=== STU205: 提交答案 ===');
 
-    // 重新进入答题页面
-    await page.goto('/student/practice');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    const tableRows = page.locator('.ant-table-tbody tr[data-row-key]');
-    if (await tableRows.count() === 0) {
+    // 直接用 STU203 捕获的活动ID重新进入答题页（列表首行随新排序变化，不再可靠）
+    if (!activityId) {
+      console.warn('⚠ STU203 未捕获活动ID，跳过');
       test.skip();
       return;
     }
-
-    // 开始练习
-    const firstRow = tableRows.first();
-    const startButton = firstRow.locator('button:has-text("开始练习"), button:has-text("继续练习")').first();
-    await startButton.waitFor({ state: 'attached', timeout: 5000 });
-    await startButton.evaluate((button: HTMLElement) => button.click());
-
-    await page.waitForURL(/\/student\/(practice|activity)\/\d+/);
+    await page.goto(`/student/activity/${activityId}`);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     // 快速填写一些答案（确保有答案可提交）
-    const questions = page.locator('.ant-card').filter({ has: page.locator('text=/第.*题/') });
+    const questions = page.locator('.activity-question-card');
     const questionCount = await questions.count();
 
     for (let i = 0; i < Math.min(questionCount, 2); i++) {

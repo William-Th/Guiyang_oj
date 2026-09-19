@@ -69,8 +69,8 @@ test.describe('Regression Tests - 未登录用户重定向', () => {
 
   // BUG012/14 - 未登录用户访问学生页面被重定向
   test('BUG012/14 - 未登录用户访问学生页面应重定向到登录页', async ({ page }) => {
-    // 尝试访问学生页面
-    await page.goto('/student/activities');
+    // 尝试访问学生页面（/student/assessments 为真实存在的学生路由）
+    await page.goto('/student/assessments');
 
     // 等待重定向完成
     await page.waitForURL(/\/login/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });

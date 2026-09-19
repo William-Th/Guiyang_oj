@@ -86,39 +86,39 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
 
       // 点击创建练习按钮
       await page.click('button:has-text("创建活动")');
-      await page.waitForURL(/\/activities\/create\/practice/, { waitUntil: 'domcontentloaded' });
+      // 创建按钮跳转 /teacher/activities/create（不带类型段，需手动选择活动类型）
+      await page.waitForURL(/\/teacher\/activities\/create/, { waitUntil: 'domcontentloaded' });
+
+      // 选择活动类型 = 练习
+      const typeSelect = page.locator('.ant-form-item').filter({ has: page.locator('label:has-text("活动类型")') }).locator('.ant-select').first();
+      await typeSelect.click();
+      await page.waitForTimeout(500);
+      await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '练习' }).first().click();
+      await page.waitForTimeout(300);
 
       // 填写活动表单
       await page.fill('input[placeholder="请输入活动标题"]', `Smoke测试-练习活动-${Date.now()}`);
       await page.fill('textarea[placeholder*="描述"]', '这是一个自动化测试创建的练习活动');
 
-      // 选择科目 - 使用更可靠的方式
-      await page.click('#subject');
+      // 选择科目（作用域限定当前打开的下拉，避免隐藏下拉干扰）
+      await page.locator('.ant-select:has(#subject)').first().click();
       await page.waitForTimeout(500);
-      // 直接点击下拉选项，不管它在哪里渲染
-      await page.getByRole('option', { name: '数学' }).click();
+      await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
       await page.waitForTimeout(300);
 
       // 选择年级
-      await page.click('#grade');
+      await page.locator('.ant-select:has(#grade)').first().click();
       await page.waitForTimeout(500);
-      await page.getByRole('option', { name: '三年级' }).click();
+      await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '三年级' }).first().click();
       await page.waitForTimeout(300);
 
       // 选择能力等级
-      await page.click('#abilityLevel');
+      await page.locator('.ant-select:has(#abilityLevel)').first().click();
       await page.waitForTimeout(500);
-      await page.getByRole('option', { name: /L3/ }).click();
+      await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: /L3/ }).first().click();
       await page.waitForTimeout(300);
 
-      // 设置时长 - 使用 scrollIntoViewIfNeeded 确保字段可见
-      const durationInput = page.locator('input[id="duration"]');
-      await durationInput.scrollIntoViewIfNeeded();
-      await durationInput.fill('45');
-      await durationInput.blur();
-      await page.waitForTimeout(300);
-
-      // 设置总分
+      // 设置总分（无限制类型无时长字段，时长仅计时制显示）
       const totalScoreInput = page.locator('input[id="totalScore"]');
       await totalScoreInput.scrollIntoViewIfNeeded();
       await totalScoreInput.fill('100');
@@ -185,11 +185,11 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
       // 等待页面加载
       await page.waitForSelector('.ant-table', { timeout: 10000 });
 
-      // 按类型筛选 - 练习（从截图看，第一个筛选器就是活动类型）
-      const typeFilter = page.locator('.ant-select').first();
-      await typeFilter.click();
+      // 按科目筛选（练习列表类型固定为练习，筛选器为科目/年级/能力等级，首个下拉即科目）
+      const subjectFilter = page.locator('.ant-select').first();
+      await subjectFilter.click();
       await page.waitForTimeout(500);
-      await page.getByRole('option', { name: '练习' }).click();
+      await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
       await page.waitForTimeout(1000);
 
       // 验证表格仍然可见（可能有数据或无数据）
@@ -208,45 +208,41 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
-      // 导航到管理员活动管理页面
-      await page.goto('/admin/activities');
+      // 导航到管理员测评管理页面（管理员活动入口为 /admin/assessments）
+      await page.goto('/admin/assessments');
       await page.waitForLoadState('networkidle');
 
       // 验证创建测评按钮存在
-      const createAssessmentBtn = page.locator('button:has-text("创建活动")');
+      const createAssessmentBtn = page.locator('button').filter({ hasText: /创\s*建/ });
       if (await createAssessmentBtn.count() > 0) {
-        await createAssessmentBtn.click();
-        await page.waitForURL(/\/activities\/create\/assessment/, { waitUntil: 'domcontentloaded' });
+        await createAssessmentBtn.first().click();
+        await page.waitForURL(/\/admin\/assessments\/create/, { waitUntil: 'domcontentloaded' });
 
-        // 填写测评活动表单
+        // 填写测评活动表单（路由已预选活动类型=测评）
         await page.fill('input[placeholder="请输入活动标题"]', `Smoke测试-测评活动-${Date.now()}`);
         await page.fill('textarea[placeholder*="描述"]', '这是一个自动化测试创建的测评活动');
 
         // 选择科目
-        await page.click('#subject');
+        await page.locator('.ant-select:has(#subject)').first().click();
         await page.waitForTimeout(500);
-        await page.getByRole('option', { name: '数学' }).click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '数学' }).first().click();
         await page.waitForTimeout(300);
 
         // 选择年级
-        await page.click('#grade');
+        await page.locator('.ant-select:has(#grade)').first().click();
         await page.waitForTimeout(500);
-        await page.getByRole('option', { name: '四年级' }).click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '四年级' }).first().click();
         await page.waitForTimeout(300);
 
         // 选择能力等级
-        await page.click('#abilityLevel');
+        await page.locator('.ant-select:has(#abilityLevel)').first().click();
         await page.waitForTimeout(500);
-        await page.getByRole('option', { name: /L4/ }).click();
+        await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: /L4/ }).first().click();
         await page.waitForTimeout(300);
 
-        // 设置时长
-        await page.fill('input[id="duration"]', '60');
-
-        // 设置总分
+        // 设置总分与及格分（无限制类型无时长字段）
         await page.fill('input[id="totalScore"]', '100');
 
-        // 设置及格分
         await page.fill('input[id="passScore"]', '60');
 
         // 滚动到页面顶部，确保创建按钮可见
@@ -254,10 +250,10 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
         await page.waitForTimeout(1000);
 
         // 直接点击创建按钮 (通过文本定位,不等待可见性)
-        await page.click('button:has-text("创建")');
+        await page.locator('button').filter({ hasText: /创\s*建/ }).last().click();
 
         // 等待创建成功
-        await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
+        await page.waitForURL(/\/admin\/assessments$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
         await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
 
         console.log('✓ 测评活动创建成功');
@@ -270,7 +266,8 @@ test.describe('Regression Tests - Activity Basic 活动管理基础功能', () =
     test('ACT106 - 管理员可以查看所有活动', async ({ page }) => {
       console.log('\n=== ACT106: 查看所有活动 ===');
 
-      await page.goto('/admin/activities');
+      // 管理员活动入口为 /admin/assessments（支持练习/测评类型筛选）
+      await page.goto('/admin/assessments');
       await page.waitForLoadState('networkidle');
 
       // 等待表格加载

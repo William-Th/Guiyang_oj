@@ -390,6 +390,8 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
   });
 
   test('PRM106 - Bug #6: 编辑失效权限并恢复', async ({ page }) => {
+    // 含 80 秒自然过期等待，默认 30s 超时不够
+    test.setTimeout(240000);
     // Step 1: 管理员登录
     await loginAsAdmin(page);
 
@@ -435,24 +437,34 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
-    // 设置一个已过期的时间（键入过去的时间点，Enter 确认）
+    // 设置到期时间为 ~75 秒后（产品约束：新授权弹窗 disabledDate 禁选过去日期，无法直接创建已过期授权；
+    // 因此授予一个即将自然过期的短时效权限，跨过 expires_at 后状态列实时计算为「已失效」）
     const expiryInput = page.locator('.ant-modal .ant-picker input').first();
+    const expirySoon = new Date(Date.now() + 75 * 1000);
+    const pad2 = (n: number) => String(n).padStart(2, '0');
+    const expiryText = `${expirySoon.getFullYear()}-${pad2(expirySoon.getMonth() + 1)}-${pad2(expirySoon.getDate())} ${pad2(expirySoon.getHours())}:${pad2(expirySoon.getMinutes())}:${pad2(expirySoon.getSeconds())}`;
     await expiryInput.click();
     await page.waitForTimeout(300);
-    await page.keyboard.type('2020-01-01 00:00:00');
+    await page.keyboard.type(expiryText);
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
-    // 提交创建失效权限
+    const typedExpiry = await expiryInput.evaluate((el: HTMLInputElement) => el.value);
+    if (!typedExpiry.includes(pad2(expirySoon.getMinutes()))) {
+      console.log(`⚠ 到期时间键入未生效（当前值: ${typedExpiry}）`);
+    }
+    // 提交创建
     const submitButton = page.locator('.ant-modal button').filter({ hasText: /确\s*定/ }).first();
     await submitButton.click();
     await page.waitForTimeout(2000);
 
-    console.log('✅ PRM106: 已创建一个失效权限用于测试');
+    console.log('✅ PRM106: 已创建约 75 秒后自然过期的短时效权限');
 
-    // Step 4: 查找失效权限并点击编辑
+    // Step 4: 等待权限自然过期后刷新列表（状态列由前端按 expires_at 实时计算）
+    await page.waitForTimeout(80000);
+    await page.reload();
     await page.waitForLoadState('networkidle');
 
-    // 找到状态为"已失效"的权限行
+    // 找到状态为"已失效"的权限行（列表按 created_at DESC，新建的短时效权限在第一页）
     const inactiveRow = page.locator('.ant-table-tbody tr').filter({ hasText: '已失效' }).first();
     await expect(inactiveRow).toBeAttached({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
 
