@@ -11,6 +11,9 @@
 import { test, expect, Page } from '@playwright/test';
 import { loginAsTeacher, loginAsAdmin, loginAsStudent } from '../../helpers/auth';
 
+// PTL005/007 需等待时间窗口开启（61 秒+），放宽单用例超时
+test.setTimeout(300000);
+
 /**
  * Helper: Fill activity form with basic info
  */
@@ -44,6 +47,15 @@ async function fillBasicActivityInfo(page: Page, title: string, description: str
   const gradeOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: '四年级' }).first();
   await expect(gradeOption).toBeVisible({ timeout: 8000 });
   await gradeOption.click();
+  await page.waitForTimeout(300);
+
+  // 选择能力等级（测评活动 API 必填 ability_level，表单标注可选但后端强制）
+  const abilitySelect = page.locator('.ant-select:has(#abilityLevel)').first();
+  await abilitySelect.click();
+  await page.waitForTimeout(300);
+  const abilityOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: /L2/ }).first();
+  await expect(abilityOption).toBeVisible({ timeout: 8000 });
+  await abilityOption.click();
   await page.waitForTimeout(300);
 }
 
