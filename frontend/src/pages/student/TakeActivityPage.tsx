@@ -307,11 +307,12 @@ const TakeActivityPage: React.FC = () => {
       const startResponse = await activityApi.startActivity(activityId);
 
       // Store student_activity_id for later use
-      const studentActivityId = startResponse.studentActivityId;
+      // 后端返回蛇形字段（student_activity_id/started_at/deadline），做兼容映射
+      const studentActivityId = startResponse.studentActivityId ?? (startResponse as any).student_activity_id;
       setStudentActivity({
         id: studentActivityId,
-        start_time: startResponse.startTime,
-        time_limit_deadline: startResponse.timeLimitDeadline,
+        start_time: startResponse.startTime ?? (startResponse as any).started_at,
+        time_limit_deadline: startResponse.timeLimitDeadline ?? (startResponse as any).deadline,
         status: 'in_progress'
       } as any);
       hasStartedRef.current = true;
@@ -479,12 +480,12 @@ const TakeActivityPage: React.FC = () => {
     saveTimeoutRef.current = setTimeout(async () => {
       if (!activityId || !studentActivity) return;
 
-      // Save each answered question to backend
+      // Save each answered question to backend（字段名与题目卡片一致：q_${index}_${id}）
       const questions = activity?.questions || [];
       const savePromises: Promise<void>[] = [];
 
-      questions.forEach((question) => {
-        const fieldName = `question_${question.id}`;
+      questions.forEach((question, qIndex) => {
+        const fieldName = `q_${qIndex}_${question.id}`;
         const answer = allValues[fieldName];
 
         // Only save non-empty answers

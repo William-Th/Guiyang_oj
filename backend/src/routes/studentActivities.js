@@ -494,14 +494,27 @@ router.post('/:id/start',
       }
 
       // Create new attempt
-      const insertResult = await query(`
-        INSERT INTO student_activities (
-          student_id, activity_id, status, start_time, started_at,
-          time_limit_deadline, ip_address, attempt_number, grading_status
-        )
-        VALUES ($1, $2, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $3, $4, $5, 'pending')
-        RETURNING id, start_time, time_limit_deadline
-      `, [studentId, activityId, timeLimitDeadline, ipAddress, attemptNumber]);
+      // 表上存在 (student_id, activity_id) 唯一约束，重做时复用原行并推进 attempt_number
+      let attemptRow;
+      if (existingResult.rows.length > 0) {
+        attemptRow = await query(`
+          UPDATE student_activities
+          SET status = 'in_progress', start_time = CURRENT_TIMESTAMP, started_at = CURRENT_TIMESTAMP,
+              time_limit_deadline = $3, grading_status = 'pending', attempt_number = $5
+          WHERE id = $4
+          RETURNING id, start_time, time_limit_deadline
+        `, [studentId, activityId, timeLimitDeadline, existingResult.rows[0].id, attemptNumber]);
+      } else {
+        attemptRow = await query(`
+          INSERT INTO student_activities (
+            student_id, activity_id, status, start_time, started_at,
+            time_limit_deadline, ip_address, attempt_number, grading_status
+          )
+          VALUES ($1, $2, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $3, $4, $5, 'pending')
+          RETURNING id, start_time, time_limit_deadline
+        `, [studentId, activityId, timeLimitDeadline, ipAddress, attemptNumber]);
+      }
+      const insertResult = attemptRow;
 
       logger.info(`Student ${studentId} started activity ${activityId}, attempt #${attemptNumber}`);
 
@@ -583,6 +596,7 @@ router.get('/:id/questions',
         SELECT
           aq.id as activity_question_id,
           aq.question_id,
+          aq.question_id as id,
           aq.order_index,
           aq.score as max_score,
           qb.question_code,
