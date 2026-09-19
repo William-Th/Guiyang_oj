@@ -248,3 +248,23 @@ COMMENT ON TABLE users IS '所有演示账号的密码都是 password123';
 COMMENT ON COLUMN users.password IS '使用 bcrypt 加密，盐值为 10';
 COMMENT ON TABLE districts IS '区域管理表，支持区级和市级管理';
 COMMENT ON TABLE admin_permissions IS '管理员权限表，定义各级管理员的管理范围和权限';
+-- 区级测评题库审核人权限（assessment_manage）
+-- 修复：审核人下拉框依赖此表，缺种子数据会导致 R405/R406/R409 审核流程不可用
+INSERT INTO teacher_permissions (user_id, permission_type, subjects, granted_by, scope_level, district_id, notes)
+SELECT u.id, 'assessment_manage', ARRAY['数学','信息科技','语文','英语'], a.id, 'district',
+       CASE WHEN u.username LIKE 'teacher_yy%' THEN 1 WHEN u.username LIKE 'teacher_nm%' THEN 2 WHEN u.username LIKE 'teacher_by%' THEN 4 END,
+       '种子数据：区级测评题库审核人'
+FROM users u, users a
+WHERE a.username = 'admin'
+  AND u.username IN ('teacher_yy_ms_math','teacher_yy_ms_it','teacher_nm_ms_math','teacher_nm_ms_it','teacher_by_ms_math','teacher_by_ms_it')
+ON CONFLICT DO NOTHING;
+
+-- 区级/市级练习题库审核人权限（practice_district_manage / practice_municipal_manage）
+INSERT INTO teacher_permissions (user_id, permission_type, subjects, granted_by, scope_level, district_id, notes)
+SELECT u.id, t.pt, ARRAY['数学','信息科技','语文','英语'], a.id, 'district',
+       CASE WHEN u.username LIKE 'teacher_yy%' THEN 1 WHEN u.username LIKE 'teacher_nm%' THEN 2 WHEN u.username LIKE 'teacher_by%' THEN 4 END,
+       '种子数据：区级练习题库审核人'
+FROM users u, users a, (VALUES ('practice_district_manage'),('practice_municipal_manage')) AS t(pt)
+WHERE a.username = 'admin'
+  AND u.username IN ('teacher_yy_ms_math','teacher_yy_ms_it','teacher_nm_ms_math','teacher_nm_ms_it','teacher_by_ms_math','teacher_by_ms_it')
+ON CONFLICT DO NOTHING;
