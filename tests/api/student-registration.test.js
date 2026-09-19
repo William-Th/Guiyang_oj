@@ -6,7 +6,7 @@
  * 测试范围:
  * - 学生注册申请（表单验证、重复检测）
  * - 配置接口（区县、学校列表）
- * - 申请状态查�?
+ * - 申请状态查询
  * - 管理员审核流程（获取列表、批准、拒绝）
  * - 审核历史查看
  * - 自动升级机制（模拟时间）
@@ -19,7 +19,7 @@ const http = require('http');
 
 // 配置
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-const TIMEOUT = 10000; // 10秒超�?
+const TIMEOUT = 10000; // 10秒超时
 
 // 测试数据
 let authTokens = {
@@ -30,7 +30,7 @@ let authTokens = {
 };
 
 let testData = {
-  testPhone: `139${Date.now().toString().slice(-8)}`, // 生成唯一手机�?
+  testPhone: `139${Date.now().toString().slice(-8)}`, // 生成唯一手机号
   registrationId: null,
   studentUserId: null
 };
@@ -115,12 +115,12 @@ function test(name, fn) {
     .then(() => {
       results.passed++;
       results.tests.push({ name, status: 'passed' });
-      console.log(`${colors.green}�?{colors.reset} ${name}`);
+      console.log(`${colors.green}✓${colors.reset} ${name}`);
     })
     .catch((error) => {
       results.failed++;
       results.tests.push({ name, status: 'failed', error: error.message });
-      console.log(`${colors.red}�?{colors.reset} ${name}`);
+      console.log(`${colors.red}✗${colors.reset} ${name}`);
       console.log(`  ${colors.red}Error: ${error.message}${colors.reset}`);
     });
 }
@@ -129,7 +129,7 @@ function skip(name, reason) {
   results.total++;
   results.skipped++;
   results.tests.push({ name, status: 'skipped', reason });
-  console.log(`${colors.yellow}�?{colors.reset} ${name} ${colors.yellow}(skipped: ${reason})${colors.reset}`);
+  console.log(`${colors.yellow}○${colors.reset} ${name} ${colors.yellow}(skipped: ${reason})${colors.reset}`);
   return Promise.resolve();
 }
 
@@ -148,7 +148,7 @@ async function login(username, password) {
 }
 
 // ============================================
-// 测试套件开�?
+// 测试套件开始
 // ============================================
 
 console.log(`\n${colors.bold}${colors.blue}==============================================`);
@@ -161,7 +161,7 @@ console.log(`Test Phone: ${testData.testPhone}\n`);
 async function runTests() {
   try {
     // ============================================
-    // 准备阶段: 登录各级管理员账�?
+    // 准备阶段: 登录各级管理员账号
     // ============================================
     console.log(`\n${colors.bold}Phase 0: Authentication Setup${colors.reset}`);
 
@@ -193,10 +193,10 @@ async function runTests() {
       assert(Array.isArray(response.body.data), 'Data should be an array');
       assert(response.body.data.length === 12, `Expected 12 districts, got ${response.body.data.length}`);
 
-      // 验证包含云岩�?
+      // 验证包含云岩区
       const yunyan = response.body.data.find(d => d.code === 'YY');
       assert(yunyan, 'Should contain Yunyan district (YY)');
-      assert(yunyan.name === '云岩�?, 'Yunyan name should be correct');
+      assert(yunyan.name === '云岩区', 'Yunyan name should be correct');
     });
 
     await test('GET /api/registration/config/schools/YY - Get schools in Yunyan district', async () => {
@@ -233,12 +233,12 @@ async function runTests() {
         idCardLast4: '1234',
         districtCode: 'YY',
         schoolCode: 'YY-PS-01',
-        grade: '二年�?
+        grade: '二年级'
       });
 
       assert(response.statusCode === 201, `Expected 201, got ${response.statusCode}`);
       assert(response.body.success === true, 'Response should indicate success');
-      assert(response.body.message.includes('已提�?), 'Should contain success message');
+      assert(response.body.message.includes('已提交'), 'Should contain success message');
       assert(response.body.data.id, 'Should return registration ID');
 
       testData.registrationId = response.body.data.id;
@@ -252,12 +252,12 @@ async function runTests() {
         idCardLast4: '5678',
         districtCode: 'YY',
         schoolCode: 'YY-PS-01',
-        grade: '二年�?
+        grade: '二年级'
       });
 
       assert(response.statusCode === 400, `Expected 400, got ${response.statusCode}`);
       assert(response.body.success === false, 'Response should indicate failure');
-      assert(response.body.message.includes('已注�?) || response.body.message.includes('待审�?),
+      assert(response.body.message.includes('已注册') || response.body.message.includes('待审核'),
         'Should indicate duplicate registration');
     });
 
@@ -269,12 +269,12 @@ async function runTests() {
         idCardLast4: '1234',
         districtCode: 'YY',
         schoolCode: 'YY-PS-01',
-        grade: '二年�?
+        grade: '二年级'
       });
 
       assert(response.statusCode === 400, `Expected 400, got ${response.statusCode}`);
       assert(response.body.success === false, 'Response should indicate failure');
-      assert(response.body.message.includes('手机�?), 'Should mention phone number validation');
+      assert(response.body.message.includes('手机号'), 'Should mention phone number validation');
     });
 
     await test('POST /api/registration/student - Missing required field (realName)', async () => {
@@ -284,7 +284,7 @@ async function runTests() {
         idCardLast4: '1234',
         districtCode: 'YY',
         schoolCode: 'YY-PS-01',
-        grade: '二年�?
+        grade: '二年级'
       });
 
       assert(response.statusCode === 400, `Expected 400, got ${response.statusCode}`);
@@ -299,7 +299,7 @@ async function runTests() {
         idCardLast4: '1234',
         districtCode: 'INVALID',
         schoolCode: 'YY-PS-01',
-        grade: '二年�?
+        grade: '二年级'
       });
 
       assert(response.statusCode === 400, `Expected 400, got ${response.statusCode}`);
@@ -315,7 +315,7 @@ async function runTests() {
         idCardLast4: '1234',
         districtCode: 'YY',
         schoolCode: 'NM-PS-01', // 南明区学校，但选择了云岩区
-        grade: '二年�?
+        grade: '二年级'
       });
 
       assert(response.statusCode === 400, `Expected 400, got ${response.statusCode}`);
@@ -324,7 +324,7 @@ async function runTests() {
     });
 
     // ============================================
-    // 阶段3: 申请状态查询测�?
+    // 阶段3: 申请状态查询测试
     // ============================================
     console.log(`\n${colors.bold}Phase 3: Registration Status Query${colors.reset}`);
 
@@ -343,16 +343,16 @@ async function runTests() {
 
       assert(response.statusCode === 404, `Expected 404, got ${response.statusCode}`);
       assert(response.body.success === false, 'Response should indicate failure');
-      assert(response.body.message.includes('未找�?), 'Should indicate not found');
+      assert(response.body.message.includes('未找到'), 'Should indicate not found');
     });
 
     // ============================================
-    // 阶段4: 管理员审核流程测�?
+    // 阶段4: 管理员审核流程测试
     // ============================================
     console.log(`\n${colors.bold}Phase 4: Admin Review Process${colors.reset}`);
 
-    // 注意：这些接口需�?JWT 认证，当�?registration.js 中有 TODO 注释
-    // 如果认证未实现，这些测试会失�?
+    // 注意：这些接口需要 JWT 认证，当前 registration.js 中有 TODO 注释
+    // 如果认证未实现，这些测试会失败
     await skip('GET /api/registration/admin/requests - Get pending requests (school admin)',
       'JWT authentication not yet implemented in registration.js');
 

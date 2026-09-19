@@ -105,11 +105,11 @@ async function runTest(testName, testFn) {
   try {
     await testFn();
     passedTests++;
-    log(`�?${testName}`, colors.green);
+    log(`✓ ${testName}`, colors.green);
     return true;
   } catch (error) {
     failedTests++;
-    log(`�?${testName}`, colors.red);
+    log(`✗ ${testName}`, colors.red);
     log(`  Error: ${error.message}`, colors.red);
     return false;
   }
@@ -142,23 +142,23 @@ async function setupAuthentication() {
 
   try {
     tokens.teacher = await login(TEST_USERS.teacher.username, TEST_USERS.teacher.password);
-    log('�?Teacher login successful', colors.green);
+    log('✓ Teacher login successful', colors.green);
   } catch (error) {
-    log(`�?Teacher login failed: ${error.message}`, colors.red);
+    log(`✗ Teacher login failed: ${error.message}`, colors.red);
   }
 
   try {
     tokens.admin = await login(TEST_USERS.admin.username, TEST_USERS.admin.password);
-    log('�?Admin login successful', colors.green);
+    log('✓ Admin login successful', colors.green);
   } catch (error) {
-    log(`�?Admin login failed: ${error.message}`, colors.red);
+    log(`✗ Admin login failed: ${error.message}`, colors.red);
   }
 
   try {
     tokens.student = await login(TEST_USERS.student.username, TEST_USERS.student.password);
-    log('�?Student login successful', colors.green);
+    log('✓ Student login successful', colors.green);
   } catch (error) {
-    log(`�?Student login failed: ${error.message}`, colors.red);
+    log(`✗ Student login failed: ${error.message}`, colors.red);
   }
 }
 
@@ -328,7 +328,7 @@ async function testQuestionBankAPI() {
 
   // Test 3: Filter by grade
   await runTest('QB-003: Filter question banks by grade', async () => {
-    const response = await makeRequest(`${API_URL}/api/question-bank/bank?grade=${encodeURIComponent('三年�?)}`, {
+    const response = await makeRequest(`${API_URL}/api/question-bank/bank?grade=${encodeURIComponent('三年级')}`, {
       headers: { Authorization: `Bearer ${tokens.teacher}` }
     });
     assertStatus(response, 200, 'Should return 200 for filtered questions');
@@ -436,8 +436,8 @@ async function runAllTests() {
   testStartTime = Date.now();
 
   log('╔════════════════════════════════════════════════════════════╗', colors.cyan);
-  log('�?       Comprehensive API Test Suite                       �?, colors.cyan);
-  log('�?       Question Review, User Management, System Config     �?, colors.cyan);
+  log('║        Comprehensive API Test Suite                       ║', colors.cyan);
+  log('║        Question Review, User Management, System Config     ║', colors.cyan);
   log('╚════════════════════════════════════════════════════════════╝', colors.cyan);
 
   try {
@@ -453,7 +453,7 @@ async function runAllTests() {
     await testPermissionAPI();
 
   } catch (error) {
-    log(`\n�?Test execution error: ${error.message}`, colors.red);
+    log(`\n✗ Test execution error: ${error.message}`, colors.red);
   }
 
   // Print summary

@@ -1,10 +1,10 @@
 /**
  * 题目编码功能 API测试
  *
- * 测试内容�?
+ * 测试内容：
  * 1. 题目编码自动生成
  * 2. 编码格式验证
- * 3. 编码唯一性验�?
+ * 3. 编码唯一性验证
  * 4. 通过编码查询题目
  * 5. 编码解析功能
  */
@@ -15,7 +15,7 @@ const { query, getClient } = require('../../backend/src/database/connection');
 describe('Question Code Service Tests', () => {
   let testQuestionIds = [];
 
-  // 测试后清�?
+  // 测试后清理
   afterAll(async () => {
     // 清理测试数据
     if (testQuestionIds.length > 0) {
@@ -28,7 +28,7 @@ describe('Question Code Service Tests', () => {
       const code = await questionCodeService.generateQuestionCode('数学');
 
       expect(code).toBeDefined();
-      expect(code).toMatch(/^MATH\d{10}$/); // MATH + 10位数�?
+      expect(code).toMatch(/^MATH\d{10}$/); // MATH + 10位数字
       expect(code.length).toBe(14);
     });
 
@@ -58,7 +58,7 @@ describe('Question Code Service Tests', () => {
       const code1 = await questionCodeService.generateQuestionCode('数学');
       const code2 = await questionCodeService.generateQuestionCode('数学');
 
-      // 提取序号部分（最�?位）
+      // 提取序号部分（最后4位）
       const seq1 = parseInt(code1.substring(10), 10);
       const seq2 = parseInt(code2.substring(10), 10);
 
@@ -67,7 +67,7 @@ describe('Question Code Service Tests', () => {
   });
 
   describe('编码格式验证', () => {
-    it('应该包含正确的日期信�?, async () => {
+    it('应该包含正确的日期信息', async () => {
       const testDate = new Date('2025-03-15');
       const code = await questionCodeService.generateQuestionCode('数学', testDate);
 
@@ -77,7 +77,7 @@ describe('Question Code Service Tests', () => {
       expect(code.substring(8, 10)).toBe('15'); // 日期
     });
 
-    it('序号应该�?位数字，不足�?', async () => {
+    it('序号应该是4位数字，不足补0', async () => {
       const code = await questionCodeService.generateQuestionCode('生物');
 
       const sequence = code.substring(10, 14);
@@ -86,8 +86,8 @@ describe('Question Code Service Tests', () => {
     });
   });
 
-  describe('编码唯一性验�?, () => {
-    it('数据库中不应该有重复的编�?, async () => {
+  describe('编码唯一性验证', () => {
+    it('数据库中不应该有重复的编码', async () => {
       // 创建两个题目
       const sql = `
         INSERT INTO question_bank (type, subject, grade, content, created_by, status)
@@ -112,8 +112,8 @@ describe('Question Code Service Tests', () => {
       expect(code2).toBeDefined();
     });
 
-    it('isCodeExists应该正确检测编码是否存�?, async () => {
-      // 创建一个题�?
+    it('isCodeExists应该正确检测编码是否存在', async () => {
+      // 创建一个题目
       const sql = `
         INSERT INTO question_bank (type, subject, grade, content, created_by, status)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -121,7 +121,7 @@ describe('Question Code Service Tests', () => {
       `;
 
       const result = await query(sql, [
-        'single', '物理', '二年�?, '测试题目', 1, 'draft'
+        'single', '物理', '二年级', '测试题目', 1, 'draft'
       ]);
 
       testQuestionIds.push(result.rows[0].id);
@@ -131,7 +131,7 @@ describe('Question Code Service Tests', () => {
       const exists = await questionCodeService.isCodeExists(code);
       expect(exists).toBe(true);
 
-      // 检查不存在的编�?
+      // 检查不存在的编码
       const notExists = await questionCodeService.isCodeExists('MATH9999990001');
       expect(notExists).toBe(false);
     });
@@ -147,7 +147,7 @@ describe('Question Code Service Tests', () => {
       `;
 
       const result = await query(sql, [
-        'single', '化学', '三年�?, '通过编码查询测试', 1, 'draft'
+        'single', '化学', '三年级', '通过编码查询测试', 1, 'draft'
       ]);
 
       testQuestionIds.push(result.rows[0].id);
@@ -208,12 +208,12 @@ describe('Question Code Service Tests', () => {
       expect(SUBJECT_CODE_MAP['物理']).toBe('IT');
       expect(SUBJECT_CODE_MAP['化学']).toBe('MATH');
       expect(SUBJECT_CODE_MAP['生物']).toBe('IT');
-      expect(SUBJECT_CODE_MAP['计算�?]).toBe('COMP');
+      expect(SUBJECT_CODE_MAP['计算机']).toBe('COMP');
     });
   });
 
   describe('业务流程测试', () => {
-    it('完整的创�?查询-解析流程', async () => {
+    it('完整的创建-查询-解析流程', async () => {
       // 1. 创建题目（数据库触发器自动生成编码）
       const sql = `
         INSERT INTO question_bank (type, subject, grade, content, created_by, status)
@@ -222,13 +222,13 @@ describe('Question Code Service Tests', () => {
       `;
 
       const result = await query(sql, [
-        'single', '计算�?, '四年�?, '完整流程测试', 1, 'draft'
+        'single', '计算机', '四年级', '完整流程测试', 1, 'draft'
       ]);
 
       testQuestionIds.push(result.rows[0].id);
       const code = result.rows[0].question_code;
 
-      // 2. 验证编码已生�?
+      // 2. 验证编码已生成
       expect(code).toBeDefined();
       expect(code).toMatch(/^COMP\d{10}$/);
 
@@ -239,7 +239,7 @@ describe('Question Code Service Tests', () => {
 
       // 4. 解析编码
       const codeInfo = questionCodeService.parseQuestionCode(code);
-      expect(codeInfo.subject).toBe('计算�?);
+      expect(codeInfo.subject).toBe('计算机');
       expect(codeInfo.subjectCode).toBe('COMP');
 
       // 5. 验证编码存在

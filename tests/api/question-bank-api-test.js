@@ -64,10 +64,10 @@ async function test(name, fn) {
   try {
     await fn();
     passedTests++;
-    log(`�?${name}`, colors.green);
+    log(`✓ ${name}`, colors.green);
   } catch (error) {
     failedTests++;
-    log(`�?${name}`, colors.red);
+    log(`✗ ${name}`, colors.red);
     log(`  Error: ${error.message}`, colors.red);
   }
 }
@@ -158,7 +158,7 @@ async function runTests() {
     const questionData = {
       type: 'single',
       subject: '数学',
-      grade: '三年�?,
+      grade: '三年级',
       content: '1 + 1 = ?',
       options: ['1', '2', '3', '4'],
       correct_answer: 'B',
@@ -189,7 +189,7 @@ async function runTests() {
     const questionData = {
       type: 'multiple',
       subject: '语文',
-      grade: '三年�?,
+      grade: '三年级',
       content: '下列哪些是声母？',
       options: ['a', 'b', 'c', 'd'],
       correct_answer: ['B', 'C', 'D'],
@@ -215,7 +215,7 @@ async function runTests() {
     const questionData = {
       type: 'single',
       subject: '数学',
-      grade: '三年�?,
+      grade: '三年级',
       content: 'Test question',
       options: ['A', 'B'],
       correct_answer: 'A',

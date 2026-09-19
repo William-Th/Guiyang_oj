@@ -10,14 +10,14 @@ setup('authenticate as student', async ({ page }) => {
 
   // Fill in student credentials (using phone number login)
   // Note: Students now login with phone number only (ID card field removed)
-  await page.fill('input[placeholder="手机号"]', '13900139002');
+  await page.fill('input[placeholder="手机号"]', '13800138003');
   await page.fill('input[placeholder="密码"]', 'password123');
 
   // Click login button
   await page.click('button[type="submit"]');
 
   // Wait for successful login and redirect
-  await page.waitForURL('/', { timeout: 15000 });
+  await page.waitForURL('/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 
   // Verify login was successful
   await expect(page).toHaveURL('/');
@@ -43,7 +43,7 @@ setup('authenticate as teacher', async ({ page }) => {
   await activeTabPane.locator('button[type="submit"]').click();
 
   // Wait for successful login and redirect
-  await page.waitForURL('/', { timeout: 15000 });
+  await page.waitForURL('/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 
   // Verify login was successful
   await expect(page).toHaveURL('/');

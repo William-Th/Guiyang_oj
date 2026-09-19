@@ -19,7 +19,8 @@
     "test:e2e:headed": "playwright test --config=tests/playwright.config.ts --headed",
     "test:e2e:debug": "playwright test --config=tests/playwright.config.ts --debug",
     "test:e2e:report": "playwright show-report tests/test-results/html",
-    "test:install": "playwright install"
+    "test:install": "playwright install",
+    "test:regression:serial": "playwright test tests/e2e/regression --config=tests/playwright.config.ts --workers=1 --retries=1"
   },
   "name": "git",
   "version": "1.0.0",

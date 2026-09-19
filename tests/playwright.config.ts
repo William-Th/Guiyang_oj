@@ -31,7 +31,7 @@ export default defineConfig({
 
   // 全局配置
   use: {
-    baseURL: 'http://localhost:8080',  // nginx proxy (maps 80 -> 8080 on host)
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

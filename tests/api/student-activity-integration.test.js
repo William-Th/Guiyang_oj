@@ -5,7 +5,7 @@
  * 测试完整的学生答题工作流程：
  * 1. 学生登录
  * 2. 获取练习列表
- * 3. 开始练�?
+ * 3. 开始练习
  * 4. 获取题目
  * 5. 提交答案
  * 6. 提交活动
@@ -47,7 +47,7 @@ async function apiRequest(method, endpoint, data = null, token = authToken) {
     const response = await axios(config);
     return response.data;
   } catch (error) {
-    console.error(`�?API Request Failed: ${method} ${endpoint}`);
+    console.error(`❌ API Request Failed: ${method} ${endpoint}`);
     console.error('Error:', error.response?.data || error.message);
     throw error;
   }
@@ -69,7 +69,7 @@ async function testStudentLogin() {
   }
 
   authToken = response.token;
-  console.log('�?Student login successful');
+  console.log('✅ Student login successful');
   console.log(`   Token: ${authToken.substring(0, 20)}...`);
 }
 
@@ -85,7 +85,7 @@ async function testGetPractices() {
     throw new Error('Failed to get practices');
   }
 
-  console.log(`�?Found ${response.activities.length} available practices`);
+  console.log(`✅ Found ${response.activities.length} available practices`);
 
   // Find a suitable test activity
   const testActivity = response.activities.find(a =>
@@ -116,7 +116,7 @@ async function testStartActivity() {
   }
 
   studentActivityId = response.studentActivityId;
-  console.log('�?Activity started successfully');
+  console.log('✅ Activity started successfully');
   console.log(`   Student Activity ID: ${studentActivityId}`);
   console.log(`   Start Time: ${response.startTime}`);
   console.log(`   Deadline: ${response.timeLimitDeadline || 'N/A'}`);
@@ -135,7 +135,7 @@ async function testGetQuestions() {
   }
 
   const questions = response.activity.questions;
-  console.log(`�?Retrieved ${questions.length} questions`);
+  console.log(`✅ Retrieved ${questions.length} questions`);
 
   // Display question types
   const questionTypes = {};
@@ -200,12 +200,12 @@ async function testSubmitAnswers(questions) {
         failCount++;
       }
     } catch (error) {
-      console.error(`   �?Failed to submit answer for question ${question.id}`);
+      console.error(`   ❌ Failed to submit answer for question ${question.id}`);
       failCount++;
     }
   }
 
-  console.log(`�?Answer submission completed:`);
+  console.log(`✅ Answer submission completed:`);
   console.log(`   Success: ${successCount}/${questions.length}`);
   console.log(`   Failed: ${failCount}/${questions.length}`);
 
@@ -226,7 +226,7 @@ async function testSubmitActivity() {
     throw new Error('Failed to submit activity');
   }
 
-  console.log('�?Activity submitted successfully');
+  console.log('✅ Activity submitted successfully');
   console.log(`   Total Score: ${response.totalScore || 'Pending'}`);
   console.log(`   Auto-graded Questions: ${response.autoGradedAnswers || 0}`);
   console.log(`   Duration: ${response.durationFormatted || 'N/A'}`);
@@ -245,7 +245,7 @@ async function testGetResult() {
   }
 
   const result = response.result;
-  console.log('�?Activity result retrieved');
+  console.log('✅ Activity result retrieved');
   console.log(`   Status: ${result.status}`);
   console.log(`   Score: ${result.score || 'Pending'}/${result.activity.total_score}`);
   console.log(`   Grading Status: ${result.grading_status || 'pending'}`);
@@ -286,12 +286,12 @@ async function runTests() {
     await testGetResult();
 
     console.log('\n' + '='.repeat(60));
-    console.log('�?All integration tests passed successfully!');
+    console.log('✅ All integration tests passed successfully!');
     console.log('=' .repeat(60));
 
   } catch (error) {
     console.log('\n' + '='.repeat(60));
-    console.error('�?Integration tests failed');
+    console.error('❌ Integration tests failed');
     console.error('Error:', error.message);
     console.log('=' .repeat(60));
     process.exit(1);

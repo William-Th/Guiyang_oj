@@ -28,7 +28,7 @@ async function getAuthToken(username, password) {
 const testActivity = {
   title: `Test Activity ${Date.now()}`,
   subject: '数学',
-  grade: '三年�?,
+  grade: '三年级',
   abilityLevel: 'L3',
   duration: 60,
   totalScore: 100,

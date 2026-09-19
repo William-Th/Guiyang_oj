@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * Practice and Assessment API Test Suite
- * 练习和测评系�?API 测试套件
+ * 练习和测评系统 API 测试套件
  *
  * 测试范围:
- * - 学生答题流程 (15个测�?
- * - 自动判题功能 (8个测�?
- * - 教师评卷功能 (10个测�?
+ * - 学生答题流程 (15个测试)
+ * - 自动判题功能 (8个测试)
+ * - 教师评卷功能 (10个测试)
  *
  * 运行方式:
  *   node tests/api/practice-assessment-api-test.js
@@ -16,7 +16,7 @@ const http = require('http');
 
 // 配置
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-const TIMEOUT = 15000; // 15秒超�?
+const TIMEOUT = 15000; // 15秒超时
 
 // 测试数据
 let authTokens = {
@@ -102,18 +102,18 @@ function makeRequest(options, postData = null) {
  */
 async function test(name, fn) {
   results.total++;
-  process.stdout.write(`  ${colors.cyan}�?{colors.reset} ${name} ... `);
+  process.stdout.write(`  ${colors.cyan}→${colors.reset} ${name} ... `);
 
   try {
     await fn();
     results.passed++;
     results.tests.push({ name, status: 'passed' });
-    console.log(`${colors.green}�?PASSED${colors.reset}`);
+    console.log(`${colors.green}✓ PASSED${colors.reset}`);
     return true;
   } catch (error) {
     results.failed++;
     results.tests.push({ name, status: 'failed', error: error.message });
-    console.log(`${colors.red}�?FAILED${colors.reset}`);
+    console.log(`${colors.red}✗ FAILED${colors.reset}`);
     console.log(`    ${colors.red}Error: ${error.message}${colors.reset}`);
     return false;
   }
@@ -154,7 +154,7 @@ async function createTestActivity(token, type = 'practice') {
     title: `${type === 'practice' ? '练习' : '测评'}测试-${timestamp}`,
     description: '用于API测试',
     subject: '数学',
-    grade: '三年�?,
+    grade: '三年级',
     abilityLevel: 'L1',
     type: type,
     totalScore: 100,
@@ -181,7 +181,7 @@ async function createTestActivity(token, type = 'practice') {
 }
 
 /**
- * 添加题目到活动（使用批量接口�?
+ * 添加题目到活动（使用批量接口）
  */
 async function addQuestionsToActivity(token, activityId, questionIds) {
   const questions = questionIds.map((qid) => ({
@@ -211,7 +211,7 @@ async function addQuestionsToActivity(token, activityId, questionIds) {
  */
 async function getPublishedQuestions(token, count = 5) {
   const res = await makeRequest({
-    path: '/api/question-bank/bank?status=published&subject=数学&grade=三年�?limit=10',
+    path: '/api/question-bank/bank?status=published&subject=数学&grade=三年级&limit=10',
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`
@@ -238,7 +238,7 @@ async function runTests() {
   console.log(`${colors.blue}========================================${colors.reset}\n`);
 
   // ============================================================================
-  // 第一部分: 学生答题流程测试 (15个测�?
+  // 第一部分: 学生答题流程测试 (15个测试)
   // ============================================================================
   console.log(`${colors.cyan}[1] Student Answer Flow Tests${colors.reset}`);
 
@@ -255,12 +255,12 @@ async function runTests() {
     assert(testData.activityId > 0, 'Activity ID should be positive');
   });
 
-  await test('TC-PA-004: 获取已发布题�?, async () => {
+  await test('TC-PA-004: 获取已发布题目', async () => {
     testData.questionIds = await getPublishedQuestions(authTokens.teacher, 5);
     assert(testData.questionIds.length >= 5, `Need at least 5 questions, got ${testData.questionIds.length}`);
   });
 
-  await test('TC-PA-005: 教师添加题目到活�?, async () => {
+  await test('TC-PA-005: 教师添加题目到活动', async () => {
     await addQuestionsToActivity(authTokens.teacher, testData.activityId, testData.questionIds);
   });
 
@@ -309,7 +309,7 @@ async function runTests() {
     assert(data.activity, 'Response should contain activity');
   });
 
-  await test('TC-PA-009: 学生开始练习活�?, async () => {
+  await test('TC-PA-009: 学生开始练习活动', async () => {
     const res = await makeRequest({
       path: `/api/student/activities/${testData.activityId}/start`,
       method: 'POST',
@@ -384,7 +384,7 @@ async function runTests() {
     assert(data.success, 'Response success should be true');
   });
 
-  await test('TC-PA-013: 提交填空题答�?, async () => {
+  await test('TC-PA-013: 提交填空题答案', async () => {
     const res = await makeRequest({
       path: `/api/student/activities/${testData.activityId}/answers`,
       method: 'POST',
@@ -437,7 +437,7 @@ async function runTests() {
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   // ============================================================================
-  // 第二部分: 自动判题功能测试 (8个测�?
+  // 第二部分: 自动判题功能测试 (8个测试)
   // ============================================================================
   console.log(`\n${colors.cyan}[2] Auto-Grading Tests${colors.reset}`);
 
@@ -482,7 +482,7 @@ async function runTests() {
     assert(true, 'Multiple choice auto-grading verified');
   });
 
-  await test('TC-AG-004: 验证填空题自动判�?, async () => {
+  await test('TC-AG-004: 验证填空题自动判题', async () => {
     // Similar logic to verify fill-blank auto-grading
     assert(true, 'Fill-blank auto-grading verified');
   });
@@ -523,7 +523,7 @@ async function runTests() {
       'Score should be calculated');
   });
 
-  await test('TC-AG-007: 验证评卷状态更�?, async () => {
+  await test('TC-AG-007: 验证评卷状态更新', async () => {
     const res = await makeRequest({
       path: `/api/student/activities/${testData.activityId}/result`,
       method: 'GET',
@@ -554,11 +554,11 @@ async function runTests() {
   });
 
   // ============================================================================
-  // 第三部分: 教师评卷功能测试 (10个测�?
+  // 第三部分: 教师评卷功能测试 (10个测试)
   // ============================================================================
   console.log(`\n${colors.cyan}[3] Teacher Grading Tests${colors.reset}`);
 
-  await test('TC-TG-001: 教师获取待评卷列�?, async () => {
+  await test('TC-TG-001: 教师获取待评卷列表', async () => {
     const res = await makeRequest({
       path: '/api/teacher/grading/pending',
       method: 'GET',
@@ -590,7 +590,7 @@ async function runTests() {
     assert(Array.isArray(data.subjective_questions), 'Should contain subjective_questions');
   });
 
-  await test('TC-TG-003: 教师评分主观�?, async () => {
+  await test('TC-TG-003: 教师评分主观题', async () => {
     // Find a subjective question answer to grade
     const detailRes = await makeRequest({
       path: `/api/teacher/grading/student-activity/${testData.studentActivityId}`,
@@ -768,7 +768,7 @@ function printResults() {
   if (results.failed > 0) {
     console.log(`\n${colors.red}Failed Tests:${colors.reset}`);
     results.tests.filter(t => t.status === 'failed').forEach(t => {
-      console.log(`  ${colors.red}�?{colors.reset} ${t.name}`);
+      console.log(`  ${colors.red}✗${colors.reset} ${t.name}`);
       console.log(`    Error: ${t.error}`);
     });
   }
@@ -779,16 +779,16 @@ function printResults() {
   const exitCode = results.failed > 0 ? 1 : 0;
 
   if (exitCode === 0) {
-    console.log(`${colors.green}�?All tests passed! Ready to proceed to frontend development.${colors.reset}\n`);
+    console.log(`${colors.green}✅ All tests passed! Ready to proceed to frontend development.${colors.reset}\n`);
   } else {
-    console.log(`${colors.red}�?Some tests failed. Please fix issues before proceeding.${colors.reset}\n`);
+    console.log(`${colors.red}❌ Some tests failed. Please fix issues before proceeding.${colors.reset}\n`);
   }
 
   process.exit(exitCode);
 }
 
 /**
- * 主函�?
+ * 主函数
  */
 async function main() {
   try {

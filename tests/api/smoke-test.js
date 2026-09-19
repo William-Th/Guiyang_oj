@@ -11,7 +11,7 @@ const http = require('http');
 
 // 配置
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3003';
-const TIMEOUT = 5000; // 5秒超�?
+const TIMEOUT = 5000; // 5秒超时
 
 // 测试结果
 const results = {
@@ -79,7 +79,7 @@ function makeRequest(options, postData = null) {
 }
 
 /**
- * 测试用例执行�?
+ * 测试用例执行器
  */
 async function runTest(name, testFn) {
   results.total++;
@@ -90,13 +90,13 @@ async function runTest(name, testFn) {
     const duration = Date.now() - startTime;
     results.passed++;
     results.tests.push({ name, status: 'PASS', duration });
-    console.log(`${colors.green}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
+    console.log(`${colors.green}✓${colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
     return true;
   } catch (error) {
     const duration = Date.now() - startTime;
     results.failed++;
     results.tests.push({ name, status: 'FAIL', error: error.message, duration });
-    console.log(`${colors.red}�?{colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
+    console.log(`${colors.red}✗${colors.reset} ${name} ${colors.blue}(${duration}ms)${colors.reset}`);
     console.log(`  ${colors.red}Error: ${error.message}${colors.reset}`);
     return false;
   }
@@ -181,7 +181,7 @@ async function runSmokeTests() {
   // 测试6: 教师登录API
   await runTest('Teacher login endpoint', async () => {
     const postData = JSON.stringify({
-      username: 'teacher01',
+      username: 'teacher_by_ps_math',
       password: 'password123',
       loginType: 'username'
     });
@@ -220,9 +220,9 @@ async function runSmokeTests() {
     assert(response.statusCode === 401, `Expected status 401, got ${response.statusCode}`);
   });
 
-  // 测试8: 证书验证API（公开接口�?
+  // 测试8: 证书验证API（公开接口）
   await runTest('Certificate verification endpoint', async () => {
-    // 使用一个不存在的证书编号，应该返回404（或证书不存在的响应�?
+    // 使用一个不存在的证书编号，应该返回404（或证书不存在的响应）
     const response = await makeRequest({ path: '/api/certificate/verify/GY-2025-00000000' });
     // 接受404或其他表示证书不存在的状态码
     assert(response.statusCode >= 400 && response.statusCode < 500,
@@ -248,7 +248,7 @@ async function runSmokeTests() {
 }
 
 /**
- * 主函�?
+ * 主函数
  */
 async function main() {
   const startTime = Date.now();
@@ -268,7 +268,7 @@ async function main() {
   console.log(`${colors.red}Failed: ${results.failed}${colors.reset}`);
   console.log(`Duration: ${totalTime}ms\n`);
 
-  // 如果有失败的测试，退出码�?
+  // 如果有失败的测试，退出码为1
   if (results.failed > 0) {
     console.log(`${colors.red}Smoke tests FAILED${colors.reset}\n`);
     process.exit(1);

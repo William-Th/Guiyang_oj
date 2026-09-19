@@ -40,7 +40,7 @@ describe('Student Activities API Tests', () => {
         {
           title: `Test Practice ${Date.now()}`,
           subject: '数学',
-          grade: '三年�?,
+          grade: '三年级',
           abilityLevel: 'L3',
           duration: 60,
           totalScore: 100,
@@ -110,7 +110,7 @@ describe('Student Activities API Tests', () => {
       expect(response.status).toBe(200);
       const activities = response.data.activities;
       activities.forEach(activity => {
-        expect(activity.grade).toBe('三年�?);
+        expect(activity.grade).toBe('三年级');
       });
     });
 
@@ -273,7 +273,7 @@ describe('Student Activities API Tests', () => {
   describe('Multiple Filter Combinations', () => {
     test('Student can apply multiple filters to practice list', async () => {
       const response = await axios.get(
-        `${API_BASE_URL}/activities/practice?subject=数学&grade=三年�?ability_level=L3`,
+        `${API_BASE_URL}/activities/practice?subject=数学&grade=三年级&ability_level=L3`,
         {
           headers: { Authorization: `Bearer ${studentToken}` }
         }
@@ -283,7 +283,7 @@ describe('Student Activities API Tests', () => {
       const activities = response.data.activities;
       activities.forEach(activity => {
         expect(activity.subject).toBe('数学');
-        expect(activity.grade).toBe('三年�?);
+        expect(activity.grade).toBe('三年级');
         expect(activity.ability_level).toBe('L3');
         expect(activity.type).toBe('practice');
       });

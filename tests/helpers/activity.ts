@@ -32,7 +32,7 @@ export async function addQuestionsToActivity(
         score: defaultScore
       }));
 
-      const response = await fetch(`http://localhost:3001/api/activities/${activityId}/questions/batch`, {
+      const response = await fetch(`/api/activities/${activityId}/questions/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export async function getPublishedQuestions(
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/question-bank/bank?subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}&status=published&limit=${limit}`,
+        `/api/question-bank/bank?subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}&status=published&limit=${limit}`,
         {
           method: 'GET',
           headers: {
@@ -168,7 +168,7 @@ export async function createActivityWithQuestions(
   await submitButton.click();
 
   // Wait for navigation back to activities list
-  await page.waitForURL(/\/activities$/, { timeout: 10000 });
+  await page.waitForURL(/\/activities$/, { timeout: 10000, waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
 
   // Extract activity ID from URL or find the newly created activity
@@ -180,7 +180,7 @@ export async function createActivityWithQuestions(
         throw new Error('No auth token found');
       }
 
-      const response = await fetch('http://localhost:3001/api/activities', {
+      const response = await fetch('/api/activities', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`

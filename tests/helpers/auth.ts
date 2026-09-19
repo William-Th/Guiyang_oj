@@ -7,26 +7,27 @@ import { Page } from '@playwright/test';
 
 /**
  * Login as student
+ * 注意：学生端已改为手机号登录（身份证字段已移除）
  */
-export async function loginAsStudent(page: Page, idCard: string = '520102200801011234', password: string = 'password123') {
+export async function loginAsStudent(page: Page, phone: string = '13800138003', password: string = 'password123') {
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
 
   // Click student tab
-  const studentTab = page.locator('text=学生登录').or(page.locator('[role="tab"]:has-text("学生")'));
+  const studentTab = page.locator('text=学生入口').or(page.locator('[role="tab"]:has-text("学生")'));
   await studentTab.click();
   await page.waitForTimeout(300);
 
-  // Fill credentials
-  await page.fill('input[placeholder*="身份证"], input[type="text"]', idCard);
-  await page.fill('input[placeholder*="密码"], input[type="password"]', password);
+  // Fill credentials (phone number login)
+  await page.fill('input[placeholder="手机号"]', phone);
+  await page.fill('input[placeholder="密码"], input[type="password"]', password);
 
   // Submit
   const loginButton = page.locator('button[type="submit"]').or(page.locator('button:has-text("登录")'));
   await loginButton.click();
 
   // Wait for navigation
-  await page.waitForURL(/^(?!.*\/login).*$/, { timeout: 10000 });
+  await page.waitForURL(/^(?!.*\/login).*$/, { timeout: 15000 });
   await page.waitForLoadState('networkidle');
 }
 
@@ -109,5 +110,5 @@ export async function logout(page: Page) {
   await logoutButton.click();
 
   // Wait for redirect to login
-  await page.waitForURL('/login', { timeout: 10000 });
+  await page.waitForURL('/login', { timeout: 10000, waitUntil: 'domcontentloaded' });
 }

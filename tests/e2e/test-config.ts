@@ -4,6 +4,11 @@ export const STORAGE_STATE = {
   ADMIN: 'tests/.auth/admin.json'
 };
 
+// 兼容各 spec 直接导入的别名（此前缺失导出导致 storageState 为 undefined，用例全部被弹回登录页）
+export const STUDENT_STORAGE_STATE = STORAGE_STATE.STUDENT;
+export const TEACHER_STORAGE_STATE = STORAGE_STATE.TEACHER;
+export const ADMIN_STORAGE_STATE = STORAGE_STATE.ADMIN;
+
 export const TEST_CONFIG = {
   // Demo accounts from CLAUDE.md
   STUDENT: {
@@ -15,7 +20,7 @@ export const TEST_CONFIG = {
     password: 'password123'
   },
   TEACHER02: {
-    username: 'teacher02',
+    username: 'teacher_yy_ms_math',
     password: 'password123'
   },
   ADMIN: {
