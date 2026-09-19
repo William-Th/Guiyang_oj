@@ -4,6 +4,7 @@ import { EyeOutlined, PlayCircleOutlined, FormOutlined, UnorderedListOutlined, T
 import { useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import { SUBJECTS, getAllGrades, getAllAbilityLevels } from '../../config/subjects';
+import { useNowTick, formatCountdown, getTimeGate } from '../../hooks/useCountdown';
 import AssessmentRegistrationModal from '../../components/student/AssessmentRegistrationModal';
 
 interface Assessment {
@@ -48,6 +49,8 @@ interface HistoryAssessment {
 const AssessmentCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  // 每秒刷新的当前时间，驱动未开始活动的「距开始」倒计时
+  const now = useNowTick();
   // 进入页面时若带 tab state（从结果页返回），则恢复到对应 Tab
   const initialTab = location.state?.tab === 'completed' ? 'completed' : 'available';
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -176,14 +179,21 @@ const AssessmentCenterPage: React.FC = () => {
         const isRegistered = record.registration_status === 'confirmed';
         const needsRegistration = record.registration_enabled && !isRegistered;
         const canStart = !record.registration_enabled || isRegistered;
+        // 时间闸门：未开始的定时活动保持可见，但「开始」禁用并显示倒计时，到点自动恢复
+        const gate = getTimeGate(record.start_time, now);
         return (
-          <Space>
+          <Space size={4} wrap>
             <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/student/activity/${record.id}`)}>详情</Button>
             {needsRegistration && (
               <Button size="small" type="primary" icon={<FormOutlined />} onClick={() => handleRegisterClick(record)}>报名</Button>
             )}
             {canStart && (
-              <Button size="small" type="primary" danger icon={<PlayCircleOutlined />} onClick={() => handleStartAssessment(record.id)}>开始</Button>
+              <Button size="small" type="primary" danger icon={<PlayCircleOutlined />}
+                disabled={gate.notStarted}
+                onClick={() => handleStartAssessment(record.id)}>开始</Button>
+            )}
+            {canStart && gate.notStarted && (
+              <Tag color="warning" className="start-countdown">距开始 {formatCountdown(gate.msLeft)}</Tag>
             )}
           </Space>
         );

@@ -4,6 +4,7 @@ import { PlayCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import { SUBJECTS, getAllGrades, getAllAbilityLevels } from '../../config/subjects';
+import { useNowTick, formatCountdown, getTimeGate } from '../../hooks/useCountdown';
 
 interface Practice {
   id: number;
@@ -20,6 +21,7 @@ interface Practice {
   allow_retake: boolean;
   max_attempts: number;
   my_status?: string;
+  student_status?: string;
   my_score?: number;
   attempt_number?: number;
 }
@@ -49,6 +51,8 @@ interface HistoryActivity {
 const PracticeCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  // 每秒刷新的当前时间，驱动未开始活动的「距开始」倒计时
+  const now = useNowTick();
   // 进入页面时若带 tab state（从结果页返回），则恢复到对应 Tab
   const initialTab = location.state?.tab === 'completed' ? 'completed' : 'available';
   const [practices, setPractices] = useState<Practice[]>([]);
@@ -148,7 +152,9 @@ const PracticeCenterPage: React.FC = () => {
   const columns = [
     {
       title: '练习名称', dataIndex: 'title', key: 'title', width: isMobile ? undefined : 200,
-      render: (title: string, record: Practice) => (
+      render: (title: string, record: Practice) => {
+        const myStatus = record.my_status ?? record.student_status;
+        return (
         <Space direction={isMobile ? 'vertical' : 'horizontal'} size={4} className="activity-title-cell">
           <span className="activity-title-text">{title}</span>
           {isMobile && (
@@ -158,13 +164,14 @@ const PracticeCenterPage: React.FC = () => {
               {getAbilityLevelTag(record.ability_level)}
             </Space>
           )}
-          {record.my_status === 'submitted' || record.my_status === 'graded' ? (
+          {myStatus === 'submitted' || myStatus === 'graded' ? (
             <Tag color="success" icon={<TrophyOutlined />}>已完成</Tag>
-          ) : record.my_status === 'in_progress' ? (
+          ) : myStatus === 'in_progress' ? (
             <Tag color="processing" icon={<PlayCircleOutlined />}>进行中</Tag>
           ) : null}
         </Space>
-      ),
+        );
+      },
     },
     { title: '科目', dataIndex: 'subject', key: 'subject', width: 100, render: (s: string) => getSubjectTag(s) },
     { title: '年级', dataIndex: 'grade', key: 'grade', width: 100 },
@@ -176,19 +183,32 @@ const PracticeCenterPage: React.FC = () => {
       title: '操作', key: 'action', width: isMobile ? 112 : 150,
       fixed: isMobile ? undefined : 'right' as const,
       render: (_: any, record: Practice) => {
-        if (record.my_status === 'graded' || record.my_status === 'submitted') {
-          return (
-            <Button size="small" type="primary" icon={<TrophyOutlined />}
-              onClick={() => goResult(record.id)}>
-              查看结果
-            </Button>
-          );
-        }
+        const myStatus = record.my_status ?? record.student_status;
+        const completed = myStatus === 'graded' || myStatus === 'submitted';
+        // 已完成但后端仍列为可参加（allow_retake 且次数未满）时保留重做入口，与可用性契约一致
+        const canRetake = Boolean(record.allow_retake)
+          && (record.attempt_number ?? 0) < (record.max_attempts ?? 1);
+        // 时间闸门：未开始的定时练习保持可见，但按钮禁用并显示倒计时，到点自动恢复
+        const gate = getTimeGate(record.start_time, now);
         return (
-          <Button size="small" type="primary" icon={<PlayCircleOutlined />}
-            onClick={() => handleStartPractice(record.id)}>
-            开始练习
-          </Button>
+          <Space size={4} wrap>
+            {completed && (
+              <Button size="small" type="primary" icon={<TrophyOutlined />}
+                onClick={() => goResult(record.id)}>
+                查看结果
+              </Button>
+            )}
+            {(!completed || canRetake) && (
+              <Button size="small" type="primary" icon={<PlayCircleOutlined />}
+                disabled={gate.notStarted}
+                onClick={() => handleStartPractice(record.id)}>
+                开始练习
+              </Button>
+            )}
+            {(!completed || canRetake) && gate.notStarted && (
+              <Tag color="warning" className="start-countdown">距开始 {formatCountdown(gate.msLeft)}</Tag>
+            )}
+          </Space>
         );
       },
     },
