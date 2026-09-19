@@ -412,7 +412,17 @@ const ActivityFormPage: React.FC = () => {
           >
             <Select
               placeholder="请选择时间限制类型"
-              onChange={(value: TimeLimitType) => setTimeLimitType(value)}
+              onChange={(value: TimeLimitType) => {
+                setTimeLimitType(value);
+                // 切换类型时清理不属于新类型的字段（模型校验禁止残留）
+                if (value === 'unlimited') {
+                  form.setFieldsValue({ timeRange: null, duration: undefined });
+                } else if (value === 'scheduled') {
+                  form.setFieldsValue({ duration: undefined });
+                } else {
+                  form.setFieldsValue({ timeRange: null });
+                }
+              }}
               virtual={false}
             >
               <Option value="unlimited">无限制（练习模式）</Option>
@@ -432,7 +442,7 @@ const ActivityFormPage: React.FC = () => {
             </Form.Item>
           )}
 
-          {(timeLimitType === 'scheduled' || timeLimitType === 'timed') && (
+          {timeLimitType === 'timed' && (
             <Form.Item
               label="答题时长（分钟）"
               name="duration"
@@ -440,11 +450,7 @@ const ActivityFormPage: React.FC = () => {
                 { required: true, message: '请输入答题时长' },
                 { type: 'number', min: 1, max: 300, message: '时长应在1-300分钟之间' },
               ]}
-              help={
-                timeLimitType === 'scheduled'
-                  ? '学生必须在活动时间内完成，且不超过此时长'
-                  : '学生从开始答题时起计时，超时自动提交'
-              }
+              help="学生从开始答题时起计时，超时自动提交"
             >
               <InputNumber min={1} max={300} style={{ width: '100%' }} />
             </Form.Item>
