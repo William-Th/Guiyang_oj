@@ -693,7 +693,8 @@ const typeOrder = {
   - 已修复并验证：lifecycle-student 3 个（重建被误清的【完整流程测试】活动数据后 8/8）、code-question-flow 2 个（练习页路由 `/student/activities/practice → /student/practice`、history → results）、complete-lifecycle selectOption → antd Select 点击交互 + 90s 超时、auth R003 断言文案、time-limit-scheduled 的 setTimeRange（页面上有“结果发布时间”DatePicker 排在前面，`.ant-picker-input` first() 打错了字段）与 scheduled 类型不再填写 duration
   - **修复真实产品 bug**（`frontend/src/pages/teacher/ActivityFormPage.tsx`）：定时制（scheduled）活动此前在 UI 上必填“答题时长”，但后端模型禁止 scheduled 带 duration（`Activity.validateTimeLimitConfig`）→ UI 创建定时制活动必然 500。修复：duration 仅对 timed 显示；切换时间限制类型时清理不属于新类型的 timeRange/duration 残留值（已重建前端镜像）
   - **串行化为标准**：`npm run test:regression:serial`（workers=1 + retries=1），避免 6 workers 共库互踩
-  - 仍待修（需产品侧核对，非机械修复）：hierarchical-permissions **已 11/14**（PRM101/103/104/105 已按现行权限矩阵修复；剩余 PRM106 弹窗内有效期选择器交互、QBC101 成功消息时序、REV101 审核工作台行定位）、activity-basic 3 个长流程、time-limit-scheduled 4 个（表单全部填齐、DOM 快照确认无校验错误，但点击“创建”后无 POST 发出——手动复刻同流程可成功，疑与弹层焦点/时序相关，需单独排查）、time-limit-timed 2 个、unauthenticated-redirect 1、GRD203/STA103/PAP102/R401/PRF102 等偶发
+  - 仍待修（需产品侧核对，非机械修复）：hierarchical-permissions **已 11/14**（PRM101/103/104/105 已按现行权限矩阵修复；剩余 PRM106 弹窗内有效期选择器交互、QBC101 成功消息时序、REV101 审核工作台行定位）、activity-basic 3 个长流程、time-limit-scheduled 2 个（PTL005/007 长流程时序：PTL004 已稳定通过，保存跳转已加 3 次重试自愈；PTL007 需等待 2.5 分钟窗口关闭，总时长逼近 300 秒上限）、time-limit-timed 2 个、unauthenticated-redirect 1、GRD203/STA103/PAP102/R401/PRF102 等偶发
+  - **产品缺口登记**：① start 接口（POST /api/student/activities/:id/start）无 start_time 时间闸门，未开始的定时制活动学生仍可进入作答（PTL006 已按现状改为断言列表过滤，缺口待产品补）；② 测评活动能力等级表单标注"可选"但 API 强制必填（表单与后端契约不一致）
   - **权限矩阵确认记录**（2026-09-19）：① 现行类型 9 种 = 4 个题库管理（测评/市级/区级/竞赛）+ 5 个练习发布；`*_review` 系列废弃，列表出现“（旧）”即断言失败；② 授予权限：市级/系统管理员可授全部，区级管理员授 区级练习题库管理 + 区级/校级练习发布，校级管理员授 校级练习发布；③ 区级审核人（6 名区初中教师）可同时持有 测评/市级/区级 三个管理权限（兼职多范围审核人），PRM103 按此口径断言“列表禁止出现废弃旧类型、不限制现行管理类型”
 - 💰 **合规部署预算文档 v1.0**（新增，与前端改动无关）
   - 市级公网部署（>1 万用户、等保三级）四类费用预算，三档方案
