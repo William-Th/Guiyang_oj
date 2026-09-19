@@ -436,6 +436,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.waitForTimeout(300);
 
     // 设置一个已过期的时间（键入过去的时间点，Enter 确认）
+    const expiryInput = page.locator('.ant-modal .ant-picker input').first();
     await expiryInput.click();
     await page.waitForTimeout(300);
     await page.keyboard.type('2020-01-01 00:00:00');
@@ -573,12 +574,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     const contentInput = page.locator('textarea[placeholder*="题目内容"]');
     await contentInput.fill(`【QBC101-${timestamp}】3 × 4 = ?`);
 
-    // 添加选项C和D（默认只有A和B）
-    const addOptionButton = page.locator('button').filter({ hasText: /添加选项/ });
-    await addOptionButton.click(); // 添加选项C
-    await page.waitForTimeout(300);
-    await addOptionButton.click(); // 添加选项D
-    await page.waitForTimeout(300);
+    // 表单初始即有4个选项框，无需添加
 
     // 填写选项
     const optionInputs = page.locator('input[placeholder*="选项"]');
@@ -662,13 +658,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
 
     await page.locator('textarea[placeholder*="题目内容"]').fill(`【REV101-${timestamp}】5 × 6 = ?`);
 
-    // 添加选项C和D（默认只有A和B）
-    const addOptionBtn = page.locator('button').filter({ hasText: /添加选项/ });
-    await addOptionBtn.click(); // 添加选项C
-    await page.waitForTimeout(300);
-    await addOptionBtn.click(); // 添加选项D
-    await page.waitForTimeout(300);
-
+    // 表单初始即有4个选项框，无需添加
     const optionInputs = page.locator('input[placeholder*="选项"]');
     await optionInputs.nth(0).fill('25');
     await optionInputs.nth(1).fill('30');
@@ -697,6 +687,11 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await easyOption.evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(300);
 
+
+    // 提交表单保存草稿（此前缺少保存步骤，草稿从未创建）
+    await page.click('button[type="submit"]');
+    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: TEST_TIMEOUTS.ELEMENT_WAIT });
+    await page.waitForTimeout(2000);
 // Step 4: 导航到草稿箱
     await navigateToQuestionBank(page);
     await page.waitForTimeout(500);
