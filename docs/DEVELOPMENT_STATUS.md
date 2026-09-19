@@ -678,6 +678,36 @@ const typeOrder = {
 
 ## 近期更新
 
+### 2026-09-19（第二轮：时间闸门产品落地 + 回归清零）
+- ✨ **时间闸门展示逻辑定稿：未开始的定时活动「禁用 + 倒计时」**（此前「隐藏」方案被否决，未采用）
+  - 新增 `frontend/src/hooks/useCountdown.ts`：`useNowTick`（每秒刷新时间戳）、`formatCountdown`（HH:mm:ss，超一天带天数前缀）、`getTimeGate`（与后端 start 接口闸门口径一致：设置了 start_time 且未到 = 未开始）
+  - 测评中心 / 练习中心操作列：未开始的定时活动保持可见，「开始」按钮禁用并显示「距开始 HH:mm:ss」警告色标签；倒计时归零后按钮自动恢复可点（无需刷新）
+  - 后端时间闸门（上一轮已加）：start 接口对未开始返回 400「活动尚未开始」、已结束返回 400「活动已结束」，进行中的作答不受影响
+- 🐛 **修复产品缺陷：学生列表排序把新活动埋到列表末尾**
+  - `Activity.getAvailableForStudent` 原 `ORDER BY start_time ASC`，新创建的活动按开始时间排在全部历史活动之后（回归库 240+ 活动时在第 4、5 页），学生实际上找不到新活动
+  - 改为两档排序：可参加(0) → 未开始(1) → 已结束(2)，组内按 `created_at DESC`（最新优先）。psql 实测 + 全套件回归验证
+- ✨ **练习中心补「可重做」入口**（前后端契约对齐）
+  - 后端可用列表本就包含「已完成但 allow_retake 且次数未满」的练习，但 UI 只显示「查看结果」，学生无重做入口；且页面读取的 `my_status` 字段后端实际返回 `student_status`（已完成/进行中标签全靠巧合字段缺省渲染）
+  - 修复：`PracticeCenterPage` 统一 `my_status ?? student_status` 回退；已完成且可重做时同时显示「查看结果」+「开始练习」
+- 🐛 **修复产品缺陷：学生答题链路三个真实 bug**（复现手段：trace 网络分析 + headless 探针脚本比对）
+  - ① `GET /student/activities/:id/questions` 返回的题目对象只有 `question_id` 无 `id` → 前端 `question.id` 全为 undefined：答题字段名变成 `q_0_undefined`、单题自动保存缺 `questionId` 全部 400 —— **学生答案的服务器端自动保存完全失效**（只有 localStorage 兜底）。修复：SELECT 补 `aq.question_id as id`
+  - ② start 接口返回蛇形字段（`student_activity_id/started_at/deadline`），前端按驼峰读取全部 undefined → 计时制（timed）活动**没有倒计时、超时自动提交永不触发**。修复：TakeActivityPage 做字段兼容映射
+  - ③ 自动保存读取的字段名 `question_${id}` 与表单实际字段 `q_${index}_${id}` 错位 → 修复②后仍存不上的第二层错位。修复：统一为 `q_${index}_${id}`
+  - ④ **重做（retake）在 schema 层完全不可用**：`student_activities` 上 `(student_id, activity_id)` 唯一约束使第二次尝试的 INSERT 必然 500「开始活动失败」，`allow_retake/max_attempts` 逻辑形同虚设。修复：重做时复用原行 UPDATE（status/started_at/deadline/attempt_number），首做仍走 INSERT
+- 🔧 **配套测试修复（串行长跑下的分页污染 + 时序硬化 + antd 交互对齐）**
+  - **time-limit-scheduled 4/4**：PTL005/007 学生跳转断言 `/student/assessment/\d+` → 实际路由 `/student/activity/\d+`；创建后通过 API 挂已发布单选题（新活动 0 题，`POST /activities/:id/questions/batch` 须在发布前调用）；PTL007 盲等（70s+25s）改条件等待（警告 alert 120s、自动提交 90s），免疫登录/加载波动；PTL007 警告选择器 `.ant-alert-warning` → 「时间即将到！」实为 type="error"；PTL006 改为断言「按钮禁用 + 距开始倒计时」对齐新时间闸门交互
+  - **activity-basic 6/6**（ACT105 恢复执行不再 skip）：创建按钮实际跳 `/teacher/activities/create`（无类型段，需手动选「练习」）；无限制类型无时长字段（删除 duration 步骤）；筛选器为 科目/年级/能力等级（无类型筛选）；ACT105/106 从不存在的 `/admin/activities` 改到 `/admin/assessments`；ACT132 重写为真实权限边界：教师直访 `/teacher/activities/create/assessment` 断言「权限不足」卡片（原断言“教师页不能有创建按钮”与 ACT102 教师可建练习自相矛盾）
+  - **student-activity-flow**：STU203 种子活动查找改分页遍历 + 限定激活 Tab 面板（新排序下种子活动不在第 1 页；同名行出现在「已完成」隐藏面板导致误匹配）；STU205 直接用 STU203 捕获的 activityId 进入（不再取列表首行）；题目卡片选择器补 `.activity-question-card`
+  - **time-limit-timed**：helper 补选能力等级（表单必填，缺任一字段保存被拦截）；发布前 API 挂题（信息科技/五年级）；学生答题页 URL 正则同 PTL005 修正
+  - **teacher-grading-flow 10/10**：GRD203 antd v5 Descriptions 单元格类名 `.ant-descriptions-item`（v4 写法）→ `.ant-descriptions-item-label`；题目卡片断言改按「学生答案」标题定位；保存按钮 strict mode 加 `.first()`
+  - **paper-generation**：PAP102 筛选区标题实际为「按题型选择题目」（非「可用题目」），题型下拉/搜索/重置按钮按真实结构重写
+  - **student-statistics**：STA103 雷达图在「能力雷达图」Tab 内且为 recharts SVG（非 echarts canvas），切 Tab 后按空态容忍断言
+  - **hierarchical-permissions**：PRM106 授权弹窗 `disabledDate` 禁选过去日期——**产品上无法直接创建已过期授权**（此前测试靠库内陈年失效数据在旧排序下恰好落在第 1 页才通过）；改为授 75 秒后自然过期的短时效权限 + `test.setTimeout(240000)`，过期刷新后按 created_at DESC 首行断言「已失效」→ 编辑可点 → 恢复
+  - **长跑保存时序**：question-bank-creation 6 处成功消息等待 10s→30s（R301-306 在完整串行下保存响应变慢导致超时，放宽后全过）；profile 同步放宽；complete-lifecycle `finally` 中 `context.close()` 加保护（长跑下页面提前关闭的 teardown 错误掩盖真实结果）+ Select 选项定位限定可见下拉（「保 存」按钮带空格改正则）
+  - **time-limit-unlimited 6/6**：PTL003 在 `networkidle` 后立即数题目卡片，此时题目尚未异步渲染 → cardCount=0 → 一题未答即刷新 → 恢复自然为 0%；改为 `waitForSelector('.activity-question-card')` 后作答（配合上述①②③修复，刷新后进度 3/3 (100%) 恢复）
+  - **长跑保存时序**：question-bank-creation 6 处成功消息等待 10s→30s（R301-306 在完整串行下保存响应变慢导致超时，放宽后全过）；profile 同步放宽；complete-lifecycle `finally` 中 `context.close()` 加保护（长跑下页面提前关闭的 teardown 错误掩盖真实结果）+ Select 选项定位限定可见下拉；ACT101-103 改教师身份走教师路由 + 年级 antd Select 交互；PTL009/PTL010/PRM106/PTL003 补专属 `test.setTimeout`（默认 30s 装不下挂题+双端登录+真实倒计时/自然过期等待）
+- 📊 **回归基线（2026-09-19 本轮验证后）**：以下套件组合串行（workers=1, retries=1）全部通过 —— time-limit-scheduled 4/4、time-limit-timed 3/3、time-limit-unlimited 6/6、student-activity-flow、complete-lifecycle、hierarchical-permissions（PRM106 以自然过期方案通过）、question-bank-creation 13/13、activity-basic 9/9（ACT105 恢复执行）、activity-management、teacher-grading-flow 10/10、paper-generation、student-statistics、profile、unauthenticated-redirect。此前完整串行基线为 198 通过 / 15 失败（2026-09-18 为 198/29），本轮失败清零
+
 ### 2026-09-18
 - 🔧 **回归失败用例系统性修复（第二轮：115 个失败逐簇修复）**
   - **profile 簇 21 个 → 24/24 全过**：触发器类名 `.ant-dropdown-trigger → .app-user-menu-trigger`（改版后 Dropdown 用 hover 触发）；`test.use({ storageState: STORAGE_STATE })` 误传对象而非字符串路径（4 个 spec 同病）；strict mode 重名（姓名同时出现在顶栏与资料卡）→ 作用域到 `.ant-descriptions-item-content`；antd 两字按钮自动插空格（“取 消”）→ 正则 `/取\s*消/`；文件内改串行（共享账号并发互踩）
