@@ -103,11 +103,13 @@ guiyang_oj/
 │   └── migrations/         # 增量迁移脚本
 ├── config/                  # 全局配置（学校、区县、能力、知识点、角色层级等 JSON）
 ├── tests/                   # 测试套件
-│   ├── e2e/                # Playwright E2E 测试
+│   ├── e2e/                # Playwright E2E 回归测试
+│   │   └── regression/     # 全量回归用例（npm run test:regression:serial）
 │   ├── api/                # API / 业务流程测试
 │   └── docs/               # 测试规范文档
-├── docs/                    # 📋 项目文档（开发状态、API、推荐算法、需求等）
-├── documents/               # 判题服务设计文档（JUDGE_SERVICE_DESIGN.md）
+├── docs/                    # 📋 项目文档（开发状态、API、需求设计、归档等）
+│   ├── architecture-resources/ # 系统架构与参考设计图
+│   └── archive/            # 历史阶段性文档归档
 ├── buget/                   # 预算与部署配置记录
 ├── nginx/                   # Nginx 反向代理配置
 ├── docker-compose.yml       # Docker Compose 编排
@@ -166,7 +168,7 @@ guiyang_oj/
 
 ## 📊 功能特性
 
-> 以下功能反映截至 2026 年 7 月的最新迭代进度：✅ 为已有功能，🆕 为近期新增。
+> 以下功能反映截至 2026 年 9 月的最新迭代进度：✅ 为已有功能，🆕 为近期新增。
 
 ### 学生端
 - ✅ 手机号登录、在线测评/练习、自动计时、自动交卷
@@ -200,11 +202,21 @@ guiyang_oj/
 - 🆕 独立判题微服务，支持编程题自动判题与测试用例管理
 
 ### 通用
-- ✅ 薄荷品牌设计规范（全前端主题重构）
+- ✅ 全新主题视觉：天空蓝 #0ea5e9（2026-09 全前端换色）+ 紧凑表格密度
 - ✅ 响应式适配
 - ✅ 多层级角色权限体系（system_admin → student，共 8 级）
 
 ## 🔧 常用命令
+
+### 测试
+
+```bash
+# 全量 E2E 串行回归（推荐，workers=1 + retries=1）
+npm run test:regression:serial
+
+# 后端 Jest 单元/API 测试（push 时自动执行）
+cd backend && npm test
+```
 
 ### Docker命令
 
@@ -254,7 +266,7 @@ docker exec guiyang_oj_postgres pg_dump -U postgres guiyang_oj > backup.sql
 - **[题库重构](./docs/QUESTION_BANK_REDESIGN.md)** - 题库系统设计
 - **[教学班需求](./docs/TEACHING_CLASS_REQUIREMENTS.md)** - 教学班设计
 - **[数据可视化需求](./docs/DATA_VISUALIZATION_REQUIREMENTS.md)** - 学习统计设计
-- **[判题服务设计](./documents/JUDGE_SERVICE_DESIGN.md)** - judge-service 设计文档
+- **[判题服务设计](./docs/JUDGE_SERVICE_DESIGN.md)** - judge-service 设计文档
 
 👉 完整文档列表见 **[docs/README.md](./docs/README.md)**
 
@@ -521,4 +533,4 @@ npm run test:e2e  # 运行测试
 
 ---
 
-*最后更新：2026 年 7 月*
+*最后更新：2026 年 9 月*

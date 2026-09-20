@@ -4,7 +4,7 @@
 
 **最后更新**: 2026-02-20
 **API 版本**: v1.0
-**Base URL**: `http://localhost:3001/api`
+**Base URL**: `http://localhost:8080/api（Nginx 统一入口；3001 为后端容器内端口，宿主机映射为 3003）`
 
 ---
 

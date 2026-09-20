@@ -1127,3 +1127,13 @@ docker exec guiyang_oj_backend env | grep DATABASE
 **文档维护**: 每次重大问题解决后，及时更新本文档
 **最后更新**: 2025-10-30 (合并前端最佳实践，新增React组件设计和代码审查章节)
 **维护人员**: 开发团队
+
+<!-- 2026-09 补充 -->
+## E2E 全量回归
+
+```bash
+# 全量串行回归（workers=1 + retries=1，约 30-50 分钟）
+npm run test:regression:serial
+```
+
+> 注：本文档中部分示例的 `localhost:3001` 为后端容器内端口；宿主机访问统一走 Nginx 8080 入口（后端宿主机端口 3003）。

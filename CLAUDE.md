@@ -83,6 +83,7 @@ docker exec -i guiyang_oj_postgres psql -U postgres -d guiyang_oj < database/mig
 npx playwright test -c tests/playwright.config.ts                    # 所有测试
 npx playwright test tests/e2e/smoke/ -c tests/playwright.config.ts   # 冒烟测试
 npx playwright test tests/e2e/regression/ -c tests/playwright.config.ts  # 回归测试
+npm run test:regression:serial                                        # 全量串行回归（workers=1 + retries=1，推荐）
 npx playwright test --ui -c tests/playwright.config.ts                # UI模式（调试）
 npx playwright test --headed -c tests/playwright.config.ts            # 有头模式
 
@@ -150,9 +151,9 @@ guiyang_oj/
 | Frontend | 3100 | 容器内80端口映射 |
 | Backend | 3003 | 容器内3001端口映射 |
 | Nginx | 8080 | 反向代理，对外统一入口 |
-| PostgreSQL | 5432 | 数据库 |
-| Redis | 6379 | 缓存 |
-| pgAdmin | 5050 | 数据库管理 |
+| PostgreSQL | 5433 | 容器内 5432 映射 |
+| Redis | 6380 | 容器内 6379 映射 |
+| pgAdmin | 5051 | 容器内 80 映射 |
 | Judge Service | 3002 | 判题服务 |
 
 ### 演示账号
@@ -163,7 +164,7 @@ guiyang_oj/
 |------|--------|------|
 | 管理员 | admin | 系统管理员 |
 | 学生 | 13800138003 | 手机号登录 |
-| 教师 | teacher01 | 教师账号 |
+| 教师 | teacher_by_ps_math | 白云一小·数学（陈刚） |
 
 ### API路由结构
 

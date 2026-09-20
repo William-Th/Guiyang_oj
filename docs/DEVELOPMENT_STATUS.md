@@ -427,7 +427,7 @@ const typeOrder = {
 
 **背景**: 支持编程题（type='code'）的在线评测功能，包括代码编译、执行、测试用例评测、自动评分等。
 
-**设计文档**: `documents/JUDGE_SERVICE_DESIGN.md`
+**设计文档**: `docs/JUDGE_SERVICE_DESIGN.md`
 
 **目标**:
 - 支持 C++ 和 C 语言代码在线编译和执行
