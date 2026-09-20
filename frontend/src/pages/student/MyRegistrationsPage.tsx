@@ -51,7 +51,7 @@ const MyRegistrationsPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await getMyRegistrations();
-      setRegistrations(response.data || []);
+      setRegistrations(response.registrations || []);
     } catch (error: any) {
       console.error('Load registrations error:', error);
       message.error(error.response?.data?.message || '加载报名记录失败');

@@ -105,7 +105,8 @@ class Activity {
       SELECT id, title, description, subject, grade, start_time, end_time,
              duration, total_score, pass_score, status, type, ability_level,
              scope, allow_retake, max_attempts, is_official, created_by, created_at,
-             time_limit_type
+             time_limit_type, registration_enabled,
+             (SELECT COUNT(*) FROM student_activities WHERE activity_id = activities.id) as participant_count
       FROM activities
       ${whereClause}
       ORDER BY created_at DESC
@@ -125,7 +126,7 @@ class Activity {
              duration, total_score, pass_score, status, type, ability_level,
              scope, allow_retake, max_attempts, is_official, target_audience,
              certificate_config, created_by, created_at, updated_at,
-             time_limit_type
+             time_limit_type, result_publish_time, registration_enabled
       FROM activities
       WHERE id = $1
     `, [id]);
@@ -319,6 +320,7 @@ class Activity {
       SELECT a.id, a.title, a.subject, a.grade, a.start_time, a.end_time,
              a.duration, a.total_score, a.status, a.type, a.ability_level,
              a.is_official, a.allow_retake, a.max_attempts, a.time_limit_type,
+             a.registration_enabled,
              sa.status as student_status, sa.attempt_number
       FROM activities a
       LEFT JOIN student_activities sa ON a.id = sa.activity_id AND sa.student_id = $1
@@ -408,6 +410,7 @@ class Activity {
     const result = await query(`
       SELECT id, title, subject, grade, type, ability_level, scope, status,
              total_score, is_official, created_at, updated_at,
+             start_time, end_time,
              (SELECT COUNT(*) FROM student_activities WHERE activity_id = activities.id) as participant_count
       FROM activities
       WHERE created_by = $1
@@ -654,16 +657,17 @@ class Activity {
    * @returns {Promise<Object>} Activity statistics
    */
   static async getStatistics(id) {
+    // 已完成 = 已提交或已批改（student_activities.status 无 'completed' 取值）
     const result = await query(`
       SELECT
         COUNT(DISTINCT sa.student_id) as total_participants,
-        COUNT(DISTINCT CASE WHEN sa.status = 'completed' THEN sa.student_id END) as completed_count,
-        AVG(CASE WHEN sa.status = 'completed' THEN sa.score END) as average_score,
-        MAX(CASE WHEN sa.status = 'completed' THEN sa.score END) as highest_score,
-        MIN(CASE WHEN sa.status = 'completed' THEN sa.score END) as lowest_score,
+        COUNT(DISTINCT CASE WHEN sa.status IN ('submitted', 'graded') THEN sa.student_id END) as completed_count,
+        AVG(CASE WHEN sa.status IN ('submitted', 'graded') THEN sa.score END) as average_score,
+        MAX(CASE WHEN sa.status IN ('submitted', 'graded') THEN sa.score END) as highest_score,
+        MIN(CASE WHEN sa.status IN ('submitted', 'graded') THEN sa.score END) as lowest_score,
         a.pass_score,
         COUNT(DISTINCT CASE
-          WHEN sa.status = 'completed' AND sa.score >= a.pass_score
+          WHEN sa.status IN ('submitted', 'graded') AND sa.score >= a.pass_score
           THEN sa.student_id
         END) as passed_count
       FROM activities a

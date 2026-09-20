@@ -193,9 +193,9 @@ export const cancelRegistration = async (
 };
 
 /**
- * Get student's registrations
+ * Get student's registrations（后端返回键为 registrations）
  */
-export const getMyRegistrations = async (): Promise<{ data: AssessmentRegistration[] }> => {
+export const getMyRegistrations = async (): Promise<{ registrations: AssessmentRegistration[] }> => {
   const response = await api.get('/assessments/my-registrations');
   return response.data;
 };

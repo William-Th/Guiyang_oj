@@ -289,6 +289,8 @@ router.get('/pending', authMiddleware, async (req, res) => {
       // 使用 review_id 作为主键（而不是 draft_id）
       id: row.review_id,
       draft_id: row.draft_id,
+      // 草稿在发布前没有 question_code，用草稿号占位供列表「题目编号」列显示
+      question_code: `DRAFT-${row.draft_id}`,
       type: row.type,
       subject: row.subject,
       grade: row.grade,
@@ -314,11 +316,28 @@ router.get('/pending', authMiddleware, async (req, res) => {
       updated_at: row.updated_at
     }));
 
+    // 审核统计（前端统计卡读取 meta.approved_count / rejected_count / approval_rate）
+    const statsResult = await query(
+      `SELECT
+        COUNT(*) FILTER (WHERE status = 'published' AND reviewer_id = $1 AND is_active = true) AS approved_count,
+        COUNT(*) FILTER (WHERE status = 'inactive' AND reviewer_id = $1 AND is_active = true) AS rejected_count
+      FROM question_bank`,
+      [req.user.id]
+    );
+    const approvedCount = parseInt(statsResult.rows[0].approved_count) || 0;
+    const rejectedCount = parseInt(statsResult.rows[0].rejected_count) || 0;
+    const reviewedTotal = approvedCount + rejectedCount;
+
     res.json({
       success: true,
       data: pendingReviews,
       meta: {
-        count: pendingReviews.length
+        count: pendingReviews.length,
+        approved_count: approvedCount,
+        rejected_count: rejectedCount,
+        approval_rate: reviewedTotal > 0
+          ? parseFloat(((approvedCount / reviewedTotal) * 100).toFixed(1))
+          : 0
       }
     });
   } catch (error) {

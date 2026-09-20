@@ -179,7 +179,8 @@ class ActivityQuestion {
         qb.knowledge_points,
         qb.level,
         qb.suggested_score,
-        qb.scope
+        qb.scope,
+        qb.image_url
       FROM activity_questions aq
       INNER JOIN question_bank_with_draft qb ON aq.question_id = qb.id
       WHERE aq.activity_id = $1
@@ -297,7 +298,8 @@ class ActivityQuestion {
         qb.knowledge_points,
         qb.subject,
         qb.grade,
-        qb.scope
+        qb.scope,
+        qb.image_url
       FROM question_bank_with_draft qb
       ${whereClause}
       ORDER BY qb.question_code DESC

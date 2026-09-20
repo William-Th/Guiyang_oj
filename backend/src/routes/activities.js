@@ -140,6 +140,20 @@ router.get('/assessments', authMiddleware, async (req, res) => {
     const candidates = await Activity.getAvailableForStudent(req.user.id, filters);
     const activities = await filterActivitiesForStudent(req.user, candidates);
 
+    // 批量补充报名状态（前端报名闸门依赖 registration_enabled / registration_status）
+    if (activities.length > 0) {
+      const ids = activities.map(a => a.id);
+      const regResult = await query(
+        `SELECT activity_id, status FROM assessment_registrations
+         WHERE student_id = $1 AND activity_id = ANY($2::int[])`,
+        [req.user.id, ids]
+      );
+      const regMap = new Map(regResult.rows.map(r => [r.activity_id, r.status]));
+      activities.forEach(a => {
+        a.registration_status = regMap.get(a.id) || null;
+      });
+    }
+
     res.json({
       success: true,
       activities,

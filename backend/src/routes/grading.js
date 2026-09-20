@@ -112,9 +112,23 @@ router.get('/pending', authMiddleware, async (req, res) => {
 
     const result = await query(queryStr, params);
 
+    // 已完成评卷数不在待评卷列表中，单独统计供前端「已完成」卡片展示
+    const completedResult = await query(
+      `SELECT COUNT(*) as completed
+       FROM student_activities sa
+       JOIN activities a ON sa.activity_id = a.id
+       WHERE sa.status IN ('submitted', 'graded')
+         AND sa.grading_status = 'completed'
+         AND a.created_by = $1`,
+      [teacherId]
+    );
+
     res.json({
       success: true,
-      submissions: result.rows
+      submissions: result.rows,
+      meta: {
+        completed_count: parseInt(completedResult.rows[0].completed) || 0
+      }
     });
 
   } catch (error) {

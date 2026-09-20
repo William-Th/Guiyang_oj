@@ -102,7 +102,7 @@ class AssessmentRegistration {
              u.phone as student_phone,
              s.name as school_name,
              st.grade as student_grade,
-             st.class_name as student_class
+             st.class as student_class
       FROM assessment_registrations ar
       LEFT JOIN activities a ON ar.activity_id = a.id
       LEFT JOIN assessment_locations al ON ar.location_id = al.id
@@ -475,12 +475,25 @@ class AssessmentRegistration {
    * @returns {Object} 资格检查结果
    */
   static async checkEligibility(activityId, studentId) {
+    const result = await this._checkEligibility(activityId, studentId);
+    // 前端弹窗依赖 reason（合并文案）
+    result.reason = result.reasons.join('；');
+    return result;
+  }
+
+  static async _checkEligibility(activityId, studentId) {
     const result = {
       eligible: true,
       reasons: [],
       requireLocation: false,
       alreadyRegistered: false,
-      registration: null
+      registration: null,
+      // 前端弹窗依赖 activity（报名时间/是否需要测评点）；活动不存在时保留默认结构
+      activity: {
+        require_location: false,
+        registration_start_time: null,
+        registration_end_time: null
+      }
     };
 
     // 获取活动信息
@@ -502,6 +515,11 @@ class AssessmentRegistration {
     }
 
     const activity = activityResult.rows[0];
+    result.activity = {
+      require_location: activity.require_location || false,
+      registration_start_time: activity.registration_start_time || null,
+      registration_end_time: activity.registration_end_time || null
+    };
 
     // 检查活动类型
     if (activity.type !== 'assessment') {
@@ -549,7 +567,7 @@ class AssessmentRegistration {
 
     // 获取学生信息
     const studentResult = await query(`
-      SELECT u.*, st.grade, st.class_name, st.school_id, s.district_id
+      SELECT u.*, st.grade, st.class, st.school_id, s.district_id
       FROM users u
       JOIN students st ON u.id = st.user_id
       JOIN schools s ON st.school_id = s.id

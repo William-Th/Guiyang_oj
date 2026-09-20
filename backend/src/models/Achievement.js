@@ -180,8 +180,11 @@ class Achievement {
    * @returns {Promise<Object>}
    */
   static async updateProgress(studentId, achievementId, currentValue, targetValue) {
+    // 防御 NaN/undefined：非数值一律按 0 处理，避免向 DB 写入 NaN（pg 22P02）
+    currentValue = Number.isFinite(Number(currentValue)) ? Number(currentValue) : 0;
+    targetValue = Number.isFinite(Number(targetValue)) ? Number(targetValue) : 0;
     const progressPercentage = targetValue > 0
-      ? Math.round((currentValue / targetValue) * 100)
+      ? Math.min(100, Math.round((currentValue / targetValue) * 100))
       : 0;
 
     const result = await pool.query(

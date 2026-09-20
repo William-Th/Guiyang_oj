@@ -37,6 +37,7 @@ const GradingListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [submissions, setSubmissions] = useState<PendingSubmission[]>([]);
+  const [completedCount, setCompletedCount] = useState(0);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [filters, setFilters] = useState<{
     activityId?: number;
@@ -105,6 +106,7 @@ const GradingListPage: React.FC = () => {
       setLoading(true);
       const response = await gradingApi.getPendingGrading(filters);
       setSubmissions(response.submissions || []);
+      setCompletedCount(response.meta?.completed_count ?? 0);
     } catch (error) {
       const apiError = error as ApiError;
       console.error('Load pending grading error:', apiError);
@@ -243,13 +245,13 @@ const GradingListPage: React.FC = () => {
     },
   ];
 
-  // Calculate statistics
+  // Calculate statistics（已完成项不在待评卷列表内，取自接口 meta.completed_count）
   const stats = {
     total: submissions.length,
     pending: submissions.filter(s => s.grading_status === 'pending').length,
     autoGraded: submissions.filter(s => s.grading_status === 'auto_graded').length,
     partialGraded: submissions.filter(s => s.grading_status === 'partial_graded').length,
-    completed: submissions.filter(s => s.grading_status === 'completed').length,
+    completed: completedCount,
   };
 
   if (loading) {

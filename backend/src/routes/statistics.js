@@ -294,16 +294,22 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
       const subjectNames = (Array.isArray(teacherSubjects) ? teacherSubjects : [])
         .filter(Boolean);
 
+      // 降级查询：视图为每生粒度，聚合出前端期望的 grade / student_count 维度
       let fallbackSql = `
         SELECT
-          ability,
-          subject,
-          total_questions as total_attempts,
-          correct_count,
-          accuracy_rate,
-          avg_score,
-          last_activity_time
-        FROM v_student_ability_realtime
+          v.ability,
+          v.subject,
+          st.grade,
+          COUNT(DISTINCT v.student_id) as student_count,
+          SUM(v.total_questions) as total_attempts,
+          SUM(v.correct_count) as correct_count,
+          CASE WHEN SUM(v.total_questions) > 0
+            THEN ROUND(SUM(v.correct_count) * 100.0 / SUM(v.total_questions), 1)
+            ELSE 0 END as accuracy_rate,
+          ROUND(AVG(v.avg_score), 1) as avg_score,
+          MAX(v.last_activity_time) as last_activity_time
+        FROM v_student_ability_realtime v
+        JOIN students st ON v.student_id = st.id
         WHERE 1=1
       `;
       const fallbackParams = [];
@@ -311,23 +317,29 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
 
       if (subject) {
         fpIdx++;
-        fallbackSql += ` AND subject = $${fpIdx}`;
+        fallbackSql += ` AND v.subject = $${fpIdx}`;
         fallbackParams.push(subject);
       } else if (subjectNames.length > 0) {
         fpIdx++;
         const placeholders = subjectNames.map((_, i) => `$${fpIdx + i}`).join(', ');
-        fallbackSql += ` AND subject IN (${placeholders})`;
+        fallbackSql += ` AND v.subject IN (${placeholders})`;
         fallbackParams.push(...subjectNames);
         fpIdx += subjectNames.length;
       }
 
       if (ability) {
         fpIdx++;
-        fallbackSql += ` AND ability = $${fpIdx}`;
+        fallbackSql += ` AND v.ability = $${fpIdx}`;
         fallbackParams.push(ability);
       }
 
-      fallbackSql += ' ORDER BY subject, ability';
+      if (grade) {
+        fpIdx++;
+        fallbackSql += ` AND st.grade = $${fpIdx}`;
+        fallbackParams.push(grade);
+      }
+
+      fallbackSql += ' GROUP BY st.grade, v.subject, v.ability ORDER BY v.subject, v.ability';
       result = await query(fallbackSql, fallbackParams);
     }
 
@@ -357,11 +369,12 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
 router.get('/teacher/district-abilities', authMiddleware, async (req, res) => {
   try {
     // Verify user has district-level or municipal-level permissions
+    // 现行权限体系发放 *_manage（*_review 已废弃），市级/区级管理员/审核人凭此通行
     const permissionSql = `
       SELECT district_id, scope_level
       FROM teacher_permissions
       WHERE user_id = $1
-        AND permission_type IN ('practice_district_review', 'practice_municipal_review', 'assessment_review')
+        AND permission_type IN ('practice_district_manage', 'practice_municipal_manage', 'assessment_manage')
         AND is_active = true
         AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
       LIMIT 1

@@ -284,10 +284,10 @@ class TeacherPermission {
    * @returns {Promise<boolean>}
    */
   static async canReviewQuestion(reviewerId, questionId, targetScope) {
-    // 获取题目信息
+    // 获取题目信息（question_bank 是发布记录表，subject/created_by 在 question_bank_with_draft 视图）
     const questionSql = `
       SELECT subject, created_by
-      FROM question_bank
+      FROM question_bank_with_draft
       WHERE id = $1 AND is_active = true
     `;
     const questionResult = await query(questionSql, [questionId]);

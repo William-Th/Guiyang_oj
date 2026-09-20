@@ -42,7 +42,8 @@ router.get('/practice', authMiddleware, async (req, res) => {
       WHERE a.type = 'practice'
         AND a.status = 'published'
         AND (a.is_virtual = false OR a.is_virtual IS NULL)
-        AND (a.start_time IS NULL OR a.start_time <= CURRENT_TIMESTAMP)
+        -- 未开始的活动保留在列表中（前端禁用+倒计时展示，与测评中心口径一致）；
+        -- 已结束的练习不出现在可用列表（结果走「已完成」Tab）
         AND (a.end_time IS NULL OR a.end_time >= CURRENT_TIMESTAMP)
     `;
 
@@ -434,7 +435,7 @@ router.post('/:id/start',
 
       // Check existing attempts
       const existingResult = await query(`
-        SELECT id, status, attempt_number
+        SELECT id, status, attempt_number, start_time, time_limit_deadline
         FROM student_activities
         WHERE student_id = $1 AND activity_id = $2
         ORDER BY attempt_number DESC
@@ -443,10 +444,14 @@ router.post('/:id/start',
 
       // Check if already has in_progress attempt
       if (existingResult.rows.length > 0 && existingResult.rows[0].status === 'in_progress') {
+        const row = existingResult.rows[0];
         return res.json({
           success: true,
           message: '继续之前的答题',
-          student_activity_id: existingResult.rows[0].id,
+          student_activity_id: row.id,
+          started_at: row.start_time,
+          deadline: row.time_limit_deadline,
+          attempt_number: row.attempt_number,
           is_continue: true
         });
       }
@@ -604,7 +609,11 @@ router.get('/:id/questions',
           qb.content,
           qb.options,
           qb.difficulty,
-          qb.image_url
+          qb.image_url,
+          qb.code_template,
+          qb.time_limit,
+          qb.memory_limit,
+          qb.supported_languages
         FROM activity_questions aq
         JOIN question_bank_with_draft qb ON aq.question_id = qb.id
         WHERE aq.activity_id = $1

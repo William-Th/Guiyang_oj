@@ -22,7 +22,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Trust proxy - needed for rate limiting with nginx
-app.set('trust proxy', true);
+// 指定跳数为 1（后端前仅一层 nginx）：true 过于宽松，express-rate-limit 会校验失败
+app.set('trust proxy', 1);
 
 // Validate required environment variables
 const requiredEnvVars = [

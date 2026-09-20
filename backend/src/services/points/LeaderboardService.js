@@ -22,13 +22,14 @@ class LeaderboardService {
       let query = `
         SELECT
           sp.student_id,
-          s.real_name as student_name,
-          sch.school_name,
-          s.class_name,
+          u.real_name as student_name,
+          sch.name as school_name,
+          s.class as class_name,
           sp.total_points as points,
           ROW_NUMBER() OVER (ORDER BY sp.total_points DESC, sp.student_id ASC) as rank
         FROM student_points sp
         JOIN students s ON sp.student_id = s.id
+        JOIN users u ON s.user_id = u.id
         LEFT JOIN schools sch ON s.school_id = sch.id
         WHERE sp.total_points > 0
       `;
@@ -43,9 +44,9 @@ class LeaderboardService {
         params.push(schoolId);
         paramCount++;
       } else if (scope && scope.startsWith('class_')) {
-        const classId = parseInt(scope.replace('class_', ''));
-        query += ` AND s.class_id = $${paramCount}`;
-        params.push(classId);
+        const className = scope.replace('class_', '');
+        query += ` AND s.class = $${paramCount}`;
+        params.push(className);
         paramCount++;
       }
 
@@ -142,13 +143,14 @@ class LeaderboardService {
         )
         SELECT
           wp.student_id,
-          s.real_name as student_name,
-          sch.school_name,
-          s.class_name,
+          u.real_name as student_name,
+          sch.name as school_name,
+          s.class as class_name,
           wp.week_points as points,
           ROW_NUMBER() OVER (ORDER BY wp.week_points DESC, wp.student_id ASC) as rank
         FROM weekly_points wp
         JOIN students s ON wp.student_id = s.id
+        JOIN users u ON s.user_id = u.id
         LEFT JOIN schools sch ON s.school_id = sch.id
         WHERE wp.week_points > 0
       `;
@@ -163,9 +165,9 @@ class LeaderboardService {
         params.push(schoolId);
         paramCount++;
       } else if (scope && scope.startsWith('class_')) {
-        const classId = parseInt(scope.replace('class_', ''));
-        query += ` AND s.class_id = $${paramCount}`;
-        params.push(classId);
+        const className = scope.replace('class_', '');
+        query += ` AND s.class = $${paramCount}`;
+        params.push(className);
         paramCount++;
       }
 
@@ -258,13 +260,14 @@ class LeaderboardService {
         )
         SELECT
           mp.student_id,
-          s.real_name as student_name,
-          sch.school_name,
-          s.class_name,
+          u.real_name as student_name,
+          sch.name as school_name,
+          s.class as class_name,
           mp.month_points as points,
           ROW_NUMBER() OVER (ORDER BY mp.month_points DESC, mp.student_id ASC) as rank
         FROM monthly_points mp
         JOIN students s ON mp.student_id = s.id
+        JOIN users u ON s.user_id = u.id
         LEFT JOIN schools sch ON s.school_id = sch.id
         WHERE mp.month_points > 0
       `;
@@ -279,9 +282,9 @@ class LeaderboardService {
         params.push(schoolId);
         paramCount++;
       } else if (scope && scope.startsWith('class_')) {
-        const classId = parseInt(scope.replace('class_', ''));
-        query += ` AND s.class_id = $${paramCount}`;
-        params.push(classId);
+        const className = scope.replace('class_', '');
+        query += ` AND s.class = $${paramCount}`;
+        params.push(className);
         paramCount++;
       }
 

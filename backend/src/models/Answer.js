@@ -44,14 +44,15 @@ class Answer {
       score = (
         CASE
           WHEN q.type IN ('single', 'multiple') AND a.answer = q.correct_answer THEN
-            q.score
+            q.suggested_score
           WHEN q.type IN ('single', 'multiple') AND a.answer != q.correct_answer THEN
             0
           ELSE
             NULL -- Manual grading needed
         END
       )
-      FROM question_bank q
+      -- question_bank 是发布记录表，题目内容/答案/分值在 question_bank_with_draft 视图
+      FROM question_bank_with_draft q
       WHERE a.question_id = q.id AND a.student_exam_id = $1
       RETURNING a.id, a.question_id, a.is_correct, a.score
     `, [studentExamId]);
