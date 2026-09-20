@@ -150,36 +150,43 @@ test.describe('Regression Tests - Teacher Grading Flow 教师评卷流程', () =
       return;
     }
 
-    const firstRow = tableRows.first();
-    await expect(firstRow).toBeAttached();
+    // 逐行尝试：最新提交可能来自空试卷活动（无题目卡），最多换下一行重试
+    const maxRows = Math.min(rowCount, 3);
+    let questionCount = 0;
+    for (let idx = 0; idx < maxRows; idx++) {
+      const row = tableRows.nth(idx);
+      await expect(row).toBeAttached();
 
-    // 获取学生姓名和活动名称（用于后续验证）
-    const studentCell = firstRow.locator('td').nth(1);
-    const studentName = await studentCell.textContent();
-    console.log(`学生: ${studentName}`);
+      // 点击评卷按钮
+      const gradingButton = row.locator('button').filter({ hasText: /评\s*卷/ }).first();
+      await gradingButton.waitFor({ state: 'attached', timeout: 5000 });
 
-    // 点击评卷按钮
-    const gradingButton = firstRow.locator('button').filter({ hasText: /评\s*卷/ }).first();
-    await gradingButton.waitFor({ state: 'attached', timeout: 5000 });
+      // 使用 evaluate 绕过可见性检查
+      await gradingButton.evaluate((button: HTMLElement) => button.click());
 
-    // 使用 evaluate 绕过可见性检查
-    await gradingButton.evaluate((button: HTMLElement) => button.click());
+      // 等待导航到详情页
+      await page.waitForURL(/\/teacher\/grading\/\d+/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
+      await page.waitForLoadState('networkidle');
 
-    // 等待导航到详情页
-    await page.waitForURL(/\/teacher\/grading\/\d+/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
+      // 验证详情页元素
+      await expect(page.locator('.ant-card-head-title:has-text("评卷详情")')).toBeAttached();
 
-    // 验证详情页元素
-    await expect(page.locator('.ant-card-head-title:has-text("评卷详情")')).toBeAttached();
+      // 验证学生信息显示（antd v5 Descriptions 单元格类名为 ant-descriptions-item-label）
+      const studentInfo = page.locator('.ant-descriptions-item-label').filter({ hasText: /学生姓名/ });
+      await expect(studentInfo).toBeAttached();
 
-    // 验证学生信息显示（antd v5 Descriptions 单元格类名为 ant-descriptions-item-label）
-    const studentInfo = page.locator('.ant-descriptions-item-label').filter({ hasText: /学生姓名/ });
-    await expect(studentInfo).toBeAttached();
+      // 验证题目卡片存在（每题卡片含「学生答案」标题）
+      questionCount = await page.locator('.ant-card').filter({ has: page.locator('text=学生答案') }).count();
+      console.log(`第 ${idx + 1} 行提交包含 ${questionCount} 道题目`);
+      if (questionCount > 0) break;
 
-    // 验证题目卡片存在（每题卡片含「学生答案」标题）
-    const questionCards = page.locator('.ant-card').filter({ has: page.locator('text=学生答案') });
-    const questionCount = await questionCards.count();
-    console.log(`找到 ${questionCount} 道题目`);
+      if (idx < maxRows - 1) {
+        console.log('⚠ 该提交无题目（空试卷），换下一行重试');
+        await page.goto('/teacher/grading');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
+      }
+    }
     expect(questionCount).toBeGreaterThan(0);
 
     // 验证保存和完成按钮存在（页面有「保存所有评分」与「保存本题评分」两个按钮）
