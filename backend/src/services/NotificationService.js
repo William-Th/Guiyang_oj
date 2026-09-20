@@ -317,17 +317,27 @@ class NotificationService {
    */
   async handleAchievementAwarded(data) {
     try {
-      const { userId, achievement } = data;
+      // 两个发射方（AchievementDetector / AchievementService）均为扁平载荷：
+      // { source, studentId, achievementId, achievementName, pointsAwarded }
+      // 此前按 { userId, achievement.name } 读取，字段全为 undefined，成就通知从未发出
+      const userId = data.userId ?? data.studentId;
+      const achievementId = data.achievementId ?? data.achievement?.id;
+      const achievementName = data.achievementName ?? data.achievement?.name;
+
+      if (!userId || !achievementName) {
+        logger.warn('Achievement awarded event missing userId/achievementName, notification skipped', { data });
+        return;
+      }
 
       await this.sendByTemplate('achievement_unlocked', userId, {
-        achievement_name: achievement.name,
-        description: achievement.description || ''
+        achievement_name: achievementName,
+        description: data.description ?? data.achievement?.description ?? ''
       }, {
         related_type: 'achievement',
-        related_id: achievement.id,
+        related_id: achievementId,
         metadata: {
-          achievement_code: achievement.code,
-          points: achievement.points
+          achievement_code: data.achievementCode ?? data.achievement?.code,
+          points: data.pointsAwarded ?? data.achievement?.points
         }
       });
     } catch (error) {
