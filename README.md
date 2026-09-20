@@ -136,7 +136,7 @@ guiyang_oj/
 > - 当前最高管理员仅 `admin` 一个（role=municipal_admin），同时承担系统管理员与市级管理员职能。
 > - 区级管理员共 6 个：`yunyan_admin` / `nanming_admin` / `guanshanhu_admin` / `baiyun_admin` / `huaxi_admin` / `wudang_admin`。
 > - 教师共 18 个，命名规则 `teacher_<区缩写>_<学段>_<科目>`（如 `teacher_by_ps_math` = 白云·小学·数学，`teacher_nm_ms_it` = 南明·初中·信息科技）。
-> - 学生共 10 个，用户名即手机号（13800138003 ~ 13800138009 等）。
+> - 学生共 17 个（10 个种子账号 + 7 个 E2E 自动化账号），用户名即手机号。完整清单见 [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md)。
 
 ## 🛠 技术栈
 
