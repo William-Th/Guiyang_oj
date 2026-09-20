@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { questionReviewApi, questionBankApi } from '../../services/api';
 import { buildDistrictScope, getDistrictById } from '../../config/districts';
+import { questionBankBasePath } from '@/utils/questionBankPath';
 
 interface Question {
   id: number;
@@ -345,7 +346,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
         extra={
           <Button
             type="primary"
-            onClick={() => navigate('/teacher/question-bank/create')}
+            onClick={() => navigate(`${questionBankBasePath()}/create`)}
           >
             新建题目
           </Button>
@@ -359,7 +360,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
             >
               <Button
                 type="primary"
-                onClick={() => navigate('/teacher/question-bank/create')}
+                onClick={() => navigate(`${questionBankBasePath()}/create`)}
               >
                 立即创建
               </Button>

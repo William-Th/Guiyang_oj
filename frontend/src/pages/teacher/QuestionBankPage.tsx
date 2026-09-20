@@ -32,6 +32,7 @@ import { RootState } from '../../store';
 import { questionBankApi, questionGovernanceApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject, getAllGrades } from '../../config/subjects';
 import { getAllDistricts, District } from '../../config/districts';
+import { questionBankBasePath } from '@/utils/questionBankPath';
 
 interface Question {
   id: number;
@@ -647,7 +648,7 @@ const QuestionBankPage: React.FC = () => {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => navigate('/teacher/question-bank/create')}
+              onClick={() => navigate(`${questionBankBasePath()}/create`)}
             >
               新建题目
             </Button>

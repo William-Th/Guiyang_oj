@@ -37,6 +37,7 @@ import {
   Notification,
   Announcement
 } from '../../services/notificationApi';
+import { questionBankBasePath } from '@/utils/questionBankPath';
 
 const { Text, Paragraph } = Typography;
 
@@ -130,7 +131,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
           navigate('/student/achievements');
           break;
         case 'question':
-          navigate('/teacher/question-bank');
+          navigate(questionBankBasePath());
           break;
         default:
           navigate('/notifications');

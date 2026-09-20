@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { questionReviewApi, questionBankApi } from '../../services/api';
 import { buildDistrictScope, getDistrictById } from '../../config/districts';
+import { questionBankBasePath } from '@/utils/questionBankPath';
 
 interface Question {
   id: number;
@@ -169,7 +170,7 @@ const MySubmissionsPage: React.FC = () => {
 
   const handleEditRejected = (question: Question) => {
     if (question.status === 'inactive' || question.status === 'rejected') {
-      navigate(`/teacher/question-bank/edit/${question.draft_id}`);
+      navigate(`${questionBankBasePath()}/edit/${question.draft_id}`);
     }
   };
 
@@ -442,7 +443,7 @@ const MySubmissionsPage: React.FC = () => {
                     const newId = response.data?.id;
                     if (newId) {
                       message.success('已创建修订副本');
-                      navigate(`/teacher/question-bank/edit/${newId}`);
+                      navigate(`${questionBankBasePath()}/edit/${newId}`);
                     }
                   } catch (error: any) {
                     message.error(error.response?.data?.error || '创建修订副本失败');
@@ -465,7 +466,7 @@ const MySubmissionsPage: React.FC = () => {
         extra={
           <Button
             type="primary"
-            onClick={() => navigate('/teacher/question-bank/drafts')}
+            onClick={() => navigate(questionBankBasePath())}
           >
             返回草稿箱
           </Button>
@@ -479,7 +480,7 @@ const MySubmissionsPage: React.FC = () => {
             >
               <Button
                 type="primary"
-                onClick={() => navigate('/teacher/question-bank/drafts')}
+                onClick={() => navigate(questionBankBasePath())}
               >
                 去草稿箱提交题目
               </Button>

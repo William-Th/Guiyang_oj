@@ -24,6 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { questionBankApi, questionReviewApi, testCaseAPI, questionImageUploadApi, questionGovernanceApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject } from '../../config/subjects';
 import { CodeQuestionForm, CodeQuestionConfig, TestCase } from '../../components/questions';
+import { questionBankBasePath } from '@/utils/questionBankPath';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -176,7 +177,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       }
     } catch (error: any) {
       message.error('加载题目失败');
-      navigate('/teacher/question-bank');
+      navigate(questionBankBasePath());
     } finally {
       setLoading(false);
     }
@@ -295,7 +296,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate('/teacher/question-bank');
+        navigate(questionBankBasePath());
       }
     } catch (error: any) {
       message.error(error.response?.data?.error || '提交失败');
