@@ -325,6 +325,15 @@
   background: rgba(255, 255, 255, 0.86) !important;
 }
 
+/* 组合输入框（带前后缀/搜索组）的内层输入框不重复描边，避免双重边框 */
+.app-shell .app-page-surface .ant-input-affix-wrapper .ant-input {
+  min-height: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 /* 搜索组合框（Input.Search）：输入框右角与按钮左角还原贴合，避免整体被圆角拆成两块 */
 .app-shell .app-page-surface .ant-input-search > .ant-input-group > .ant-input-affix-wrapper,
 .app-shell .app-page-surface .ant-input-search > .ant-input-group > .ant-input {

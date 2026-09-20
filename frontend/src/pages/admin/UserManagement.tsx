@@ -430,13 +430,13 @@ const UserManagement: React.FC = () => {
       title: '姓名',
       dataIndex: 'real_name',
       key: 'real_name',
-      width: 120,
+      width: 170,
     },
     {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
-      width: 100,
+      width: 130,
       render: (role: string) => (
         <Tag color={getRoleColor(role)} icon={getRoleIcon(role)}>
           {getRoleName(role)}
