@@ -702,6 +702,7 @@ const typeOrder = {
   - 评卷列表「已完成」卡恒 0（completed 不在待评卷列表内）→ `/pending` 响应补 `meta.completed_count`，前端改读
 - 🔧 其余：`server.js` trust proxy `true → 1`（消除 express-rate-limit 校验告警）；`Achievement.updateProgress` 加 NaN 防御与 100% 封顶
 - 📊 **回归基线（2026-09-20 本轮审查修复后）**：全量串行（workers=1, retries=1）**214 通过 / 6 失败**，其中 4 个已随即修复——lifecycle-student-test 3 个（种子活动【完整流程测试】被上轮提交消耗且 allow_retake=false 被列表排除 → 种子改可重做 + spec 加分页遍历查找，修复后 8/8）、GRD203（最新提交来自空试卷活动 → 改为逐行重试有题的提交）；其余 2 个（R301/PRF102）为 50 分钟长跑负载下的保存响应抖动，隔离复跑 question-bank-creation 13/13、profile 24/24 全绿。叠加此前验证：time-limit-scheduled 4/4、time-limit-timed 3/3、time-limit-unlimited 6/6、student-activity-flow、activity-basic 9/9、activity-management、teacher-grading-flow 10/10、paper-generation、student-statistics、unauthenticated-redirect 全绿。剩余已知未修：`QuestionCategory`/`getPendingByReviewer`（死代码，路由未挂载/无调用方）、DraftsPage 题目编码列（草稿发布前本无编码，显示 '-' 属预期）
+- 🔔 **成就解锁通知修复**：handleAchievementAwarded 按旧结构读 { userId, achievement.name }，而发射方实际发扁平载荷 { studentId, achievementName }——通知创建抛错被吞，学生从未收到成就通知。改为兼容扁平字段 + 缺失守卫，容器内实测通知落库渲染正确
 
 ### 2026-09-19（第二轮：时间闸门产品落地 + 回归清零）
 - ✨ **时间闸门展示逻辑定稿：未开始的定时活动「禁用 + 倒计时」**（此前「隐藏」方案被否决，未采用）
