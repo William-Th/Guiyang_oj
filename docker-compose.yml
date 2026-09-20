@@ -54,6 +54,9 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in your local environment}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in your local environment}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3100,http://localhost:8080,http://127.0.0.1:3100,http://127.0.0.1:8080}
+      # 本地/测试环境放大限流（默认 100/15min 会掐断 E2E 串行回归与课堂同出口 IP 场景）
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-10000}
     depends_on:
       postgres:
         condition: service_healthy

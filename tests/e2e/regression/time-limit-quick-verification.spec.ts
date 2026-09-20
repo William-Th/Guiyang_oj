@@ -45,6 +45,8 @@ async function createAndOpenUnlimitedActivity(page: Page, title: string): Promis
 }
 
 test('VERIFY-PTL001 - 验证无限制时间功能', async ({ page }) => {
+  // 创建+挂题+发布+双端登录全流程远超默认 30s
+  test.setTimeout(240000);
   const title = `[VERIFY1] 无限制练习 - ${Date.now()}`;
   await createAndOpenUnlimitedActivity(page, title);
 
@@ -63,15 +65,33 @@ test('VERIFY-PTL001 - 验证无限制时间功能', async ({ page }) => {
   await expect(progressText).toBeVisible();
   console.log('✓ Progress display is visible');
 
-  // 答第一题后进度更新
-  const firstQuestion = page.locator('.activity-question-card').first();
-  const firstOption = firstQuestion.locator('input[type="radio"]').first();
-  const textArea = firstQuestion.locator('textarea').first();
-  if (await firstOption.count() > 0) {
-    await firstOption.check();
-  } else {
-    await textArea.fill('Test answer');
+  // 答一道「可自动作答」的题后进度更新（单选 radio / 多选 checkbox / 主观/填空 textarea；
+  // 跳过代码题等无法自动作答的题型；等控件真正渲染完成再作答）
+  const cards = page.locator('.activity-question-card');
+  const cardCount = await cards.count();
+  let answered = false;
+  for (let i = 0; i < cardCount && !answered; i++) {
+    const q = cards.nth(i);
+    const radio = q.locator('input[type="radio"]').first();
+    const checkbox = q.locator('.ant-checkbox-wrapper').first();
+    const textArea = q.locator('textarea').first();
+    const kind = await Promise.race([
+      radio.waitFor({ state: 'attached', timeout: 10000 }).then(() => 'radio').catch(() => null),
+      checkbox.waitFor({ state: 'attached', timeout: 10000 }).then(() => 'checkbox').catch(() => null),
+      textArea.waitFor({ state: 'attached', timeout: 10000 }).then(() => 'textarea').catch(() => null),
+    ]);
+    if (kind === 'radio') {
+      await radio.check();
+      answered = true;
+    } else if (kind === 'checkbox') {
+      await checkbox.click();
+      answered = true;
+    } else if (kind === 'textarea') {
+      await textArea.fill('Test answer');
+      answered = true;
+    }
   }
+  expect(answered, '没有找到可自动作答的题目').toBeTruthy();
   await page.waitForTimeout(1000);
   const progressAfter = page.locator(`.ant-progress-text:has-text("1/")`);
   await expect(progressAfter).toBeVisible();
