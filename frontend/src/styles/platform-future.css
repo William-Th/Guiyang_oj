@@ -135,6 +135,15 @@
   color: inherit;
 }
 
+/* 收紧图标与文字之间的间距（antd 默认 8~10px 偏宽） */
+.app-desktop-navigation .ant-menu-item-icon {
+  margin-inline-end: 3px !important;
+}
+
+.app-desktop-navigation .ant-menu-title-content {
+  margin-inline-start: 0 !important;
+}
+
 .app-header-user {
   flex: 0 0 auto;
   color: #fff;
