@@ -499,9 +499,10 @@ const UserManagement: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 260,
+      fixed: 'right' as const,
       render: (_: any, record: User) => (
-        <Space size="small">
+        <Space size="small" style={{ whiteSpace: 'nowrap' }}>
           <Button
             type="primary"
             size="small"

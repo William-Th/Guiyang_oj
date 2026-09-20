@@ -23,7 +23,8 @@ body {
 .app-header {
   display: flex;
   align-items: center;
-  background: var(--bohe-gradient) !important;
+  /* 专属头部渐变：整条保持足够深度，避免浅色端影响白色文字可读性（--bohe-gradient 浅端过亮） */
+  background: linear-gradient(120deg, #35817f 0%, #4d9899 45%, #5fae8c 100%) !important;
   padding: 0 var(--bohe-space-6) !important;
   box-shadow: 0 2px 8px rgba(77, 152, 153, 0.3);
 }

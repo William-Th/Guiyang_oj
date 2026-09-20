@@ -105,8 +105,10 @@
   min-height: 48px;
   align-items: center;
   padding-inline: var(--bohe-space-4);
+  /* 相邻胶囊之间留出间距，避免悬停态与选中态贴在一起产生重叠观感 */
+  margin-inline: 6px;
   margin-block: var(--bohe-space-3);
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
   font-weight: 500;
   border-radius: var(--bohe-radius-lg);
 }
