@@ -107,7 +107,9 @@ const getViewableRoles = (currentUserRole: UserRole): Array<{ text: string; valu
       ];
 
     case 'municipal_admin':
-      // 市级管理员：可以查看除系统管理员外的所有角色
+      // 市级管理员：可查看除系统管理员、其他市级总管理员外的所有角色
+      // （后端 /users/all 会排除 system_admin / municipal_admin，
+      //   市级总管理员筛选项对本角色永远为空，故不提供）
       return [
         { text: '学生', value: 'student' },
         { text: '家长', value: 'parent' },
@@ -116,7 +118,6 @@ const getViewableRoles = (currentUserRole: UserRole): Array<{ text: string; valu
         { text: '区级管理员', value: 'district_admin' },
         { text: '市直属学校管理员', value: 'municipal_school_admin' },
         { text: '基地校管理员', value: 'base_school_admin' },
-        { text: '市级总管理员', value: 'municipal_admin' },
       ];
 
     case 'system_admin':
@@ -649,14 +650,26 @@ const UserManagement: React.FC = () => {
               </Card>
             </Col>
           )}
-          {(canViewRoleStats('municipal_admin') || canViewRoleStats('municipal_school_admin')) && (
+          {canViewRoleStats('municipal_admin') && (
             <Col xs={24} sm={12} lg={6}>
               <Card>
                 <Statistic
-                  title="市级管理员"
-                  value={statistics.municipalAdmins + statistics.municipalSchoolAdmins}
+                  title="市级总管理员"
+                  value={statistics.municipalAdmins}
                   prefix={<CrownOutlined />}
                   valueStyle={{ color: '#f5222d' }}
+                />
+              </Card>
+            </Col>
+          )}
+          {canViewRoleStats('municipal_school_admin') && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="市直属学校管理员"
+                  value={statistics.municipalSchoolAdmins}
+                  prefix={<CrownOutlined />}
+                  valueStyle={{ color: '#fa541c' }}
                 />
               </Card>
             </Col>
