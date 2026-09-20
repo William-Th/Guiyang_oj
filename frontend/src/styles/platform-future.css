@@ -103,13 +103,15 @@
   display: none;
 }
 
-.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item:hover,
-.app-desktop-navigation.ant-menu-horizontal > .ant-menu-submenu:hover {
+/* 仅未选中项响应悬停；选中项悬停前后保持选中态不变 */
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item:hover:not(.ant-menu-item-selected),
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-submenu:hover:not(.ant-menu-submenu-selected) {
   color: #fff !important;
   background: rgba(255, 255, 255, 0.12) !important;
 }
 
-.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item-selected {
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item-selected,
+.app-desktop-navigation.ant-menu-horizontal > .ant-menu-item-selected:hover {
   color: var(--bohe-mint-900) !important;
   background: rgba(255, 255, 255, 0.94) !important;
   box-shadow: 0 8px 20px rgba(12, 74, 110, 0.18);
