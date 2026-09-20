@@ -100,7 +100,8 @@
 .student-home__hero h1.ant-typography {
   max-width: 640px;
   margin: 0 0 var(--bohe-space-4);
-  color: #fff;
+  /* Hero 为蓝色渐变底，antd 运行时注入的标题默认黑色必须强制覆盖 */
+  color: #fff !important;
   font-size: clamp(32px, 4vw, 48px);
   line-height: 1.16;
   letter-spacing: -0.03em;
@@ -110,7 +111,7 @@
 .student-home__hero p.ant-typography {
   max-width: 600px;
   margin-bottom: var(--bohe-space-6);
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.95) !important;
   font-size: var(--bohe-font-size-lg);
   line-height: 1.8;
 }
@@ -157,7 +158,7 @@
 .student-home__quick-links .ant-btn-link {
   min-height: 44px;
   padding-inline: var(--bohe-space-2);
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.92) !important;
 }
 
 .student-home__quick-links .ant-btn-link:hover,
