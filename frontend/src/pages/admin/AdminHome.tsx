@@ -88,10 +88,10 @@ const AdminHome: React.FC = () => {
 
   const getWorkflowIcon = (type: WorkflowItem['type']) => {
     const iconMap = {
-      'user_approval': <TeamOutlined style={{ fontSize: 24, color: '#16a34a' }} />,
+      'user_approval': <TeamOutlined style={{ fontSize: 24, color: '#0ea5e9' }} />,
       'question_review': <BookOutlined style={{ fontSize: 24, color: '#52c41a' }} />,
-      'exam_approval': <FileTextOutlined style={{ fontSize: 24, color: '#fa8c16' }} />,
-      'certificate_issue': <TrophyOutlined style={{ fontSize: 24, color: '#16a34a' }} />,
+      'exam_approval': <FileTextOutlined style={{ fontSize: 24, color: '#faad14' }} />,
+      'certificate_issue': <TrophyOutlined style={{ fontSize: 24, color: '#0ea5e9' }} />,
     };
     return iconMap[type];
   };
@@ -225,7 +225,7 @@ const AdminHome: React.FC = () => {
                         title="学校总数"
                         value={regionStats.totalSchools}
                         prefix={<TeamOutlined />}
-                        valueStyle={{ color: '#16a34a' }}
+                        valueStyle={{ color: '#0ea5e9' }}
                         suffix="所"
                       />
                     </Card>
@@ -247,7 +247,7 @@ const AdminHome: React.FC = () => {
                         title="学生总数"
                         value={regionStats.totalStudents}
                         prefix={<TeamOutlined />}
-                        valueStyle={{ color: '#fa8c16' }}
+                        valueStyle={{ color: '#faad14' }}
                         suffix="人"
                       />
                     </Card>
@@ -258,7 +258,7 @@ const AdminHome: React.FC = () => {
                         title="进行中活动"
                         value={regionStats.activeExams}
                         prefix={<FileTextOutlined />}
-                        valueStyle={{ color: '#16a34a' }}
+                        valueStyle={{ color: '#0ea5e9' }}
                         suffix="场"
                       />
                     </Card>
@@ -277,7 +277,7 @@ const AdminHome: React.FC = () => {
                   <Progress
                     percent={regionStats.pendingApprovals > 0 ? Math.max(20, 100 - regionStats.pendingApprovals * 5) : 100}
                     strokeColor={{
-                      '0%': '#16a34a',
+                      '0%': '#0ea5e9',
                       '100%': '#87d068',
                     }}
                     status={regionStats.pendingApprovals > 0 ? 'active' : 'success'}

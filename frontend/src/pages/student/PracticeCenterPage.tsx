@@ -293,7 +293,7 @@ const PracticeCenterPage: React.FC = () => {
           const totalScore = Number(record.total_score) || 0;
           const passed = totalScore > 0 && myScore >= totalScore * 0.6;
           return (
-            <span style={{ fontSize: 16, fontWeight: 'bold', color: passed ? '#52c41a' : '#ff4d4f' }}>
+            <span style={{ fontSize: 16, fontWeight: 'bold', color: passed ? '#52c41a' : '#f5222d' }}>
               {myScore.toFixed(1)} / {totalScore}
             </span>
           );

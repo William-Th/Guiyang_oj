@@ -21,12 +21,12 @@
 }
 
 .current-student-row {
-  background-color: #f0fdf4 !important;
+  background-color: #f0f9ff !important;
   font-weight: 600;
 }
 
 .current-student-row:hover {
-  background-color: #dcfce7 !important;
+  background-color: #e0f2fe !important;
 }
 
 /* 响应式设计 */

@@ -295,7 +295,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
       key: 'content',
       ellipsis: true,
       render: (content: string, record: ImportQuestion) => (
-        <span style={{ color: record.status === 'error' ? '#ff4d4f' : undefined }}>
+        <span style={{ color: record.status === 'error' ? '#f5222d' : undefined }}>
           {content || '(空)'}
         </span>
       )
@@ -334,7 +334,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
       render: (errors: string[]) => errors && errors.length > 0 ? (
         <div>
           {errors.map((error, index) => (
-            <div key={index} style={{ color: '#ff4d4f', fontSize: '12px' }}>
+            <div key={index} style={{ color: '#f5222d', fontSize: '12px' }}>
               {error}
             </div>
           ))}
@@ -388,7 +388,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
 
             <Dragger {...uploadProps} style={{ padding: '40px' }}>
               <p className="ant-upload-drag-icon">
-                <InboxOutlined style={{ fontSize: '48px', color: '#16a34a' }} />
+                <InboxOutlined style={{ fontSize: '48px', color: '#0ea5e9' }} />
               </p>
               <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
               <p className="ant-upload-hint">
@@ -423,7 +423,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
                     <Statistic 
                       title="总题目数" 
                       value={totalCount} 
-                      valueStyle={{ color: '#16a34a' }}
+                      valueStyle={{ color: '#0ea5e9' }}
                     />
                   </Col>
                   <Col span={6}>
@@ -437,7 +437,7 @@ blank,中国的首都是___。,,,,北京,填空题示例,8,chinese,easy,地理`;
                     <Statistic 
                       title="错误" 
                       value={errorCount} 
-                      valueStyle={{ color: '#ff4d4f' }}
+                      valueStyle={{ color: '#f5222d' }}
                     />
                   </Col>
                   <Col span={6}>

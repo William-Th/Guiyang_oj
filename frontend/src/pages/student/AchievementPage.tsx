@@ -157,9 +157,9 @@ const AchievementPage: React.FC = () => {
   const getRarityInfo = (rarity: string) => {
     const rarityMap: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
       common: { color: '#8c8c8c', label: '普通', icon: <StarOutlined /> },
-      rare: { color: '#16a34a', label: '稀有', icon: <StarOutlined /> },
+      rare: { color: '#0ea5e9', label: '稀有', icon: <StarOutlined /> },
       epic: { color: '#722ed1', label: '史诗', icon: <FireOutlined /> },
-      legendary: { color: '#fa8c16', label: '传说', icon: <TrophyOutlined /> },
+      legendary: { color: '#faad14', label: '传说', icon: <TrophyOutlined /> },
     };
     return rarityMap[rarity] || rarityMap.common;
   };
@@ -294,7 +294,7 @@ const AchievementPage: React.FC = () => {
               <div style={{ marginTop: 4 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <Text style={{ fontSize: 12, color: '#8c8c8c' }}>进度</Text>
-                  <Text style={{ fontSize: 12, color: '#16a34a' }}>
+                  <Text style={{ fontSize: 12, color: '#0ea5e9' }}>
                     {progress.current_value}/{progress.target_value}
                   </Text>
                 </div>
@@ -312,7 +312,7 @@ const AchievementPage: React.FC = () => {
 
             <div style={{ marginTop: 4 }}>
               <Space>
-                <Text strong style={{ color: '#fa8c16' }}>
+                <Text strong style={{ color: '#faad14' }}>
                   +{achievement.points_reward} 积分
                 </Text>
                 {earned && count > 0 && achievement.max_times && achievement.max_times > 1 && (
@@ -371,7 +371,7 @@ const AchievementPage: React.FC = () => {
               title="成就积分"
               value={stats.totalPoints}
               prefix={<StarOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
@@ -381,7 +381,7 @@ const AchievementPage: React.FC = () => {
               title="当前积分"
               value={pointsAccount?.current_points || 0}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#16a34a' }}
+              valueStyle={{ color: '#0ea5e9' }}
             />
           </Card>
         </Col>
@@ -535,7 +535,7 @@ const AchievementPage: React.FC = () => {
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Text>当前进度</Text>
-                        <Text strong style={{ color: '#16a34a' }}>
+                        <Text strong style={{ color: '#0ea5e9' }}>
                           {progress.current_value} / {progress.target_value}
                         </Text>
                       </div>
@@ -559,7 +559,7 @@ const AchievementPage: React.FC = () => {
                     value={selectedAchievement.points_reward}
                     prefix={<StarOutlined />}
                     suffix="积分"
-                    valueStyle={{ color: '#fa8c16' }}
+                    valueStyle={{ color: '#faad14' }}
                   />
                 </Card>
 

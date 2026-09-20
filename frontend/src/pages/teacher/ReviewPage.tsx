@@ -446,7 +446,7 @@ const ReviewPage: React.FC = () => {
               <div style={{
                 marginTop: 8,
                 padding: 12,
-                background: '#f0fdf4',
+                background: '#f0f9ff',
                 borderRadius: 4
               }}>
                 {renderAnswer(selectedQuestion)}
@@ -508,7 +508,7 @@ const ReviewPage: React.FC = () => {
                     <CheckCircleOutlined style={{ color: '#52c41a' }} /> 批准通过
                   </Radio.Button>
                   <Radio.Button value="rejected">
-                    <CloseCircleOutlined style={{ color: '#ff4d4f' }} /> 拒绝
+                    <CloseCircleOutlined style={{ color: '#f5222d' }} /> 拒绝
                   </Radio.Button>
                 </Radio.Group>
               </div>

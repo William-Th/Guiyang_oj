@@ -469,7 +469,7 @@ const TeacherDashboard: React.FC = () => {
               title="创建活动总数"
               value={stats.totalActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#16a34a' }}
+              valueStyle={{ color: '#0ea5e9' }}
             />
           </Card>
         </Col>
@@ -489,7 +489,7 @@ const TeacherDashboard: React.FC = () => {
               title="已完成的活动"
               value={stats.completedActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>

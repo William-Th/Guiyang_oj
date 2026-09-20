@@ -1,43 +1,43 @@
 /**
- * 薄荷编程品牌设计规范 — Ant Design 5 主题配置
+ * 平台主题规范 — Ant Design 5 主题配置
  *
- * 基于 bohe-design-guard 规范：
- * - 品牌主色: #16a34a (mint-600)
- * - 品牌次色: #15803d (mint-700, hover)
- * - Logo 渐变: #4D9899 → #7AC99C
+ * 颜色体系：
+ * - 品牌主色: #0ea5e9 (sky-500)
+ * - 品牌次色: #0284c7 (sky-600)
+ * - 品牌渐变: #0284c7 → #38bdf8
+ * - 成功: #52c41a / 警告: #faad14 / 错误: #f5222d / 信息: #0ea5e9（跟随主题）
  * - 间距基数: 4px
- * - 最小触摸目标: 44×44px
  */
 
 import type { ThemeConfig } from 'antd';
 
-// 薄荷绿色板
+// 天空蓝主色板（沿用 mintColors 导出名，避免破坏外部引用）
 export const mintColors = {
-  50: '#f0fdf4',
-  100: '#dcfce7',
-  200: '#bbf7d0',
-  300: '#86efac',
-  400: '#4ade80',
-  500: '#22c55e',
-  600: '#16a34a', // 品牌主色
-  700: '#15803d', // hover 状态
-  800: '#166534',
-  900: '#14532d',
+  50: '#f0f9ff',
+  100: '#e0f2fe',
+  200: '#bae6fd',
+  300: '#7dd3fc',
+  400: '#38bdf8',
+  500: '#0ea5e9',
+  600: '#0ea5e9', // 品牌主色
+  700: '#0284c7', // active/深色
+  800: '#075985',
+  900: '#0c4a6e',
 };
 
-// 薄荷品牌渐变
+// 品牌渐变
 export const mintGradient = {
-  start: '#4D9899',
-  end: '#7AC99C',
-  css: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
+  start: '#0284c7',
+  end: '#38bdf8',
+  css: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
 };
 
-// 功能色（保持语义化）
+// 功能色
 export const semanticColors = {
-  success: '#16a34a',
-  warning: '#fa8c16',
+  success: '#52c41a',
+  warning: '#faad14',
   error: '#f5222d',
-  info: '#16a34a', // info 使用品牌色替代蓝色
+  info: '#0ea5e9', // 信息色跟随主题色
 };
 
 // 薄荷字体栈
@@ -111,7 +111,7 @@ const boheTheme: ThemeConfig = {
   components: {
     // 按钮组件
     Button: {
-      primaryShadow: '0 2px 0 rgba(22, 163, 74, 0.1)',
+      primaryShadow: '0 2px 0 rgba(14, 165, 233, 0.1)',
       algorithm: true,
     },
     // 菜单组件
@@ -154,12 +154,18 @@ const boheTheme: ThemeConfig = {
       borderRadiusLG: 16,
       headerBg: 'transparent',
     },
-    // 表格
+    // 表格（紧凑密度，参考 Element Plus / Naive UI）
     Table: {
-      headerBg: mintColors[50],
-      headerColor: '#374151',
-      headerSplitColor: '#dcfce7',
-      rowHoverBg: mintColors[50],
+      headerBg: '#f7f8fa',
+      headerColor: '#475569',
+      headerSplitColor: 'transparent',
+      rowHoverBg: '#f0f9ff',
+      borderColor: '#f1f5f9',
+      cellFontSize: 13.5,
+      cellPaddingBlock: 9,
+      cellPaddingInline: 12,
+      cellPaddingBlockSM: 6,
+      cellPaddingInlineSM: 8,
     },
     // 输入框
     Input: {

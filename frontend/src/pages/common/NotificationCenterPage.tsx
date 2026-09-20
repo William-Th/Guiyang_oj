@@ -268,11 +268,11 @@ const NotificationCenterPage: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'activity':
-        return <ClockCircleOutlined style={{ color: '#16a34a', fontSize: 24 }} />;
+        return <ClockCircleOutlined style={{ color: '#0ea5e9', fontSize: 24 }} />;
       case 'achievement':
         return <TrophyOutlined style={{ color: '#faad14', fontSize: 24 }} />;
       case 'reminder':
-        return <ClockCircleOutlined style={{ color: '#ff4d4f', fontSize: 24 }} />;
+        return <ClockCircleOutlined style={{ color: '#f5222d', fontSize: 24 }} />;
       case 'announcement':
         return <SoundOutlined style={{ color: '#52c41a', fontSize: 24 }} />;
       default:
@@ -410,7 +410,7 @@ const NotificationCenterPage: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
             <div style={{ marginRight: 16 }}>
-              <SoundOutlined style={{ color: item.is_pinned ? '#ff4d4f' : '#52c41a', fontSize: 24 }} />
+              <SoundOutlined style={{ color: item.is_pinned ? '#f5222d' : '#52c41a', fontSize: 24 }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ marginBottom: 8 }}>

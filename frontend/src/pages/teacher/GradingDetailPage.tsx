@@ -510,7 +510,7 @@ const GradingDetailPage: React.FC = () => {
           </Descriptions.Item>
           <Descriptions.Item label="总分">{detail.activity.total_score}</Descriptions.Item>
           <Descriptions.Item label="当前得分">
-            <Text strong style={{ fontSize: '16px', color: '#16a34a' }}>
+            <Text strong style={{ fontSize: '16px', color: '#0ea5e9' }}>
               {detail.student_activity.score || 0}
             </Text>
           </Descriptions.Item>
@@ -534,7 +534,7 @@ const GradingDetailPage: React.FC = () => {
               <div style={{
                 padding: '10px 14px',
                 background: '#fafafa',
-                borderLeft: '3px solid #16a34a',
+                borderLeft: '3px solid #0ea5e9',
                 marginBottom: 12,
                 borderRadius: 4
               }}>
@@ -559,7 +559,7 @@ const GradingDetailPage: React.FC = () => {
                     style={{ marginBottom: 16 }}
                     title={
                       <Space size="large">
-                        <div style={{ fontSize: 18, fontWeight: 'bold', color: '#16a34a' }}>
+                        <div style={{ fontSize: 18, fontWeight: 'bold', color: '#0ea5e9' }}>
                           {idx + 1}.
                         </div>
                         <Tag color="green" style={{ fontSize: 14 }}>

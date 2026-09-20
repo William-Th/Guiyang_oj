@@ -488,8 +488,8 @@ const DataAnalytics: React.FC = () => {
                       <Radar
                         name="平均正确率 (%)"
                         dataKey="accuracy"
-                        stroke="#16a34a"
-                        fill="#16a34a"
+                        stroke="#0ea5e9"
+                        fill="#0ea5e9"
                         fillOpacity={0.6}
                       />
                       <Tooltip />

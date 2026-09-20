@@ -292,8 +292,8 @@ const MyStatistics: React.FC = () => {
                         <Radar
                           name="正确率 (%)"
                           dataKey="accuracy"
-                          stroke="#16a34a"
-                          fill="#16a34a"
+                          stroke="#0ea5e9"
+                          fill="#0ea5e9"
                           fillOpacity={0.6}
                         />
                         <Tooltip />
@@ -428,7 +428,7 @@ const MyStatistics: React.FC = () => {
                 <Row gutter={[16, 16]}>
                   {weakPoints.map((wp, index) => (
                     <Col key={index} xs={24} sm={12} md={8}>
-                      <Card size="small" style={{ borderLeft: '3px solid #ff4d4f' }}>
+                      <Card size="small" style={{ borderLeft: '3px solid #f5222d' }}>
                         <div><strong>{wp.knowledge_point}</strong></div>
                         <div style={{ fontSize: 12, color: '#666' }}>
                           正确率：{wp.accuracy_rate.toFixed(1)}%（{wp.correct_count}/{wp.total_questions}）

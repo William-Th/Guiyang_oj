@@ -263,7 +263,7 @@ const RegistrationManagement: React.FC<RegistrationManagementProps> = ({
               <Statistic
                 title="待确认"
                 value={statistics.pending}
-                valueStyle={{ color: '#16a34a' }}
+                valueStyle={{ color: '#0ea5e9' }}
                 prefix={<ClockCircleOutlined />}
               />
             </Col>

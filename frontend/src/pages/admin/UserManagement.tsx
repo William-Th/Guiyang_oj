@@ -553,7 +553,7 @@ const UserManagement: React.FC = () => {
               title="总用户数"
               value={statistics.totalUsers}
               prefix={<UserOutlined />}
-              valueStyle={{ color: '#16a34a' }}
+              valueStyle={{ color: '#0ea5e9' }}
             />
           </Card>
         </Col>
@@ -576,7 +576,7 @@ const UserManagement: React.FC = () => {
                 title="教师"
                 value={statistics.teachers}
                 prefix={<TeamOutlined />}
-                valueStyle={{ color: '#16a34a' }}
+                valueStyle={{ color: '#0ea5e9' }}
               />
             </Card>
           </Col>
@@ -620,7 +620,7 @@ const UserManagement: React.FC = () => {
                   title="校级管理员"
                   value={statistics.schoolAdmins}
                   prefix={<CrownOutlined />}
-                  valueStyle={{ color: '#fa8c16' }}
+                  valueStyle={{ color: '#faad14' }}
                 />
               </Card>
             </Col>
@@ -656,7 +656,7 @@ const UserManagement: React.FC = () => {
                   title="市级管理员"
                   value={statistics.municipalAdmins + statistics.municipalSchoolAdmins}
                   prefix={<CrownOutlined />}
-                  valueStyle={{ color: '#ff4d4f' }}
+                  valueStyle={{ color: '#f5222d' }}
                 />
               </Card>
             </Col>

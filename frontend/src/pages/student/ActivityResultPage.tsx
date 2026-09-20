@@ -237,8 +237,8 @@ const ActivityResultPage: React.FC = () => {
           let fontWeight = 'normal';
 
           if (data?.can_show_answers && isCorrect) {
-            bg = '#f0fdf4';
-            border = '1px solid #86efac';
+            bg = '#f0f9ff';
+            border = '1px solid #7dd3fc';
             fontWeight = 'bold';
           }
           if (isWrong) {
@@ -246,8 +246,8 @@ const ActivityResultPage: React.FC = () => {
             border = '1px solid #fca5a5';
           }
           if (!data?.can_show_answers && isMyAnswer) {
-            bg = '#f0fdf4';
-            border = '1px solid #86efac';
+            bg = '#f0f9ff';
+            border = '1px solid #7dd3fc';
             fontWeight = 'bold';
           }
 
@@ -357,7 +357,7 @@ const ActivityResultPage: React.FC = () => {
     // 选择题的正确答案已在选项中标注
     if (isChoiceType) {
       if (correctAns) {
-        return <Text type="secondary">正确答案：<Text strong style={{ color: '#16a34a' }}>{correctAns}</Text></Text>;
+        return <Text type="secondary">正确答案：<Text strong style={{ color: '#0ea5e9' }}>{correctAns}</Text></Text>;
       }
       return null;
     }
@@ -370,7 +370,7 @@ const ActivityResultPage: React.FC = () => {
           style={{
             marginTop: 8,
             padding: 12,
-            background: '#f0fdf4',
+            background: '#f0f9ff',
             borderRadius: 4,
             whiteSpace: 'pre-wrap',
           }}
@@ -480,7 +480,7 @@ const ActivityResultPage: React.FC = () => {
               title="总分"
               value={Number(student_activity.score)}
               suffix={`/ ${student_activity.activity_total_score}`}
-              valueStyle={{ color: Number(student_activity.score) >= 60 ? '#52c41a' : '#ff4d4f', fontSize: 28 }}
+              valueStyle={{ color: Number(student_activity.score) >= 60 ? '#52c41a' : '#f5222d', fontSize: 28 }}
               prefix={<TrophyOutlined />}
             />
             <Progress
@@ -497,7 +497,7 @@ const ActivityResultPage: React.FC = () => {
               title="正确率"
               value={correctRate}
               suffix="%"
-              valueStyle={{ color: correctRate >= 60 ? '#52c41a' : '#ff4d4f' }}
+              valueStyle={{ color: correctRate >= 60 ? '#52c41a' : '#f5222d' }}
             />
           </Card>
         </Col>
@@ -642,7 +642,7 @@ const ActivityResultPage: React.FC = () => {
                     {data.can_show_answers && answer.feedback && (
                       <div style={{ marginTop: 12 }}>
                         <Text type="secondary">评语：</Text>
-                        <Paragraph style={{ marginTop: 8, padding: 12, background: '#f0fdf4', borderRadius: 4 }}>
+                        <Paragraph style={{ marginTop: 8, padding: 12, background: '#f0f9ff', borderRadius: 4 }}>
                           {answer.feedback}
                         </Paragraph>
                       </div>

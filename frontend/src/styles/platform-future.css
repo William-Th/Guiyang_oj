@@ -8,8 +8,8 @@
   overflow-x: hidden;
   color: var(--bohe-text-primary);
   background:
-    radial-gradient(circle at 8% 8%, rgba(122, 201, 156, 0.18), transparent 28%),
-    radial-gradient(circle at 90% 4%, rgba(77, 152, 153, 0.14), transparent 26%),
+    radial-gradient(circle at 8% 8%, rgba(56, 189, 248, 0.18), transparent 28%),
+    radial-gradient(circle at 90% 4%, rgba(2, 132, 199, 0.14), transparent 26%),
     var(--bohe-bg-secondary);
 }
 
@@ -29,7 +29,7 @@
   background:
     radial-gradient(circle at 72% 0%, rgba(255, 255, 255, 0.2), transparent 32%),
     linear-gradient(120deg, var(--bohe-mint-900) 0%, var(--bohe-gradient-start) 56%, var(--bohe-gradient-end) 100%) !important;
-  box-shadow: 0 12px 32px rgba(20, 83, 45, 0.16);
+  box-shadow: 0 12px 32px rgba(12, 74, 110, 0.16);
 }
 
 .app-header::after {
@@ -76,7 +76,7 @@
   border: 1px solid rgba(255, 255, 255, 0.52);
   border-radius: var(--bohe-radius-lg);
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 24px rgba(20, 83, 45, 0.2);
+  box-shadow: 0 8px 24px rgba(12, 74, 110, 0.2);
 }
 
 .app-brand-name {
@@ -127,7 +127,7 @@
 .app-desktop-navigation.ant-menu-horizontal > .ant-menu-item-selected {
   color: var(--bohe-mint-900) !important;
   background: rgba(255, 255, 255, 0.94) !important;
-  box-shadow: 0 8px 20px rgba(20, 83, 45, 0.18);
+  box-shadow: 0 8px 20px rgba(12, 74, 110, 0.18);
 }
 
 .app-desktop-navigation .ant-menu-title-content,
@@ -184,7 +184,7 @@
 .app-mobile-navigation-drawer .ant-drawer-body {
   padding: var(--bohe-space-4);
   background:
-    radial-gradient(circle at 100% 0%, rgba(122, 201, 156, 0.2), transparent 32%),
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.2), transparent 32%),
     var(--bohe-bg-secondary);
 }
 
@@ -205,7 +205,7 @@
   position: relative;
   padding: var(--bohe-space-8);
   background:
-    radial-gradient(circle at 7% 4%, rgba(122, 201, 156, 0.16), transparent 24%),
+    radial-gradient(circle at 7% 4%, rgba(56, 189, 248, 0.16), transparent 24%),
     radial-gradient(circle at 94% 10%, rgba(147, 51, 234, 0.06), transparent 20%),
     linear-gradient(180deg, var(--bohe-mint-50), var(--bohe-bg-secondary) 320px) !important;
 }
@@ -217,8 +217,8 @@
   content: '';
   opacity: 0.22;
   background-image:
-    linear-gradient(rgba(77, 152, 153, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(77, 152, 153, 0.1) 1px, transparent 1px);
+    linear-gradient(rgba(2, 132, 199, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(2, 132, 199, 0.1) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, #000, transparent 56%);
 }
@@ -240,22 +240,22 @@
 
 /* 共享组件：使用 :where 保持低优先级，让专项页面可覆盖 */
 .app-shell .app-page-surface :where(.ant-card) {
-  border-color: rgba(77, 152, 153, 0.18);
+  border-color: rgba(2, 132, 199, 0.18);
   border-radius: var(--bohe-radius-xl);
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 36px rgba(77, 152, 153, 0.08);
+  box-shadow: 0 12px 36px rgba(2, 132, 199, 0.08);
   backdrop-filter: blur(16px);
 }
 
 .app-shell .app-page-surface :where(.ant-card-hoverable:hover) {
   border-color: var(--bohe-mint-300);
-  box-shadow: 0 20px 48px rgba(77, 152, 153, 0.14);
+  box-shadow: 0 20px 48px rgba(2, 132, 199, 0.14);
   transform: translateY(-2px);
 }
 
 .app-shell .app-page-surface :where(.ant-card-head) {
   min-height: 56px;
-  border-bottom-color: rgba(77, 152, 153, 0.14);
+  border-bottom-color: rgba(2, 132, 199, 0.14);
   background: linear-gradient(90deg, rgba(240, 253, 244, 0.78), rgba(255, 255, 255, 0.4));
 }
 
@@ -267,7 +267,7 @@
 
 .app-shell .app-page-surface :where(.ant-table-wrapper) {
   overflow: hidden;
-  border: 1px solid rgba(77, 152, 153, 0.14);
+  border: 1px solid rgba(2, 132, 199, 0.14);
   border-radius: var(--bohe-radius-xl);
   background: rgba(255, 255, 255, 0.9);
 }
@@ -279,13 +279,13 @@
 }
 
 .app-shell .app-page-surface :where(.ant-table-tbody > tr > td) {
-  border-bottom-color: rgba(77, 152, 153, 0.1);
+  border-bottom-color: rgba(2, 132, 199, 0.1);
 }
 
 .app-shell .app-page-surface :where(.ant-tabs-nav) {
   min-height: 52px;
   padding: var(--bohe-space-1);
-  border: 1px solid rgba(77, 152, 153, 0.14);
+  border: 1px solid rgba(2, 132, 199, 0.14);
   border-radius: var(--bohe-radius-xl);
   background: rgba(255, 255, 255, 0.78);
 }
@@ -319,7 +319,7 @@
 .app-shell .app-page-surface :where(.ant-btn-primary) {
   border-color: transparent;
   background: linear-gradient(135deg, var(--bohe-mint-600), var(--bohe-gradient-start));
-  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.18);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.18);
 }
 
 .app-shell .app-page-surface :where(.ant-btn-primary:hover) {
@@ -370,7 +370,7 @@
 
 .app-footer {
   color: var(--bohe-text-secondary) !important;
-  border-top: 1px solid rgba(77, 152, 153, 0.12);
+  border-top: 1px solid rgba(2, 132, 199, 0.12);
   background: linear-gradient(180deg, var(--bohe-bg-secondary), var(--bohe-mint-50)) !important;
 }
 
@@ -465,3 +465,30 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ============================================================
+   表格紧凑化（参考 Element Plus / Naive UI 密度）
+   - 单元格 9×12 内边距、13.5px 字号，替代默认 16px 的松散观感
+   - 表头浅灰底 + 中性灰字，去彩色分隔
+   - 行悬停淡主色，分隔线统一浅灰
+   ============================================================ */
+.ant-table-wrapper .ant-table {
+  font-size: 13.5px;
+  border-radius: 10px;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th {
+  padding: 9px 12px !important;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  padding: 8px 12px !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td,
+.ant-table-wrapper .ant-table-thead > tr > th {
+  border-bottom: 1px solid #f1f5f9;
+}
+

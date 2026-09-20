@@ -157,7 +157,7 @@ const ResultsPage: React.FC = () => {
         const myScore = Number(record.score) || 0;
         const totalScore = Number(record.total_score) || 0;
         const percentage = totalScore > 0 ? myScore / totalScore : 0;
-        const color = percentage >= 0.9 ? '#52c41a' : percentage >= 0.6 ? '#16a34a' : '#ff4d4f';
+        const color = percentage >= 0.9 ? '#52c41a' : percentage >= 0.6 ? '#0ea5e9' : '#f5222d';
         return (
           <span style={{ fontSize: 16, fontWeight: 'bold', color }}>
             {record.score != null ? Number(record.score).toFixed(1) : '-'}{totalScore > 0 ? ` / ${totalScore}` : ''}
@@ -210,7 +210,7 @@ const ResultsPage: React.FC = () => {
               title="已完成考试"
               value={stats.total}
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#16a34a' }}
+              valueStyle={{ color: '#0ea5e9' }}
               suffix="次"
             />
           </Card>
@@ -232,7 +232,7 @@ const ResultsPage: React.FC = () => {
               title="优秀次数"
               value={stats.excellent}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#faad14' }}
               suffix="次"
             />
           </Card>
@@ -243,7 +243,7 @@ const ResultsPage: React.FC = () => {
               title="通过率"
               value={stats.total > 0 ? Math.round(stats.passed / stats.total * 100) : 0}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#16a34a' }}
+              valueStyle={{ color: '#0ea5e9' }}
               suffix="%"
             />
           </Card>

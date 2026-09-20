@@ -428,7 +428,7 @@ const PermissionManagement: React.FC = () => {
         const now = new Date();
         const isExpired = expiryDate < now;
         return (
-          <span style={{ color: isExpired ? '#ff4d4f' : '#000' }}>
+          <span style={{ color: isExpired ? '#f5222d' : '#000' }}>
             {expiryDate.toLocaleString('zh-CN')}
             {isExpired && <Tag color="error" style={{ marginLeft: 8 }}>已过期</Tag>}
           </span>
@@ -665,8 +665,8 @@ const PermissionManagement: React.FC = () => {
         <div style={{
           marginTop: 16,
           padding: 12,
-          background: '#f0fdf4',
-          border: '1px solid #bbf7d0',
+          background: '#f0f9ff',
+          border: '1px solid #bae6fd',
           borderRadius: 4
         }}>
           <strong>权限说明：</strong>

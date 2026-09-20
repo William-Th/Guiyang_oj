@@ -131,7 +131,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
               strong
               style={{
                 fontSize: '18px',
-                color: statusColor === 'error' ? '#ff4d4f' : statusColor === 'warning' ? '#faad14' : '#52c41a',
+                color: statusColor === 'error' ? '#f5222d' : statusColor === 'warning' ? '#faad14' : '#52c41a',
               }}
             >
               {formatTime(timeRemaining)}

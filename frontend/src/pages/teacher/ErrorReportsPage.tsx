@@ -231,7 +231,7 @@ const ErrorReportsPage: React.FC = () => {
             <RadioGroupLike action={action} setAction={setAction} />
             <TextArea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="填写处理意见，将反馈给审核流程" style={{ marginTop: 8 }} />
             {handling.report_count != null && handling.report_count >= 3 && (
-              <div style={{ marginTop: 8, color: '#fa8c16' }}>
+              <div style={{ marginTop: 8, color: '#faad14' }}>
                 ⚠ 该题累计被纠错 {handling.report_count} 次，已{handling.report_count >= 5 ? '达到上限冻结' : '触发上级关注'}。
               </div>
             )}

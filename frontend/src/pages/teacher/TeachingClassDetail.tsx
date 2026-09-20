@@ -352,7 +352,7 @@ const TeachingClassDetailPage: React.FC = () => {
           )}
           {detail.rejection_reason && (
             <Descriptions.Item label="拒绝原因" span={2}>
-              <span style={{ color: '#ff4d4f' }}>{detail.rejection_reason}</span>
+              <span style={{ color: '#f5222d' }}>{detail.rejection_reason}</span>
             </Descriptions.Item>
           )}
           <Descriptions.Item label="描述" span={2}>

@@ -216,7 +216,7 @@ const AssessmentCenterPage: React.FC = () => {
         const myScore = Number(record.score) || 0;
         const totalScore = Number(record.total_score) || 0;
         const pct = totalScore > 0 ? myScore / totalScore : 0;
-        const color = pct >= 0.9 ? '#52c41a' : pct >= 0.6 ? '#16a34a' : '#ff4d4f';
+        const color = pct >= 0.9 ? '#52c41a' : pct >= 0.6 ? '#0ea5e9' : '#f5222d';
         return (
           <span style={{ fontSize: 16, fontWeight: 'bold', color }}>
             {myScore.toFixed(1)} / {totalScore}

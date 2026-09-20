@@ -182,11 +182,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'activity':
-        return <ClockCircleOutlined style={{ color: '#16a34a' }} />;
+        return <ClockCircleOutlined style={{ color: '#0ea5e9' }} />;
       case 'achievement':
         return <TrophyOutlined style={{ color: '#faad14' }} />;
       case 'reminder':
-        return <ClockCircleOutlined style={{ color: '#ff4d4f' }} />;
+        return <ClockCircleOutlined style={{ color: '#f5222d' }} />;
       case 'announcement':
         return <SoundOutlined style={{ color: '#52c41a' }} />;
       default:
@@ -282,7 +282,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
           }}
         >
           <List.Item.Meta
-            avatar={<SoundOutlined style={{ color: item.is_pinned ? '#ff4d4f' : '#52c41a', fontSize: 20 }} />}
+            avatar={<SoundOutlined style={{ color: item.is_pinned ? '#f5222d' : '#52c41a', fontSize: 20 }} />}
             title={
               <Space>
                 <Text strong={!item.is_read}>{item.title}</Text>

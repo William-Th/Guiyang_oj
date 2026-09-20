@@ -275,7 +275,7 @@ const GradingListPage: React.FC = () => {
             <Statistic
               title="待评卷"
               value={stats.pending}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>

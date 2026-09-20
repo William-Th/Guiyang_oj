@@ -26,7 +26,7 @@ body {
   /* 纯色头部：统一品牌色，避免渐变浅端影响白色文字可读性 */
   background: var(--bohe-gradient-start) !important;
   padding: 0 var(--bohe-space-6) !important;
-  box-shadow: 0 2px 8px rgba(77, 152, 153, 0.3);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
 }
 
 .app-brand {

@@ -223,7 +223,7 @@ const PointsPage: React.FC = () => {
       render: (change: number) => {
         const isEarn = change > 0;
         return (
-          <Text strong style={{ color: isEarn ? '#52c41a' : '#ff4d4f', fontSize: 15 }}>
+          <Text strong style={{ color: isEarn ? '#52c41a' : '#f5222d', fontSize: 15 }}>
             {isEarn ? <RiseOutlined /> : <FallOutlined />} {isEarn ? '+' : ''}{change}
           </Text>
         );
@@ -276,7 +276,7 @@ const PointsPage: React.FC = () => {
       width: 120,
       align: 'right',
       render: (points: number) => (
-        <Text strong style={{ color: '#fa8c16', fontSize: 16 }}>
+        <Text strong style={{ color: '#faad14', fontSize: 16 }}>
           {points}
         </Text>
       ),
@@ -305,13 +305,13 @@ const PointsPage: React.FC = () => {
               title="当前可用积分"
               value={pointsAccount?.current_points || 0}
               prefix={<StarOutlined />}
-              valueStyle={{ color: '#16a34a', fontSize: 40 }}
+              valueStyle={{ color: '#0ea5e9', fontSize: 40 }}
             />
           </Col>
           <Col>
             <div style={{ textAlign: 'right' }}>
               <Text type="secondary">当前连胜</Text>
-              <div style={{ fontSize: 24, color: '#fa8c16', fontWeight: 600, marginTop: 4 }}>
+              <div style={{ fontSize: 24, color: '#faad14', fontWeight: 600, marginTop: 4 }}>
                 <FireOutlined /> {streak} 题
               </div>
             </div>
@@ -347,7 +347,7 @@ const PointsPage: React.FC = () => {
               title="累计获得"
               value={summary.totalEarned}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
@@ -357,7 +357,7 @@ const PointsPage: React.FC = () => {
               title="累计消耗"
               value={summary.totalSpent}
               prefix={<FallOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
+              valueStyle={{ color: '#f5222d' }}
             />
           </Card>
         </Col>

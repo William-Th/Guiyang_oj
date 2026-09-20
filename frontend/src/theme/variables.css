@@ -1,45 +1,45 @@
 /**
- * 薄荷编程品牌设计规范 — CSS 自定义属性
+ * 平台主题设计规范 — CSS 自定义属性
  *
- * 供 inline style 和自定义 CSS 引用，
- * 与 Ant Design token 配合使用。
+ * 颜色体系：主色 #0ea5e9（天空蓝）；成功 #52c41a / 警告 #faad14 / 错误 #f5222d / 信息跟随主题。
+ * 供 inline style 和自定义 CSS 引用，与 Ant Design token 配合使用。
  */
 
 :root {
   /* ===== 品牌色 ===== */
-  --bohe-primary: #16a34a;
-  --bohe-primary-hover: #22c55e;
-  --bohe-primary-active: #15803d;
-  --bohe-primary-bg: #f0fdf4;
-  --bohe-primary-bg-hover: #dcfce7;
-  --bohe-primary-border: #bbf7d0;
+  --bohe-primary: #0ea5e9;
+  --bohe-primary-hover: #38bdf8;
+  --bohe-primary-active: #0284c7;
+  --bohe-primary-bg: #f0f9ff;
+  --bohe-primary-bg-hover: #e0f2fe;
+  --bohe-primary-border: #bae6fd;
 
-  /* 薄荷绿色板 */
-  --bohe-mint-50: #f0fdf4;
-  --bohe-mint-100: #dcfce7;
-  --bohe-mint-200: #bbf7d0;
-  --bohe-mint-300: #86efac;
-  --bohe-mint-400: #4ade80;
-  --bohe-mint-500: #22c55e;
-  --bohe-mint-600: #16a34a;
-  --bohe-mint-700: #15803d;
-  --bohe-mint-800: #166534;
-  --bohe-mint-900: #14532d;
+  /* 天空蓝主色板（沿用 mint-* 变量名） */
+  --bohe-mint-50: #f0f9ff;
+  --bohe-mint-100: #e0f2fe;
+  --bohe-mint-200: #bae6fd;
+  --bohe-mint-300: #7dd3fc;
+  --bohe-mint-400: #38bdf8;
+  --bohe-mint-500: #0ea5e9;
+  --bohe-mint-600: #0ea5e9;
+  --bohe-mint-700: #0284c7;
+  --bohe-mint-800: #075985;
+  --bohe-mint-900: #0c4a6e;
 
   /* 品牌渐变 */
-  --bohe-gradient: linear-gradient(135deg, #4D9899 0%, #7AC99C 100%);
-  --bohe-gradient-start: #4D9899;
-  --bohe-gradient-end: #7AC99C;
+  --bohe-gradient: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  --bohe-gradient-start: #0284c7;
+  --bohe-gradient-end: #38bdf8;
 
   /* ===== 功能色 ===== */
-  --bohe-success: #16a34a;
-  --bohe-success-bg: #f0fdf4;
-  --bohe-warning: #fa8c16;
-  --bohe-warning-bg: #fff7e6;
+  --bohe-success: #52c41a;
+  --bohe-success-bg: #f6ffed;
+  --bohe-warning: #faad14;
+  --bohe-warning-bg: #fffbe6;
   --bohe-error: #f5222d;
   --bohe-error-bg: #fff1f0;
-  --bohe-info: #16a34a;
-  --bohe-info-bg: #f0fdf4;
+  --bohe-info: #0ea5e9;
+  --bohe-info-bg: #f0f9ff;
 
   /* ===== 中性色 ===== */
   --bohe-text-primary: #1f2937;

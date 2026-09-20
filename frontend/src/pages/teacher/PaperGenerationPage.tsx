@@ -557,7 +557,7 @@ const PaperGenerationPage: React.FC = () => {
             onClick={() => canEdit && handleStartEditScore(record)}
           >
             {score}
-            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#16a34a' }} />}
+            {canEdit && <EditOutlined style={{ marginLeft: 4, fontSize: 12, color: '#0ea5e9' }} />}
           </span>
         );
       },
@@ -751,7 +751,7 @@ const PaperGenerationPage: React.FC = () => {
                 <Statistic
                   title="活动设置总分"
                   value={activity.total_score}
-                  valueStyle={{ color: '#16a34a' }}
+                  valueStyle={{ color: '#0ea5e9' }}
                 />
               </Col>
               <Col span={4}>
@@ -761,7 +761,7 @@ const PaperGenerationPage: React.FC = () => {
                   valueStyle={{
                     color: Math.round(Number(paperStats.actual_total_score || 0) * 100) / 100 === Math.round(Number(activity.total_score) * 100) / 100
                       ? '#52c41a'
-                      : '#ff4d4f'
+                      : '#f5222d'
                   }}
                 />
               </Col>
@@ -963,7 +963,7 @@ const PaperGenerationPage: React.FC = () => {
                           padding: '4px 12px',
                           border: '1px solid #d9d9d9',
                           borderRadius: '6px',
-                          background: isSelected ? '#f0fdf4' : '#fff',
+                          background: isSelected ? '#f0f9ff' : '#fff',
                           borderColor: isSelected ? info.color : '#d9d9d9',
                         }}
                       >
@@ -1067,8 +1067,8 @@ const PaperGenerationPage: React.FC = () => {
                               size="small"
                               hoverable
                               style={{
-                                border: isSelected ? '2px solid #16a34a' : '1px solid #d9d9d9',
-                                backgroundColor: isSelected ? '#f0fdf4' : undefined,
+                                border: isSelected ? '2px solid #0ea5e9' : '1px solid #d9d9d9',
+                                backgroundColor: isSelected ? '#f0f9ff' : undefined,
                                 cursor: 'pointer',
                                 height: '100%',
                               }}

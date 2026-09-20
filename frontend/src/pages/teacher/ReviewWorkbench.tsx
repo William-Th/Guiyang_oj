@@ -494,7 +494,7 @@ const ReviewWorkbench: React.FC = () => {
               title="待审核"
               value={stats.pending_count}
               suffix="题"
-              valueStyle={{ color: '#16a34a' }}
+              valueStyle={{ color: '#0ea5e9' }}
             />
           </Col>
           <Col span={6}>
@@ -510,7 +510,7 @@ const ReviewWorkbench: React.FC = () => {
               title="已拒绝"
               value={stats.rejected_count}
               suffix="题"
-              valueStyle={{ color: '#ff4d4f' }}
+              valueStyle={{ color: '#f5222d' }}
             />
           </Col>
           <Col span={6}>
@@ -694,7 +694,7 @@ const ReviewWorkbench: React.FC = () => {
 
             <div style={{ marginBottom: 16 }}>
               <strong>正确答案：</strong>
-              <div style={{ marginTop: 8, padding: 12, background: '#f0fdf4', borderRadius: 4 }}>
+              <div style={{ marginTop: 8, padding: 12, background: '#f0f9ff', borderRadius: 4 }}>
                 {formatCorrectAnswer(selectedQuestion.correct_answer)}
               </div>
             </div>
@@ -791,7 +791,7 @@ const ReviewWorkbench: React.FC = () => {
               <div style={{
                 marginTop: 8,
                 padding: 12,
-                background: '#f0fdf4',
+                background: '#f0f9ff',
                 borderRadius: 4
               }}>
                 {renderAnswer(selectedQuestion)}
@@ -853,7 +853,7 @@ const ReviewWorkbench: React.FC = () => {
                     <CheckCircleOutlined style={{ color: '#52c41a' }} /> 批准通过
                   </Radio.Button>
                   <Radio.Button value="rejected">
-                    <CloseCircleOutlined style={{ color: '#ff4d4f' }} /> 拒绝
+                    <CloseCircleOutlined style={{ color: '#f5222d' }} /> 拒绝
                   </Radio.Button>
                 </Radio.Group>
               </div>

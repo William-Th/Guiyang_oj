@@ -124,7 +124,7 @@ const RegisterStatusPage: React.FC = () => {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
+        background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -165,7 +165,7 @@ const RegisterStatusPage: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
+      background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
       padding: '40px 20px'
     }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -217,7 +217,7 @@ const RegisterStatusPage: React.FC = () => {
               ) : (
                 <div>
                   <p>
-                    <CloseCircleOutlined style={{ color: '#ff4d4f', marginRight: '8px' }} />
+                    <CloseCircleOutlined style={{ color: '#f5222d', marginRight: '8px' }} />
                     很抱歉，您的申请未通过审核
                   </p>
                   <p>审核时间：{status.reviewed_at ? dayjs(status.reviewed_at).format('YYYY-MM-DD HH:mm:ss') : '-'}</p>
@@ -251,12 +251,12 @@ const RegisterStatusPage: React.FC = () => {
                 <div style={{ marginTop: '12px' }}>
                   <Space direction="vertical" size="small" style={{ width: '100%' }}>
                     <div>
-                      <UserOutlined style={{ marginRight: '8px', color: '#16a34a' }} />
+                      <UserOutlined style={{ marginRight: '8px', color: '#0ea5e9' }} />
                       <Text strong>审核人：</Text>
                       <Text>{getReviewerContact(status.current_reviewer_level, status.school_name).name}</Text>
                     </div>
                     <div>
-                      <PhoneOutlined style={{ marginRight: '8px', color: '#16a34a' }} />
+                      <PhoneOutlined style={{ marginRight: '8px', color: '#0ea5e9' }} />
                       <Text strong>联系方式：</Text>
                       <Text>{getReviewerContact(status.current_reviewer_level, status.school_name).phone}</Text>
                     </div>

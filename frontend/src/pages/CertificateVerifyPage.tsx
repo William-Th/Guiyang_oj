@@ -194,7 +194,7 @@ const CertificateVerifyPage: React.FC = () => {
             status="error"
             title="证书验证失败"
             subTitle={verifyResult.message}
-            icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+            icon={<CloseCircleOutlined style={{ color: '#f5222d' }} />}
             extra={[
               <Button key="retry" onClick={() => handleVerify()}>
                 重新验证
@@ -309,7 +309,7 @@ const CertificateVerifyPage: React.FC = () => {
           maxWidth: 1200,
           margin: '0 auto'
         }}>
-          <Title level={3} style={{ margin: 0, color: '#16a34a', cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <Title level={3} style={{ margin: 0, color: '#0ea5e9', cursor: 'pointer' }} onClick={() => navigate('/')}>
             <HomeOutlined style={{ marginRight: 8 }} />
             贵阳市小学生测评平台
           </Title>

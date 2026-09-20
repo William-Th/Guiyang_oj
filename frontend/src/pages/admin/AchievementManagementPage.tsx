@@ -85,14 +85,14 @@ const RARITY_CONFIG: Record<string, { icon: string; label: string; tagColor: str
     icon: '💎',
     label: '稀有',
     tagColor: 'blue',
-    textColor: '#16a34a',
-    bgGradient: 'linear-gradient(135deg, #4D9899 0%, #7AC99C 100%)',
+    textColor: '#0ea5e9',
+    bgGradient: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
   },
   epic: {
     icon: '💜',
     label: '史诗',
     tagColor: 'purple',
-    textColor: '#16a34a',
+    textColor: '#0ea5e9',
     bgGradient: 'linear-gradient(135deg, #f9f0ff 0%, #d3adf7 100%)',
   },
   legendary: {

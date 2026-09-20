@@ -107,7 +107,7 @@ const AdminDashboard: React.FC = () => {
                 title="总考试数"
                 value={stats.totalExams}
                 prefix={<FileTextOutlined />}
-                valueStyle={{ color: '#16a34a' }}
+                valueStyle={{ color: '#0ea5e9' }}
               />
             </Card>
           </Col>
@@ -127,7 +127,7 @@ const AdminDashboard: React.FC = () => {
                 title="在线教师"
                 value={stats.onlineTeachers}
                 prefix={<TeamOutlined />}
-                valueStyle={{ color: '#fa8c16' }}
+                valueStyle={{ color: '#faad14' }}
               />
             </Card>
           </Col>

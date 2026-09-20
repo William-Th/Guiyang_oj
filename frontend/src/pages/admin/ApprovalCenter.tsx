@@ -851,7 +851,7 @@ const TeachingClassApproval: React.FC<{ onCountChange: (count: number) => void }
       <Modal
         title={
           <span>
-            <ExclamationCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+            <ExclamationCircleOutlined style={{ color: '#f5222d', marginRight: 8 }} />
             拒绝教学班
           </span>
         }

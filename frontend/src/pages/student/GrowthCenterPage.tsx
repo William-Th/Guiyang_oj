@@ -127,7 +127,7 @@ const GrowthCenterPage: React.FC = () => {
                 title="总参与活动"
                 value={overview?.total_activities || 0}
                 prefix={<FireOutlined />}
-                valueStyle={{ color: '#fa8c16' }}
+                valueStyle={{ color: '#faad14' }}
               />
             </Card>
           </Col>
@@ -148,7 +148,7 @@ const GrowthCenterPage: React.FC = () => {
                 value={Math.floor((overview?.total_study_seconds || 0) / 3600)}
                 suffix="小时"
                 prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#16a34a' }}
+                valueStyle={{ color: '#0ea5e9' }}
               />
             </Card>
           </Col>
@@ -180,7 +180,7 @@ const GrowthCenterPage: React.FC = () => {
               <Row gutter={16}>
                 <Col span={12}>
                   <div style={{ textAlign: 'center', padding: '12px', background: '#f0f5ff', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0ea5e9' }}>
                       {overview?.completed_activities || 0}
                     </div>
                     <div style={{ color: '#666', marginTop: '4px' }}>已完成</div>
@@ -188,7 +188,7 @@ const GrowthCenterPage: React.FC = () => {
                 </Col>
                 <Col span={12}>
                   <div style={{ textAlign: 'center', padding: '12px', background: '#fff7e6', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fa8c16' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14' }}>
                       {inProgressCount > 0 ? inProgressCount : 0}
                     </div>
                     <div style={{ color: '#666', marginTop: '4px' }}>进行中</div>
@@ -218,7 +218,7 @@ const GrowthCenterPage: React.FC = () => {
                         title="已获得成就"
                         value={studentAchievements.length}
                         prefix={<TrophyOutlined />}
-                        valueStyle={{ color: '#fa8c16' }}
+                        valueStyle={{ color: '#faad14' }}
                       />
                     </Col>
                     <Col span={8}>
@@ -226,7 +226,7 @@ const GrowthCenterPage: React.FC = () => {
                         title="当前积分"
                         value={pointsAccount?.current_points || 0}
                         prefix={<StarOutlined />}
-                        valueStyle={{ color: '#16a34a' }}
+                        valueStyle={{ color: '#0ea5e9' }}
                       />
                     </Col>
                     <Col span={8}>
@@ -252,7 +252,7 @@ const GrowthCenterPage: React.FC = () => {
                         }}
                       >
                         <div>
-                          <TrophyOutlined style={{ color: '#fa8c16', marginRight: 8 }} />
+                          <TrophyOutlined style={{ color: '#faad14', marginRight: 8 }} />
                           <Text strong>{ach.achievement_name}</Text>
                         </div>
                         <Tag color="gold">{ach.rarity === 'legendary' ? '传说' : ach.rarity === 'epic' ? '史诗' : ach.rarity === 'rare' ? '稀有' : '普通'}</Tag>
