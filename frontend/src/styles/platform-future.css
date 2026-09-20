@@ -104,9 +104,9 @@
   height: 48px;
   min-height: 48px;
   align-items: center;
-  padding-inline: var(--bohe-space-4);
-  /* 相邻胶囊之间留出间距，避免悬停态与选中态贴在一起产生重叠观感 */
-  margin-inline: 6px;
+  /* 紧凑间距，导航整体居左紧贴品牌区 */
+  padding-inline: var(--bohe-space-3);
+  margin-inline: 2px;
   margin-block: var(--bohe-space-3);
   color: rgba(255, 255, 255, 0.95) !important;
   font-weight: 500;
@@ -137,13 +137,7 @@
 
 .app-header-user {
   flex: 0 0 auto;
-  min-height: 48px;
-  padding: var(--bohe-space-1) var(--bohe-space-2);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--bohe-radius-full);
-  background: rgba(20, 83, 45, 0.16);
-  backdrop-filter: blur(12px);
 }
 
 .app-header-user :where(.ant-btn),
