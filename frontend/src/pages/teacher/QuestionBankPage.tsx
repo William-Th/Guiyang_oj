@@ -31,7 +31,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { questionBankApi, questionGovernanceApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject, getAllGrades } from '../../config/subjects';
-import { getAllDistricts, District } from '../../config/districts';
+import { getAllDistricts, District, getDistrictNameFromScope } from '../../config/districts';
 import { questionBankBasePath } from '@/utils/questionBankPath';
 
 interface Question {
@@ -362,10 +362,12 @@ const QuestionBankPage: React.FC = () => {
       practice_municipal: { text: '市级练习', color: 'blue' },
       practice_district: { text: '区级练习', color: 'cyan' },
       practice_school: { text: '校级题库', color: 'green' },
+      system: { text: '系统题库', color: 'purple' },
     };
-    // Handle dynamic scopes like practice_district_nanming
+    // Handle dynamic scopes like practice_district_YY（后缀为区县代码，展示时转中文名）
     if (scope.startsWith('practice_district_')) {
-      return { text: `区级练习 (${scope.replace('practice_district_', '')})`, color: 'cyan' };
+      const districtName = getDistrictNameFromScope(scope);
+      return { text: `区级练习（${districtName}）`, color: 'cyan' };
     }
     if (scope.startsWith('practice_school_')) {
       return { text: `校级题库 (${scope.replace('practice_school_', '')})`, color: 'green' };
