@@ -325,6 +325,18 @@
   background: rgba(255, 255, 255, 0.86) !important;
 }
 
+/* 搜索组合框（Input.Search）：输入框右角与按钮左角还原贴合，避免整体被圆角拆成两块 */
+.app-shell .app-page-surface .ant-input-search > .ant-input-group > .ant-input-affix-wrapper,
+.app-shell .app-page-surface .ant-input-search > .ant-input-group > .ant-input {
+  border-radius: var(--bohe-radius-lg) 0 0 var(--bohe-radius-lg) !important;
+}
+
+.app-shell .app-page-surface .ant-input-search > .ant-input-group > .ant-input-group-addon .ant-btn,
+.app-shell .app-page-surface .ant-input-search .ant-input-search-button {
+  margin-inline-start: -1px;
+  border-radius: 0 var(--bohe-radius-lg) var(--bohe-radius-lg) 0 !important;
+}
+
 .app-shell .app-page-surface :where(.ant-tag) {
   min-height: 28px;
   padding-inline: var(--bohe-space-3);
