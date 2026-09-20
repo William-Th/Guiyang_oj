@@ -57,11 +57,12 @@
   padding: var(--bohe-space-10);
   overflow: hidden;
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--bohe-radius-xl);
+  /* 明亮天空蓝渐变：与主题色一致，全程保证白字对比度 */
   background:
-    linear-gradient(135deg, rgba(12, 74, 110, 0.97) 0%, rgba(2, 132, 199, 0.95) 55%, rgba(56, 189, 248, 0.92) 100%);
-  box-shadow: 0 24px 64px rgba(2, 132, 199, 0.22);
+    linear-gradient(135deg, #0369a1 0%, #0284c7 48%, #0ea5e9 100%);
+  box-shadow: 0 24px 64px rgba(2, 132, 199, 0.25);
 }
 
 .student-home__hero::after {
@@ -86,12 +87,13 @@
   min-height: 36px;
   padding: var(--bohe-space-2) var(--bohe-space-3);
   margin-bottom: var(--bohe-space-4);
+  color: #fff;
   font-size: var(--bohe-font-size-sm);
   font-weight: 600;
   letter-spacing: 0.08em;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: var(--bohe-radius-full);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(12px);
 }
 
@@ -108,7 +110,7 @@
 .student-home__hero p.ant-typography {
   max-width: 600px;
   margin-bottom: var(--bohe-space-6);
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(255, 255, 255, 0.95);
   font-size: var(--bohe-font-size-lg);
   line-height: 1.8;
 }
@@ -120,16 +122,16 @@
 }
 
 .student-home__hero-actions .student-primary-action {
-  color: var(--bohe-mint-900);
+  color: var(--bohe-mint-700) !important;
   border: 0;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(4, 47, 46, 0.22);
+  background: #fff !important;
+  box-shadow: 0 12px 28px rgba(2, 132, 199, 0.28);
 }
 
 .student-home__hero-actions .student-primary-action:hover,
 .student-home__hero-actions .student-primary-action:focus-visible {
-  color: var(--bohe-mint-900) !important;
-  background: var(--bohe-mint-50) !important;
+  color: var(--bohe-mint-700) !important;
+  background: var(--bohe-mint-100) !important;
   transform: translateY(-2px);
 }
 
