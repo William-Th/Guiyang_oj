@@ -678,6 +678,31 @@ const typeOrder = {
 
 ## 近期更新
 
+### 2026-09-20（第三轮：全链路一致性复查——DB ↔ 后端 ↔ 前端）
+- 🔍 **系统性一致性审查**：以「后端 SQL 引用列 vs 数据库真实 schema」「后端响应字段 vs 前端消费字段」两条主线，三路并行排查 21 张核心表 + 学生域 9 组页面 + 教师/管理域 10 组页面，共确认 22 处不一致（另排除 3 处死代码：`questionBank_simple` 路由未挂载、`getPendingByReviewer` 无调用方）。
+- 🐛 **修复 DB ↔ 后端列名/表名错误（全部为 42703 级必炸）**
+  - `models/Answer.js` `gradeAnswers`：`question_bank` 是发布记录表（无 type/correct_answer/score 列）→ 改查 `question_bank_with_draft` 视图，分值取 `suggested_score`。此前 `POST /activities/:id/submit` 的自动判分必 500
+  - `models/AssessmentRegistration.js`：`students.class_name`（实际列 `class`）×2 —— 报名资格检查/报名回查必 500，整个报名链路瘫痪
+  - `models/TeacherPermission.js` `canReviewQuestion`：`question_bank` 无 subject/created_by → 改查视图
+  - `services/points/LeaderboardService.js`：`students.real_name/class_name`、`schools.school_name`、`students.class_id` 全部为不存在的列 —— **排行榜定时任务自上线以来从未成功生成过**。修复：real_name 经 `JOIN users`、班级用 `s.class`、学校名 `sch.name as school_name`、class 作用域改按班级名过滤；三榜 SQL 已在库上实测跑通并成功生成数据
+- 🐛 **修复后端 ↔ 前端字段不一致（学生域）**
+  - `GET /activities/assessments` 不返回 `registration_enabled/registration_status` → 前端报名按钮永不出现、状态列恒「无需报名」、开始按钮绕过报名闸门。修复：模型 SELECT 补 `registration_enabled`，路由批量查 `assessment_registrations` 注入 `registration_status`
+  - 「我的报名」页读 `response.data`，后端键为 `registrations` → 页面恒为空。修复：`services/assessmentRegistrationApi.ts` 返回类型与页面取值对齐
+  - start 续答分支不返回 `deadline/started_at` → 计时制活动断续答后无倒计时不自动交卷。修复：continue 分支补齐字段
+  - 编程题接口不返回 `code_template/time_limit/memory_limit/supported_languages` → 代码题空白模板、判题配置退化。修复：questions SELECT 补四列（视图已有）
+  - 报资格响应无 `reason`（只有 reasons 数组）与 `activity` 对象 → 报名弹窗拒绝原因恒为兜底文案、报名时间不展示、L1-L3 线下测评选点校验失效。修复：checkEligibility 重构为「内部计算 + 薄包装补全 reason/activity」（所有提前返回路径均携带）
+- 🐛 **修复后端 ↔ 前端字段不一致（教师/管理域）**
+  - 活动统计过滤 `sa.status='completed'`（该枚举值从不出现）→ 详情页统计 tab 恒 0。修复：改 `IN ('submitted','graded')`，实测 6/6 完成、平均分 46.5
+  - `getByCreator` 缺 `start_time/end_time` → 教师驾驶舱「进行中/已完成」统计恒 0、开始时间列 Invalid Date；`findAll` 缺 `participant_count` → 两个活动列表「参与人数」恒 0。修复：SELECT 补列
+  - `findById` 缺 `result_publish_time` → 编辑活动时结果发布时间不回显（易被误清）。修复：补列
+  - `GET /question-review/pending` 的 meta 缺 `approved_count/rejected_count/approval_rate` → 审核工作台统计卡恒 0；待审列表缺 `question_code`。修复：meta 并入统计、草稿以 `DRAFT-{id}` 占位
+  - 组卷页 `getActivityQuestions/getAvailableQuestions` 缺 `image_url` → 已选题目预览配图永不显示。修复：补列
+  - `district-abilities` 权限校验仍用废弃的 `*_review` 类型 → 持新 `*_manage` 权限的区域分析整体 403。修复：校验改 `*_manage`
+  - 本校能力数据降级分支缺 `grade/student_count` → 前端年级筛选/学生数失真。修复：改聚合查询（JOIN students 取 grade、COUNT(DISTINCT) 学生数）
+  - 评卷列表「已完成」卡恒 0（completed 不在待评卷列表内）→ `/pending` 响应补 `meta.completed_count`，前端改读
+- 🔧 其余：`server.js` trust proxy `true → 1`（消除 express-rate-limit 校验告警）；`Achievement.updateProgress` 加 NaN 防御与 100% 封顶
+- 📊 **回归基线（2026-09-20 本轮审查修复后）**：全量串行（workers=1, retries=1）**214 通过 / 6 失败**，其中 4 个已随即修复——lifecycle-student-test 3 个（种子活动【完整流程测试】被上轮提交消耗且 allow_retake=false 被列表排除 → 种子改可重做 + spec 加分页遍历查找，修复后 8/8）、GRD203（最新提交来自空试卷活动 → 改为逐行重试有题的提交）；其余 2 个（R301/PRF102）为 50 分钟长跑负载下的保存响应抖动，隔离复跑 question-bank-creation 13/13、profile 24/24 全绿。叠加此前验证：time-limit-scheduled 4/4、time-limit-timed 3/3、time-limit-unlimited 6/6、student-activity-flow、activity-basic 9/9、activity-management、teacher-grading-flow 10/10、paper-generation、student-statistics、unauthenticated-redirect 全绿。剩余已知未修：`QuestionCategory`/`getPendingByReviewer`（死代码，路由未挂载/无调用方）、DraftsPage 题目编码列（草稿发布前本无编码，显示 '-' 属预期）
+
 ### 2026-09-19（第二轮：时间闸门产品落地 + 回归清零）
 - ✨ **时间闸门展示逻辑定稿：未开始的定时活动「禁用 + 倒计时」**（此前「隐藏」方案被否决，未采用）
   - 新增 `frontend/src/hooks/useCountdown.ts`：`useNowTick`（每秒刷新时间戳）、`formatCountdown`（HH:mm:ss，超一天带天数前缀）、`getTimeGate`（与后端 start 接口闸门口径一致：设置了 start_time 且未到 = 未开始）
