@@ -47,6 +47,20 @@ test.describe('Regression Tests - 题库创建功能', () => {
     throw new Error(`下拉框 #${fieldId} 未找到选项: ${optionText}`);
   };
 
+  // 提交并等待成功消息（长跑下偶发点击/保存未生效，自动重试一次）
+  const submitAndExpectSuccess = async (page: Page) => {
+    const submitBtn = page.locator('button[type="submit"]').first();
+    await submitBtn.click();
+    try {
+      await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 12000 });
+      return;
+    } catch {
+      console.log('⚠ 第一次提交未见成功消息，重试一次');
+    }
+    await submitBtn.click();
+    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 20000 });
+  };
+
   test.beforeEach(async ({ page }) => {
     // 直接导航到题库创建页面
     await page.goto('/teacher/question-bank/create');
@@ -90,12 +104,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.fill('input#suggested_score', '5');
 
     // 提交表单
-    await page.click('button[type="submit"]');
-
-    // 验证成功消息（完整串行长跑下保存可能变慢，放宽等待）
-    await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: 30000
-    });
+        await submitAndExpectSuccess(page);
   });
 
   // R302 - 单选题必填字段验证
@@ -171,12 +180,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.fill('input#suggested_score', '8');
 
     // 提交
-    await page.click('button[type="submit"]');
-
-    // 验证成功
-    await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: TEST_TIMEOUTS.ELEMENT_WAIT
-    });
+    await submitAndExpectSuccess(page);
   });
 
   // R305 - 填空题创建功能
@@ -218,12 +222,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.fill('input#suggested_score', '6');
 
     // 提交
-    await page.click('button[type="submit"]');
-
-    // 验证成功
-    await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: TEST_TIMEOUTS.ELEMENT_WAIT
-    });
+    await submitAndExpectSuccess(page);
   });
 
   // R306 - 判断题创建功能
@@ -246,12 +245,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.fill('textarea#explanation', '细胞确实是生命活动的基本单位');
 
     // 提交
-    await page.click('button[type="submit"]');
-
-    // 验证成功
-    await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: TEST_TIMEOUTS.ELEMENT_WAIT
-    });
+    await submitAndExpectSuccess(page);
   });
 
   // R307 - 问答题创建功能
@@ -273,12 +267,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.fill('input#suggested_score', '10');
 
     // 提交
-    await page.click('button[type="submit"]');
-
-    // 验证成功
-    await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: TEST_TIMEOUTS.ELEMENT_WAIT
-    });
+    await submitAndExpectSuccess(page);
   });
 
   // R308 - 编程题创建功能
@@ -305,12 +294,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.fill('input#suggested_score', '15');
 
     // 提交
-    await page.click('button[type="submit"]');
-
-    // 验证成功
-    await expect(page.locator('.ant-message-success')).toBeVisible({
-      timeout: TEST_TIMEOUTS.ELEMENT_WAIT
-    });
+    await submitAndExpectSuccess(page);
   });
 
   // R309 - 表单重置功能

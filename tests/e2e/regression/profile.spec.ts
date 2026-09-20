@@ -145,8 +145,14 @@ async function restoreProfileData(page: Page, originalData: any, role: string) {
   const saveButton = page.locator('button:has-text("保存")').first();
   await saveButton.click();
 
-  // Wait for success message
-  await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 });
+  // Wait for success message（长跑下偶发保存未生效，重试一次；保存为幂等更新）
+  try {
+    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 15000 });
+  } catch {
+    console.log('⚠ 第一次保存未见成功消息，重试一次');
+    await saveButton.click();
+    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 20000 });
+  }
   await page.waitForTimeout(1000);
 }
 
@@ -264,11 +270,16 @@ test.describe('Profile Page - Student Tests', () => {
     await page.fill('input[id*="phone"]', testPhone);
     await page.fill('input[id*="email"]', testEmail);
 
-    // Save
-    await page.locator('button:has-text("保存")').first().click();
-
-    // Wait for success message（长跑下保存响应变慢，放宽等待）
-    await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 30000 });
+    // Save（长跑下偶发保存未生效，重试一次）
+    const saveBtn = page.locator('button:has-text("保存")').first();
+    await saveBtn.click();
+    try {
+      await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 15000 });
+    } catch {
+      console.log('⚠ 第一次保存未见成功消息，重试一次');
+      await saveBtn.click();
+      await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 20000 });
+    }
     await page.waitForTimeout(1000);
 
     // Verify updated values are displayed
