@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
+import RichTextViewer from '../../components/common/RichTextViewer';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -627,7 +628,7 @@ const ActivityResultPage: React.FC = () => {
                     {/* 题干 */}
                     <div style={{ marginBottom: 12 }}>
                       <Paragraph style={{ fontSize: 16, marginBottom: 0 }}>
-                        {answer.question_content}
+                        <RichTextViewer content={answer.question_content} />
                       </Paragraph>
                     </div>
 
@@ -658,7 +659,7 @@ const ActivityResultPage: React.FC = () => {
                       <div style={{ marginTop: 12, padding: 12, background: '#fffbeb', borderRadius: 4 }}>
                         <Text type="secondary" strong>解析：</Text>
                         <Paragraph style={{ marginTop: 4, marginBottom: 0 }}>
-                          {answer.question_explanation}
+                          <RichTextViewer content={answer.question_explanation} />
                         </Paragraph>
                       </div>
                     )}

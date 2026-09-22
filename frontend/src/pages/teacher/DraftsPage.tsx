@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+
+import { plainTextPreview, stripHtml } from '@/utils/richText';
 import {
   Card,
   Table,
@@ -24,6 +26,7 @@ import type { RootState } from '../../store';
 import { questionReviewApi, questionBankApi } from '../../services/api';
 import { buildDistrictScope, getDistrictById } from '../../config/districts';
 import { questionBankBasePath } from '@/utils/questionBankPath';
+import RichTextViewer from '../../components/common/RichTextViewer';
 
 interface Question {
   id: number;
@@ -276,8 +279,8 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
       key: 'content',
       ellipsis: true,
       render: (text: string) => (
-        <Tooltip title={text}>
-          <span>{text.length > 50 ? text.substring(0, 50) + '...' : text}</span>
+        <Tooltip title={stripHtml(text)}>
+          <span>{plainTextPreview(text, 50)}</span>
         </Tooltip>
       ),
     },
@@ -404,8 +407,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ onEdit, isActive }) => {
             </div>
             <p>
               <strong>题目：</strong>
-              {selectedQuestion.content.substring(0, 100)}
-              {selectedQuestion.content.length > 100 && '...'}
+              <RichTextViewer content={selectedQuestion.content} />
             </p>
             <p>
               <strong>科目：</strong>{selectedQuestion.subject}

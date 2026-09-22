@@ -12,6 +12,7 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const { sanitizeRichText, htmlToPlainText } = require('../utils/richTextSanitizer');
 const {
   getActorScope,
   canAccessQuestion,
@@ -386,6 +387,14 @@ router.put('/bank/:id', authMiddleware, async (req, res) => {
         success: false,
         error: '无权限：您只能更新自己创建的题目。系统管理员可以更新所有题目。'
       });
+    }
+
+    // 富文本字段消毒（部分更新也覆盖）
+    if (typeof req.body.content === 'string') {
+      req.body.content = sanitizeRichText(sanitizeText(req.body.content));
+    }
+    if (typeof req.body.explanation === 'string') {
+      req.body.explanation = sanitizeRichText(sanitizeText(req.body.explanation));
     }
 
     // Validate question if type is being changed
@@ -841,10 +850,10 @@ router.get('/export', authMiddleware, async (req, res) => {
         '科目': q.subject || '',
         '年级': q.grade || '',
         '级别': q.level || '',
-        '题目内容': q.content || '',
+        '题目内容': htmlToPlainText(q.content) || '',
         '选项': Array.isArray(options) ? options.join(' | ') : '',
         '正确答案': formatCorrectAnswer(correctAnswer, q.type),
-        '解析': q.explanation || '',
+        '解析': htmlToPlainText(q.explanation) || '',
         '难度': getDifficultyText(q.difficulty),
         '分值': q.score || q.suggested_score || 0,
         '标签': Array.isArray(tags) ? tags.join(', ') : '',
@@ -1039,12 +1048,12 @@ function validateQuestion(question) {
     return '题目类型和内容不能为空';
   }
 
-  // 清洗题目内容中的不可见字符
+  // 清洗题目内容中的不可见字符，并对富文本 HTML 做白名单消毒（防存储型 XSS）
   if (question.content) {
-    question.content = sanitizeText(question.content);
+    question.content = sanitizeRichText(sanitizeText(question.content));
   }
   if (question.explanation) {
-    question.explanation = sanitizeText(question.explanation);
+    question.explanation = sanitizeRichText(sanitizeText(question.explanation));
   }
 
   switch (type) {

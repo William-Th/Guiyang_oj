@@ -137,7 +137,7 @@ test.describe('Regression Tests - 题库删除功能 [教师]', () => {
     await page.waitForTimeout(300);
     await page.locator('.ant-select-item-option:has-text("一年级")').first().click();
 
-    await page.fill('textarea#content', `【QBDEL103删除测试-${timestamp}】1+1=2`);
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', `【QBDEL103删除测试-${timestamp}】1+1=2`);
     await page.check('label:has-text("正确") input[type="radio"]');
 
     await page.click('.ant-select:has(#level)');
@@ -227,7 +227,7 @@ test.describe('Regression Tests - 题库删除功能 [教师]', () => {
     await page.waitForTimeout(300);
     await page.locator('.ant-select-item-option:has-text("一年级")').first().click();
 
-    await page.fill('textarea#content', `【QBDEL105对话框测试-${timestamp}】测试确认对话框`);
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', `【QBDEL105对话框测试-${timestamp}】测试确认对话框`);
     await page.check('label:has-text("正确") input[type="radio"]');
 
     await page.click('.ant-select:has(#level)');

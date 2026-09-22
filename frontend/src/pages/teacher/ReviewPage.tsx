@@ -21,6 +21,7 @@ import {
   CloseCircleOutlined,
 } from '@ant-design/icons';
 import { questionReviewApi, questionBankApi } from '../../services/api';
+import RichTextViewer from '../../components/common/RichTextViewer';
 
 const { TextArea } = Input;
 
@@ -412,10 +413,9 @@ const ReviewPage: React.FC = () => {
                 marginTop: 8,
                 padding: 12,
                 background: '#f5f5f5',
-                borderRadius: 4,
-                whiteSpace: 'pre-wrap'
+                borderRadius: 4
               }}>
-                {selectedQuestion.content}
+                <RichTextViewer content={selectedQuestion.content} />
               </div>
               {selectedQuestion.image_url && (
                 <div style={{ marginTop: 8 }}>

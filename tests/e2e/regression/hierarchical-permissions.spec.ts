@@ -583,7 +583,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.waitForTimeout(300);
 
     // 填写题目内容
-    const contentInput = page.locator('textarea[placeholder*="题目内容"]');
+    const contentInput = page.locator('[data-testid="question-content"] [contenteditable="true"]');
     await contentInput.fill(`【QBC101-${timestamp}】3 × 4 = ?`);
 
     // 表单初始即有4个选项框，无需添加
@@ -668,7 +668,7 @@ test.describe('HPS-E2E: Hierarchical Permission System E2E Tests', () => {
     await page.locator('.ant-select-item').filter({ hasText: '三年级' }).first().evaluate((el: HTMLElement) => el.click());
     await page.waitForTimeout(300);
 
-    await page.locator('textarea[placeholder*="题目内容"]').fill(`【REV101-${timestamp}】5 × 6 = ?`);
+    await page.locator('[data-testid="question-content"] [contenteditable="true"]').fill(`【REV101-${timestamp}】5 × 6 = ?`);
 
     // 表单初始即有4个选项框，无需添加
     const optionInputs = page.locator('input[placeholder*="选项"]');

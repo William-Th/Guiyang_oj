@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import { SearchOutlined, FilterOutlined, PlusOutlined } from '@ant-design/icons';
 import QuestionDisplay from './QuestionDisplay';
+import { stripHtml } from '@/utils/richText';
 
 const { Option } = Select;
 
@@ -169,7 +170,7 @@ const QuestionBankSelector: React.FC<QuestionBankSelectorProps> = ({
     if (filters.searchText) {
       const searchLower = filters.searchText.toLowerCase();
       filtered = filtered.filter(q => 
-        q.content.toLowerCase().includes(searchLower) ||
+        stripHtml(q.content).toLowerCase().includes(searchLower) ||
         q.tags.some(tag => tag.toLowerCase().includes(searchLower))
       );
     }

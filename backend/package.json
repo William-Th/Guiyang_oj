@@ -10,6 +10,16 @@
     "lint": "eslint src/",
     "migrate": "node src/database/migrate.js"
   },
+  "jest": {
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^is-plain-object$": "<rootDir>/node_modules/is-plain-object/dist/is-plain-object.js"
+    }
+  },
+  "overrides": {
+    "htmlparser2": "^8.0.2",
+    "escape-string-regexp": "^4.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -29,6 +39,7 @@
     "puppeteer": "^24.16.2",
     "qrcode": "^1.5.4",
     "redis": "^4.6.11",
+    "sanitize-html": "^2.17.7",
     "uuid": "^11.1.0",
     "winston": "^3.11.0",
     "xlsx": "^0.18.5"

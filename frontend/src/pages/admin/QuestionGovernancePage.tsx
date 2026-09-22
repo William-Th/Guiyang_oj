@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+
+import { plainTextPreview } from '@/utils/richText';
 import {
   Card,
   Tabs,
@@ -172,7 +174,7 @@ const QuestionGovernancePage: React.FC = () => {
       dataIndex: 'content',
       render: (c: string, r) => (
         <Tooltip title={`草稿ID #${r.draft_id}`}>
-          <div style={{ maxWidth: 300 }} dangerouslySetInnerHTML={{ __html: c && c.length > 50 ? c.slice(0, 50) + '...' : c || `题目#${r.draft_id}` }} />
+          <div style={{ maxWidth: 300 }}>{plainTextPreview(c, 50) || `题目#${r.draft_id}`}</div>
         </Tooltip>
       ),
     },

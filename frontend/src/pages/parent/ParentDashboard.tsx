@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+
+import { plainTextPreview } from '@/utils/richText';
 import {
   Card,
   Tabs,
@@ -220,7 +222,7 @@ const ParentDashboard: React.FC = () => {
                           title: '题目',
                           dataIndex: 'content',
                           render: (c: string) => (
-                            <div style={{ maxWidth: 300 }} dangerouslySetInnerHTML={{ __html: c && c.length > 40 ? c.slice(0, 40) + '...' : c }} />
+                            <div style={{ maxWidth: 300 }}>{plainTextPreview(c, 40)}</div>
                           ),
                         },
                         { title: '科目', dataIndex: 'subject', width: 90 },

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+
+import { plainTextPreview } from '@/utils/richText';
 import {
   Card,
   Table,
@@ -97,7 +99,7 @@ const ErrorReportsPage: React.FC = () => {
       dataIndex: 'question_content',
       render: (c: string, r) => (
         <Tooltip title={`题目ID #${r.question_id}`}>
-          <div style={{ maxWidth: 300 }} dangerouslySetInnerHTML={{ __html: c && c.length > 60 ? c.slice(0, 60) + '...' : c }} />
+          <div style={{ maxWidth: 300 }}>{plainTextPreview(c, 60)}</div>
         </Tooltip>
       ),
     },

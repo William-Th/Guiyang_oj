@@ -28,6 +28,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { questionReviewApi, questionBankApi } from '../../services/api';
+import RichTextViewer from '../../components/common/RichTextViewer';
 import { SUBJECTS } from '../../config/subjects';
 
 const { TextArea } = Input;
@@ -666,7 +667,7 @@ const ReviewWorkbench: React.FC = () => {
             <div style={{ marginBottom: 16 }}>
               <strong>题目内容：</strong>
               <div style={{ marginTop: 8, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-                {selectedQuestion.content}
+                <RichTextViewer content={selectedQuestion.content} />
               </div>
               {selectedQuestion.image_url && (
                 <div style={{ marginTop: 8 }}>
@@ -757,10 +758,9 @@ const ReviewWorkbench: React.FC = () => {
                 marginTop: 8,
                 padding: 12,
                 background: '#f5f5f5',
-                borderRadius: 4,
-                whiteSpace: 'pre-wrap'
+                borderRadius: 4
               }}>
-                {selectedQuestion.content}
+                <RichTextViewer content={selectedQuestion.content} />
               </div>
               {selectedQuestion.image_url && (
                 <div style={{ marginTop: 8 }}>

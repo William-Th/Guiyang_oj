@@ -78,7 +78,7 @@ test.describe('Regression Tests - 草稿管理功能 [教师]', () => {
 
     // 填写题目内容
     const content = `【QBDF302-${uniqueId}】这是一道测试题目用于验证草稿功能`;
-    await page.fill('textarea#content', content);
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', content);
     await page.check('label:has-text("正确") input[type="radio"]');
 
     await page.click('.ant-select:has(#level)');
@@ -222,7 +222,7 @@ test.describe('Regression Tests - 草稿管理功能 [教师]', () => {
     await page.waitForTimeout(300);
     await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option:has-text("一年级")').first().click();
 
-    await page.fill('textarea#content', `【QBDF304-${uniqueId}】用于测试删除的草稿`);
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', `【QBDF304-${uniqueId}】用于测试删除的草稿`);
     await page.check('label:has-text("正确") input[type="radio"]');
 
     await page.click('.ant-select:has(#level)');

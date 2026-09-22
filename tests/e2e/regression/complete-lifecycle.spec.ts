@@ -78,7 +78,7 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       await selectOpenDropdownOption(page, 'L4');
 
       // 输入题目内容
-      const contentInput = page.locator('textarea[name="content"], #content').first();
+      const contentInput = page.locator('[data-testid="question-content"] [contenteditable="true"]');
       await contentInput.fill(testData.question.content);
 
       // 输入选项
@@ -101,7 +101,7 @@ test.describe.serial('Complete Question Lifecycle - Simplified', () => {
       }
 
       // 输入解析
-      const explanationInput = page.locator('textarea[name="explanation"], #explanation').first();
+      const explanationInput = page.locator('[data-testid="question-explanation"] [contenteditable="true"], textarea[name="explanation"], #explanation').first();
       if (await explanationInput.count() > 0) {
         await explanationInput.fill('1加1等于2');
       }

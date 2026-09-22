@@ -1,0 +1,58 @@
+/* 富文本展示（RichTextViewer）通用样式 */
+.rich-text-viewer {
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+/* 历史纯文本数据：保留换行 */
+.rich-text-viewer--plain {
+  white-space: pre-wrap;
+}
+
+.rich-text-viewer p {
+  margin: 0 0 4px;
+}
+
+.rich-text-viewer img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.rich-text-viewer table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  max-width: 100%;
+}
+
+.rich-text-viewer table td,
+.rich-text-viewer table th {
+  border: 1px solid #d9d9d9;
+  padding: 4px 8px;
+  min-width: 32px;
+}
+
+.rich-text-viewer a {
+  color: var(--bohe-primary, #0ea5e9);
+}
+
+.rich-text-viewer ul,
+.rich-text-viewer ol {
+  padding-left: 22px;
+  margin: 4px 0;
+}
+
+.rich-text-viewer blockquote {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-left: 3px solid #d9d9d9;
+  color: #595959;
+}
+
+.rich-text-viewer pre {
+  background: #f6f8fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}

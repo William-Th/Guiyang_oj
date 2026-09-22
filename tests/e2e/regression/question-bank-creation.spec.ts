@@ -82,7 +82,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await selectAntOption(page, 'grade', '七年级');
 
     // 填写题目内容
-    await page.fill('textarea#content', '1 + 1 = ?');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '1 + 1 = ?');
 
     // 填写选项（表单初始即有4个选项框）
     const options = page.locator('input[placeholder="选项内容"]');
@@ -150,7 +150,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 基本信息
     await selectAntOption(page, 'subject', '信息科技');
     await selectAntOption(page, 'grade', '八年级');
-    await page.fill('textarea#content', '以下哪些属于计算机的输入设备？');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '以下哪些属于计算机的输入设备？');
 
     // 填写选项（表单初始即有4个选项框）
     const options = page.locator('input[placeholder="选项内容"]');
@@ -194,7 +194,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 基本信息
     await selectAntOption(page, 'subject', '数学');
     await selectAntOption(page, 'grade', '九年级');
-    await page.fill('textarea#content', '水的化学式是____，它由____元素组成。');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '水的化学式是____，它由____元素组成。');
 
     // Wait for blank form to render with initial answer field
     // The placeholder text might be different, try multiple selectors
@@ -233,7 +233,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 基本信息
     await selectAntOption(page, 'subject', '信息科技');
     await selectAntOption(page, 'grade', '七年级');
-    await page.fill('textarea#content', 'CPU 是计算机的中央处理器。');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', 'CPU 是计算机的中央处理器。');
 
     // 选择正确答案 - 正确
     await page.check('label:has-text("正确") input[type="radio"]');
@@ -242,7 +242,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await selectAntOption(page, 'level', 'L1');
     await selectAntOption(page, 'difficulty', '简单');
     await page.fill('input#suggested_score', '3');
-    await page.fill('textarea#explanation', '细胞确实是生命活动的基本单位');
+    await page.fill('[data-testid="question-explanation"] [contenteditable="true"]', '细胞确实是生命活动的基本单位');
 
     // 提交
     await submitAndExpectSuccess(page);
@@ -256,7 +256,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 基本信息
     await selectAntOption(page, 'subject', '数学');
     await selectAntOption(page, 'grade', '九年级');
-    await page.fill('textarea#content', '请简述勾股定理的内容及其应用场景。');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '请简述勾股定理的内容及其应用场景。');
 
     // 参考答案（可选）
     await page.fill('textarea#correct_answer', '勾股定理指出，在直角三角形中，两条直角边的平方和等于斜边的平方。');
@@ -278,7 +278,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     // 基本信息
     await selectAntOption(page, 'subject', '信息科技');
     await selectAntOption(page, 'grade', '八年级');
-    await page.fill('textarea#content', '编写一个函数，计算斐波那契数列的第n项。');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '编写一个函数，计算斐波那契数列的第n项。');
 
     // 参考答案
     const referenceCode = `def fibonacci(n):
@@ -306,7 +306,7 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await selectAntOption(page, 'subject', '数学');
     await page.waitForTimeout(500);
 
-    await page.fill('textarea#content', '测试内容');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '测试内容');
     await page.waitForTimeout(500);
 
     // Scroll to bottom to reveal buttons
@@ -329,8 +329,8 @@ test.describe('Regression Tests - 题库创建功能', () => {
     await page.waitForTimeout(1000);
 
     // 验证内容已清空
-    const content = await page.locator('textarea#content').inputValue();
-    expect(content).toBe('');
+    const content = await page.locator('[data-testid="question-content"] [contenteditable="true"]').innerText();
+    expect(content.replace(/\s/g, '')).toBe('');
   });
 
   // R310 - 切换题型时表单适配

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+import { plainTextPreview, stripHtml } from '@/utils/richText';
 import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
 import {
   Card,
@@ -27,6 +29,7 @@ import {
   ArrowUpOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import RichTextViewer from '../../components/common/RichTextViewer';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { questionBankApi, questionGovernanceApi } from '../../services/api';
@@ -465,8 +468,8 @@ const QuestionBankPage: React.FC = () => {
       key: 'content',
       ellipsis: true,
       render: (text: string) => (
-        <Tooltip title={text}>
-          <span>{text.length > 50 ? text.substring(0, 50) + '...' : text}</span>
+        <Tooltip title={stripHtml(text)}>
+          <span>{plainTextPreview(text, 50)}</span>
         </Tooltip>
       ),
     },
@@ -876,7 +879,9 @@ const QuestionBankPage: React.FC = () => {
             <p>
               <strong>题目内容：</strong>
             </p>
-            <p style={{ fontSize: '16px', marginLeft: 20 }}>{previewQuestion.content}</p>
+            <p style={{ fontSize: '16px', marginLeft: 20 }}>
+              <RichTextViewer content={previewQuestion.content} />
+            </p>
 
             {previewQuestion.options && previewQuestion.options.length > 0 && (
               <>

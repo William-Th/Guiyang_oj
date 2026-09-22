@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gradingApi } from '../../services/api';
+import RichTextViewer from '../../components/common/RichTextViewer';
 import { ApiError, GradingQuestion } from '../../types';
 
 const { TextArea } = Input;
@@ -601,7 +602,7 @@ const GradingDetailPage: React.FC = () => {
 
                     <div style={{ marginBottom: 16 }}>
                       <Title level={5}>题目</Title>
-                      <Paragraph>{question.content}</Paragraph>
+                      <Paragraph><RichTextViewer content={question.content} /></Paragraph>
 
                       {question.image_url && (
                         <div style={{ margin: '8px 0' }}>

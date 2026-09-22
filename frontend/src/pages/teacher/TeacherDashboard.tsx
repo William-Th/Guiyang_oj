@@ -17,6 +17,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import api, { questionBankApi } from '@/services/api';
+import { plainTextPreview } from '@/utils/richText';
 
 interface TeacherStats {
   totalQuestions: number;
@@ -249,7 +250,10 @@ const TeacherDashboard: React.FC = () => {
       dataIndex: 'content',
       key: 'content',
       ellipsis: true,
-      render: (text: string) => text?.length > 50 ? text.substring(0, 50) + '...' : (text || '-')
+      render: (text: string) => {
+        const plain = plainTextPreview(text, 50);
+        return plain || '-';
+      }
     },
     {
       title: '难度',

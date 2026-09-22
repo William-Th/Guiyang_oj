@@ -182,14 +182,15 @@ test.describe('学生学习空间视觉与响应式回归', () => {
       const button = document.querySelector<HTMLElement>('.ant-card .ant-btn');
 
       return {
-        headerBackground: header ? getComputedStyle(header).backgroundImage : 'none',
+        headerBackground: header ? getComputedStyle(header).backgroundColor : 'transparent',
         cardRadius: card ? Number.parseFloat(getComputedStyle(card).borderRadius) : 0,
         tableHeaderBackground: tableHeader ? getComputedStyle(tableHeader).backgroundColor : 'transparent',
         buttonHeight: button ? button.getBoundingClientRect().height : 0,
       };
     });
 
-    expect(visualStyle.headerBackground).toContain('linear-gradient');
+    // 2026-09 品牌改版：导航栏由渐变改为纯主题色 #0ea5e9（rgb(14, 165, 233)）
+    expect(visualStyle.headerBackground).toBe('rgb(14, 165, 233)');
     expect(visualStyle.cardRadius).toBeGreaterThanOrEqual(16);
     expect(visualStyle.tableHeaderBackground).not.toBe('rgba(0, 0, 0, 0)');
     expect(visualStyle.buttonHeight).toBeGreaterThanOrEqual(44);

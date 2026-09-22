@@ -24,6 +24,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { questionBankApi, questionReviewApi, testCaseAPI, questionImageUploadApi, questionGovernanceApi } from '../../services/api';
 import { SUBJECTS, getGradesBySubject } from '../../config/subjects';
 import { CodeQuestionForm, CodeQuestionConfig, TestCase } from '../../components/questions';
+import { RichTextEditor } from '../../components/common';
+import { stripHtml } from '@/utils/richText';
 import { questionBankBasePath } from '@/utils/questionBankPath';
 
 const { TextArea } = Input;
@@ -677,9 +679,17 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           <Form.Item
             label="题目内容"
             name="content"
-            rules={[{ required: true, message: '请输入题目内容' }]}
+            rules={[
+              {
+                validator: (_rule, value) => {
+                  const text = stripHtml(value || '').trim();
+                  return text ? Promise.resolve() : Promise.reject(new Error('请输入题目内容'));
+                },
+              },
+            ]}
+            help="支持加粗、颜色、列表、表格等排版，可点击工具栏图片按钮插入配图"
           >
-            <TextArea rows={4} placeholder="请输入题目内容" />
+            <RichTextEditor placeholder="请输入题目内容，支持富文本排版与配图" height={260} testId="question-content" />
           </Form.Item>
 
           {/* 题目图片上传 */}
@@ -731,7 +741,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
               </Upload>
             )}
             <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>
-              支持 JPG、PNG、GIF、WebP 格式，最大 10MB
+              支持 JPG、PNG、GIF、WebP 格式，最大 2MB；如需图文混排，可直接在题目内容编辑器中插入图片
             </div>
           </Form.Item>
 
@@ -785,7 +795,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           </Row>
 
           <Form.Item label="题目解析" name="explanation">
-            <TextArea rows={3} placeholder="请输入题目解析（选填）" />
+            <RichTextEditor placeholder="请输入题目解析（选填），支持富文本排版与配图" height={180} testId="question-explanation" />
           </Form.Item>
 
           <Form.Item label="标签" name="tags" help="多个标签用逗号分隔">

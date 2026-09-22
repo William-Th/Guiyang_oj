@@ -25,6 +25,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi } from '../../services/api';
 import CountdownTimer from '../../components/common/CountdownTimer';
+import RichTextViewer from '../../components/common/RichTextViewer';
 import CodeQuestion from '../../components/CodeQuestion';
 import type { CodeQuestionData } from '../../components/CodeQuestion';
 import type { ActivityQuestion, StudentActivity } from '../../types/activity';
@@ -831,7 +832,7 @@ const TakeActivityPage: React.FC = () => {
                         <div className="activity-question-card__header">
                           <span className="activity-question-card__number">{typeIndex + 1}</span>
                           <span className="activity-question-card__content">
-                            {question.content}
+                            <RichTextViewer content={question.content} />
                           </span>
                           <span className="activity-question-card__score">
                             {typeof (question as any).max_score === 'string' ? (question as any).max_score : (question as any).max_score || question.score} 分

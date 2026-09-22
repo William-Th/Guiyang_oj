@@ -28,6 +28,7 @@ import {
 import CodeEditor, { CODE_TEMPLATES } from '../CodeEditor';
 import JudgeResult, { JudgeResultData } from '../JudgeResult';
 import { judgeAPI } from '../../services/api';
+import RichTextViewer from '../common/RichTextViewer';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -251,10 +252,9 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
         <Title level={5}>
           <FileTextOutlined /> 题目描述
         </Title>
-        <div
-          style={{ fontSize: 14 }}
-          dangerouslySetInnerHTML={{ __html: question.content }}
-        />
+        <div style={{ fontSize: 14 }}>
+          <RichTextViewer content={question.content} />
+        </div>
 
         {/* Limits info */}
         <Divider />

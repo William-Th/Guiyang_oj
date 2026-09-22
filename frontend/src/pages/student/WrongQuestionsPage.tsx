@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+
+import { plainTextPreview } from '@/utils/richText';
 import {
   Card,
   Table,
@@ -27,6 +29,7 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons';
 import { wrongQuestionApi } from '../../services/api';
+import RichTextViewer from '../../components/common/RichTextViewer';
 import type { ColumnsType } from 'antd/es/table';
 
 const { TextArea } = Input;
@@ -218,10 +221,7 @@ const WrongQuestionsPage: React.FC = () => {
       title: '题目',
       dataIndex: 'content',
       render: (c: string) => (
-        <div
-          className="wrong-question-title"
-          dangerouslySetInnerHTML={{ __html: c && c.length > 80 ? c.slice(0, 80) + '...' : c }}
-        />
+        <div className="wrong-question-title">{plainTextPreview(c, 80)}</div>
       ),
     },
     { title: '科目', dataIndex: 'subject', width: 90 },
@@ -337,10 +337,7 @@ const WrongQuestionsPage: React.FC = () => {
                       </Tag>
                       <Tag>{TYPE_LABEL[item.type] || item.type}</Tag>
                     </div>
-                    <div
-                      className="wrong-question-card__content"
-                      dangerouslySetInnerHTML={{ __html: item.content || '' }}
-                    />
+                    <RichTextViewer content={item.content} className="wrong-question-card__content" />
                     <div className="wrong-question-card__footer">
                       <Text type="secondary">累计答错 {item.error_count} 次</Text>
                       {renderActions(item)}
@@ -378,10 +375,7 @@ const WrongQuestionsPage: React.FC = () => {
                 )}
                 {redoing.type && <Tag>{TYPE_LABEL[redoing.type] || redoing.type}</Tag>}
               </Space>
-              <div
-                className="wrong-question-redo-modal__content"
-                dangerouslySetInnerHTML={{ __html: redoing.content || '' }}
-              />
+              <RichTextViewer content={redoing.content} className="wrong-question-redo-modal__content" />
               {unsupported ? (
                 <Alert type="warning" showIcon message="该题型（编程/问答/匹配）暂不支持在线自动判题" />
               ) : redoing.type === 'multiple' ? (

@@ -141,7 +141,7 @@ test.describe('Regression Tests - 题库草稿箱与审核流程', () => {
     await selectAntOption(page, 'type', questionData.type);
     await selectAntOption(page, 'subject', questionData.subject);
     await selectAntOption(page, 'grade', questionData.grade);
-    await page.fill('textarea#content', questionData.content);
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', questionData.content);
 
     // 如果是判断题，选择答案
     if (questionData.type === '判断题') {
@@ -251,11 +251,11 @@ test.describe('Regression Tests - 题库草稿箱与审核流程', () => {
     await expect(page.locator('.ant-card-head-title:has-text("编辑题目")')).toBeVisible();
 
     // 验证表单已加载原始数据（题目内容应该是原始内容）
-    const contentTextarea = page.locator('textarea#content');
-    await expect(contentTextarea).toHaveValue('测试编辑功能 - 原始内容', { timeout: 5000 });
+    const contentEditor = page.locator('[data-testid="question-content"] [contenteditable="true"]');
+    await expect(contentEditor).toHaveText('测试编辑功能 - 原始内容', { timeout: 5000 });
 
     // 修改题目内容
-    await page.fill('textarea#content', '测试编辑功能 - 修改后的内容');
+    await page.fill('[data-testid="question-content"] [contenteditable="true"]', '测试编辑功能 - 修改后的内容');
 
     // 提交修改
     await page.click('button[type="submit"]');
@@ -825,8 +825,8 @@ test.describe('Regression Tests - 题库草稿箱与审核流程', () => {
         await expect(page.locator('.ant-tabs-tab-active:has-text("新建题目")')).toBeVisible();
 
         // 修改题目内容
-        const contentField = page.locator('textarea#content');
-        const currentContent = await contentField.inputValue();
+        const contentField = page.locator('[data-testid="question-content"] [contenteditable="true"]');
+        const currentContent = (await contentField.innerText()).trim();
         await contentField.fill(currentContent + ' - 已根据审核意见修改');
 
         // 提交修改

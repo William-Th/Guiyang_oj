@@ -3,6 +3,18 @@ const router = express.Router();
 const QuestionDraft = require('../models/QuestionDraft');
 const QuestionBank = require('../models/QuestionBank');
 const { authMiddleware } = require('../middleware/auth');
+const { sanitizeRichText } = require('../utils/richTextSanitizer');
+
+// 草稿富文本字段消毒（防存储型 XSS）
+function sanitizeDraftRichText(body) {
+  if (typeof body.content === 'string') {
+    body.content = sanitizeRichText(body.content);
+  }
+  if (typeof body.explanation === 'string') {
+    body.explanation = sanitizeRichText(body.explanation);
+  }
+  return body;
+}
 
 /**
  * 获取我的草稿列表
@@ -86,10 +98,10 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
 
-    const draftData = {
+    const draftData = sanitizeDraftRichText({
       ...req.body,
       created_by: req.user.id
-    };
+    });
 
     const draft = await QuestionDraft.create(draftData);
 
@@ -170,7 +182,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    const draft = await QuestionDraft.update(id, req.body);
+    const draft = await QuestionDraft.update(id, sanitizeDraftRichText(req.body));
 
     // 算法①：内容变更后重算指纹（失败不阻塞）
     try {

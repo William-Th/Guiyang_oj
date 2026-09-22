@@ -1,5 +1,7 @@
 import React from 'react';
 import { Radio, Checkbox, Input, Space } from 'antd';
+import RichTextViewer from '../common/RichTextViewer';
+import { stripHtml } from '@/utils/richText';
 import { optionText, parseOption } from './questionOption';
 
 interface Question {
@@ -156,7 +158,9 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             {showAnswer && question.explanation && (
               <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
                 <strong>参考答案/评分标准:</strong>
-                <div style={{ marginTop: '8px' }}>{question.explanation}</div>
+                <div style={{ marginTop: '8px' }}>
+                  <RichTextViewer content={question.explanation} />
+                </div>
               </div>
             )}
           </div>
@@ -179,8 +183,8 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             {showAnswer && question.explanation && (
               <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
                 <strong>参考代码:</strong>
-                <pre style={{ marginTop: '8px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
-                  {question.explanation}
+                <pre style={{ marginTop: '8px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px', whiteSpace: 'pre-wrap' }}>
+                  {stripHtml(question.explanation)}
                 </pre>
               </div>
             )}
@@ -236,13 +240,15 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
   return (
     <div>
       <div style={{ fontSize: '18px', marginBottom: '24px', lineHeight: '1.6' }}>
-        {question.content}
+        <RichTextViewer content={question.content} />
       </div>
       {renderQuestionContent()}
       {showAnswer && question.explanation && question.type !== 'essay' && question.type !== 'code' && (
         <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
           <strong>解析:</strong>
-          <div style={{ marginTop: '8px' }}>{question.explanation}</div>
+          <div style={{ marginTop: '8px' }}>
+            <RichTextViewer content={question.explanation} />
+          </div>
         </div>
       )}
     </div>

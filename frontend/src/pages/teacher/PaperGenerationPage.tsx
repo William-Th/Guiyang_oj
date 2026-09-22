@@ -41,6 +41,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi, paperExportApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';
 import { getAbilityLevelsBySubject } from '../../config/subjects';
+import RichTextViewer from '../../components/common/RichTextViewer';
+import { plainTextPreview } from '@/utils/richText';
 
 const { Option } = Select;
 const { Search } = Input;
@@ -1092,8 +1094,8 @@ const PaperGenerationPage: React.FC = () => {
                                       {isSelected && <Tag color="blue">已选</Tag>}
                                     </Space>
                                   </div>
-                                  <div style={{ fontSize: 13, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.5', maxHeight: 39 }} title={question.content}>
-                                    {question.content}
+                                  <div style={{ fontSize: 13, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.5', maxHeight: 39 }} title={plainTextPreview(question.content, 120)}>
+                                    {plainTextPreview(question.content, 120)}
                                   </div>
                                   <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
                                     分值: {question.suggested_score} │ 级别: {question.level}
@@ -1175,7 +1177,7 @@ const PaperGenerationPage: React.FC = () => {
               )}
               <Descriptions.Item label="题目内容" span={2}>
                 <div style={{ whiteSpace: 'pre-wrap' }}>
-                  {previewQuestion.content}
+                  <RichTextViewer content={previewQuestion.content} />
                 </div>
                 {previewQuestion.image_url && (
                   <div style={{ marginTop: 8 }}>
@@ -1286,7 +1288,7 @@ const PaperGenerationPage: React.FC = () => {
                           <span style={{ fontWeight: 'bold' }}>
                             {type === 'blank' ? `${idx + 1}.` : `${getQuestionNum()}.`}
                           </span>
-                          <span style={{ marginLeft: 8 }}>{question.content}</span>
+                          <span style={{ marginLeft: 8 }}><RichTextViewer content={question.content} /></span>
                           {question.score && (
                             <span style={{ marginLeft: 8, color: '#999', fontSize: 12 }}>
                               （{question.score}分）

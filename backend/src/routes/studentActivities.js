@@ -505,10 +505,10 @@ router.post('/:id/start',
         attemptRow = await query(`
           UPDATE student_activities
           SET status = 'in_progress', start_time = CURRENT_TIMESTAMP, started_at = CURRENT_TIMESTAMP,
-              time_limit_deadline = $3, grading_status = 'pending', attempt_number = $5
-          WHERE id = $4
+              time_limit_deadline = $1, grading_status = 'pending', attempt_number = $3
+          WHERE id = $2
           RETURNING id, start_time, time_limit_deadline
-        `, [studentId, activityId, timeLimitDeadline, existingResult.rows[0].id, attemptNumber]);
+        `, [timeLimitDeadline, existingResult.rows[0].id, attemptNumber]);
       } else {
         attemptRow = await query(`
           INSERT INTO student_activities (

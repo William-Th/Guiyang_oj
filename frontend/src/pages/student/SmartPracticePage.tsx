@@ -20,6 +20,7 @@ import {
 } from 'antd';
 import { ReloadOutlined, FireOutlined, ThunderboltOutlined, EditOutlined } from '@ant-design/icons';
 import { recommendApi } from '../../services/api';
+import RichTextViewer from '../../components/common/RichTextViewer';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -419,10 +420,9 @@ const SmartPracticePage: React.FC = () => {
               )}
               {current.type && <Tag>{TYPE_LABEL[current.type] || current.type}</Tag>}
             </Space>
-            <div
-              style={{ marginBottom: 16, fontSize: 16, lineHeight: 1.8 }}
-              dangerouslySetInnerHTML={{ __html: current.content || '' }}
-            />
+            <div style={{ marginBottom: 16, fontSize: 16, lineHeight: 1.8 }}>
+              <RichTextViewer content={current.content} />
+            </div>
 
             {/* 结果已出：禁用交互，仅展示对错与解析 */}
             {result ? (
