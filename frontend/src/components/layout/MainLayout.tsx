@@ -379,7 +379,7 @@ const MainLayout: React.FC = () => {
         </div>
       </Content>
       <Footer className="app-footer">
-        贵阳市教育局 ©2024 小学生测评服务平台
+        贵阳市教育局 ©{new Date().getFullYear()} 小学生测评服务平台
       </Footer>
     </Layout>
   );
