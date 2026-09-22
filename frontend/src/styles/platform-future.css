@@ -64,6 +64,11 @@
   box-shadow: 0 8px 24px rgba(12, 74, 110, 0.2);
 }
 
+.app-brand-mark svg {
+  width: 26px;
+  height: 26px;
+}
+
 .app-brand-name {
   overflow: hidden;
   text-overflow: ellipsis;
