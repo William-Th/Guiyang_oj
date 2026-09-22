@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 贵阳市小学生测评平台 标签图标：主题色圆角方块 + 白色闪电，与页头品牌标识一致 -->
+  <rect width="32" height="32" rx="7" fill="#0ea5e9"/>
+  <path d="M18.2 3.5 L9.2 17.6 H14.4 L13 28.5 L22.8 14.2 H17.4 Z"
+        fill="#ffffff" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+</svg>
