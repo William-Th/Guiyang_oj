@@ -70,8 +70,23 @@ interface Reviewer {
   subjects: string[];
 }
 
-const MySubmissionsPage: React.FC = () => {
+interface MySubmissionsPageProps {
+  /** 本页面作为题库管理内嵌 Tab 渲染时，由父组件传入切回「我的草稿」Tab 的回调 */
+  onBackToDrafts?: () => void;
+}
+
+const MySubmissionsPage: React.FC<MySubmissionsPageProps> = ({ onBackToDrafts }) => {
   const navigate = useNavigate();
+
+  // 内嵌 Tab 场景下路由不变，必须通过父组件回调切换 Tab；独立路由场景才走 navigate
+  const goBackToDrafts = () => {
+    if (onBackToDrafts) {
+      onBackToDrafts();
+    } else {
+      navigate(questionBankBasePath());
+    }
+  };
+
   const user = useSelector((state: RootState) => state.auth.user);
   const [loading, setLoading] = useState(false);
   const [submissions, setSubmissions] = useState<Question[]>([]);
@@ -466,7 +481,7 @@ const MySubmissionsPage: React.FC = () => {
         extra={
           <Button
             type="primary"
-            onClick={() => navigate(questionBankBasePath())}
+            onClick={goBackToDrafts}
           >
             返回草稿箱
           </Button>
@@ -480,7 +495,7 @@ const MySubmissionsPage: React.FC = () => {
             >
               <Button
                 type="primary"
-                onClick={() => navigate(questionBankBasePath())}
+                onClick={goBackToDrafts}
               >
                 去草稿箱提交题目
               </Button>

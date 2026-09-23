@@ -84,7 +84,7 @@ const QuestionBankMain: React.FC = () => {
           }
           key="submissions"
         >
-          <MySubmissionsPage />
+          <MySubmissionsPage onBackToDrafts={() => handleTabChange('drafts')} />
         </Tabs.TabPane>
 
         <Tabs.TabPane
