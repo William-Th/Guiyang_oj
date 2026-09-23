@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, Descriptions, Tag, Button, Space, message, Spin, Table, Statistic, Row, Col } from 'antd';
 import { EditOutlined, BarChartOutlined, TeamOutlined, ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { activityApi } from '../../services/api';
+import { RootState } from '../../store';
 import LocationManagement from '../../components/admin/LocationManagement';
 import RegistrationManagement from '../../components/admin/RegistrationManagement';
 
@@ -25,6 +27,7 @@ interface Activity {
   allow_retake: boolean;
   max_attempts: number;
   created_at: string;
+  created_by?: number;
 }
 
 interface Participant {
@@ -49,6 +52,7 @@ interface Statistics {
 const ActivityDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const user = useSelector((state: RootState) => state.auth.user);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
@@ -212,21 +216,23 @@ const ActivityDetailPage: React.FC = () => {
           </Space>
         }
         extra={
-          <Space>
-            <Button
-              icon={<FileTextOutlined />}
-              onClick={() => navigate(`/teacher/activities/${activity.id}/paper`)}
-            >
-              组卷
-            </Button>
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => navigate(`/teacher/activities/edit/${activity.id}`)}
-              disabled={activity.status !== 'draft'}
-            >
-              编辑
-            </Button>
-          </Space>
+          activity.created_by === user?.id ? (
+            <Space>
+              <Button
+                icon={<FileTextOutlined />}
+                onClick={() => navigate(`/teacher/activities/${activity.id}/paper`)}
+              >
+                组卷
+              </Button>
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/teacher/activities/edit/${activity.id}`)}
+                disabled={activity.status !== 'draft'}
+              >
+                编辑
+              </Button>
+            </Space>
+          ) : undefined
         }
         tabList={[
           { key: 'info', tab: '基本信息' },

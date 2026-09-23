@@ -209,7 +209,26 @@ async function canStudentParticipate(user, activity) {
 async function canReadActivity(user, activity) {
   if (!user || !activity) return false;
   if (user.role === 'student') return canStudentParticipate(user, activity);
-  return canManageActivity(user, activity);
+  if (await canManageActivity(user, activity)) return true;
+  // 同校教师共享：本校教师可只读查看其他教师已发布/进行中的练习活动（管理仍限创建者）
+  if (user.role === 'teacher' && activity.type === 'practice' &&
+      ['published', 'ongoing'].includes(activity.status)) {
+    return sameSchoolTeacher(user.id, activity.created_by);
+  }
+  return false;
+}
+
+/** 判断两个用户是否同校教师（含同一人） */
+async function sameSchoolTeacher(userIdA, userIdB) {
+  if (sameId(userIdA, userIdB)) return true;
+  const result = await query(`
+    SELECT 1
+    FROM teachers a
+    JOIN teachers b ON b.school_id = a.school_id
+    WHERE a.user_id = $1 AND b.user_id = $2
+    LIMIT 1
+  `, [userIdA, userIdB]);
+  return result.rows.length > 0;
 }
 
 function questionScope(question) {

@@ -101,12 +101,21 @@ class Activity {
       params.push(filters.created_by);
     }
 
+    if (filters.created_by_scope) {
+      // 同校共享：本人的活动全部可见；同校其他教师的活动仅非草稿可见
+      whereClause += ` AND (created_by = $${++paramCount} OR (created_by = ANY($${++paramCount}) AND status <> $${++paramCount}))`;
+      params.push(filters.created_by_scope.viewerId);
+      params.push(filters.created_by_scope.ids);
+      params.push('draft');
+    }
+
     const result = await query(`
       SELECT id, title, description, subject, grade, start_time, end_time,
              duration, total_score, pass_score, status, type, ability_level,
              scope, allow_retake, max_attempts, is_official, created_by, created_at,
              time_limit_type, registration_enabled,
-             (SELECT COUNT(*) FROM student_activities WHERE activity_id = activities.id) as participant_count
+             (SELECT COUNT(*) FROM student_activities WHERE activity_id = activities.id) as participant_count,
+             (SELECT real_name FROM users WHERE users.id = activities.created_by) as creator_name
       FROM activities
       ${whereClause}
       ORDER BY created_at DESC

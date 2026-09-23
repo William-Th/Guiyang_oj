@@ -196,10 +196,28 @@ router.get('/', authMiddleware, async (req, res) => {
       });
     }
 
-    // For teachers, only show their own practice activities
+    // For teachers, show their own + same-school teachers' practice activities
     if (req.user && req.user.role === 'teacher') {
-      filters.created_by = req.user.id;
       filters.type = 'practice'; // Teachers can only see practice activities
+      const teacherResult = await query(
+        'SELECT school_id FROM teachers WHERE user_id = $1',
+        [req.user.id]
+      );
+      const schoolId = teacherResult.rows[0]?.school_id;
+      if (schoolId) {
+        // 同校共享：本校教师创建的练习活动互相可见（他人草稿除外，编辑仍限创建者）
+        const colleagues = await query(
+          'SELECT user_id FROM teachers WHERE school_id = $1',
+          [schoolId]
+        );
+        filters.created_by_scope = {
+          viewerId: req.user.id,
+          ids: colleagues.rows.map((r) => r.user_id)
+        };
+      } else {
+        // 未关联学校的教师仅可见自己的活动
+        filters.created_by = req.user.id;
+      }
     }
 
     const candidates = await Activity.findAll(filters);

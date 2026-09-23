@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Button, Space, message, Spin, Select, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { activityApi } from '../../services/api';
+import { RootState } from '../../store';
 import { SUBJECTS, getAllGrades, getAllAbilityLevels } from '../../config/subjects';
 
 interface Activity {
@@ -23,10 +25,13 @@ interface Activity {
   max_attempts: number;
   created_at: string;
   participant_count?: number;
+  created_by?: number;
+  creator_name?: string;
 }
 
 const ActivityListPage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<{
@@ -143,6 +148,14 @@ const ActivityListPage: React.FC = () => {
       width: 200,
     },
     {
+      title: '创建人',
+      dataIndex: 'creator_name',
+      key: 'creator_name',
+      width: 100,
+      render: (name: string, record: Activity) =>
+        record.created_by === user?.id ? <Tag color="blue">我</Tag> : (name || '-'),
+    },
+    {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
@@ -216,51 +229,59 @@ const ActivityListPage: React.FC = () => {
       key: 'action',
       width: 250,
       fixed: 'right' as const,
-      render: (_: any, record: Activity) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/teacher/activities/${record.id}`)}
-          >
-            查看
-          </Button>
-          <Button
-            size="small"
-            icon={<FileTextOutlined />}
-            onClick={() => navigate(`/teacher/activities/${record.id}/paper`)}
-          >
-            组卷
-          </Button>
-          {record.status === 'draft' && (
+      render: (_: any, record: Activity) => {
+        // 同校共享的活动：非创建者仅可查看（编辑/组卷/发布/删除仍限创建者）
+        const isCreator = record.created_by === user?.id;
+        return (
+          <Space>
             <Button
               size="small"
-              icon={<EditOutlined />}
-              onClick={() => navigate(`/teacher/activities/edit/${record.id}`)}
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/teacher/activities/${record.id}`)}
             >
-              编辑
+              查看
             </Button>
-          )}
-          <Button
-            size="small"
-            type={record.status === 'published' ? 'default' : 'primary'}
-            onClick={() => handlePublish(record.id, record.status)}
-            disabled={record.status === 'ongoing' || record.status === 'finished'}
-          >
-            {record.status === 'published' ? '取消发布' : '发布'}
-          </Button>
-          {record.status === 'draft' && (
-            <Button
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.id)}
-            >
-              删除
-            </Button>
-          )}
-        </Space>
-      ),
+            {isCreator && (
+              <Button
+                size="small"
+                icon={<FileTextOutlined />}
+                onClick={() => navigate(`/teacher/activities/${record.id}/paper`)}
+              >
+                组卷
+              </Button>
+            )}
+            {isCreator && record.status === 'draft' && (
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/teacher/activities/edit/${record.id}`)}
+              >
+                编辑
+              </Button>
+            )}
+            {isCreator && (
+              <Button
+                size="small"
+                type={record.status === 'published' ? 'default' : 'primary'}
+                onClick={() => handlePublish(record.id, record.status)}
+                disabled={record.status === 'ongoing' || record.status === 'finished'}
+              >
+                {record.status === 'published' ? '取消发布' : '发布'}
+              </Button>
+            )}
+            {isCreator && record.status === 'draft' && (
+              <Button
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.id)}
+              >
+                删除
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
