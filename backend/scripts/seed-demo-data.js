@@ -572,7 +572,7 @@ async function seedWorkflows(idMap) {
   // ---------- 7. 我的提交 + 待我审核：3 道待审核题目 ----------
   // scope = practice_school_6（云岩一小校级题库），审核人 = 蒋磊本人
   const pendingSubmissions = [
-    { subject: '数学', grade: '三年级', type: 'single', content: '3 千米 200 米 = （　）米。', options: ['32', '302', '3200', '320'], correct: 'C', explanation: '3 千米 = 3000 米，加 200 米等于 3200 米。', difficulty: 'easy', level: 'L2', tags: ['单位换算'] },
+    { subject: '数学', grade: '三年级', type: 'single', content: '<p>3 千米 200 米 = （　）米。</p><p><strong>提示：</strong>1 千米 = 1000 米。</p>', options: ['32', '302', '3200', '320'], correct: 'C', explanation: '3 千米 = 3000 米，加 200 米等于 3200 米。', difficulty: 'easy', level: 'L2', tags: ['单位换算'] },
     { subject: '数学', grade: '三年级', type: 'essay', content: '妈妈带 50 元去超市，买了一箱牛奶花 38 元。收银员应找回多少元？', correct: '50 - 38 = 12（元）。答：应找回 12 元。', explanation: '购物找零用减法。', difficulty: 'easy', level: 'L2', tags: ['应用'] },
     { subject: '信息科技', grade: '三年级', type: 'single', content: '发送电子邮件时，必须要知道对方的（　）。', options: ['家庭住址', '电子邮箱地址', '电话号码', '身份证号'], correct: 'B', explanation: '电子邮件需要知道对方的邮箱地址才能发送。', difficulty: 'easy', level: 'L2', tags: ['网络通信'] },
   ];

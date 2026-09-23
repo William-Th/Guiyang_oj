@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import { questionReviewApi, questionBankApi } from '../../services/api';
 import RichTextViewer from '../../components/common/RichTextViewer';
+import { plainTextPreview } from '@/utils/richText';
 import { SUBJECTS } from '../../config/subjects';
 
 const { TextArea } = Input;
@@ -417,8 +418,8 @@ const ReviewWorkbench: React.FC = () => {
       key: 'content',
       ellipsis: true,
       render: (text: string) => (
-        <Tooltip title={text}>
-          <span>{text}</span>
+        <Tooltip title={plainTextPreview(text, 80)}>
+          <span>{plainTextPreview(text, 50)}</span>
         </Tooltip>
       ),
     },
