@@ -340,6 +340,13 @@ async function clean() {
     `DELETE FROM student_login_history`,
     `DELETE FROM audit_logs`,
     `DELETE FROM import_logs`,
+    `DELETE FROM student_wrong_questions`,
+    `DELETE FROM teacher_permissions`,
+    `DELETE FROM teaching_class_approvals`,
+    `DELETE FROM teaching_class_activities`,
+    `DELETE FROM teaching_class_members`,
+    `DELETE FROM teaching_class_teachers`,
+    `DELETE FROM teaching_classes`,
     `DELETE FROM activities`,
   ];
 
@@ -359,6 +366,9 @@ async function clean() {
     'student_activities', 'answers', 'question_reviews', 'certificates',
     'points_transactions', 'achievement_progress', 'student_achievements',
     'daily_question_sets', 'activity_history', 'user_notifications',
+    'student_wrong_questions', 'teacher_permissions',
+    'teaching_classes', 'teaching_class_members', 'teaching_class_teachers',
+    'teaching_class_activities', 'teaching_class_approvals',
   ];
   for (const t of seqTables) {
     await pool.query(
@@ -403,7 +413,7 @@ async function seedQuestions() {
     const bank = await pool.query(
       `INSERT INTO question_bank
         (draft_id, scope, status, reviewer_id, published_by, published_at, is_active, usage_count)
-       VALUES ($1, 'practice_school', 'published', $2, $2, CURRENT_TIMESTAMP, true, 0)
+       VALUES ($1, 'practice_municipal', 'published', $2, $2, CURRENT_TIMESTAMP, true, 0)
        RETURNING id`,
       [draftId, q.creator || TEACHER_YY_PS_MATH]
     );
@@ -482,6 +492,184 @@ async function seedActivities(idMap) {
   console.log(`  题库利用率：${usedQuestionIds.size} / ${QUESTIONS.length} 道题目已被卷子引用`);
 }
 
+// ============================================================================
+// 业务流转演示数据：草稿箱 / 待审核 / 审核权限 / 错题集 / 教学班
+// ============================================================================
+
+async function seedWorkflows(idMap) {
+  const creator = TEACHER_YY_PS_MATH;
+
+  // ---------- 6. 草稿箱：6 道未提交的草稿 ----------
+  const drafts = [
+    { subject: '数学', grade: '三年级', type: 'single', content: '下面哪组线段能围成三角形？', options: ['2cm、3cm、6cm', '3cm、4cm、5cm', '1cm、2cm、4cm', '2cm、2cm、5cm'], correct: 'B', explanation: '三角形两边之和必须大于第三边，只有 3+4>5 满足。', difficulty: 'medium', level: 'L3', tags: ['三角形'] },
+    { subject: '数学', grade: '三年级', type: 'essay', content: '鸡兔同笼，共有 8 个头、22 只脚。鸡和兔各有几只？', correct: '假设全是鸡：8 × 2 = 16 只脚，比实际少 22 - 16 = 6 只；每只兔比鸡多 2 只脚，兔 = 6 ÷ 2 = 3 只，鸡 = 8 - 3 = 5 只。', explanation: '经典鸡兔同笼，可用假设法求解。', difficulty: 'hard', level: 'L5', tags: ['应用题'] },
+    { subject: '数学', grade: '四年级', type: 'single', content: '一条平角是多少度？', options: ['90°', '180°', '270°', '360°'], correct: 'B', explanation: '平角等于 180°。', difficulty: 'easy', level: 'L3', tags: ['角'] },
+    { subject: '数学', grade: '五年级', type: 'blank', content: '把 1 平均分成 4 份，每份是（　）。（填分数）', correct: '1/4|四分之一', explanation: '分数单位的概念。', difficulty: 'medium', level: 'L4', tags: ['分数'] },
+    { subject: '信息科技', grade: '三年级', type: 'single', content: '下列哪个是常用的网页浏览器？', options: ['Word', 'Chrome', 'Excel', 'PowerPoint'], correct: 'B', explanation: 'Chrome 是浏览器，其余是办公软件。', difficulty: 'easy', level: 'L2', tags: ['网络'] },
+    { subject: '信息科技', grade: '三年级', type: 'true_false', content: '为了安全，账号密码应该定期更换，并且不要告诉别人。', correct: 'true', explanation: '保护账号安全的基本习惯。', difficulty: 'easy', level: 'L2', tags: ['信息安全'] },
+  ];
+
+  for (const d of drafts) {
+    await pool.query(
+      `INSERT INTO question_drafts
+        (type, subject, grade, content, options, correct_answer, explanation,
+         difficulty, level, tags, created_by, is_active)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, $10::text[], $11, true)`,
+      [d.type, d.subject, d.grade, d.content,
+       d.options ? JSON.stringify(d.options) : null,
+       JSON.stringify(d.correct), d.explanation || null,
+       d.difficulty || 'medium', d.level || 'L2', d.tags || [], creator]
+    );
+  }
+  console.log(`✓ 草稿箱：${drafts.length} 道草稿（含数学/信息科技多题型）`);
+
+  // ---------- 7. 我的提交 + 待我审核：3 道待审核题目 ----------
+  // scope = practice_school_6（云岩一小校级题库），审核人 = 蒋磊本人
+  const pendingSubmissions = [
+    { subject: '数学', grade: '三年级', type: 'single', content: '3 千米 200 米 = （　）米。', options: ['32', '302', '3200', '320'], correct: 'C', explanation: '3 千米 = 3000 米，加 200 米等于 3200 米。', difficulty: 'easy', level: 'L2', tags: ['单位换算'] },
+    { subject: '数学', grade: '三年级', type: 'essay', content: '妈妈带 50 元去超市，买了一箱牛奶花 38 元。收银员应找回多少元？', correct: '50 - 38 = 12（元）。答：应找回 12 元。', explanation: '购物找零用减法。', difficulty: 'easy', level: 'L2', tags: ['应用'] },
+    { subject: '信息科技', grade: '三年级', type: 'single', content: '发送电子邮件时，必须要知道对方的（　）。', options: ['家庭住址', '电子邮箱地址', '电话号码', '身份证号'], correct: 'B', explanation: '电子邮件需要知道对方的邮箱地址才能发送。', difficulty: 'easy', level: 'L2', tags: ['网络通信'] },
+  ];
+
+  for (const d of pendingSubmissions) {
+    const draft = await pool.query(
+      `INSERT INTO question_drafts
+        (type, subject, grade, content, options, correct_answer, explanation,
+         difficulty, level, tags, created_by, is_active)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, $10::text[], $11, true)
+       RETURNING id`,
+      [d.type, d.subject, d.grade, d.content,
+       d.options ? JSON.stringify(d.options) : null,
+       JSON.stringify(d.correct), d.explanation || null,
+       d.difficulty, d.level, d.tags || [], creator]
+    );
+    await pool.query(
+      `INSERT INTO question_bank
+        (draft_id, scope, status, reviewer_id, published_by, published_at, is_active)
+       VALUES ($1, 'practice_school_6', 'pending_review', $2, $2, CURRENT_TIMESTAMP, true)`,
+      [draft.rows[0].id, creator]
+    );
+  }
+  console.log('✓ 我的提交：3 道待审核题目（提交到云岩一小校级题库，审核人=蒋磊）');
+
+  // ---------- 8. 审核权限 ----------
+  // 蒋磊：云岩一小校级审核（校级发布无需审核人，此权限用于工作台展示）
+  await pool.query(
+    `INSERT INTO teacher_permissions (user_id, permission_type, subjects, granted_by, notes, is_active)
+     VALUES ($1, 'practice_school_manage', $2::text[], 1, '演示数据：云岩一小校级审核权限', true)`,
+    [creator, ['数学', '信息科技']]
+  );
+  // 韩雪：云岩区区级审核人（区级题库提交时出现在审核人下拉中）
+  await pool.query(
+    `INSERT INTO teacher_permissions (user_id, permission_type, subjects, scope_level, district_id, granted_by, notes, is_active)
+     VALUES ($1, 'practice_district_manage', $2::text[], 'district', 1, 1, '演示数据：云岩区区级审核权限', true)`,
+    [TEACHER_YY_PS_IT, ['数学', '信息科技']]
+  );
+  // 曹斌（云岩一中数学，user 26）：云岩区区级审核人（E2E R405 依赖其出现在审核人下拉中）
+  await pool.query(
+    `INSERT INTO teacher_permissions (user_id, permission_type, subjects, scope_level, district_id, granted_by, notes, is_active)
+     VALUES (26, 'practice_district_manage', ARRAY['数学','信息科技']::text[], 'district', 1, 1, '演示数据：云岩区区级审核权限（数学/信息科技）', true)`
+  );
+  // 曹斌：测评题库审核人（E2E R409 依赖其出现在测评题库审核人下拉中）
+  await pool.query(
+    `INSERT INTO teacher_permissions (user_id, permission_type, subjects, scope_level, granted_by, notes, is_active)
+     VALUES (26, 'assessment_manage', ARRAY['数学','信息科技']::text[], 'municipal', 1, '演示数据：测评题库审核权限', true)`
+  );
+  console.log('✓ 审核权限：蒋磊校级审核 + 韩雪/曹斌云岩区区级审核 + 曹斌测评题库审核');
+
+  // ---------- 9. 错题集：张小明的数学错题 ----------
+  // 学生账号 13800138003（张小明）的 users.id = 30；错题引用种子题库中的题目
+  const wrongDefs = [
+    { contentLike: '下面哪个数是奇数', errorCount: 2, knowledge: ['数的奇偶性'] },
+    { contentLike: '1 千米等于多少米', errorCount: 1, knowledge: ['长度单位'] },
+    { contentLike: '钟面上时针从 3 走到 5', errorCount: 1, knowledge: ['时间认识'] },
+    { contentLike: '每盒铅笔有 6 支', errorCount: 3, knowledge: ['乘法应用'] },
+    { contentLike: '一个长方形长 8 厘米', errorCount: 1, knowledge: ['周长计算'] },
+  ];
+  for (const w of wrongDefs) {
+    const q = await pool.query(
+      `SELECT qb.id AS bank_id, qb.draft_id, qd.difficulty
+       FROM question_bank qb
+       JOIN question_drafts qd ON qd.id = qb.draft_id
+       WHERE qd.content LIKE $1 AND qb.status = 'published' AND qb.is_active = true
+       LIMIT 1`,
+      [w.contentLike + '%']
+    );
+    if (q.rows.length === 0) {
+      console.log(`  ⚠ 未找到错题引用的题目: ${w.contentLike}`);
+      continue;
+    }
+    const row = q.rows[0];
+    await pool.query(
+      `INSERT INTO student_wrong_questions
+        (student_id, question_id, draft_id, subject, knowledge_points, difficulty,
+         error_count, review_count, first_wrong_at, last_wrong_at, source_activity_id, status)
+       VALUES ($1, $2, $3, '数学', $4::text[], $5, $6, 0,
+         CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '1 day',
+         (SELECT id FROM activities WHERE title LIKE '%基础练习（一）%' LIMIT 1), 'active')`,
+      [30, row.bank_id, row.draft_id, w.knowledge, row.difficulty, w.errorCount]
+    );
+  }
+  console.log('✓ 错题集：张小明新增 5 道数学错题（含错误次数与知识点）');
+
+  // ---------- 10. 教学班：两个已批准的教学班 ----------
+  // 班级 1：蒋磊的三年级数学教学班（云岩一小）
+  const class1 = await pool.query(
+    `INSERT INTO teaching_classes
+      (name, description, scope, school_id, subject, grade, academic_year, status, created_by, approved_by, approved_at)
+     VALUES ('云岩一小三年级(1)班数学教学班', '三年级数学课堂教学与练习辅导',
+       'school', 6, '数学', '三年级', '2025-2026', 'approved', $1, 1, CURRENT_TIMESTAMP)
+     RETURNING id`,
+    [creator]
+  );
+  // 班级 2：韩雪的三年级信息科技教学班（云岩一小）
+  const class2 = await pool.query(
+    `INSERT INTO teaching_classes
+      (name, description, scope, school_id, subject, grade, academic_year, status, created_by, approved_by, approved_at)
+     VALUES ('云岩一小三年级信息科技教学班', '三年级信息科技基础教学',
+       'school', 6, '信息科技', '三年级', '2025-2026', 'approved', $1, 1, CURRENT_TIMESTAMP)
+     RETURNING id`,
+    [TEACHER_YY_PS_IT]
+  );
+  const c1 = class1.rows[0].id;
+  const c2 = class2.rows[0].id;
+
+  // 任课教师（teachers 表行 id：user 24 → 13，user 25 → 14）
+  await pool.query(
+    `INSERT INTO teaching_class_teachers (teaching_class_id, teacher_id, role, is_active)
+     VALUES ($1, 13, 'creator', true), ($2, 14, 'teacher', true)
+     ON CONFLICT DO NOTHING`,
+    [c1, c2]
+  );
+
+  // 学生成员（云岩一小：31 王明 / 32 李华 / 33 张伟，均为三年级）
+  for (const sid of [31, 32, 33]) {
+    await pool.query(
+      `INSERT INTO teaching_class_members (teaching_class_id, student_id, is_active)
+       VALUES ($1, $2, true), ($3, $2, true)
+       ON CONFLICT DO NOTHING`,
+      [c1, sid, c2]
+    );
+  }
+
+  // 关联活动：数学教学班挂基础练习与期中测评
+  await pool.query(
+    `INSERT INTO teaching_class_activities (teaching_class_id, activity_id, assigned_by, is_required)
+     SELECT $1, id, $2, true FROM activities
+     WHERE title IN ('【练习】三年级数学基础练习（一）', '【测评】三年级数学期中综合测评')
+     ON CONFLICT DO NOTHING`,
+    [c1, creator]
+  );
+  await pool.query(
+    `INSERT INTO teaching_class_activities (teaching_class_id, activity_id, assigned_by, is_required)
+     SELECT $1, id, $2, true FROM activities
+     WHERE title = '【练习】三年级信息科技基础入门'
+     ON CONFLICT DO NOTHING`,
+    [c2, TEACHER_YY_PS_IT]
+  );
+  console.log('✓ 教学班：2 个已批准教学班（数学/信息科技，各含任课教师、3 名学生与关联活动）');
+}
+
 async function verify() {
   const r = await pool.query(`
     SELECT
@@ -511,6 +699,7 @@ async function main() {
   await clean();
   const idMap = await seedQuestions();
   await seedActivities(idMap);
+  await seedWorkflows(idMap);
   await verify();
   await pool.end();
   console.log('\n全部完成。');
