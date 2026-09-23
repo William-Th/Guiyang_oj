@@ -16,6 +16,7 @@
     "test:regression:headed": "playwright test tests/e2e/regression --config=tests/playwright.config.ts --headed",
     "test:e2e": "playwright test --config=tests/playwright.config.ts",
     "test:e2e:ui": "playwright test --config=tests/playwright.config.ts --ui",
+    "test:report": "playwright show-report tests/test-results/html",
     "test:e2e:headed": "playwright test --config=tests/playwright.config.ts --headed",
     "test:e2e:debug": "playwright test --config=tests/playwright.config.ts --debug",
     "test:e2e:report": "playwright show-report tests/test-results/html",

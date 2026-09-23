@@ -20,8 +20,11 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // 测试报告
+  // html 报告器必须 open: 'never'：默认 on-failure 会在有失败用例时自动启动
+  // 报告服务器并永久阻塞进程（后台跑套件时表现为“卡住”永不结束）。
+  // 需要查看报告时手动执行：npm run test:report
   reporter: [
-    ['html', { outputFolder: './test-results/html' }],
+    ['html', { outputFolder: './test-results/html', open: 'never' }],
     ['json', { outputFile: './test-results/results.json' }],
     ['list']
   ],
