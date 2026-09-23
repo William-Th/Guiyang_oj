@@ -368,7 +368,7 @@ const TeachingClassList: React.FC = () => {
           style={{ width: 120 }}
           value={filters.subject}
           onChange={(value) => setFilters({ ...filters, subject: value })}
-          options={SUBJECTS.map(s => ({ value: s, label: s }))}
+          options={SUBJECTS}
         />
         <Select
           placeholder="年级"
@@ -376,7 +376,7 @@ const TeachingClassList: React.FC = () => {
           style={{ width: 120 }}
           value={filters.grade}
           onChange={(value) => setFilters({ ...filters, grade: value })}
-          options={getAllGrades().map(g => ({ value: g, label: g }))}
+          options={getAllGrades()}
         />
       </Space>
 

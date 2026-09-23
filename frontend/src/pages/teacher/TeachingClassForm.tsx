@@ -210,7 +210,7 @@ const TeachingClassForm: React.FC = () => {
           <Select
             placeholder="选择学科"
             allowClear
-            options={SUBJECTS.map(subject => ({ value: subject, label: subject }))}
+            options={SUBJECTS}
           />
         </Form.Item>
 
@@ -222,7 +222,7 @@ const TeachingClassForm: React.FC = () => {
           <Select
             placeholder="选择年级"
             allowClear
-            options={getAllGrades().map(grade => ({ value: grade, label: grade }))}
+            options={getAllGrades()}
           />
         </Form.Item>
 
