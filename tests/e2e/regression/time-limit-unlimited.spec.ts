@@ -178,16 +178,21 @@ test('PTL002 - 学生参加无限制活动', async ({ page }) => {
   const firstQuestion = page.locator('.activity-question-card').first();
   await expect(firstQuestion).toBeVisible();
 
-  // Handle different question types (code/text or single choice)
+  // Handle different question types (single/multiple choice, code/text)
   const radioInput = firstQuestion.locator('input[type="radio"]').first();
+  const checkboxInput = firstQuestion.locator('input[type="checkbox"]').first();
   const textArea = firstQuestion.locator('textarea').first();
 
   const radioCount = await radioInput.count();
+  const checkboxCount = await checkboxInput.count();
   const textCount = await textArea.count();
 
   if (radioCount > 0) {
     // Single choice question
     await radioInput.check();
+  } else if (checkboxCount > 0) {
+    // Multiple choice question
+    await checkboxInput.check();
   } else if (textCount > 0) {
     // Code or essay question
     await textArea.fill('Test answer');

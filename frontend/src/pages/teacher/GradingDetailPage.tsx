@@ -9,7 +9,6 @@ import {
   Space,
   message,
   Spin,
-  Descriptions,
   Tag,
   Divider,
   Typography,
@@ -21,6 +20,7 @@ import {
   Tooltip,
   Modal,
   Image,
+  Segmented,
 } from 'antd';
 import {
   SaveOutlined,
@@ -28,14 +28,86 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   UpOutlined,
+  DownOutlined,
+  CloseCircleOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gradingApi } from '../../services/api';
 import RichTextViewer from '../../components/common/RichTextViewer';
+import { plainTextPreview } from '@/utils/richText';
 import { ApiError, GradingQuestion } from '../../types';
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
+
+/** 分值显示：整数去掉小数点（5.00 → 5，15.5 → 15.5） */
+const fmtScore = (value: unknown): string => {
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (value === null || value === undefined || Number.isNaN(n)) return '-';
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+};
+
+/** 学生答案可能以 JSON 字符串存储（如 "[\"A\"]"、"true"），客观题先解析再格式化 */
+const parseAnswerValue = (raw: unknown, type: string): unknown => {
+  if (typeof raw === 'string' && ['single', 'multiple', 'true_false', 'blank', 'fill_blank', 'matching'].includes(type)) {
+    const t = raw.trim();
+    if (t.startsWith('[') || t.startsWith('{') || t === 'true' || t === 'false') {
+      try {
+        return JSON.parse(t);
+      } catch {
+        return raw;
+      }
+    }
+  }
+  return raw;
+};
+
+/** 选项字母映射回选项文本（如 A → "A. 12"） */
+const letterToOptionText = (letter: string, options?: any[]): string => {
+  const idx = letter.toUpperCase().charCodeAt(0) - 65;
+  if (options && idx >= 0 && idx < options.length) {
+    return optionText(options[idx], idx);
+  }
+  return letter;
+};
+
+/** 把学生答案渲染为教师可读的文本（"true" → 正确、["A","B"] → A. xx、B. xx） */
+const formatStudentAnswer = (answer: { answer: unknown }, question: { type: string; options?: any[] }): string => {
+  const value = parseAnswerValue(answer.answer, question.type);
+
+  if (question.type === 'true_false') {
+    return value === true || value === 'true' ? '正确' : '错误';
+  }
+  if (Array.isArray(value)) {
+    if (question.options && ['multiple', 'single'].includes(question.type)) {
+      return value.map((v) => letterToOptionText(String(v), question.options)).join('、');
+    }
+    return value.map((v) => String(v)).join('；');
+  }
+  if (question.options && question.type === 'single' && typeof value === 'string') {
+    return letterToOptionText(value, question.options);
+  }
+  return String(value ?? '');
+};
+
+/** 客观题正确答案文本 */
+const formatCorrectAnswer = (question: { type: string; options?: any[]; correct_answer?: string | string[] }): string => {
+  const value = parseAnswerValue(question.correct_answer, question.type);
+  if (question.type === 'true_false') {
+    return value === true || value === 'true' ? '正确' : '错误';
+  }
+  if (Array.isArray(value)) {
+    if (question.options) {
+      return value.map((v) => letterToOptionText(String(v), question.options)).join('、');
+    }
+    return value.join('；');
+  }
+  if (question.options && question.type === 'single' && typeof value === 'string') {
+    return letterToOptionText(value, question.options);
+  }
+  return String(value ?? '');
+};
 
 // Extended type to match actual API response
 interface GradingDetailResponse {
@@ -89,6 +161,9 @@ const GradingDetailPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [detail, setDetail] = useState<GradingDetailResponse | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<'all' | 'pending'>('all');
+  // 已自动评分的客观题默认折叠，展开后记录在此
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const questionRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   const studentActivityId = id ? parseInt(id) : undefined;
@@ -130,10 +205,15 @@ const GradingDetailPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [detail, currentQuestionIndex]);
 
-  // Scroll to specific question
+  // Scroll to specific question（折叠中的题目先展开再定位）
   const scrollToQuestion = (index: number) => {
     const questionId = detail?.questions[index]?.id;
     if (questionId && questionRefs.current[questionId]) {
+      setExpandedIds((prev) => {
+        const next = new Set(prev);
+        next.add(questionId);
+        return next;
+      });
       questionRefs.current[questionId]?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
@@ -373,14 +453,6 @@ const GradingDetailPage: React.FC = () => {
     }
   };
 
-  const renderAnswer = (answer: GradingDetailResponse['answers'][0]) => {
-    return (
-      <div style={{ whiteSpace: 'pre-wrap' }}>
-        {Array.isArray(answer.answer) ? answer.answer.join(', ') : String(answer.answer || '')}
-      </div>
-    );
-  };
-
   const getQuestionTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
       single: '单选题',
@@ -455,26 +527,46 @@ const GradingDetailPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', gap: 16 }}>
       {/* Main Content */}
-      <div style={{ flex: 1 }}>
-        <Card
-          title={
-            <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <div>评卷详情</div>
-              <Progress
-                percent={progressPercent}
-                status={pendingCount === 0 ? 'success' : 'active'}
-                format={(percent) => `${gradedCount} / ${detail.answers.length} (${percent}%)`}
-              />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* 顶部摘要条：单行收纳学生/活动/进度/操作，吸顶常驻 */}
+        <div className="grading-summary-bar">
+          <div className="grading-summary-bar__row">
+            <Space size="small" wrap>
+              <Button size="small" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+                返回
+              </Button>
+              <Divider type="vertical" />
+              <UserOutlined style={{ color: 'var(--bohe-primary)' }} />
+              <Text strong>{detail.student.real_name}</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>{detail.student.username}</Text>
+              <Divider type="vertical" />
+              <Text ellipsis style={{ maxWidth: 240 }}>{detail.activity.title}</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {detail.activity.subject} / {detail.activity.grade} · 提交于{' '}
+                {new Date(detail.student_activity.submit_time).toLocaleString('zh-CN', {
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
             </Space>
-          }
-          extra={
-            <Space>
+
+            <Space size="small" wrap>
+              {pendingCount > 0 && (
+                <Text type="warning" style={{ fontSize: 13 }}>
+                  还有 {pendingCount} 道待评分
+                </Text>
+              )}
+              <Tag color={pendingCount === 0 ? 'green' : 'orange'}>
+                已评 {gradedCount} / {detail.answers.length}
+              </Tag>
               <Tooltip title="快捷键: N=下一题, P=上一题, S=保存">
-                <Button size="small" type="text">快捷键提示</Button>
+                <Button size="small" type="text">快捷键</Button>
               </Tooltip>
-              <Button onClick={() => navigate(-1)}>返回</Button>
               <Button
                 type="primary"
+                size="small"
                 icon={<SaveOutlined />}
                 onClick={() => handleBatchSave()}
                 loading={saving}
@@ -484,6 +576,7 @@ const GradingDetailPage: React.FC = () => {
               <Button
                 type="primary"
                 danger
+                size="small"
                 icon={<CheckCircleOutlined />}
                 onClick={() => handleCompleteGrading()}
                 loading={saving}
@@ -492,44 +585,43 @@ const GradingDetailPage: React.FC = () => {
                 完成评卷
               </Button>
             </Space>
-          }
-        >
-        <Descriptions bordered column={2}>
-          <Descriptions.Item label="学生姓名">{detail.student.real_name}</Descriptions.Item>
-          <Descriptions.Item label="学号">{detail.student.username}</Descriptions.Item>
-          <Descriptions.Item label="活动名称">{detail.activity.title}</Descriptions.Item>
-          <Descriptions.Item label="科目/年级">
-            {detail.activity.subject} / {detail.activity.grade}
-          </Descriptions.Item>
-          <Descriptions.Item label="提交时间">
-            {new Date(detail.student_activity.submit_time).toLocaleString('zh-CN')}
-          </Descriptions.Item>
-          <Descriptions.Item label="评卷进度">
-            <Tag color={pendingCount === 0 ? 'green' : 'orange'}>
-              {gradedCount} / {detail.answers.length} 已评
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="总分">{detail.activity.total_score}</Descriptions.Item>
-          <Descriptions.Item label="当前得分">
-            <Text strong style={{ fontSize: '16px', color: '#0ea5e9' }}>
-              {detail.student_activity.score || 0}
+          </div>
+          <div className="grading-summary-bar__score">
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              总分 {fmtScore(detail.activity.total_score)}
             </Text>
-          </Descriptions.Item>
-        </Descriptions>
+            <Text strong style={{ fontSize: 16, color: 'var(--bohe-primary)' }}>
+              {fmtScore(detail.student_activity.score)}
+            </Text>
+            <div className="grading-summary-bar__progress">
+              <Progress
+                percent={progressPercent}
+                size="small"
+                showInfo={false}
+                status={pendingCount === 0 ? 'success' : 'active'}
+              />
+            </div>
+          </div>
+        </div>
 
-        {pendingCount > 0 && (
-          <Alert
-            message={`还有 ${pendingCount} 道题目待评分`}
-            type="warning"
-            showIcon
-            style={{ marginTop: 16 }}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0' }}>
+          <Segmented
+            value={viewMode}
+            onChange={(v) => setViewMode(v as 'all' | 'pending')}
+            options={[
+              { label: `全部题目（${detail.answers.length}）`, value: 'all' },
+              { label: `仅看待评分（${pendingCount}）`, value: 'pending' },
+            ]}
           />
-        )}
-      </Card>
+        </div>
 
-      <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+      <Form form={form} layout="vertical">
         {computeGroupedQuestions().map((group, groupIndex) => {
           const cnNum = CN_NUMS[groupIndex] || String(groupIndex + 1);
+          const visibleItems = viewMode === 'pending'
+            ? group.items.filter(({ answer }) => answer.grading_status === 'pending')
+            : group.items;
+          if (visibleItems.length === 0) return null;
           return (
             <div key={group.type} style={{ marginBottom: 24 }}>
               <div style={{
@@ -542,15 +634,59 @@ const GradingDetailPage: React.FC = () => {
                 <Title level={5} style={{ margin: 0 }}>
                   {cnNum}、{group.typeName}
                   <Text type="secondary" style={{ fontSize: 14, marginLeft: 12, fontWeight: 'normal' }}>
-                    （{group.items.length} 题 · {group.totalScore} 分 ·
+                    （{group.items.length} 题 · {fmtScore(group.totalScore)} 分 ·
                     已评 {group.gradedCount}/{group.items.length}
-                    {group.earnedScore > 0 ? ` · 得 ${group.earnedScore} 分` : ''}）
+                    {group.earnedScore > 0 ? ` · 得 ${fmtScore(group.earnedScore)} 分` : ''}）
                   </Text>
                 </Title>
               </div>
-              {group.items.map(({ question, answer, globalIndex }, idx) => {
-                const isSubjective = ['short_answer', 'essay', 'coding', 'programming'].includes(question.type);
+              {visibleItems.map(({ question, answer, globalIndex }, idx) => {
+                const isSubjective = ['short_answer', 'essay', 'coding', 'programming', 'code'].includes(question.type);
                 const needsManualGrading = answer.grading_status === 'pending' || isSubjective;
+                const isAutoGradedObjective = !isSubjective && answer.grading_status !== 'pending';
+                const isExpanded = !isAutoGradedObjective || expandedIds.has(question.id);
+                const hasReference = isSubjective && (question.correct_answer || question.explanation);
+
+                if (!isExpanded) {
+                  /* 已自动评分的客观题：默认折叠为一行摘要 */
+                  return (
+                    <Card
+                      key={question.id}
+                      id={`question-${question.id}`}
+                      ref={(el) => (questionRefs.current[question.id] = el)}
+                      size="small"
+                      style={{ marginBottom: 12 }}
+                      className="grading-question-summary"
+                      hoverable
+                      onClick={() => setExpandedIds((prev) => new Set(prev).add(question.id))}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontWeight: 700, color: 'var(--bohe-primary)' }}>{idx + 1}.</span>
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#555' }}>
+                          {plainTextPreview(question.content, 60)}
+                        </span>
+                        {answer.is_correct !== null && answer.is_correct !== undefined && (
+                          answer.is_correct
+                            ? <Tag color="success" icon={<CheckCircleOutlined />}>答对</Tag>
+                            : <Tag color="error" icon={<CloseCircleOutlined />}>答错</Tag>
+                        )}
+                        <Tag color="blue">已自动评分</Tag>
+                        <Tag style={{ marginRight: 0 }}>{fmtScore(answer.score)} / {fmtScore(question.score)} 分</Tag>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<DownOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedIds((prev) => new Set(prev).add(question.id));
+                          }}
+                        >
+                          展开
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                }
 
                 return (
                   <Card
@@ -564,7 +700,7 @@ const GradingDetailPage: React.FC = () => {
                           {idx + 1}.
                         </div>
                         <Tag color="green" style={{ fontSize: 14 }}>
-                          满分: {question.score} 分
+                          满分: {fmtScore(question.score)} 分
                         </Tag>
                         {answer.grading_status === 'auto_graded' && (
                           <Tag color="blue">已自动评分</Tag>
@@ -579,6 +715,19 @@ const GradingDetailPage: React.FC = () => {
                     }
                     extra={
                       <Space>
+                        {isAutoGradedObjective && (
+                          <Button
+                            size="small"
+                            icon={<UpOutlined />}
+                            onClick={() => setExpandedIds((prev) => {
+                              const next = new Set(prev);
+                              next.delete(question.id);
+                              return next;
+                            })}
+                          >
+                            收起
+                          </Button>
+                        )}
                         <Button
                           size="small"
                           icon={<ArrowLeftOutlined />}
@@ -632,9 +781,55 @@ const GradingDetailPage: React.FC = () => {
                         background: '#f5f5f5',
                         borderRadius: '4px',
                       }}>
-                        {renderAnswer(answer)}
+                        {formatStudentAnswer(answer, question)}
                       </div>
                     </div>
+
+                    {!needsManualGrading && question.correct_answer !== null && question.correct_answer !== undefined && (
+                      <div style={{ marginBottom: 16 }}>
+                        <Title level={5}>正确答案</Title>
+                        <div style={{
+                          padding: '12px',
+                          background: '#f6ffed',
+                          border: '1px solid #b7eb8f',
+                          borderRadius: '4px',
+                        }}>
+                          {formatCorrectAnswer(question)}
+                        </div>
+                      </div>
+                    )}
+
+                    {hasReference && (
+                      <div style={{ marginBottom: 16 }}>
+                        {question.correct_answer && (
+                          <>
+                            <Title level={5}>参考答案</Title>
+                            <div style={{
+                              padding: '12px',
+                              background: '#f6ffed',
+                              border: '1px solid #b7eb8f',
+                              borderRadius: '4px',
+                              marginBottom: question.explanation ? 12 : 0,
+                            }}>
+                              <RichTextViewer content={Array.isArray(question.correct_answer) ? question.correct_answer.join('；') : question.correct_answer} />
+                            </div>
+                          </>
+                        )}
+                        {question.explanation && (
+                          <>
+                            <Title level={5}>解析 / 评分标准</Title>
+                            <div style={{
+                              padding: '12px',
+                              background: '#fffbeb',
+                              border: '1px solid #ffe58f',
+                              borderRadius: '4px',
+                            }}>
+                              <RichTextViewer content={question.explanation} />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
 
                     {!needsManualGrading && answer.is_correct !== null && (
                       <Alert
@@ -646,13 +841,13 @@ const GradingDetailPage: React.FC = () => {
                     )}
 
                     <Row gutter={16}>
-                      <Col span={6}>
+                      <Col xs={24} sm={8} md={6}>
                         <Form.Item
                           label="得分"
                           name={`score_${answer.id}`}
                           rules={[
                             { required: true, message: '请输入得分' },
-                            { type: 'number', min: 0, max: question.score, message: `得分范围: 0-${question.score}` },
+                            { type: 'number', min: 0, max: question.score, message: `得分范围: 0-${fmtScore(question.score)}` },
                           ]}
                         >
                           <InputNumber
@@ -664,7 +859,7 @@ const GradingDetailPage: React.FC = () => {
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={18}>
+                      <Col xs={24} sm={16} md={18}>
                         <Form.Item label="评语" name={`feedback_${answer.id}`}>
                           <TextArea
                             rows={2}

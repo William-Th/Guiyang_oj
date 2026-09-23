@@ -69,6 +69,54 @@
   height: 30px;
 }
 
+/* 评卷详情页顶部摘要条 */
+.grading-summary-bar {
+  position: sticky;
+  top: 8px;
+  z-index: 30;
+  margin-bottom: 4px;
+  padding: 10px 16px 8px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(2, 132, 199, 0.16);
+  border-radius: var(--bohe-radius-lg);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.10);
+}
+
+.grading-summary-bar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.grading-summary-bar__score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grading-summary-bar__progress {
+  flex: 1;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+.grading-summary-bar__progress .ant-progress {
+  margin: 0;
+  line-height: 1;
+}
+
+.grading-summary-bar__progress .ant-progress-inner {
+  border-radius: 4px;
+}
+
+/* 已自动评分客观题的折叠摘要行 */
+.grading-question-summary .ant-card-body {
+  padding: 8px 16px;
+}
+
 .app-brand-name {
   overflow: hidden;
   text-overflow: ellipsis;

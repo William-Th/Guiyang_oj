@@ -236,7 +236,8 @@ test.describe('学生学习空间视觉与响应式回归', () => {
 
     await expect(page.getByRole('heading', { name: '信息科技基础练习' })).toBeVisible();
     await expect(page.getByRole('button', { name: /第 1 题/ })).toBeVisible();
-    await expect(page.getByText('A. 键盘')).toBeVisible();
+    // 2026-09 版式改版：选项字母为圆形徽标，选项文本不再带 "A." 前缀
+    await expect(page.getByText('键盘').first()).toBeVisible();
     await expect(page.getByRole('button', { name: /提交答案/ })).toBeVisible();
 
     const dimensions = await page.evaluate(() => ({

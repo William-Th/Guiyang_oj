@@ -66,6 +66,8 @@ router.get('/pending', authMiddleware, async (req, res) => {
       WHERE sa.status IN ('submitted', 'graded')
         AND sa.grading_status IN ('pending', 'auto_graded', 'partial_graded')
         AND a.created_by = $1
+        /* 纯客观题提交保留在列表中供教师复核，但没有任何答案的空提交无需处理，不展示 */
+        AND EXISTS (SELECT 1 FROM answers an WHERE an.student_exam_id = sa.id)
     `;
 
     const params = [teacherId];

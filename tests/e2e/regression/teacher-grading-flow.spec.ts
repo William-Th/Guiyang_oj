@@ -168,12 +168,13 @@ test.describe('Regression Tests - Teacher Grading Flow 教师评卷流程', () =
       await page.waitForURL(/\/teacher\/grading\/\d+/, { timeout: TEST_TIMEOUTS.NAVIGATION, waitUntil: 'domcontentloaded' });
       await page.waitForLoadState('networkidle');
 
-      // 验证详情页元素
-      await expect(page.locator('.ant-card-head-title:has-text("评卷详情")')).toBeAttached();
+      // 验证详情页元素（2026-09 版式改版：原「评卷详情」卡片标题改为吸顶摘要条）
+      await expect(page.locator('.grading-summary-bar')).toBeAttached();
 
-      // 验证学生信息显示（antd v5 Descriptions 单元格类名为 ant-descriptions-item-label）
-      const studentInfo = page.locator('.ant-descriptions-item-label').filter({ hasText: /学生姓名/ });
-      await expect(studentInfo).toBeAttached();
+      // 验证学生信息显示（2026-09 版式改版：顶部为吸顶摘要条 .grading-summary-bar）
+      const summaryBar = page.locator('.grading-summary-bar');
+      await expect(summaryBar).toBeAttached();
+      await expect(summaryBar).toContainText('张小明');
 
       // 验证题目卡片存在（每题卡片含「学生答案」标题）
       questionCount = await page.locator('.ant-card').filter({ has: page.locator('text=学生答案') }).count();

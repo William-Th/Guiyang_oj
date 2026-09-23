@@ -121,7 +121,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
 
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="small">
-      {/* Countdown Display */}
+      {/* Countdown Display（时间充裕时白底卡片，进入警告/危急才整条变色） */}
       <Alert
         message={
           <Space>
@@ -140,6 +140,11 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
         }
         type={statusColor as any}
         banner
+        style={
+          statusColor === 'success'
+            ? { background: '#fff', border: '1px solid rgba(14, 165, 233, 0.18)' }
+            : undefined
+        }
       />
 
       {/* Warning when time is running out */}

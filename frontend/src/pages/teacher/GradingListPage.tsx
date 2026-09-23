@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col, DatePicker, Input, Modal } from 'antd';
-import { EyeOutlined, CheckCircleOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  EyeOutlined,
+  CheckCircleOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  FileDoneOutlined,
+  EditOutlined,
+  AuditOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gradingApi, activityApi } from '../../services/api';
 import { ApiError, FilterParams } from '../../types';
+
+/** 分值显示：整数去掉小数点（0.00 → 0） */
+const fmtScore = (value: unknown): string => {
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (value === null || value === undefined || value === '' || Number.isNaN(n)) return '-';
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+};
 
 interface PendingSubmission {
   student_activity_id: number;
@@ -223,7 +238,7 @@ const GradingListPage: React.FC = () => {
       dataIndex: 'score',
       key: 'score',
       width: 100,
-      render: (score: number | null) => score !== null ? score : '-',
+      render: (score: number | null) => (score !== null && score !== undefined ? fmtScore(score) : '-'),
     },
     {
       title: '操作',
@@ -234,7 +249,6 @@ const GradingListPage: React.FC = () => {
         <Space>
           <Button
             size="small"
-            type="primary"
             icon={<EyeOutlined />}
             onClick={() => handleGrade(record.student_activity_id)}
           >
@@ -265,36 +279,42 @@ const GradingListPage: React.FC = () => {
   return (
     <div>
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
-            <Statistic title="总提交数" value={stats.total} />
+            <Statistic
+              title="总提交数"
+              value={stats.total}
+              prefix={<FileDoneOutlined style={{ color: 'var(--bohe-primary)', marginRight: 6 }} />}
+            />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title="待评卷"
               value={stats.pending}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: 'var(--bohe-primary)' }}
+              prefix={<EditOutlined style={{ color: 'var(--bohe-primary)', marginRight: 6 }} />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title="部分评分"
               value={stats.partialGraded}
               valueStyle={{ color: '#13c2c2' }}
+              prefix={<AuditOutlined style={{ color: '#13c2c2', marginRight: 6 }} />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title="已完成"
               value={stats.completed}
               valueStyle={{ color: '#52c41a' }}
-              prefix={<CheckCircleOutlined />}
+              prefix={<CheckCircleOutlined style={{ color: '#52c41a', marginRight: 6 }} />}
             />
           </Card>
         </Col>

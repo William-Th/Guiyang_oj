@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { optionText } from '../../components/questions/questionOption';
+import { parseOption } from '../../components/questions/questionOption';
 import {
   Card,
   Form,
@@ -16,11 +16,14 @@ import {
   Divider,
   Progress,
   Image,
+  Dropdown,
 } from 'antd';
 import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   CheckOutlined,
+  MoreOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { activityApi } from '../../services/api';
@@ -32,6 +35,13 @@ import type { ActivityQuestion, StudentActivity } from '../../types/activity';
 
 const { TextArea } = Input;
 const { Title, Paragraph } = Typography;
+
+/** 分值显示：整数去掉小数点（10.00 → 10） */
+const fmtScore = (value: unknown): string => {
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (value === null || value === undefined || Number.isNaN(n)) return '-';
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+};
 
 /**
  * LocalStorage helper functions for answer persistence
@@ -697,27 +707,9 @@ const TakeActivityPage: React.FC = () => {
               <div className="activity-meta">
                 <span className="activity-meta__item">科目：{activity.subject}</span>
                 <span className="activity-meta__item">年级：{activity.grade}</span>
-                <span className="activity-meta__item">总分：{activity.total_score}</span>
-                <span className="activity-meta__item">及格分：{activity.pass_score}</span>
+                <span className="activity-meta__item">总分：{fmtScore(activity.total_score)}</span>
+                <span className="activity-meta__item">及格分：{fmtScore(activity.pass_score)}</span>
               </div>
-            </div>
-            <div className="activity-hero-card__actions">
-              <Button
-                type="default"
-                onClick={() => navigate(-1)}
-                disabled={submitting}
-              >
-                放弃答题
-              </Button>
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={handleSubmit}
-                loading={submitting}
-                disabled={answeredCount === 0}
-              >
-                提交答案 ({answeredCount}/{activity.questions.length})
-              </Button>
             </div>
           </div>
         </Card>
@@ -835,7 +827,7 @@ const TakeActivityPage: React.FC = () => {
                             <RichTextViewer content={question.content} />
                           </span>
                           <span className="activity-question-card__score">
-                            {typeof (question as any).max_score === 'string' ? (question as any).max_score : (question as any).max_score || question.score} 分
+                            {fmtScore((question as any).max_score ?? question.score)} 分
                           </span>
                           {answeredQuestions.has(index) && (
                             <CheckOutlined className="activity-question-card__complete" aria-label="已作答" />
@@ -863,15 +855,19 @@ const TakeActivityPage: React.FC = () => {
                           >
                             <Radio.Group className="activity-answer-options">
                               <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                                {question.options.map((option, optIndex) => (
-                                  <Radio
-                                    key={`${index}-${optIndex}`}
-                                    value={String.fromCharCode(65 + optIndex)}
-                                    className="activity-answer-option"
-                                  >
-                                    {optionText(option, optIndex)}
-                                  </Radio>
-                                ))}
+                                {question.options.map((option, optIndex) => {
+                                  const { label, content } = parseOption(option, optIndex);
+                                  return (
+                                    <Radio
+                                      key={`${index}-${optIndex}`}
+                                      value={String.fromCharCode(65 + optIndex)}
+                                      className="activity-answer-option"
+                                    >
+                                      <span className="activity-answer-option__badge">{label}</span>
+                                      <span className="activity-answer-option__text">{content}</span>
+                                    </Radio>
+                                  );
+                                })}
                               </Space>
                             </Radio.Group>
                           </Form.Item>
@@ -887,15 +883,19 @@ const TakeActivityPage: React.FC = () => {
                           >
                             <Checkbox.Group className="activity-answer-options">
                               <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                                {question.options.map((option, optIndex) => (
-                                  <Checkbox
-                                    key={`${index}-${optIndex}`}
-                                    value={String.fromCharCode(65 + optIndex)}
-                                    className="activity-answer-option"
-                                  >
-                                    {optionText(option, optIndex)}
-                                  </Checkbox>
-                                ))}
+                                {question.options.map((option, optIndex) => {
+                                  const { label, content } = parseOption(option, optIndex);
+                                  return (
+                                    <Checkbox
+                                      key={`${index}-${optIndex}`}
+                                      value={String.fromCharCode(65 + optIndex)}
+                                      className="activity-answer-option"
+                                    >
+                                      <span className="activity-answer-option__badge">{label}</span>
+                                      <span className="activity-answer-option__text">{content}</span>
+                                    </Checkbox>
+                                  );
+                                })}
                               </Space>
                             </Checkbox.Group>
                           </Form.Item>
@@ -943,8 +943,10 @@ const TakeActivityPage: React.FC = () => {
                             style={{ marginBottom: 0, fontSize: '16px' }}
                           >
                             <TextArea
-                              placeholder="请输入答案"
-                              autoSize={{ minRows: 4, maxRows: 8 }}
+                              placeholder="请在这里写下你的答案"
+                              autoSize={{ minRows: 5, maxRows: 12 }}
+                              maxLength={1000}
+                              showCount
                               style={{ fontSize: '16px' }}
                             />
                           </Form.Item>
@@ -983,6 +985,52 @@ const TakeActivityPage: React.FC = () => {
               );
             })}
         </Form>
+
+        {/* 底部粘性提交栏：答题过程中随时可见 */}
+        <div className="activity-submit-bar">
+          <div className="activity-submit-bar__info">
+            已答 <strong>{answeredCount}</strong> / {activity.questions.length} 题
+            {answeredCount < activity.questions.length && (
+              <span className="activity-submit-bar__hint">
+                （还有 {activity.questions.length - answeredCount} 题未作答）
+              </span>
+            )}
+          </div>
+          <Space size="small">
+            <Button
+              className="activity-submit-bar__abandon"
+              onClick={() => navigate(-1)}
+              disabled={submitting}
+            >
+              放弃答题
+            </Button>
+            <Dropdown
+              className="activity-submit-bar__more"
+              trigger={['click']}
+              menu={{
+                items: [
+                  {
+                    key: 'abandon',
+                    icon: <CloseOutlined />,
+                    label: '放弃答题',
+                    onClick: () => navigate(-1),
+                  },
+                ],
+              }}
+            >
+              <Button icon={<MoreOutlined />} disabled={submitting} aria-label="更多操作" />
+            </Dropdown>
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={handleSubmit}
+              loading={submitting}
+              disabled={answeredCount === 0}
+            >
+              提交答案 ({answeredCount}/{activity.questions.length})
+            </Button>
+          </Space>
+        </div>
       </div>
     </main>
   );

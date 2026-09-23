@@ -749,6 +749,98 @@
   box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.08);
 }
 
+/* 底部粘性提交栏 */
+.activity-submit-bar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(2, 132, 199, 0.16);
+  border-radius: var(--bohe-radius-lg);
+  box-shadow: 0 -4px 20px rgba(2, 132, 199, 0.12);
+}
+
+.activity-submit-bar__info {
+  font-size: 15px;
+  color: #475569;
+}
+
+.activity-submit-bar__info strong {
+  color: var(--bohe-primary);
+  font-size: 18px;
+}
+
+.activity-submit-bar__hint {
+  margin-left: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.activity-submit-bar__more {
+  display: none;
+}
+
+/* 选项字母徽标：隐藏默认圆点，字母徽标即选中指示 */
+.activity-answer-option.ant-radio-wrapper,
+.activity-answer-option.ant-checkbox-wrapper {
+  position: relative;
+}
+
+.activity-answer-option .ant-radio,
+.activity-answer-option .ant-checkbox {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.activity-answer-option__badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: var(--bohe-mint-700);
+  font-weight: 700;
+  border: 1.5px solid var(--bohe-mint-300);
+  border-radius: 50%;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.activity-answer-option.ant-radio-wrapper-checked .activity-answer-option__badge,
+.activity-answer-option.ant-checkbox-wrapper-checked .activity-answer-option__badge {
+  color: #fff;
+  border-color: var(--bohe-primary);
+  background: var(--bohe-primary);
+}
+
+.activity-answer-option.ant-radio-wrapper-checked .activity-answer-option__text,
+.activity-answer-option.ant-checkbox-wrapper-checked .activity-answer-option__text {
+  font-weight: 600;
+}
+
+/* 判断题（无字母徽标）选中行尾部打勾 */
+.activity-answer-option.ant-radio-wrapper-checked::after {
+  content: '¹3';
+  margin-left: auto;
+  padding-right: 4px;
+  color: var(--bohe-primary);
+  font-weight: 700;
+}
+
 .activity-question-card .ant-input,
 .activity-question-card .ant-input-affix-wrapper {
   min-height: 48px;
@@ -1152,6 +1244,21 @@
   .activity-answer-option.ant-radio-wrapper:hover,
   .activity-answer-option.ant-checkbox-wrapper:hover {
     transform: none;
+  }
+
+  .activity-submit-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    bottom: 8px;
+  }
+
+  .activity-submit-bar__abandon {
+    display: none;
+  }
+
+  .activity-submit-bar__more {
+    display: inline-flex;
   }
 
   .wrong-questions-page__hero {

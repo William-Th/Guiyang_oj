@@ -14,7 +14,7 @@ test.describe('Student Activity Flow - Lifecycle Test', () => {
   const findSeedRow = async (page: Page) => {
     const title = '【完整流程测试】';
     const rows = () => page.locator('.ant-tabs-tabpane-active .ant-table-tbody tr:visible').filter({ hasText: title });
-    for (let p = 0; p < 10; p++) {
+    for (let p = 0; p < 20; p++) {
       if ((await rows().count()) > 0) return rows().first();
       const next = page.locator('.ant-pagination-next:not(.ant-pagination-disabled)');
       if ((await next.count()) === 0) break;
