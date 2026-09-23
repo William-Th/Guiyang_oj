@@ -11,6 +11,16 @@ class StudentPoints {
    * @returns {Promise<Object>}
    */
   static async getPointsAccount(studentId) {
+    // 惰性初始化：账户不存在时自动创建零积分账户（新学生/数据重置后均可安全调用）
+    await pool.query(
+      `
+      INSERT INTO student_points (student_id, current_points, total_points, spent_points, frozen_points)
+      VALUES ($1, 0, 0, 0, 0)
+      ON CONFLICT (student_id) DO NOTHING
+      `,
+      [studentId]
+    );
+
     const result = await pool.query(
       `
       SELECT

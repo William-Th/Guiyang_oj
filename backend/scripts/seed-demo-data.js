@@ -331,7 +331,6 @@ async function clean() {
     `DELETE FROM achievement_progress`,
     `DELETE FROM student_achievements`,
     `DELETE FROM points_transactions`,
-    `DELETE FROM student_points`,
     `DELETE FROM leaderboards`,
     `DELETE FROM district_ability_stats`,
     `DELETE FROM user_notifications`,
@@ -376,8 +375,9 @@ async function clean() {
     ).catch(() => {});
   }
 
-  // 学生积分余额清零（保留账户记录）
-  await pool.query(`UPDATE student_points SET balance = 0, total_earned = 0, total_spent = 0`).catch(() => {});
+  // 学生积分账户：确保人人有账户并清零（保留账户行，避免前端 404）
+  await pool.query(`INSERT INTO student_points (student_id) SELECT id FROM students ON CONFLICT DO NOTHING`);
+  await pool.query(`UPDATE student_points SET current_points = 0, total_points = 0, spent_points = 0, frozen_points = 0`);
 
   console.log('✓ 清理完成：活动、答卷、题库、积分流水等事务性数据已清空');
 }
