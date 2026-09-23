@@ -91,8 +91,8 @@ test.describe('Student Activity Flow - Lifecycle Test', () => {
     const hasQuestion = await page.locator('text=/题/').count() > 0;
     console.log(`页面包含题目: ${hasQuestion}`);
 
-    // 选择答案 B (2)
-    const radioB = page.locator('input[type="radio"][value="B"]');
+    // 选择第一道单选题的答案 B（卷子含多道单选，需限定题卡范围）
+    const radioB = page.locator('.activity-question-card').first().locator('input[type="radio"][value="B"]');
     if (await radioB.count() > 0) {
       await radioB.check();
       console.log('已选择选项B');
