@@ -437,17 +437,33 @@ const ReviewWorkbench: React.FC = () => {
       title: '目标范围',
       dataIndex: 'target_scope',
       key: 'target_scope',
-      width: 120,
+      width: 180,
       render: (scope?: string) => {
         const config = getScopeText(scope);
-        return <Tag color={config.color}>{config.text}</Tag>;
+        return (
+          <Tooltip title={config.text}>
+            <Tag
+              color={config.color}
+              style={{
+                maxWidth: 160,
+                display: 'inline-block',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                verticalAlign: 'middle',
+              }}
+            >
+              {config.text}
+            </Tag>
+          </Tooltip>
+        );
       },
     },
     {
       title: '提交人',
       dataIndex: 'submitted_by_name',
       key: 'submitted_by_name',
-      width: 100,
+      width: 110,
     },
     {
       title: '提交时间',
