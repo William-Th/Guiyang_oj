@@ -57,4 +57,15 @@ function htmlToPlainText(text) {
     .trim();
 }
 
-module.exports = { sanitizeRichText, htmlToPlainText };
+const MAX_RICH_TEXT_LENGTH = 200000; // 约 20 万字符，防止粘贴超大 base64 图片撑爆存储
+
+/** 校验富文本长度，超限返回错误信息，否则返回 null */
+function checkRichTextLength(text, label) {
+  if (typeof text !== 'string' || !text) return null;
+  if (text.length > MAX_RICH_TEXT_LENGTH) {
+    return label + '过长，请压缩图片或精简内容后重试';
+  }
+  return null;
+}
+
+module.exports = { sanitizeRichText, htmlToPlainText, checkRichTextLength, MAX_RICH_TEXT_LENGTH };

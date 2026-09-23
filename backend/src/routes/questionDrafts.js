@@ -3,10 +3,18 @@ const router = express.Router();
 const QuestionDraft = require('../models/QuestionDraft');
 const QuestionBank = require('../models/QuestionBank');
 const { authMiddleware } = require('../middleware/auth');
-const { sanitizeRichText } = require('../utils/richTextSanitizer');
+const { sanitizeRichText, checkRichTextLength } = require('../utils/richTextSanitizer');
 
-// 草稿富文本字段消毒（防存储型 XSS）
+// 草稿富文本字段消毒（防存储型 XSS）+ 长度防护
 function sanitizeDraftRichText(body) {
+  const contentTooLong = checkRichTextLength(body.content, '题目内容');
+  if (contentTooLong) {
+    throw new Error(contentTooLong);
+  }
+  const explanationTooLong = checkRichTextLength(body.explanation, '题目解析');
+  if (explanationTooLong) {
+    throw new Error(explanationTooLong);
+  }
   if (typeof body.content === 'string') {
     body.content = sanitizeRichText(body.content);
   }

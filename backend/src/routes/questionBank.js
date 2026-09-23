@@ -12,7 +12,7 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { sanitizeRichText, htmlToPlainText } = require('../utils/richTextSanitizer');
+const { sanitizeRichText, htmlToPlainText, checkRichTextLength } = require('../utils/richTextSanitizer');
 const {
   getActorScope,
   canAccessQuestion,
@@ -1055,6 +1055,12 @@ function validateQuestion(question) {
   if (question.explanation) {
     question.explanation = sanitizeRichText(sanitizeText(question.explanation));
   }
+
+  // 富文本长度防护（粘贴超大 base64 图片会撑爆存储与页面）
+  const contentTooLong = checkRichTextLength(question.content, '题目内容');
+  if (contentTooLong) return contentTooLong;
+  const explanationTooLong = checkRichTextLength(question.explanation, '题目解析');
+  if (explanationTooLong) return explanationTooLong;
 
   switch (type) {
   case 'single':

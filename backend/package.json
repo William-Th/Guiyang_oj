@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "test": "jest",
     "lint": "eslint src/",
-    "migrate": "node src/database/migrate.js"
+    "migrate": "node src/database/migrate.js",
+    "db:ensure": "node scripts/ensure-db-support.js"
   },
   "jest": {
     "testEnvironment": "node",
