@@ -10,9 +10,17 @@ const { query } = require('../database/connection');
 
 // 科目代码映射
 const SUBJECT_CODE_MAP = {
+  '语文': 'CHIN',
   '数学': 'MATH',
+  '英语': 'ENG',
+  '道德与法治': 'MORL',
+  '科学': 'SCIE',
+  '信息科技': 'INFO',
+  '历史': 'HIST',
+  '地理': 'GEOG',
   '物理': 'PHYS',
   '化学': 'CHEM',
+  '生物学': 'BIOL',
   '生物': 'BIOL',
   '计算机': 'COMP'
 };

@@ -12,6 +12,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { gradingApi, activityApi } from '../../services/api';
 import { ApiError, FilterParams } from '../../types';
+import { SUBJECTS } from '../../config/subjects';
 
 /** 分值显示：整数去掉小数点（0.00 → 0） */
 const fmtScore = (value: unknown): string => {
@@ -363,11 +364,11 @@ const GradingListPage: React.FC = () => {
             onChange={(value) => setFilters({ ...filters, subject: value })}
             virtual={false}
           >
-            <Select.Option value="语文">语文</Select.Option>
-            <Select.Option value="数学">数学</Select.Option>
-            <Select.Option value="英语">英语</Select.Option>
-            <Select.Option value="科学">科学</Select.Option>
-            <Select.Option value="计算机">计算机</Select.Option>
+            {SUBJECTS.map((subject) => (
+              <Select.Option key={subject.value} value={subject.value}>
+                {subject.label}
+              </Select.Option>
+            ))}
           </Select>
 
           <Select

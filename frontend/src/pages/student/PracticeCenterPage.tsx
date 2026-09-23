@@ -135,6 +135,8 @@ const PracticeCenterPage: React.FC = () => {
   const getSubjectTag = (subject: string) => {
     const colors: Record<string, string> = {
       '语文': 'blue', '数学': 'green', '科学': 'purple',
+      '道德与法治': 'gold', '历史': 'orange', '地理': 'cyan',
+      '物理': 'geekblue', '化学': 'magenta', '生物学': 'green',
       '英语': 'orange', '计算机': 'cyan', '信息科技': 'cyan',
     };
     return <Tag color={colors[subject] || 'default'}>{subject}</Tag>;

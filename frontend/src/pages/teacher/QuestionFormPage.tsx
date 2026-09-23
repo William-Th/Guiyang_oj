@@ -114,9 +114,17 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
     try {
       setLoadingConfig(true);
       const subjectMap: Record<string, string> = {
+        '语文': 'chinese',
         '数学': 'math',
+        '英语': 'english',
+        '道德与法治': 'moral',
+        '科学': 'science',
+        '信息科技': 'it',
+        '历史': 'history',
+        '地理': 'geography',
         '物理': 'physics',
         '化学': 'chemistry',
+        '生物学': 'biology',
         '生物': 'biology',
         '计算机': 'computer',
       };

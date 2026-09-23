@@ -131,6 +131,12 @@ const AssessmentManagementPage: React.FC = () => {
           '语文': 'blue',
           '数学': 'green',
           '科学': 'purple',
+          '道德与法治': 'gold',
+          '历史': 'orange',
+          '地理': 'cyan',
+          '物理': 'geekblue',
+          '化学': 'magenta',
+          '生物学': 'green',
           '英语': 'orange',
           '计算机': 'cyan',
         };

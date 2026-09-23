@@ -28,6 +28,36 @@ const TEACHER_YY_PS_MATH = 24; // 蒋磊-云岩一小（数学）
 const TEACHER_YY_PS_IT = 25;   // 韩雪-云岩一小（信息科技）
 
 // ============================================================================
+// 科目配置（subjects 表；2022 课程方案，幂等）
+// ============================================================================
+
+const SUBJECT_ROWS = [
+  ['MATH', '数学', '数学，一年级到高三', ['1','2','3','4','5','6','7','8','9','10','11','12'], 1],
+  ['IT', '信息科技', '信息科技，三年级到高三', ['3','4','5','6','7','8','9','10','11','12'], 2],
+  ['CHIN', '语文', '语文，一年级到高三', ['1','2','3','4','5','6','7','8','9','10','11','12'], 3],
+  ['ENG', '英语', '英语，三年级到高三', ['3','4','5','6','7','8','9','10','11','12'], 4],
+  ['MORL', '道德与法治', '道德与法治，一年级到九年级', ['1','2','3','4','5','6','7','8','9'], 5],
+  ['SCIE', '科学', '科学，一年级到九年级', ['1','2','3','4','5','6','7','8','9'], 6],
+  ['HIST', '历史', '历史，七年级到高三', ['7','8','9','10','11','12'], 7],
+  ['GEOG', '地理', '地理，七年级到高三', ['7','8','9','10','11','12'], 8],
+  ['PHYS', '物理', '物理，八年级到高三', ['8','9','10','11','12'], 9],
+  ['CHEM', '化学', '化学，九年级到高三', ['9','10','11','12'], 10],
+  ['BIOL', '生物学', '生物学，七年级到高三', ['7','8','9','10','11','12'], 11],
+];
+
+async function seedSubjects() {
+  for (const [code, name, desc, grades, order] of SUBJECT_ROWS) {
+    await pool.query(
+      `INSERT INTO subjects (subject_code, subject_name, description, grade_range, ability_levels, is_active, display_order)
+       VALUES ($1, $2, $3, $4::jsonb, '["优秀","良好","合格","待提高"]'::jsonb, true, $5)
+       ON CONFLICT (subject_code) DO UPDATE SET subject_name = EXCLUDED.subject_name, is_active = true, display_order = EXCLUDED.display_order`,
+      [code, name, desc, JSON.stringify(grades), order]
+    );
+  }
+  console.log('✓ 科目配置：' + SUBJECT_ROWS.length + ' 个科目（2022 课程方案）');
+}
+
+// ============================================================================
 // 题库定义
 // 格式: { subject, grade, type, content, options?, correct, explanation, difficulty, level, tags }
 // correct: single='A' | multiple=['A','C'] | true_false='true'|'false' | blank='60|六十' | essay='参考答案'
@@ -697,6 +727,7 @@ async function verify() {
 async function main() {
   console.log('开始重建演示数据…\n');
   await clean();
+  await seedSubjects();
   const idMap = await seedQuestions();
   await seedActivities(idMap);
   await seedWorkflows(idMap);
