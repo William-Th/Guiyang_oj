@@ -202,15 +202,15 @@ const WrongQuestionsPage: React.FC = () => {
     }
 
     return (
-      <Space className="wrong-question-card__actions" wrap>
-        <Button type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(question)}>
+      <Space className="wrong-question-card__actions" wrap size={4}>
+        <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={() => openRedo(question)}>
           {statusTab === 'mastered' ? '再练一次' : '重新作答'}
         </Button>
         {statusTab === 'active' && (
-          <Button icon={<CheckOutlined />} onClick={() => handleMastered(question)}>标记掌握</Button>
+          <Button size="small" icon={<CheckOutlined />} onClick={() => handleMastered(question)}>标记掌握</Button>
         )}
         {statusTab === 'active' && (
-          <Button danger icon={<DeleteOutlined />} onClick={() => handleRemove(question)}>移除</Button>
+          <Button size="small" danger type="text" icon={<DeleteOutlined />} onClick={() => handleRemove(question)}>移除</Button>
         )}
       </Space>
     );
@@ -240,7 +240,7 @@ const WrongQuestionsPage: React.FC = () => {
     },
     {
       title: '操作',
-      width: 320,
+      width: 285,
       render: (_: any, r: WrongQuestion) => renderActions(r),
     },
   ];

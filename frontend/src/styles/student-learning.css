@@ -1013,9 +1013,13 @@
   border-top: 1px solid rgba(2, 132, 199, 0.12);
 }
 
-.wrong-question-card__actions .ant-btn {
-  min-width: 44px;
-  min-height: 44px;
+/* 错题表格操作按钮：紧凑尺寸（覆盖全站主题的 44px 最小高度，仅桌面列表） */
+.wrong-questions-page .ant-table .wrong-question-card__actions .ant-btn {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
 }
 
 .wrong-question-redo-modal .ant-modal-content {
@@ -1315,6 +1319,13 @@
     grid-template-columns: repeat(3, 1fr);
     margin-top: var(--bohe-space-3);
   }
+
+  /* 移动端卡片按钮保留 44px 触控目标 */
+  .wrong-question-card__actions .ant-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
 
   .wrong-question-redo-modal .ant-modal-body {
     max-height: 64vh;
