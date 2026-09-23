@@ -68,6 +68,18 @@ const MATH4 = { subject: '数学', grade: '四年级' };
 const MATH5 = { subject: '数学', grade: '五年级' };
 const IT3 = { subject: '信息科技', grade: '三年级' };
 
+// 各科目/题型的能力标签（写入 question_drafts.abilities，供数据分析视图聚合）
+const ABILITY_BY_SUBJECT_TYPE = {
+  '数学': {
+    single: ['运算能力'], true_false: ['数感'], multiple: ['逻辑推理'],
+    blank: ['运算能力'], essay: ['应用实践'],
+  },
+  '信息科技': {
+    single: ['信息意识'], true_false: ['信息安全意识'], multiple: ['数字素养'],
+    blank: ['基本操作'], essay: ['问题解决'],
+  },
+};
+
 const QUESTIONS = [
   // ---------- 数学三年级 · 单选 ----------
   ...[
@@ -423,8 +435,9 @@ async function seedQuestions() {
     const draft = await pool.query(
       `INSERT INTO question_drafts
         (type, subject, grade, content, options, correct_answer, explanation,
-         difficulty, level, suggested_score, tags, created_by, is_active)
-       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, $10, $11::text[], $12, true)
+         difficulty, level, suggested_score, abilities, tags, created_by, is_active)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, $10,
+         $11::text[], $12::text[], $13, true)
        RETURNING id`,
       [
         q.type, q.subject, q.grade, q.content,
@@ -434,6 +447,9 @@ async function seedQuestions() {
         q.difficulty || 'medium',
         q.level || 'L2',
         10,
+        q.abilities
+          || (ABILITY_BY_SUBJECT_TYPE[q.subject] && ABILITY_BY_SUBJECT_TYPE[q.subject][q.type])
+          || [],
         q.tags || [],
         q.creator || TEACHER_YY_PS_MATH,
       ]
@@ -700,6 +716,86 @@ async function seedWorkflows(idMap) {
   console.log('✓ 教学班：2 个已批准教学班（数学/信息科技，各含任课教师、3 名学生与关联活动）');
 }
 
+async function seedAnalytics(idMap) {
+  // 云岩一小两名学生（users.id 33=王明、34=李华）在「基础练习（一）」的历史答卷
+  // 目的：为数据分析视图（v_school_ability_realtime）提供聚合数据源
+  const targetTitle = '【练习】三年级数学基础练习（一）';
+  const activity = await pool.query(
+    `SELECT id, total_score FROM activities WHERE title = $1 AND status = 'published' LIMIT 1`,
+    [targetTitle]
+  );
+  if (activity.rows.length === 0) {
+    console.log('  ⚠ 未找到目标活动，跳过历史答卷生成');
+    return;
+  }
+  const activityId = activity.rows[0].id;
+
+  const aq = await pool.query(
+    `SELECT question_id, score FROM activity_questions WHERE activity_id = $1 ORDER BY order_index`,
+    [activityId]
+  );
+  const questions = aq.rows;
+  if (questions.length === 0) {
+    console.log('  ⚠ 目标活动无题目，跳过历史答卷生成');
+    return;
+  }
+
+  // 每个学生的正确率（影响统计图表的多样性）
+  const students = [
+    { userId: 33, name: '王明', correctRatio: 0.8 },
+    { userId: 34, name: '李华', correctRatio: 0.5 },
+  ];
+
+  for (const stu of students) {
+    const sa = await pool.query(
+      `INSERT INTO student_activities
+        (student_id, activity_id, status, start_time, started_at, submit_time,
+         score, grading_status, attempt_number, ip_address)
+       VALUES ($1, $2, 'graded', CURRENT_TIMESTAMP - INTERVAL '2 days',
+         CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days' + INTERVAL '25 minutes',
+         0, 'pending', 1, '192.168.1.100')
+       RETURNING id`,
+      [stu.userId, activityId]
+    );
+    const saId = sa.rows[0].id;
+
+    let total = 0;
+    let idx = 0;
+    for (const q of questions) {
+      const isEssay = idx >= questions.length - 2; // 最后两题为主观题
+      const isCorrect = !isEssay && (idx % 10) / 10 < stu.correctRatio;
+      const score = isCorrect ? parseFloat(q.score) : isEssay ? parseFloat(q.score) * 0.6 : 0;
+      total += score;
+      await pool.query(
+        `INSERT INTO answers
+          (student_exam_id, question_id, answer, is_correct, score, auto_score,
+           grading_status, graded_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7,
+           CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '2 days',
+           CURRENT_TIMESTAMP - INTERVAL '2 days')`,
+        [
+          saId, q.question_id,
+          isEssay ? '略。学生作答内容。' : isCorrect ? 'A' : 'B',
+          isEssay ? null : isCorrect,
+          score, isEssay ? null : score,
+          isEssay ? 'pending' : 'auto_graded',
+        ]
+      );
+      idx++;
+    }
+
+    // 客观题总分写入，主观题待批（进入教师评卷列表）
+    await pool.query(
+      `UPDATE student_activities
+       SET score = $2, grading_status = 'partial_graded'
+       WHERE id = $1`,
+      [saId, total]
+    );
+    console.log(`  ✓ ${stu.name} 历史答卷：${questions.length} 题，得分 ${total}`);
+  }
+  console.log('✓ 数据分析历史数据：2 份云岩一小学生答卷已生成');
+}
+
 async function verify() {
   const r = await pool.query(`
     SELECT
@@ -731,6 +827,7 @@ async function main() {
   const idMap = await seedQuestions();
   await seedActivities(idMap);
   await seedWorkflows(idMap);
+  await seedAnalytics(idMap);
   await verify();
   await pool.end();
   console.log('\n全部完成。');

@@ -35,6 +35,7 @@ import {
   Cell,
 } from 'recharts';
 import { statisticsApi } from '../../services/api';
+import { SUBJECTS, getAllGrades } from '../../config/subjects';
 
 // 与后端 v_school_ability_realtime 视图字段保持一致
 interface SchoolAbilityStats {
@@ -69,8 +70,9 @@ const DataAnalytics: React.FC = () => {
   const [districtStats, setDistrictStats] = useState<DistrictAbilityStats[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [grades, setGrades] = useState<string[]>([]);
+  // 下拉选项以科目配置为基准（统计数据只做补充），避免无数据时无法筛选
+  const [subjects, setSubjects] = useState<string[]>(SUBJECTS.map(s => s.value));
+  const [grades, setGrades] = useState<string[]>(getAllGrades().map(g => g.value));
   const [viewLevel, setViewLevel] = useState<'school' | 'district'>('school');
   const [hasDistrictAccess, setHasDistrictAccess] = useState(false);
 
@@ -127,8 +129,8 @@ const DataAnalytics: React.FC = () => {
       const uniqueGrades = Array.from(
         new Set<string>(data.map((item: SchoolAbilityStats) => item.grade))
       );
-      setSubjects(uniqueSubjects);
-      setGrades(uniqueGrades);
+      setSubjects(prev => Array.from(new Set([...prev, ...uniqueSubjects])));
+      setGrades(prev => Array.from(new Set([...prev, ...uniqueGrades])));
     }
   };
 
