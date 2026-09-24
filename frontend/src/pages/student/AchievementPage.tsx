@@ -1,21 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  Typography,
-  Row,
-  Col,
-  Tag,
-  Space,
-  Statistic,
-  Tabs,
-  Badge,
-  Empty,
-  Spin,
-  message,
-  Select,
-  Progress,
-  Modal,
-} from 'antd';
+import { Card, Typography, Row, Col, Tag, Space, Statistic, Tabs, Badge, Empty, Spin, Select, Progress, Modal } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   TrophyOutlined,
   StarOutlined,
@@ -29,7 +14,6 @@ import { achievementApi, pointsApi } from '../../services/api';
 import './AchievementPage.css';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 // 稀有度排序权重：数值越大越稀有，排序时越靠前（传说 > 史诗 > 稀有 > 普通）
 const RARITY_ORDER: Record<string, number> = {
@@ -430,52 +414,59 @@ const AchievementPage: React.FC = () => {
       </Card>
 
       {/* 成就展示 */}
-      <Tabs defaultActiveKey="all">
-        <TabPane tab={`全部成就 (${getFilteredAchievements().length})`} key="all">
-          {getFilteredAchievements().length > 0 ? (
-            <Row gutter={[16, 16]}>
-              {getFilteredAchievements().map(achievement =>
-                <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
-                  {renderAchievementCard(
-                    achievement,
-                    isAchievementEarned(achievement.achievement_id)
-                  )}
-                </Col>
-              )}
-            </Row>
-          ) : (
-            <Empty description="暂无成就" />
-          )}
-        </TabPane>
-
-        <TabPane tab={`已获得 (${earnedAchievements.length})`} key="earned">
-          {earnedAchievements.length > 0 ? (
-            <Row gutter={[16, 16]}>
-              {earnedAchievements.map(achievement =>
-                <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
-                  {renderAchievementCard(achievement, true)}
-                </Col>
-              )}
-            </Row>
-          ) : (
-            <Empty description="还没有获得任何成就，继续努力吧！" />
-          )}
-        </TabPane>
-
-        <TabPane tab={`未获得 (${lockedAchievements.length})`} key="locked">
-          {lockedAchievements.length > 0 ? (
-            <Row gutter={[16, 16]}>
-              {lockedAchievements.map(achievement =>
-                <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
-                  {renderAchievementCard(achievement, false)}
-                </Col>
-              )}
-            </Row>
-          ) : (
-            <Empty description="恭喜！你已经获得了所有可见成就！" />
-          )}
-        </TabPane>
-      </Tabs>
+      <Tabs
+        defaultActiveKey="all"
+        items={[
+          {
+            key: 'all',
+            label: `全部成就 (${getFilteredAchievements().length})`,
+            children: getFilteredAchievements().length > 0 ? (
+              <Row gutter={[16, 16]}>
+                {getFilteredAchievements().map(achievement =>
+                  <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
+                    {renderAchievementCard(
+                      achievement,
+                      isAchievementEarned(achievement.achievement_id)
+                    )}
+                  </Col>
+                )}
+              </Row>
+            ) : (
+              <Empty description="暂无成就" />
+            ),
+          },
+          {
+            key: 'earned',
+            label: `已获得 (${earnedAchievements.length})`,
+            children: earnedAchievements.length > 0 ? (
+              <Row gutter={[16, 16]}>
+                {earnedAchievements.map(achievement =>
+                  <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
+                    {renderAchievementCard(achievement, true)}
+                  </Col>
+                )}
+              </Row>
+            ) : (
+              <Empty description="还没有获得任何成就，继续努力吧！" />
+            ),
+          },
+          {
+            key: 'locked',
+            label: `未获得 (${lockedAchievements.length})`,
+            children: lockedAchievements.length > 0 ? (
+              <Row gutter={[16, 16]}>
+                {lockedAchievements.map(achievement =>
+                  <Col xs={24} sm={12} md={6} lg={4} xl={3} key={achievement.achievement_id}>
+                    {renderAchievementCard(achievement, false)}
+                  </Col>
+                )}
+              </Row>
+            ) : (
+              <Empty description="恭喜！你已经获得了所有可见成就！" />
+            ),
+          },
+        ]}
+      />
 
       {/* 成就详情模态框 */}
       {selectedAchievement && (

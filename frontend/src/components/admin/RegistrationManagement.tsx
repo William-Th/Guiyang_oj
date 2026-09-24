@@ -4,21 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Select,
-  message,
-  Modal,
-  Input,
-  Statistic,
-  Row,
-  Col,
-  Typography
-} from 'antd';
+import { Card, Table, Button, Space, Tag, Select, Modal, Input, Statistic, Row, Col, Typography } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   CheckOutlined,
   CloseOutlined,

@@ -2,20 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import { plainTextPreview, stripHtml } from '@/utils/richText';
 import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  message,
-  Input,
-  Select,
-  Upload,
-  Spin,
-  Tooltip,
-} from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Input, Select, Upload, Spin, Tooltip } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   PlusOutlined,
   SearchOutlined,
@@ -169,7 +157,7 @@ const QuestionBankPage: React.FC = () => {
 
   // A1 申请提级（区级题目）
   const handlePromote = async (record: Question) => {
-    Modal.confirm({
+    modal.confirm({
       title: '申请提级到市级题库',
       content: '提交后将由市级管理员审核，审核通过后题目进入市级题库。',
       onOk: async () => {
@@ -228,7 +216,7 @@ const QuestionBankPage: React.FC = () => {
           `导入完成！成功: ${response.data.successful}, 失败: ${response.data.failed}`
         );
         if (response.data.errors.length > 0) {
-          Modal.info({
+          modal.info({
             title: '导入错误详情',
             content: (
               <div style={{ maxHeight: '400px', overflow: 'auto' }}>

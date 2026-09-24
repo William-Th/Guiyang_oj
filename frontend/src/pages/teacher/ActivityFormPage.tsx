@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  message,
-  InputNumber,
-  Spin,
-  DatePicker,
-  Switch,
-  Alert,
-  Divider,
-} from 'antd';
+import { Card, Form, Input, Select, Button, Space, InputNumber, Spin, DatePicker, Switch, Alert, Divider } from 'antd';
+import { message } from '../../lib/feedback';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';

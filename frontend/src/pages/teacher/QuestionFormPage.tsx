@@ -1,24 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Card,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  message,
-  Radio,
-  InputNumber,
-  Spin,
-  Checkbox,
-  Row,
-  Col,
-  Alert,
-  Tag,
-  Divider,
-  Upload,
-  Image,
-} from 'antd';
+import { Card, Form, Input, Select, Button, Space, Radio, InputNumber, Spin, Checkbox, Row, Col, Alert, Tag, Divider, Upload, Image } from 'antd';
+import { message } from '../../lib/feedback';
 import { MinusCircleOutlined, PlusOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { questionBankApi, questionReviewApi, testCaseAPI, questionImageUploadApi, questionGovernanceApi } from '../../services/api';

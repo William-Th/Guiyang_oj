@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Select, Tabs } from 'antd';
+import { Card, Table, Tag, Button, Space, Select, Tabs } from 'antd';
+import { message } from '../../lib/feedback';
 import { EyeOutlined, PlayCircleOutlined, FormOutlined, UnorderedListOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
@@ -110,7 +111,8 @@ const AssessmentCenterPage: React.FC = () => {
   };
 
   const handleStartAssessment = async (assessmentId: number) => {
-    navigate(`/student/activity/${assessmentId}`);
+    // 用类型化路由，顶部导航才能正确高亮「测评中心」
+    navigate(`/student/assessment/${assessmentId}`);
   };
 
   // 跳转结果页，携带来源类型与当前 Tab，便于结果页“返回”回到正确 Tab
@@ -185,7 +187,7 @@ const AssessmentCenterPage: React.FC = () => {
         const gate = getTimeGate(record.start_time, now);
         return (
           <Space size={4} wrap>
-            <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/student/activity/${record.id}`)}>详情</Button>
+            <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/student/assessment/${record.id}`)}>详情</Button>
             {needsRegistration && (
               <Button size="small" type="primary" icon={<FormOutlined />} onClick={() => handleRegisterClick(record)}>报名</Button>
             )}

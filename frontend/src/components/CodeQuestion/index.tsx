@@ -3,22 +3,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Button,
-  Select,
-  Space,
-  Row,
-  Col,
-  Typography,
-  Divider,
-  message,
-  Tabs,
-  Input,
-  Spin,
-  Collapse,
-  Tag,
-} from 'antd';
+import { Card, Button, Select, Space, Row, Col, Typography, Divider, Tabs, Input, Spin, Collapse, Tag } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   PlayCircleOutlined,
   SendOutlined,
@@ -33,7 +19,6 @@ import RichTextViewer from '../common/RichTextViewer';
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
-const { TabPane } = Tabs;
 const { Panel } = Collapse;
 
 export interface SampleTestCase {
@@ -386,83 +371,86 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
         <Divider />
 
         {/* Input/Output tabs */}
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <TabPane
-            tab={<span><PlayCircleOutlined /> Run Result</span>}
-            key="run"
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Text strong>自定义输入:</Text>
-                <TextArea
-                  value={customInput}
-                  onChange={(e) => setCustomInput(e.target.value)}
-                  placeholder="在此输入测试数据..."
-                  rows={6}
-                  style={{ marginTop: 8, fontFamily: 'monospace' }}
-                  disabled={readOnly}
-                />
-              </Col>
-              <Col span={12}>
-                <Text strong>输出:</Text>
-                <div style={{ marginTop: 8 }}>
-                  {running ? (
-                    <div style={{ textAlign: 'center', padding: 20 }}>
-                      <Spin tip="运行中..." />
-                    </div>
-                  ) : runResult ? (
-                    <div>
-                      <Tag color={runResult.status === 'AC' ? 'success' : 'error'}>
-                        {runResult.status}
-                      </Tag>
-                      {runResult.executionTime && (
-                        <Text type="secondary"> ({runResult.executionTime}ms)</Text>
-                      )}
-                      <pre style={{
-                        background: '#f5f5f5',
-                        padding: 8,
-                        borderRadius: 4,
-                        marginTop: 8,
-                        whiteSpace: 'pre-wrap',
-                        minHeight: 100,
-                      }}>
-                        {runResult.output || runResult.error || '(无输出)'}
-                      </pre>
-                      {runResult.stderr && (
-                        <pre style={{
-                          background: '#fff0f0',
-                          padding: 8,
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'run',
+              label: <span><PlayCircleOutlined /> Run Result</span>,
+              children: (
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Text strong>自定义输入:</Text>
+                    <TextArea
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      placeholder="在此输入测试数据..."
+                      rows={6}
+                      style={{ marginTop: 8, fontFamily: 'monospace' }}
+                      disabled={readOnly}
+                    />
+                  </Col>
+                  <Col span={12}>
+                    <Text strong>输出:</Text>
+                    <div style={{ marginTop: 8 }}>
+                      {running ? (
+                        <div style={{ textAlign: 'center', padding: 20 }}>
+                          <Spin tip="运行中..." />
+                        </div>
+                      ) : runResult ? (
+                        <div>
+                          <Tag color={runResult.status === 'AC' ? 'success' : 'error'}>
+                            {runResult.status}
+                          </Tag>
+                          {runResult.executionTime && (
+                            <Text type="secondary"> ({runResult.executionTime}ms)</Text>
+                          )}
+                          <pre style={{
+                            background: '#f5f5f5',
+                            padding: 8,
+                            borderRadius: 4,
+                            marginTop: 8,
+                            whiteSpace: 'pre-wrap',
+                            minHeight: 100,
+                          }}>
+                            {runResult.output || runResult.error || '(无输出)'}
+                          </pre>
+                          {runResult.stderr && (
+                            <pre style={{
+                              background: '#fff0f0',
+                              padding: 8,
+                              borderRadius: 4,
+                              marginTop: 8,
+                              whiteSpace: 'pre-wrap',
+                            }}>
+                              {runResult.stderr}
+                            </pre>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{
+                          background: '#f5f5f5',
+                          padding: 20,
                           borderRadius: 4,
-                          marginTop: 8,
-                          whiteSpace: 'pre-wrap',
+                          textAlign: 'center',
+                          color: '#999',
                         }}>
-                          {runResult.stderr}
-                        </pre>
+                          点击&ldquo;运行&rdquo;按钮测试代码
+                        </div>
                       )}
                     </div>
-                  ) : (
-                    <div style={{
-                      background: '#f5f5f5',
-                      padding: 20,
-                      borderRadius: 4,
-                      textAlign: 'center',
-                      color: '#999',
-                    }}>
-                      点击&ldquo;运行&rdquo;按钮测试代码
-                    </div>
-                  )}
-                </div>
-              </Col>
-            </Row>
-          </TabPane>
-
-          <TabPane
-            tab={<span><SendOutlined /> Submit Result</span>}
-            key="submit"
-          >
-            <JudgeResult result={submitResult} loading={submitting} />
-          </TabPane>
-        </Tabs>
+                  </Col>
+                </Row>
+              ),
+            },
+            {
+              key: 'submit',
+              label: <span><SendOutlined /> Submit Result</span>,
+              children: <JudgeResult result={submitResult} loading={submitting} />,
+            },
+          ]}
+        />
       </Card>
     </div>
   );

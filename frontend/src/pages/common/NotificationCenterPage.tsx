@@ -4,22 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Tabs,
-  List,
-  Typography,
-  Button,
-  Space,
-  Tag,
-  Empty,
-  Modal,
-  message,
-  Checkbox,
-  Popconfirm,
-  Badge,
-  Select
-} from 'antd';
+import { Card, Tabs, List, Typography, Button, Space, Tag, Empty, Modal, Checkbox, Popconfirm, Badge, Select } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   DeleteOutlined,
   CheckOutlined,

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, Avatar, Row, Col, message, Descriptions, Select } from 'antd';
+import { Card, Form, Input, Button, Avatar, Row, Col, Descriptions, Select } from 'antd';
+import { message } from '../lib/feedback';
 import { UserOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';

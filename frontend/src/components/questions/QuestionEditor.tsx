@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  Form, 
-  Input, 
-  Select, 
-  Button, 
-  Space, 
-  InputNumber, 
-  Card, 
-  Tag,
-  message,
-  Divider
-} from 'antd';
+import { Form, Input, Select, Button, Space, InputNumber, Card, Tag, Divider } from 'antd';
+import { message } from '../../lib/feedback';
 import { PlusOutlined, MinusOutlined, EyeOutlined } from '@ant-design/icons';
 import QuestionDisplay from './QuestionDisplay';
 

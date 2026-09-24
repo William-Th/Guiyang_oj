@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Descriptions, Tag, Button, Space, message, Spin, Table, Statistic, Row, Col } from 'antd';
+import { Card, Descriptions, Tag, Button, Space, Spin, Table, Statistic, Row, Col } from 'antd';
+import { message } from '../../lib/feedback';
 import { EditOutlined, BarChartOutlined, TeamOutlined, ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';

@@ -1,18 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  Tabs,
-  Row,
-  Col,
-  Button,
-  Tag,
-  Spin,
-  Empty,
-  Typography,
-  message,
-  Modal,
-  Statistic,
-} from 'antd';
+import { Card, Tabs, Row, Col, Button, Tag, Spin, Empty, Typography, Statistic } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import { ShoppingOutlined, CrownOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { shopApi, pointsApi } from '../../services/api';
 import { EQUIPMENT_CHANGED } from '@/hooks/useEquippedNameColor';
@@ -83,7 +71,7 @@ const ShopPage: React.FC = () => {
   }, []);
 
   const handlePurchase = (item: ShopItem) => {
-    Modal.confirm({
+    modal.confirm({
       title: `购买「${item.name}」`,
       content: `消耗 ${item.price} 积分（当前余额 ${balance}）`,
       onOk: async () => {

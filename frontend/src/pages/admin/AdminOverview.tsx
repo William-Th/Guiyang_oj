@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Spin, message } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin } from 'antd';
+import { message } from '../../lib/feedback';
 import { UserOutlined, FileTextOutlined, TrophyOutlined, TeamOutlined } from '@ant-design/icons';
 import api from '@/services/api';
 

@@ -9,7 +9,7 @@
   --student-violet-50: #faf5ff;
   --student-violet-600: #9333ea;
   --student-ink: #1f2937;
-  --student-muted: #6b7280;
+  --student-muted: #52708f;
   --student-border: rgba(2, 132, 199, 0.18);
   --student-surface: rgba(255, 255, 255, 0.88);
   position: relative;
@@ -108,7 +108,7 @@
 }
 
 .student-home__hero .ant-typography.student-home__hero-copy,
-.student-home__hero p.ant-typography {
+.student-home__hero .ant-typography {
   max-width: 600px;
   margin-bottom: var(--bohe-space-6);
   color: rgba(255, 255, 255, 0.95) !important;
@@ -258,6 +258,11 @@
   align-items: flex-end;
   justify-content: space-between;
   margin-bottom: var(--bohe-space-5);
+}
+
+/* 首页次级小字：统一蓝灰调，不用黑灰 */
+.student-home .ant-typography.ant-typography-secondary {
+  color: var(--student-muted);
 }
 
 .student-section-heading__kicker {
@@ -450,11 +455,14 @@
   grid-template-columns: 224px minmax(0, 1fr);
   gap: var(--bohe-space-6);
   align-items: start;
+  /* clip 不产生滚动容器：父级 overflow: hidden 会让侧边答题卡的 position: sticky 失效 */
+  overflow: clip;
 }
 
+/* 吸顶位置需避开 72px 的全局导航，否则答题卡会被导航盖住 */
 .activity-workspace__sidebar {
   position: sticky;
-  top: var(--bohe-space-6);
+  top: calc(72px + var(--bohe-space-4));
   z-index: 3;
 }
 
@@ -476,7 +484,8 @@
 
 .activity-question-nav.ant-card {
   width: 224px;
-  max-height: calc(100vh - 112px);
+  /* 视口高度 - 吸顶偏移(88px) - 底部留白(24px)，超长时卡片内部滚动 */
+  max-height: calc(100vh - 88px - var(--bohe-space-6));
   overflow: auto;
 }
 
@@ -493,7 +502,7 @@
 }
 
 .activity-question-nav__group {
-  margin-bottom: var(--bohe-space-4);
+  margin-bottom: var(--bohe-space-3);
 }
 
 .activity-question-nav__group-label {
@@ -506,7 +515,7 @@
 .activity-question-nav__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--bohe-space-2);
+  gap: var(--bohe-space-1);
 }
 
 .activity-question-nav__button.ant-btn {
@@ -533,10 +542,40 @@
   box-shadow: 0 6px 16px rgba(14, 165, 233, 0.24);
 }
 
+/* 当前题（未作答）：深青蓝描边 + 浅天蓝底，与整体蓝色系一致 */
 .activity-question-nav__button--current-pending.ant-btn {
-  color: var(--bohe-text-primary);
-  border: 2px solid var(--bohe-warning);
-  background: var(--bohe-warning-bg);
+  color: var(--student-cyan-600);
+  font-weight: 600;
+  border: 2px solid var(--student-cyan-600);
+  background: var(--student-cyan-100);
+}
+
+/* 状态按钮悬停/激活时保持状态色：antd 默认 hover（白底+主题色边框）
+   的选择器优先级更高，会盖掉上面的样式，这里用更高优先级压回 */
+.activity-workspace .activity-question-nav__button--answered.ant-btn:not(:disabled):hover,
+.activity-workspace .activity-question-nav__button--answered.ant-btn:not(:disabled):active,
+.activity-workspace .activity-question-nav__button--answered.ant-btn:not(:disabled):focus-visible {
+  color: var(--bohe-mint-800);
+  border-color: var(--bohe-mint-600);
+  background: var(--bohe-mint-100);
+}
+
+.activity-workspace .activity-question-nav__button--current.ant-btn:not(:disabled):hover,
+.activity-workspace .activity-question-nav__button--current.ant-btn:not(:disabled):active,
+.activity-workspace .activity-question-nav__button--current.ant-btn:not(:disabled):focus-visible {
+  color: #fff;
+  border-color: var(--bohe-mint-600);
+  background: var(--bohe-mint-600);
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.24);
+}
+
+.activity-workspace .activity-question-nav__button--current-pending.ant-btn:not(:disabled):hover,
+.activity-workspace .activity-question-nav__button--current-pending.ant-btn:not(:disabled):active,
+.activity-workspace .activity-question-nav__button--current-pending.ant-btn:not(:disabled):focus-visible {
+  color: var(--student-cyan-600);
+  font-weight: 600;
+  border: 2px solid var(--student-cyan-600);
+  background: var(--student-cyan-100);
 }
 
 .activity-question-nav__summary {
@@ -657,7 +696,8 @@
 .activity-question-card {
   padding: var(--bohe-space-6);
   margin-bottom: var(--bohe-space-5);
-  scroll-margin-top: var(--bohe-space-6);
+  /* 点击答题卡跳转后落点需避开 72px 吸顶导航，保证题目完整可见 */
+  scroll-margin-top: calc(72px + var(--bohe-space-4));
   transition: border-color var(--bohe-transition-base), box-shadow var(--bohe-transition-base);
 }
 
@@ -1075,8 +1115,14 @@
 
   .activity-workspace__sidebar {
     position: sticky;
-    top: 0;
+    /* 避开 72px 全局导航，答题卡横条吸顶可见 */
+    top: 72px;
     z-index: 5;
+  }
+
+  .activity-question-card {
+    /* 跳转落点避开「72px 导航 + 约70px 答题卡横条」两层吸顶 */
+    scroll-margin-top: 160px;
   }
 
   .activity-question-nav.ant-card {
@@ -1192,7 +1238,11 @@
   }
 
   .activity-workspace__sidebar {
-    top: var(--bohe-space-2);
+    top: 64px;
+  }
+
+  .activity-question-card {
+    scroll-margin-top: 148px;
   }
 
   .activity-question-nav.ant-card {

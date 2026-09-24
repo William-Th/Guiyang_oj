@@ -4,19 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Badge,
-  Dropdown,
-  List,
-  Typography,
-  Button,
-  Empty,
-  Spin,
-  Tabs,
-  Tag,
-  Space,
-  message
-} from 'antd';
+import { Badge, Dropdown, List, Typography, Button, Empty, Spin, Tabs, Tag, Space } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   BellOutlined,
   CheckOutlined,
@@ -379,7 +368,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className }) => {
 
   return (
     <Dropdown
-      dropdownRender={() => dropdownContent}
+      popupRender={() => dropdownContent}
       trigger={['click']}
       open={open}
       onOpenChange={setOpen}

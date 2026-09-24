@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Button, Tag, message, Spin, Empty, Space } from 'antd';
+import { Card, Row, Col, Statistic, Table, Button, Tag, Spin, Empty, Space } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   BookOutlined,
   FileTextOutlined,

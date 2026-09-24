@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Select, Modal, Tooltip } from 'antd';
+import { Card, Table, Tag, Button, Space, Select, Tooltip } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   PlusOutlined,
   EditOutlined,
@@ -79,7 +80,7 @@ const TeachingClassList: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: '确定要删除这个教学班吗？此操作不可恢复。',
       okText: '确认',
@@ -99,7 +100,7 @@ const TeachingClassList: React.FC = () => {
   };
 
   const handleSubmitForApproval = async (id: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: '提交审批',
       content: '确定要提交此教学班进行审批吗？提交后将无法修改。',
       okText: '确认提交',
@@ -118,7 +119,7 @@ const TeachingClassList: React.FC = () => {
   };
 
   const handleArchive = async (id: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: '归档教学班',
       content: '确定要归档此教学班吗？归档后将不再显示在列表中。',
       okText: '确认归档',

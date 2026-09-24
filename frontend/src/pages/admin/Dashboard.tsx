@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Tabs, Spin, message } from 'antd';
+import { Card, Row, Col, Statistic, Table, Tabs, Spin } from 'antd';
+import { message } from '../../lib/feedback';
 import { UserOutlined, FileTextOutlined, TrophyOutlined, TeamOutlined, SettingOutlined, BookOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -7,7 +8,6 @@ import UserManagement from './UserManagement';
 import QuestionBankPage from '../teacher/QuestionBankPage';
 import api from '@/services/api';
 
-const { TabPane } = Tabs;
 
 interface DashboardStats {
   totalStudents: number;
@@ -145,48 +145,60 @@ const AdminDashboard: React.FC = () => {
     );
   };
 
+  const tabItems = [
+    {
+      key: 'overview',
+      label: '数据概览',
+      children: renderOverview(),
+    },
+    // 题库管理选项卡 - 教师和管理员可见
+    ...(isTeacherOrAdmin()
+      ? [{
+          key: 'question-bank',
+          label: (
+            <span>
+              <BookOutlined />
+              题库管理
+            </span>
+          ),
+          children: <QuestionBankPage />,
+        }]
+      : []),
+    // 用户管理选项卡 - 仅管理员可见
+    ...(isAdmin()
+      ? [{
+          key: 'users',
+          label: (
+            <span>
+              <TeamOutlined />
+              用户管理
+            </span>
+          ),
+          children: <UserManagement />,
+        }]
+      : []),
+    // 权限管理选项卡 - 仅管理员可见
+    ...(isAdmin()
+      ? [{
+          key: 'permissions',
+          label: (
+            <span>
+              <SettingOutlined />
+              权限管理
+            </span>
+          ),
+          children: (
+            <div>
+              <h2>权限管理</h2>
+              <p>权限管理功能开发中...</p>
+            </div>
+          ),
+        }]
+      : []),
+  ];
+
   return (
-    <Tabs activeKey={activeTab} onChange={setActiveTab}>
-      <TabPane tab="数据概览" key="overview">
-        {renderOverview()}
-      </TabPane>
-      {/* 题库管理选项卡 - 教师和管理员可见 */}
-      {isTeacherOrAdmin() && (
-        <TabPane tab={
-          <span>
-            <BookOutlined />
-            题库管理
-          </span>
-        } key="question-bank">
-          <QuestionBankPage />
-        </TabPane>
-      )}
-      {/* 用户管理选项卡 - 仅管理员可见 */}
-      {isAdmin() && (
-        <TabPane tab={
-          <span>
-            <TeamOutlined />
-            用户管理
-          </span>
-        } key="users">
-          <UserManagement />
-        </TabPane>
-      )}
-      {/* 权限管理选项卡 - 仅管理员可见 */}
-      {isAdmin() && (
-        <TabPane tab={
-          <span>
-            <SettingOutlined />
-            权限管理
-          </span>
-        } key="permissions">
-          <div>
-            <h2>权限管理</h2>
-            <p>权限管理功能开发中...</p>
-          </div>
-        </TabPane>
-      )}
-    </Tabs>
+    <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
   );
 };
 

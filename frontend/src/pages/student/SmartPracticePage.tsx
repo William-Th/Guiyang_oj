@@ -1,23 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Card,
-  Tabs,
-  Button,
-  Select,
-  Space,
-  Tag,
-  List,
-  Empty,
-  Spin,
-  Typography,
-  message,
-  Tooltip,
-  Modal,
-  Input,
-  Alert,
-  Radio,
-  Checkbox,
-} from 'antd';
+import { Card, Tabs, Button, Select, Space, Tag, List, Empty, Spin, Typography, Tooltip, Modal, Input, Alert, Radio, Checkbox } from 'antd';
+import { message } from '../../lib/feedback';
 import { ReloadOutlined, FireOutlined, ThunderboltOutlined, EditOutlined } from '@ant-design/icons';
 import { recommendApi } from '../../services/api';
 import RichTextViewer from '../../components/common/RichTextViewer';

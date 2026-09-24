@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Spin, Select, Modal } from 'antd';
+import { Card, Table, Tag, Button, Space, Spin, Select } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { activityApi } from '../../services/api';
@@ -54,7 +55,7 @@ const AssessmentManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (assessmentId: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: '确定要删除这个活动吗？此操作不可恢复。注意：只能删除未发布的活动。',
       okText: '确认',

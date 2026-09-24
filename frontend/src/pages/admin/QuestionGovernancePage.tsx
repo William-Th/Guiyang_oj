@@ -1,22 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { plainTextPreview } from '@/utils/richText';
-import {
-  Card,
-  Tabs,
-  Table,
-  Tag,
-  Button,
-  Space,
-  Modal,
-  Input,
-  InputNumber,
-  message,
-  Empty,
-  Spin,
-  Typography,
-  Tooltip,
-} from 'antd';
+import { Card, Tabs, Table, Tag, Button, Space, Modal, Input, InputNumber, Empty, Spin, Typography, Tooltip } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import { CheckOutlined, CloseOutlined, ReloadOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { questionGovernanceApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';
@@ -137,7 +123,7 @@ const QuestionGovernancePage: React.FC = () => {
   };
 
   const handleAdminPromote = async (p: Promotion) => {
-    Modal.confirm({
+    modal.confirm({
       title: '主动提级',
       content: '确认将此区级题目直接提级到市级题库？',
       onOk: async () => {

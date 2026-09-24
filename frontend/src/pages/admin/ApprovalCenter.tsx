@@ -1,20 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Tabs,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  Input,
-  message,
-  Select,
-  Descriptions,
-  Timeline,
-  Tooltip,
-  Badge
-} from 'antd';
+import { Card, Tabs, Table, Button, Space, Tag, Modal, Input, Select, Descriptions, Timeline, Tooltip, Badge } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   CheckOutlined,
   CloseOutlined,
@@ -550,7 +536,7 @@ const TeachingClassApproval: React.FC<{ onCountChange: (count: number) => void }
   };
 
   const handleApprove = async (classItem: PendingTeachingClass) => {
-    Modal.confirm({
+    modal.confirm({
       title: '批准教学班',
       icon: <CheckOutlined style={{ color: '#52c41a' }} />,
       content: (

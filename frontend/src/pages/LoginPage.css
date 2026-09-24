@@ -1,14 +1,195 @@
-.login-container {
+/* 登录页：左右分栏大气布局（左品牌区 + 右登录卡片），蓝色渐变与注册页同族 */
+
+.login-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  justify-content: center;
+  padding: 32px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 45%, #38bdf8 100%);
 }
 
-.login-card {
-  width: 450px;
-  box-shadow: 0 8px 32px rgba(2, 132, 199, 0.2);
+/* 背景配饰：光晕 + 漂浮圆环 */
+.login-decor {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.login-decor--glow-1 {
+  width: 560px;
+  height: 560px;
+  left: -180px;
+  top: -200px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 65%);
+}
+
+.login-decor--glow-2 {
+  width: 680px;
+  height: 680px;
+  right: -240px;
+  bottom: -280px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 60%);
+}
+
+.login-decor--ring {
+  width: 240px;
+  height: 240px;
+  right: 10%;
+  top: 8%;
+  border: 2px dashed rgba(255, 255, 255, 0.22);
+  animation: login-float 9s ease-in-out infinite;
+}
+
+.login-decor--ring-sm {
+  width: 120px;
+  height: 120px;
+  left: 8%;
+  bottom: 12%;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  animation: login-float 7s ease-in-out infinite reverse;
+}
+
+@keyframes login-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
+.login-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 88px;
+}
+
+/* 左侧品牌区 */
+.login-brand {
+  max-width: 400px;
+  color: #fff;
+}
+
+.login-brand__mark {
+  display: inline-flex;
+  width: 84px;
+  height: 84px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 36px rgba(3, 60, 90, 0.3);
+}
+
+.login-brand__mark img {
+  display: block;
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+}
+
+.login-brand__title {
+  margin: 22px 0 10px;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 14px rgba(3, 60, 90, 0.28);
+}
+
+.login-brand__slogan {
+  margin: 0 0 40px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 16px;
+  letter-spacing: 0.2em;
+}
+
+.login-brand__features {
+  display: grid;
+  gap: 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.login-brand__features li {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.login-brand__icon {
+  display: inline-flex;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(6px);
+}
+
+.login-brand__features strong {
+  display: block;
+  font-size: 15px;
+}
+
+.login-brand__features span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+}
+
+/* 右侧登录卡片 */
+.login-card {
+  width: 420px;
   border: none;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(3, 60, 90, 0.35);
+}
+
+.login-card .ant-card-body {
+  padding: 32px 36px 24px;
+}
+
+.login-card__header {
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.login-card__header h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.login-card__header p {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+@media (max-width: 960px) {
+  .login-brand {
+    display: none;
+  }
+
+  .login-panel {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .login-decor--ring,
+  .login-decor--ring-sm {
+    display: none;
+  }
 }

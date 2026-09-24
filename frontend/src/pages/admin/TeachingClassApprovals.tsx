@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  message,
-  Modal,
-  Input,
-  Tag,
-  Tooltip,
-  Descriptions
-} from 'antd';
+import { Card, Table, Button, Space, Modal, Input, Tag, Tooltip, Descriptions } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   CheckOutlined,
   CloseOutlined,
@@ -73,7 +63,7 @@ const TeachingClassApprovals: React.FC = () => {
   };
 
   const handleApprove = async (classItem: PendingTeachingClass) => {
-    Modal.confirm({
+    modal.confirm({
       title: '批准教学班',
       icon: <CheckOutlined style={{ color: '#52c41a' }} />,
       content: (

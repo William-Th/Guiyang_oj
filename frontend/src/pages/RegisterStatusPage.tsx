@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Descriptions, Badge, Button, Spin, Alert, Typography, Space, Input, message } from 'antd';
+import { Card, Descriptions, Badge, Button, Spin, Alert, Typography, Space, Input } from 'antd';
+import { message } from '../lib/feedback';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import api from '@/services/api';

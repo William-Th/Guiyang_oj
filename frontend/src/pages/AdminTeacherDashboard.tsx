@@ -14,8 +14,6 @@ import QuestionBankPage from './teacher/QuestionBankPage';
 import UserManagement from './admin/UserManagement';
 import PermissionManagement from './admin/PermissionManagement';
 
-const { TabPane } = Tabs;
-
 const AdminTeacherDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { user } = useSelector((state: RootState) => state.auth);
@@ -35,82 +33,84 @@ const AdminTeacherDashboard: React.FC = () => {
   // 如果是普通教师，显示教师工作台
   if (isTeacher()) {
     return (
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane
-          tab={
-            <span>
-              <DashboardOutlined />
-              工作台
-            </span>
-          }
-          key="overview"
-        >
-          <TeacherDashboard />
-        </TabPane>
-        <TabPane
-          tab={
-            <span>
-              <BookOutlined />
-              题库管理
-            </span>
-          }
-          key="question-bank"
-        >
-          <QuestionBankPage />
-        </TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'overview',
+            label: (
+              <span>
+                <DashboardOutlined />
+                工作台
+              </span>
+            ),
+            children: <TeacherDashboard />,
+          },
+          {
+            key: 'question-bank',
+            label: (
+              <span>
+                <BookOutlined />
+                题库管理
+              </span>
+            ),
+            children: <QuestionBankPage />,
+          },
+        ]}
+      />
     );
   }
 
   // 如果是管理员，显示完整的管理后台
   if (isAdmin()) {
     return (
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane
-          tab={
-            <span>
-              <DashboardOutlined />
-              数据概览
-            </span>
-          }
-          key="overview"
-        >
-          <AdminOverview />
-        </TabPane>
-        <TabPane
-          tab={
-            <span>
-              <BookOutlined />
-              题库管理
-            </span>
-          }
-          key="question-bank"
-        >
-          <QuestionBankPage />
-        </TabPane>
-        <TabPane
-          tab={
-            <span>
-              <TeamOutlined />
-              用户管理
-            </span>
-          }
-          key="users"
-        >
-          <UserManagement />
-        </TabPane>
-        <TabPane
-          tab={
-            <span>
-              <SettingOutlined />
-              权限管理
-            </span>
-          }
-          key="permissions"
-        >
-          <PermissionManagement />
-        </TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'overview',
+            label: (
+              <span>
+                <DashboardOutlined />
+                数据概览
+              </span>
+            ),
+            children: <AdminOverview />,
+          },
+          {
+            key: 'question-bank',
+            label: (
+              <span>
+                <BookOutlined />
+                题库管理
+              </span>
+            ),
+            children: <QuestionBankPage />,
+          },
+          {
+            key: 'users',
+            label: (
+              <span>
+                <TeamOutlined />
+                用户管理
+              </span>
+            ),
+            children: <UserManagement />,
+          },
+          {
+            key: 'permissions',
+            label: (
+              <span>
+                <SettingOutlined />
+                权限管理
+              </span>
+            ),
+            children: <PermissionManagement />,
+          },
+        ]}
+      />
     );
   }
 

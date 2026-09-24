@@ -4,20 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Tag,
-  Button,
-  Space,
-  message,
-  Spin,
-  Modal,
-  Input,
-  Empty,
-  Tooltip,
-  Typography
-} from 'antd';
+import { Card, Table, Tag, Button, Space, Spin, Modal, Input, Empty, Tooltip, Typography } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   ClockCircleOutlined,
   EnvironmentOutlined,
@@ -133,7 +121,7 @@ const MyRegistrationsPage: React.FC = () => {
         <Button
           type="link"
           style={{ padding: 0 }}
-          onClick={() => navigate(`/student/activity/${record.activity_id}`)}
+          onClick={() => navigate(`/student/assessment/${record.activity_id}`)}
         >
           {title}
         </Button>
@@ -198,7 +186,7 @@ const MyRegistrationsPage: React.FC = () => {
               <Button
                 size="small"
                 type="primary"
-                onClick={() => navigate(`/student/activity/${record.activity_id}`)}
+                onClick={() => navigate(`/student/assessment/${record.activity_id}`)}
               >
                 进入测评
               </Button>
@@ -215,7 +203,7 @@ const MyRegistrationsPage: React.FC = () => {
             {!canCancel && !canTake && (
               <Button
                 size="small"
-                onClick={() => navigate(`/student/activity/${record.activity_id}`)}
+                onClick={() => navigate(`/student/assessment/${record.activity_id}`)}
               >
                 查看详情
               </Button>

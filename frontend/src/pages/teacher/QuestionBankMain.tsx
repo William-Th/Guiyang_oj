@@ -38,67 +38,63 @@ const QuestionBankMain: React.FC = () => {
 
   return (
     <div>
-      <Tabs activeKey={activeTab} onChange={handleTabChange} size="large">
-        <Tabs.TabPane
-          tab={
-            <span>
-              <BookOutlined />
-              题库浏览
-            </span>
-          }
-          key="bank"
-        >
-          <QuestionBankPage />
-        </Tabs.TabPane>
-
-        <Tabs.TabPane
-          tab={
-            <span>
-              <InboxOutlined />
-              我的草稿
-            </span>
-          }
-          key="drafts"
-        >
-          <DraftsPage onEdit={handleEdit} isActive={activeTab === 'drafts'} />
-        </Tabs.TabPane>
-
-        <Tabs.TabPane
-          tab={
-            <span>
-              <FileAddOutlined />
-              新建题目
-            </span>
-          }
-          key="create"
-        >
-          <QuestionFormPage editQuestionId={editQuestionId} onSuccess={handleSuccess} />
-        </Tabs.TabPane>
-
-        <Tabs.TabPane
-          tab={
-            <span>
-              <SendOutlined />
-              我的提交
-            </span>
-          }
-          key="submissions"
-        >
-          <MySubmissionsPage onBackToDrafts={() => handleTabChange('drafts')} />
-        </Tabs.TabPane>
-
-        <Tabs.TabPane
-          tab={
-            <span>
-              <AuditOutlined />
-              待我审核
-            </span>
-          }
-          key="review"
-        >
-          <ReviewPage />
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        size="large"
+        items={[
+          {
+            key: 'bank',
+            label: (
+              <span>
+                <BookOutlined />
+                题库浏览
+              </span>
+            ),
+            children: <QuestionBankPage />,
+          },
+          {
+            key: 'drafts',
+            label: (
+              <span>
+                <InboxOutlined />
+                我的草稿
+              </span>
+            ),
+            children: <DraftsPage onEdit={handleEdit} isActive={activeTab === 'drafts'} />,
+          },
+          {
+            key: 'create',
+            label: (
+              <span>
+                <FileAddOutlined />
+                新建题目
+              </span>
+            ),
+            children: <QuestionFormPage editQuestionId={editQuestionId} onSuccess={handleSuccess} />,
+          },
+          {
+            key: 'submissions',
+            label: (
+              <span>
+                <SendOutlined />
+                我的提交
+              </span>
+            ),
+            children: <MySubmissionsPage onBackToDrafts={() => handleTabChange('drafts')} />,
+          },
+          {
+            key: 'review',
+            label: (
+              <span>
+                <AuditOutlined />
+                待我审核
+              </span>
+            ),
+            children: <ReviewPage />,
+          },
+        ]}
+      />
     </div>
   );
 };

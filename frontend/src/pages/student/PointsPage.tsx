@@ -1,19 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  Typography,
-  Row,
-  Col,
-  Statistic,
-  Table,
-  Tag,
-  Space,
-  Tabs,
-  Empty,
-  Spin,
-  message,
-  Select,
-} from 'antd';
+import { Card, Typography, Row, Col, Statistic, Table, Tag, Space, Tabs, Empty, Spin, Select } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   StarOutlined,
   RiseOutlined,
@@ -33,7 +20,6 @@ import type { ColumnsType } from 'antd/es/table';
 import './PointsPage.css';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 interface PointsAccount {
   student_id: number;
@@ -364,62 +350,72 @@ const PointsPage: React.FC = () => {
       </Row>
 
       {/* 交易记录和排行榜 */}
-      <Tabs defaultActiveKey="transactions">
-        <TabPane tab="交易记录" key="transactions">
-          <Card
-            title="积分交易记录"
-            extra={
-              <Select
-                style={{ width: 120 }}
-                value={transactionType}
-                onChange={(value) => {
-                  setTransactionType(value);
-                  setPagination({ ...pagination, current: 1 });
-                }}
-              >
-                <Select.Option value="all">全部记录</Select.Option>
-                <Select.Option value="earn">获得记录</Select.Option>
-                <Select.Option value="spend">消费记录</Select.Option>
-              </Select>
-            }
-          >
-            {transactions.length > 0 ? (
-              <Table
-                columns={transactionColumns}
-                dataSource={transactions}
-                rowKey="transaction_id"
-                loading={loading}
-                pagination={{
-                  ...pagination,
-                  onChange: (page) => setPagination({ ...pagination, current: page }),
-                  showSizeChanger: false,
-                  showTotal: (total) => `共 ${total} 条记录`,
-                }}
-              />
-            ) : (
-              <Empty description="暂无交易记录" />
-            )}
-          </Card>
-        </TabPane>
-
-        <TabPane tab="积分排行" key="leaderboard">
-          <Card title="积分排行榜" extra={<GiftOutlined style={{ fontSize: 20 }} />}>
-            {leaderboard.length > 0 ? (
-              <Table
-                columns={leaderboardColumns}
-                dataSource={leaderboard}
-                rowKey="student_id"
-                pagination={false}
-                rowClassName={(record) =>
-                  record.student_id === pointsAccount?.student_id ? 'current-student-row' : ''
+      <Tabs
+        defaultActiveKey="transactions"
+        items={[
+          {
+            key: 'transactions',
+            label: '交易记录',
+            children: (
+              <Card
+                title="积分交易记录"
+                extra={
+                  <Select
+                    style={{ width: 120 }}
+                    value={transactionType}
+                    onChange={(value) => {
+                      setTransactionType(value);
+                      setPagination({ ...pagination, current: 1 });
+                    }}
+                  >
+                    <Select.Option value="all">全部记录</Select.Option>
+                    <Select.Option value="earn">获得记录</Select.Option>
+                    <Select.Option value="spend">消费记录</Select.Option>
+                  </Select>
                 }
-              />
-            ) : (
-              <Empty description="暂无排行数据" />
-            )}
-          </Card>
-        </TabPane>
-      </Tabs>
+              >
+                {transactions.length > 0 ? (
+                  <Table
+                    columns={transactionColumns}
+                    dataSource={transactions}
+                    rowKey="transaction_id"
+                    loading={loading}
+                    pagination={{
+                      ...pagination,
+                      onChange: (page) => setPagination({ ...pagination, current: page }),
+                      showSizeChanger: false,
+                      showTotal: (total) => `共 ${total} 条记录`,
+                    }}
+                  />
+                ) : (
+                  <Empty description="暂无交易记录" />
+                )}
+              </Card>
+            ),
+          },
+          {
+            key: 'leaderboard',
+            label: '积分排行',
+            children: (
+              <Card title="积分排行榜" extra={<GiftOutlined style={{ fontSize: 20 }} />}>
+                {leaderboard.length > 0 ? (
+                  <Table
+                    columns={leaderboardColumns}
+                    dataSource={leaderboard}
+                    rowKey="student_id"
+                    pagination={false}
+                    rowClassName={(record) =>
+                      record.student_id === pointsAccount?.student_id ? 'current-student-row' : ''
+                    }
+                  />
+                ) : (
+                  <Empty description="暂无排行数据" />
+                )}
+              </Card>
+            ),
+          },
+        ]}
+      />
 
       {pointsAccount && (
         <Card style={{ marginTop: 16 }} size="small">

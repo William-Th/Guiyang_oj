@@ -1,26 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  message,
-  Select,
-  Input,
-  Row,
-  Col,
-  Statistic,
-  Radio,
-  Divider,
-  Empty,
-  Spin,
-  Tooltip,
-  Descriptions,
-  Image,
-} from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Select, Input, Row, Col, Statistic, Radio, Divider, Empty, Spin, Tooltip, Descriptions, Image } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   EyeOutlined,
   CheckCircleOutlined,

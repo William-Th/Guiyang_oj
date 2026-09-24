@@ -182,7 +182,14 @@ const StudentHomePage: React.FC = () => {
 
   const openActivity = (item: RecentActivity) => {
     const completed = item.status === 'graded' || item.status === 'submitted';
-    navigate(completed ? `/student/results/${item.id}` : `/student/activity/${item.id}`);
+    // 测评/练习用类型化路由，顶部导航才能正确高亮对应菜单
+    if (completed) {
+      navigate(`/student/results/${item.id}`, { state: { from: item.type === 'assessment' ? 'assessment' : 'practice' } });
+    } else if (item.type === 'assessment') {
+      navigate(`/student/assessment/${item.id}`);
+    } else {
+      navigate(`/student/practice/${item.id}`);
+    }
   };
 
   const statItems = [

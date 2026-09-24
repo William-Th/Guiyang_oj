@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 import { plainTextPreview, stripHtml } from '@/utils/richText';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  message,
-  Select,
-  Tooltip,
-  Popconfirm,
-  Empty,
-  Spin,
-} from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Select, Tooltip, Popconfirm, Empty, Spin } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   EditOutlined,
   DeleteOutlined,

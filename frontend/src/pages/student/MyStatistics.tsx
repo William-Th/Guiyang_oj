@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Row,
-  Col,
-  Statistic,
-  Spin,
-  message,
-  Tabs,
-  Select,
-  Empty,
-} from 'antd';
+import { Card, Row, Col, Statistic, Spin, Tabs, Select, Empty } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   TrophyOutlined,
   CheckCircleOutlined,
@@ -273,8 +264,13 @@ const MyStatistics: React.FC = () => {
         </Card>
 
         {/* Charts */}
-        <Tabs defaultActiveKey="abilities">
-          <Tabs.TabPane tab="能力雷达图" key="abilities">
+        <Tabs
+          defaultActiveKey="abilities"
+          items={[
+            {
+              key: 'abilities',
+              label: '能力雷达图',
+              children: (
             <Card>
               {!selectedSubject ? (
                 <Empty description="请先选择科目查看能力分析" />
@@ -343,9 +339,13 @@ const MyStatistics: React.FC = () => {
                 <Empty description="暂无能力统计数据" />
               )}
             </Card>
-          </Tabs.TabPane>
-
-          <Tabs.TabPane tab="知识点掌握度" key="knowledge">
+              ),
+            },
+            {
+              key: 'knowledge',
+              label: '知识点掌握度',
+              children: (
+                <>
             <Card>
               {!selectedSubject ? (
                 <Empty description="请先选择科目查看知识点掌握" />
@@ -442,8 +442,11 @@ const MyStatistics: React.FC = () => {
               )}
             </Card>
             )}
-          </Tabs.TabPane>
-        </Tabs>
+                </>
+              ),
+            },
+          ]}
+        />
       </Spin>
     </div>
   );

@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Tag,
-  Button,
-  Space,
-  Spin,
-  Empty,
-  message,
-  Select,
-  Statistic,
-  Row,
-  Col,
-} from 'antd';
+import { Card, Table, Tag, Button, Space, Spin, Empty, Select, Statistic, Row, Col } from 'antd';
+import { message } from '../lib/feedback';
 import {
   TrophyOutlined,
   CheckCircleOutlined,

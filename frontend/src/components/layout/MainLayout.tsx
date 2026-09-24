@@ -281,15 +281,23 @@ const MainLayout: React.FC = () => {
   // 获取当前选中的菜单项（学生）
   const getStudentSelectedKey = () => {
     const path = location.pathname;
-    if (path.includes('/student/practice')) return '/student/practice';
-    if (path.includes('/student/smart-practice')) return '/student/smart-practice';
-    if (path.includes('/student/assessments')) return '/student/assessments';
-    if (path.includes('/student/wrong-questions')) return '/student/wrong-questions';
-    if (path.includes('/student/statistics')) return '/student/statistics';
-    if (path.includes('/student/achievements')) return '/student/achievements';
-    if (path.includes('/student/points')) return '/student/points';
-    if (path.includes('/student/shop')) return '/student/shop';
-    if (path === '/') return '/';
+    // 答题/结果页是详情路由（/student/assessment/:id 等），归入对应的一级菜单
+    if (path.startsWith('/student/assessment')) return '/student/assessments';
+    if (path.startsWith('/student/results')) {
+      // 结果页来源（练习/测评）由跳转方通过 location.state 传入，刷新后回退练习中心
+      return (location.state as { from?: string } | null)?.from === 'assessment'
+        ? '/student/assessments'
+        : '/student/practice';
+    }
+    if (path.startsWith('/student/practice')) return '/student/practice';
+    // 共享答题入口（如通知跳转 /student/activity/:id），默认练习中心
+    if (path.startsWith('/student/activity')) return '/student/practice';
+    if (path.startsWith('/student/smart-practice')) return '/student/smart-practice';
+    if (path.startsWith('/student/wrong-questions')) return '/student/wrong-questions';
+    if (path.startsWith('/student/statistics')) return '/student/statistics';
+    if (path.startsWith('/student/achievements')) return '/student/achievements';
+    if (path.startsWith('/student/points')) return '/student/points';
+    if (path.startsWith('/student/shop')) return '/student/shop';
     return '/';
   };
 
@@ -322,10 +330,7 @@ const MainLayout: React.FC = () => {
 
         <div className="app-brand" aria-label="贵阳市小学生测评平台">
           <span className="app-brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
-              <path d="M10.6 16.2 V21.2 C10.6 23.2 12.9 24.7 16 24.7 C19.1 24.7 21.4 23.2 21.4 21.2 V16.2 Z" />
-              <path d="M16 7.3 L28.8 13 L16 18.7 L3.2 13 Z" />
-            </svg>
+            <img src="/logo.png" alt="" />
           </span>
           <span className="app-brand-name">贵阳市小学生测评平台</span>
         </div>

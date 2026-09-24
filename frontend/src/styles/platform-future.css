@@ -5,7 +5,8 @@
 
 .app-shell {
   min-height: 100vh;
-  overflow-x: hidden;
+  /* clip 不产生滚动容器：hidden 会把 overflow-y 计算成 auto，破坏后代 position: sticky（答题卡等） */
+  overflow-x: clip;
   color: var(--bohe-text-primary);
   background:
     radial-gradient(circle at 8% 8%, rgba(56, 189, 248, 0.18), transparent 28%),
@@ -64,9 +65,11 @@
   box-shadow: 0 8px 24px rgba(12, 74, 110, 0.2);
 }
 
-.app-brand-mark svg {
-  width: 30px;
-  height: 30px;
+.app-brand-mark img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
 }
 
 /* 评卷详情页顶部摘要条 */

@@ -1,27 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { optionText } from '../../components/questions/questionOption';
-import {
-  Card,
-  Form,
-  InputNumber,
-  Input,
-  Button,
-  Space,
-  message,
-  Spin,
-  Tag,
-  Divider,
-  Typography,
-  Alert,
-  Row,
-  Col,
-  Progress,
-  Affix,
-  Tooltip,
-  Modal,
-  Image,
-  Segmented,
-} from 'antd';
+import { Card, Form, InputNumber, Input, Button, Space, Spin, Tag, Divider, Typography, Alert, Row, Col, Progress, Affix, Tooltip, Image, Segmented } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   SaveOutlined,
   CheckCircleOutlined,
@@ -431,7 +411,7 @@ const GradingDetailPage: React.FC = () => {
 
         // Only restore if backup is less than 24 hours old
         if (timeDiff < 24 * 60 * 60 * 1000) {
-          Modal.confirm({
+          modal.confirm({
             title: '发现未保存的评分数据',
             content: `发现于 ${backupDate.toLocaleString()} 的未保存评分数据，是否恢复？`,
             okText: '恢复',

@@ -1,21 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { plainTextPreview } from '@/utils/richText';
-import {
-  Card,
-  Table,
-  Tag,
-  Button,
-  Select,
-  Space,
-  Modal,
-  Input,
-  message,
-  Empty,
-  Spin,
-  Typography,
-  Tooltip,
-} from 'antd';
+import { Card, Table, Tag, Button, Select, Space, Modal, Input, Empty, Spin, Typography, Tooltip } from 'antd';
+import { message } from '../../lib/feedback';
 import { ReloadOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { questionGovernanceApi } from '../../services/api';
 import type { ColumnsType } from 'antd/es/table';

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Spin, Select, Statistic, Row, Col, DatePicker, Input, Modal } from 'antd';
+import { Card, Table, Tag, Button, Space, Spin, Select, Statistic, Row, Col, DatePicker, Input } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   EyeOutlined,
   CheckCircleOutlined,
@@ -134,7 +135,7 @@ const GradingListPage: React.FC = () => {
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
           return loadPendingGrading(retryCount + 1);
         } else {
-          Modal.error({
+          modal.error({
             title: '网络连接失败',
             content: '请检查网络后点击重新加载',
             okText: '重新加载',

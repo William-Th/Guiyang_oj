@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, message, Select, Tabs, Grid } from 'antd';
+import { Card, Table, Tag, Button, Space, Select, Tabs, Grid } from 'antd';
+import { message } from '../../lib/feedback';
 import { PlayCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { activityApi } from '../../services/api';
@@ -117,7 +118,8 @@ const PracticeCenterPage: React.FC = () => {
   };
 
   const handleStartPractice = async (practiceId: number) => {
-    navigate(`/student/activity/${practiceId}`);
+    // 用类型化路由，顶部导航才能正确高亮「练习中心」
+    navigate(`/student/practice/${practiceId}`);
   };
 
   const formatDateTime = (dateTimeString: string) => {

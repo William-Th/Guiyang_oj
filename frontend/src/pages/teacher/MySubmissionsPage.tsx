@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  message,
-  Tooltip,
-  Empty,
-  Spin,
-  Timeline,
-  Select,
-  Alert,
-} from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Tooltip, Empty, Spin, Timeline, Select, Alert } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   ClockCircleOutlined,
   CheckCircleOutlined,

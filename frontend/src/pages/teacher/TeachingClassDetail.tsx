@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Descriptions,
-  Tag,
-  Button,
-  Space,
-  message,
-  Spin,
-  Tabs,
-  Table,
-  Timeline,
-  Empty,
-  Modal
-} from 'antd';
+import { Card, Descriptions, Tag, Button, Space, Spin, Tabs, Table, Timeline, Empty } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -132,7 +120,7 @@ const TeachingClassDetailPage: React.FC = () => {
   };
 
   const handleSubmitForApproval = async () => {
-    Modal.confirm({
+    modal.confirm({
       title: '提交审批',
       content: '确定要提交此教学班进行审批吗？提交后将无法修改。',
       okText: '确认提交',
@@ -150,7 +138,7 @@ const TeachingClassDetailPage: React.FC = () => {
   };
 
   const handleRemoveActivity = async (activityId: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: '移除活动',
       content: '确定要从教学班中移除此活动吗？',
       okText: '确认',

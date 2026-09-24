@@ -1,23 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { parseOption } from '../../components/questions/questionOption';
-import {
-  Card,
-  Form,
-  Radio,
-  Checkbox,
-  Input,
-  Button,
-  Space,
-  Alert,
-  Spin,
-  message,
-  Modal,
-  Typography,
-  Divider,
-  Progress,
-  Image,
-  Dropdown,
-} from 'antd';
+import { Card, Form, Radio, Checkbox, Input, Button, Space, Alert, Spin, Typography, Divider, Progress, Image, Dropdown } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
@@ -193,8 +177,12 @@ const TakeActivityPage: React.FC = () => {
   const activityId = id ? parseInt(id) : undefined;
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasStartedRef = useRef(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const manualClickRef = useRef<number | null>(null); // 跟踪手动点击的题目索引
+  // 答题卡手动跳转的目标题索引；非 null 期间锁定高亮，直到目标题滚到落点
+  const manualClickRef = useRef<number | null>(null);
+  const scrollSettleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const manualNavAbortRef = useRef<AbortController | null>(null);
+  const scrollHandlerRef = useRef<(() => void) | null>(null);
+  const loadingActivityRef = useRef<number | null>(null);
 
   // Calculate deadline for countdown timer
   const getDeadline = (): string | null => {
@@ -234,53 +222,77 @@ const TakeActivityPage: React.FC = () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
     };
   }, [activityId]);
+
+  // 探测线算法定位当前题：取顶边越过探测线的最后一题。
+  // 与点击跳转的 block:'start' 落点一致（题目落到 scroll-margin-top 处），
+  // 修复旧的「离视口中央最近」算法在点击跳转后高亮错位的问题。
+  const updateCurrentQuestion = useCallback(() => {
+    // 手动跳转滚动进行中，锁定高亮不被中途更新
+    if (manualClickRef.current !== null) return;
+
+    // 探测线需大于题目卡 scroll-margin-top（桌面 88px / 窄屏 160px），否则跳转后命不中目标题
+    const compact = window.matchMedia('(max-width: 1024px)').matches;
+    const probe = compact ? 176 : 120;
+    let current = 0;
+    let lastNonNull = 0;
+
+    questionRefs.current.forEach((ref, index) => {
+      if (!ref) return;
+      lastNonNull = index;
+      if (ref.getBoundingClientRect().top <= probe) {
+        current = index;
+      }
+    });
+
+    // 滚动到底部时强制选中最后一题（末题较短、到不了探测线时兜底）
+    const docEl = document.documentElement;
+    if (docEl.scrollHeight - window.innerHeight - window.scrollY <= 2) {
+      current = lastNonNull;
+    }
+
+    setCurrentQuestionIndex(current);
+  }, []);
+
+  // 解除手动锁定；resume=true 时按当前位置恢复自动检测（用户接管/兜底超时）
+  const releaseManualLock = useCallback((resume: boolean) => {
+    manualNavAbortRef.current?.abort();
+    manualNavAbortRef.current = null;
+    if (scrollSettleTimerRef.current) {
+      clearTimeout(scrollSettleTimerRef.current);
+      scrollSettleTimerRef.current = null;
+    }
+    manualClickRef.current = null;
+    if (resume) {
+      updateCurrentQuestion();
+    }
+  }, [updateCurrentQuestion]);
+
+  // 用户滚动输入（滚轮/触摸/按键）→ 立即交还自动检测
+  const handleUserTakeover = useCallback(() => {
+    if (manualClickRef.current === null) return;
+    releaseManualLock(true);
+  }, [releaseManualLock]);
+
+  // 目标题是否已滚到 scroll-margin 落点（±6px）→ 解锁（高亮本就停在目标题上）
+  const checkManualTargetLanded = useCallback(() => {
+    const idx = manualClickRef.current;
+    if (idx === null) return;
+    const ref = questionRefs.current[idx];
+    if (!ref) return;
+    const margin = parseFloat(getComputedStyle(ref).scrollMarginTop) || 88;
+    if (Math.abs(ref.getBoundingClientRect().top - margin) <= 6) {
+      releaseManualLock(false);
+    }
+  }, [releaseManualLock]);
 
   // Setup scroll listener to track current visible question
   useEffect(() => {
     if (!activity || questionRefs.current.length === 0) return;
 
-    // Find which question is currently most visible in viewport
-    const updateCurrentQuestion = () => {
-      // 检查是否在手动点击的保护期内
-      const now = Date.now();
-      const clickTime = manualClickRef.current;
-      if (clickTime !== null && (now - clickTime) < 800) {
-        // 在保护期内，不自动更新
-        return;
-      }
-      // 超过保护期后清除标志
-      if (clickTime !== null) {
-        manualClickRef.current = null;
-      }
-
-      const viewportMiddle = window.innerHeight / 2;
-      let closestIndex = 0;
-      let closestDistance = Infinity;
-
-      questionRefs.current.forEach((ref, index) => {
-        if (!ref) return;
-
-        const rect = ref.getBoundingClientRect();
-        const questionMiddle = rect.top + rect.height / 2;
-        const distance = Math.abs(viewportMiddle - questionMiddle);
-
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestIndex = index;
-        }
-      });
-
-      setCurrentQuestionIndex(closestIndex);
-    };
-
     // Use setTimeout to ensure DOM is fully rendered
     const timer = setTimeout(() => {
-      // 初始化当前题目
       updateCurrentQuestion();
 
       // Add scroll listener with throttling
@@ -293,23 +305,39 @@ const TakeActivityPage: React.FC = () => {
           });
           ticking = true;
         }
+        // 手动跳转进行中：目标题到位即解锁
+        if (manualClickRef.current !== null) {
+          checkManualTargetLanded();
+        }
       };
 
       window.addEventListener('scroll', handleScroll, true); // Use capture phase
-
-      // Store cleanup function
-      return () => {
-        window.removeEventListener('scroll', handleScroll, true);
-      };
+      scrollHandlerRef.current = handleScroll;
     }, 200);
 
     return () => {
       clearTimeout(timer);
+      // 此前的清理函数误写在 setTimeout 回调里从未生效，监听器会跨活动泄漏
+      if (scrollHandlerRef.current) {
+        window.removeEventListener('scroll', scrollHandlerRef.current, true);
+        scrollHandlerRef.current = null;
+      }
+      manualNavAbortRef.current?.abort();
+      manualNavAbortRef.current = null;
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+        scrollSettleTimerRef.current = null;
+      }
+      manualClickRef.current = null;
     };
-  }, [activity]);
+  }, [activity, updateCurrentQuestion, checkManualTargetLanded]);
 
   const loadActivityAndStart = async () => {
     if (!activityId) return;
+    // StrictMode 下 effect 会双跑；同一活动只加载一次，
+    // 避免重复 startActivity（后端会撞唯一约束）与重复弹出恢复提示
+    if (loadingActivityRef.current === activityId) return;
+    loadingActivityRef.current = activityId;
 
     try {
       setLoading(true);
@@ -460,19 +488,39 @@ const TakeActivityPage: React.FC = () => {
 
   // Scroll to question
   const scrollToQuestion = (index: number) => {
-    // 记录手动点击时间戳，防止滚动监听器立即覆盖
-    // 使用当前时间戳，滚动监听器会在800ms后恢复自动检测
-    manualClickRef.current = Date.now();
-    // 立即更新选中状态，让用户看到即时反馈
+    // 立即高亮目标题并锁定，直到目标题滚到落点（checkManualTargetLanded）、
+    // 用户滚动输入或超时兜底才恢复自动检测。
+    // 不能用固定时长解锁：Chrome 平滑滚动的启动延迟可达 200ms+，中途解锁
+    // 会让探测线按半路位置重算，高亮弹回途经题（表现为"点两次才选中"）。
+    releaseManualLock(false);
+    manualClickRef.current = index;
     setCurrentQuestionIndex(index);
-    const ref = questionRefs.current[index];
-    if (ref) {
-      ref.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    questionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const ac = new AbortController();
+    manualNavAbortRef.current = ac;
+    window.addEventListener('wheel', handleUserTakeover, { signal: ac.signal, passive: true });
+    window.addEventListener('touchstart', handleUserTakeover, { signal: ac.signal, passive: true });
+    window.addEventListener('keydown', handleUserTakeover, { signal: ac.signal });
+    // 兜底：滚动极慢/被中断时也能恢复自动检测（正常情况下目标题落位即解锁）
+    scrollSettleTimerRef.current = setTimeout(() => {
+      scrollSettleTimerRef.current = null;
+      manualClickRef.current = null;
+      updateCurrentQuestion();
+    }, 1200);
   };
 
   // Auto-save answers to localStorage AND backend
-  const handleFormChange = async () => {
+  const handleFormChange = async (changedValues?: Record<string, unknown>) => {
+    // 本次作答的题目 → 左侧答题卡高亮跟随到该题
+    // （用户可能在同屏多题中直接作答下方题目，高亮应反映正在作答的题）
+    if (changedValues) {
+      const firstKey = Object.keys(changedValues)[0];
+      const match = firstKey?.match(/^q_(\d+)_/);
+      if (match) {
+        setCurrentQuestionIndex(parseInt(match[1], 10));
+      }
+    }
+
     // Get all form values (not just touched) to properly track answered questions
     const allValues = form.getFieldsValue();
     updateAnsweredTracking(allValues);
@@ -520,7 +568,7 @@ const TakeActivityPage: React.FC = () => {
   const handleSubmit = async () => {
     if (!activity || !studentActivity) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: '确认提交',
       icon: <ExclamationCircleOutlined />,
       content: (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Select, DatePicker, message, Space, Typography, Alert, ConfigProvider, Modal } from 'antd';
+import { Form, Input, Button, Card, Select, DatePicker, Space, Typography, Alert, ConfigProvider, Popover } from 'antd';
+import { message, modal } from '../lib/feedback';
 import { UserOutlined, PhoneOutlined, IdcardOutlined, BankOutlined, BookOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
@@ -99,7 +100,7 @@ const StudentRegisterPage: React.FC = () => {
         // 显示申请ID和预计审核时间
         const { id, estimatedReviewTime, inquiryCode } = response.data.data;
         sessionStorage.setItem(`registration-inquiry:${values.phone}`, inquiryCode);
-        Modal.success({
+        modal.success({
           title: '请保存注册查询码',
           width: 520,
           content: (
@@ -123,8 +124,21 @@ const StudentRegisterPage: React.FC = () => {
     }
   };
 
+  // 注册完整说明（tip 气泡内容）
+  const registerRules = (
+    <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.9 }}>
+      <li>请确保填写的信息真实准确</li>
+      <li>手机号将用于接收审核通知和登录账号</li>
+      <li>审核通过后，初始密码为：身份证后4位 + 出生年月日（如：12342015年05月15日）</li>
+      <li>提交后需使用手机号和随机查询码查询审核状态</li>
+    </ul>
+  );
+
   return (
-    <ConfigProvider locale={locale}>
+    <ConfigProvider
+      locale={locale}
+      theme={{ components: { Form: { itemMarginBottom: 16 } } }}
+    >
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
@@ -136,31 +150,38 @@ const StudentRegisterPage: React.FC = () => {
         <Card
         style={{
           width: '100%',
-          maxWidth: '600px',
+          maxWidth: '540px',
           borderRadius: '12px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <Title level={2} style={{ marginBottom: '8px' }}>学生注册申请</Title>
-          <Paragraph type="secondary">
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <Title level={2} style={{ marginBottom: '4px' }}>学生注册申请</Title>
+          <Paragraph type="secondary" style={{ marginBottom: 0 }}>
             填写以下信息提交注册申请，学校管理员将在3个工作日内审核
           </Paragraph>
         </div>
 
+        {/* 单行 tip：完整规则见「查看完整说明」气泡 */}
         <Alert
-          message="注册说明"
-          description={
-            <ul style={{ margin: 0, paddingLeft: '20px' }}>
-              <li>请确保填写的信息真实准确</li>
-              <li>手机号将用于接收审核通知和登录账号</li>
-              <li>审核通过后，初始密码为：身份证后4位 + 出生年月日（如：12342015年05月15日）</li>
-              <li>提交后需使用手机号和随机查询码查询审核状态</li>
-            </ul>
-          }
           type="info"
           showIcon
-          style={{ marginBottom: '24px' }}
+          style={{ marginBottom: '16px' }}
+          message={
+            <span>
+              注册说明：请确保填写的信息真实准确；手机号将用于接收审核通知和登录账号。
+              <Popover
+                trigger="click"
+                placement="bottom"
+                title="完整注册说明"
+                content={registerRules}
+              >
+                <Button type="link" size="small" style={{ padding: 0, height: 'auto' }}>
+                  查看完整说明
+                </Button>
+              </Popover>
+            </span>
+          }
         />
 
         <Form
@@ -168,7 +189,6 @@ const StudentRegisterPage: React.FC = () => {
           layout="vertical"
           onFinish={handleSubmit}
           autoComplete="off"
-          size="large"
         >
           <Form.Item
             label="手机号"
@@ -288,7 +308,7 @@ const StudentRegisterPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item>
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+            <Space direction="vertical" style={{ width: '100%' }} size="small">
               <Button
                 type="primary"
                 htmlType="submit"
@@ -300,7 +320,6 @@ const StudentRegisterPage: React.FC = () => {
               </Button>
               <Button
                 block
-                size="large"
                 onClick={() => navigate('/login')}
               >
                 返回登录

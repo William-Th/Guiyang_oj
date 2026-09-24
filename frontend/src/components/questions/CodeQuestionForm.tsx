@@ -4,24 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  Button,
-  Space,
-  Table,
-  Modal,
-  Checkbox,
-  message,
-  Tooltip,
-  Alert,
-  Row,
-  Col,
-  Typography,
-} from 'antd';
+import { Card, Form, Input, InputNumber, Select, Button, Space, Table, Modal, Checkbox, Tooltip, Alert, Row, Col, Typography } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -156,7 +140,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
   };
 
   const handleDeleteTestCase = (index: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: '删除测试用例',
       content: '确定要删除这个测试用例吗？',
       onOk: () => {

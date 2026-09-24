@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Row,
-  Col,
-  Statistic,
-  Spin,
-  message,
-  Tabs,
-  Select,
-  Empty,
-  Alert,
-  Tag,
-} from 'antd';
+import { Card, Row, Col, Statistic, Spin, Tabs, Select, Empty, Alert, Tag } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   TeamOutlined,
   CheckCircleOutlined,
@@ -373,8 +362,13 @@ const DataAnalytics: React.FC = () => {
         </Card>
 
         {/* Charts */}
-        <Tabs defaultActiveKey="abilities">
-          <Tabs.TabPane tab="能力分析" key="abilities">
+        <Tabs
+          defaultActiveKey="abilities"
+          items={[
+            {
+              key: 'abilities',
+              label: '能力分析',
+              children: (
             <Card>
               {(viewLevel === 'school' ? schoolBarData : districtBarData).length > 0 ? (
                 <>
@@ -473,9 +467,12 @@ const DataAnalytics: React.FC = () => {
                 <Empty description="暂无能力统计数据" />
               )}
             </Card>
-          </Tabs.TabPane>
-
-          <Tabs.TabPane tab="年级对比" key="grades">
+              ),
+            },
+            {
+              key: 'grades',
+              label: '年级对比',
+              children: (
             <Card>
               {radarData.length > 0 ? (
                 <>
@@ -503,8 +500,10 @@ const DataAnalytics: React.FC = () => {
                 <Empty description="暂无年级对比数据" />
               )}
             </Card>
-          </Tabs.TabPane>
-        </Tabs>
+              ),
+            },
+          ]}
+        />
       </Spin>
     </div>
   );

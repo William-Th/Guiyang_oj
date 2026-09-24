@@ -54,7 +54,7 @@ import { ADMIN_ROLES } from './auth/roles';
 const App: React.FC = () => {
   return (
     <Provider store={store}>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<StudentRegisterPage />} />

@@ -1,22 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Upload,
-  Button,
-  Steps,
-  Table,
-  Alert,
-  Progress,
-  Card,
-  Descriptions,
-  Space,
-  Tag,
-  message,
-  Row,
-  Col,
-  Statistic,
-  Typography
-} from 'antd';
+import { Modal, Upload, Button, Steps, Table, Alert, Progress, Card, Descriptions, Space, Tag, Row, Col, Statistic, Typography } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   InboxOutlined,
   DownloadOutlined,

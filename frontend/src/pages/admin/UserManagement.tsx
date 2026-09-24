@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  Form,
-  Input,
-  Select,
-  message,
-  Popconfirm,
-  Card,
-  Row,
-  Col,
-  Statistic,
-  Typography,
-  Badge,
-} from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Popconfirm, Card, Row, Col, Statistic, Typography, Badge } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   PlusOutlined,
   EditOutlined,

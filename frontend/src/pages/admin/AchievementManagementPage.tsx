@@ -1,27 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Modal,
-  Form,
-  Input,
-  Select,
-  InputNumber,
-  message,
-  Popconfirm,
-  Descriptions,
-  Badge,
-  Drawer,
-  Alert,
-  Divider,
-  Typography,
-  Switch,
-  Upload,
-  Image,
-} from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, InputNumber, Popconfirm, Descriptions, Badge, Drawer, Alert, Divider, Typography, Switch, Upload, Image } from 'antd';
+import { message } from '../../lib/feedback';
 import type { UploadFile, UploadProps } from 'antd';
 import {
   TrophyOutlined,

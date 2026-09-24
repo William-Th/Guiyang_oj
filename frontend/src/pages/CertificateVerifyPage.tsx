@@ -26,7 +26,7 @@ import {
   HomeOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-import { message } from 'antd';
+import { message } from '../lib/feedback';
 import moment from 'moment';
 import { certificateAPI } from '../services/api';
 

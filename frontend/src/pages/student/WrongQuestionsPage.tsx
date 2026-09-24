@@ -1,25 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { plainTextPreview } from '@/utils/richText';
-import {
-  Card,
-  Table,
-  Tag,
-  Button,
-  Select,
-  Space,
-  Modal,
-  Input,
-  Radio,
-  Checkbox,
-  Alert,
-  message,
-  Empty,
-  Spin,
-  Typography,
-  Tabs,
-  List,
-} from 'antd';
+import { Card, Table, Tag, Button, Select, Space, Modal, Input, Radio, Checkbox, Alert, Empty, Spin, Typography, Tabs, List } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   CheckOutlined,
   DeleteOutlined,
@@ -182,7 +165,7 @@ const WrongQuestionsPage: React.FC = () => {
   };
 
   const handleRemove = (q: WrongQuestion) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认移出错题集？',
       onOk: async () => {
         try {

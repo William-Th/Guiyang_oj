@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  message,
-  Spin,
-  Alert
-} from 'antd';
+import { Card, Form, Input, Select, Button, Space, Spin, Alert } from 'antd';
+import { message } from '../../lib/feedback';
 import { ArrowLeftOutlined, SaveOutlined, SendOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { teachingClassApi } from '../../services/api';

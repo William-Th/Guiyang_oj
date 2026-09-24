@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Row, Col, Card, Statistic, Progress, Timeline, Tag, Empty, Spin, message,
-  Typography, Divider,
-} from 'antd';
+import { Row, Col, Card, Statistic, Progress, Timeline, Tag, Empty, Spin, Typography, Divider } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   TrophyOutlined,
   FireOutlined,

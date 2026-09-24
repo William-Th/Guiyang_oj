@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  Table,
-  Space,
-  Button,
-  Select,
-  Input,
-  Tag,
-  message,
-  Statistic,
-  Card,
-  Row,
-  Col
-} from 'antd';
+import { Modal, Table, Space, Button, Select, Input, Tag, Statistic, Card, Row, Col } from 'antd';
+import { message } from '../../lib/feedback';
 import { SearchOutlined, FilterOutlined, PlusOutlined } from '@ant-design/icons';
 import QuestionDisplay from './QuestionDisplay';
 import { stripHtml } from '@/utils/richText';

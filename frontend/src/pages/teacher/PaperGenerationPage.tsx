@@ -1,30 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { optionText, formatCorrectAnswer } from '../../components/questions/questionOption';
-import {
-  Card,
-  Row,
-  Col,
-  Table,
-  Button,
-  Space,
-  Tag,
-  Input,
-  Select,
-  Modal,
-  InputNumber,
-  message,
-  Spin,
-  Statistic,
-  Popconfirm,
-  Divider,
-  Tooltip,
-  Empty,
-  Alert,
-  Descriptions,
-  Tabs,
-  Badge,
-  Image,
-} from 'antd';
+import { Card, Row, Col, Table, Button, Space, Tag, Input, Select, Modal, InputNumber, Spin, Statistic, Popconfirm, Divider, Tooltip, Empty, Alert, Descriptions, Tabs, Badge, Image } from 'antd';
+import { message, modal } from '../../lib/feedback';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -366,7 +343,7 @@ const PaperGenerationPage: React.FC = () => {
       const scoreMatch = questionTotalScore === activityTotalScore;
 
       if (response.valid && scoreMatch) {
-        Modal.success({
+        modal.success({
           title: '试卷验证通过',
           content: (
             <div>
@@ -382,7 +359,7 @@ const PaperGenerationPage: React.FC = () => {
         if (!scoreMatch) {
           errors.push(`题目分数总和(${questionTotalScore}分)与活动设置的总分(${activityTotalScore}分)不一致`);
         }
-        Modal.error({
+        modal.error({
           title: '试卷验证失败',
           content: (
             <div>
@@ -951,15 +928,14 @@ const PaperGenerationPage: React.FC = () => {
                   setPaginationState(prev => ({ ...prev, [key]: 1 }));
                 }
               }}
-            >
-              <Tabs.TabPane tab="全部" key="all"></Tabs.TabPane>
-              {questionGroups.map(({ type, info, questions }) => {
-                const selectedCount = getSelectedCountByType(type);
-                const isSelected = activeTypeTab === type;
-                return (
-                  <Tabs.TabPane
-                    key={type}
-                    tab={
+              items={[
+                { key: 'all', label: '全部' },
+                ...questionGroups.map(({ type, info, questions }) => {
+                  const selectedCount = getSelectedCountByType(type);
+                  const isSelected = activeTypeTab === type;
+                  return {
+                    key: type,
+                    label: (
                       <div
                         style={{
                           padding: '4px 12px',
@@ -975,12 +951,11 @@ const PaperGenerationPage: React.FC = () => {
                           <Tag color="blue" style={{ marginLeft: 4 }}>已选{selectedCount}</Tag>
                         )}
                       </div>
-                    }
-                  >
-                  </Tabs.TabPane>
-                );
-              })}
-            </Tabs>
+                    ),
+                  };
+                }),
+              ]}
+            />
 
             {/* Questions display for current tab */}
             <div style={{ marginTop: 16 }}>

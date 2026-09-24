@@ -4,19 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  Button,
-  message,
-  Spin,
-  Alert,
-  Descriptions,
-  Tag,
-  Card,
-  Progress,
-  Space,
-  Typography
-} from 'antd';
+import { Modal, Button, Spin, Alert, Descriptions, Tag, Card, Progress, Space, Typography } from 'antd';
+import { message } from '../../lib/feedback';
 import {
   EnvironmentOutlined,
   TeamOutlined,
