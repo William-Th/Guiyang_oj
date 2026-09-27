@@ -11,6 +11,7 @@
  */
 
 const { query } = require('../database/connection');
+const KnowledgeStatsService = require('./recommend/KnowledgeStatsService');
 const logger = require('../utils/logger');
 const EventEmitter = require('./EventEmitter');
 const fetch = require('node-fetch');
@@ -37,6 +38,7 @@ class AutoGradingService {
           a.answer as student_answer,
           qb.type as question_type,
           qb.correct_answer,
+          qb.knowledge_points,
           aq.score as max_score
         FROM answers a
         JOIN question_bank_with_draft qb ON a.question_id = qb.id
@@ -46,6 +48,16 @@ class AutoGradingService {
           AND aq.activity_id = sa.activity_id
           AND a.grading_status = 'pending'
       `, [studentActivityId]);
+
+      // 活动科目与学生（知识点统计回流用）
+      const metaResult = await query(
+        `SELECT sa.student_id, act.subject FROM student_activities sa
+         JOIN activities act ON act.id = sa.activity_id
+         WHERE sa.id = $1`,
+        [studentActivityId]
+      );
+      const activityStudentId = metaResult.rows[0]?.student_id || null;
+      const activitySubject = metaResult.rows[0]?.subject || null;
 
       if (answersResult.rows.length === 0) {
         logger.info(`No pending answers to grade for student_activity: ${studentActivityId}`);
@@ -88,6 +100,12 @@ class AutoGradingService {
             WHERE id = $3
           `, [gradingResult.isCorrect, gradingResult.score, answer_id]);
 
+          // P0 知识点掌握度回流：活动判分驱动薄弱度/能力值进化
+          await KnowledgeStatsService.applyAnswerResult(activityStudentId, {
+            knowledgePoints: answer.knowledge_points,
+            subject: activitySubject
+          }, gradingResult.isCorrect);
+
           totalScore += gradingResult.score;
           gradedCount++;
 
@@ -114,6 +132,12 @@ class AutoGradingService {
                 updated_at = CURRENT_TIMESTAMP
               WHERE id = $4
             `, [codeResult.isCorrect, codeResult.score, codeResult.feedback, answer_id]);
+
+            // P0 知识点掌握度回流：编程题判分同样驱动
+            await KnowledgeStatsService.applyAnswerResult(activityStudentId, {
+              knowledgePoints: answer.knowledge_points,
+              subject: activitySubject
+            }, codeResult.isCorrect);
 
             totalScore += codeResult.score;
             gradedCount++;

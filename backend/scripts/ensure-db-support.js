@@ -103,6 +103,24 @@ async function ensureStudentPoints() {
   report(`积分账户: 每个学生都有账户`, Number(missing.rows[0].n) === 0);
 }
 
+/** 知识点统计唯一索引（推荐数据闭环 ON CONFLICT 依赖） */
+async function ensureKnowledgeStatsIndex() {
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS ux_student_knowledge_stats
+       ON student_knowledge_stats (student_id, knowledge_point)`
+  );
+  report(`知识点统计: (student_id, knowledge_point) 唯一索引存在`, true);
+}
+
+/** 知识点统计唯一索引（推荐数据闭环 ON CONFLICT 依赖） */
+async function ensureKnowledgeStatsIndex() {
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS ux_student_knowledge_stats
+       ON student_knowledge_stats (student_id, knowledge_point)`
+  );
+  report(`知识点统计: (student_id, knowledge_point) 唯一索引存在`, true);
+}
+
 async function main() {
   console.log('===== 数据库格式支持自检与保障 =====\n');
 
@@ -110,6 +128,7 @@ async function main() {
   console.log('');
   await upsertSubjects();
   await ensureStudentPoints();
+  await ensureKnowledgeStatsIndex();
 
   console.log('');
   const failed = results.filter(r => !r.ok);

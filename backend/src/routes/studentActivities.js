@@ -17,6 +17,7 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../database/connection');
+const KnowledgeStatsService = require('../services/recommend/KnowledgeStatsService');
 const { authMiddleware } = require('../middleware/auth');
 const { body, param, validationResult } = require('express-validator');
 const logger = require('../utils/logger');
@@ -135,6 +136,83 @@ router.get('/daily-questions', authMiddleware, async (req, res) => {
   }
 });
 
+// ============================================================================
+// 智能学习效率画像（个性化）：能力估计 + 薄弱知识点 + 推荐练习统计
+// ============================================================================
+router.get('/learning-profile', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ success: false, message: '仅学生可查看学习画像' });
+    }
+    const { subject } = req.query;
+    const studentId = req.user.id;
+
+    // 1) 科目能力估计（掌握度表实时数据）
+    const abilityResult = await query(
+      `SELECT AVG(accuracy_rate) AS ability
+       FROM student_knowledge_stats
+       WHERE student_id = $1 AND ($2::text IS NULL OR subject = $2) AND total_questions > 0`,
+      [studentId, subject || null]
+    );
+    const abilityRaw = abilityResult.rows[0]?.ability;
+    const ability = abilityRaw == null ? null : Math.min(1, Math.max(0, parseFloat(abilityRaw) / 100));
+
+    // 2) 薄弱知识点 Top5（有作答数据、正确率最低；完成度高的排后）
+    const weak = await query(
+      `SELECT knowledge_point, accuracy_rate, total_questions, correct_count
+       FROM student_knowledge_stats
+       WHERE student_id = $1 AND ($2::text IS NULL OR subject = $2) AND total_questions >= 1
+       ORDER BY accuracy_rate ASC, total_questions DESC
+       LIMIT 5`,
+      [studentId, subject || null]
+    );
+
+    // 3) 推荐练习统计（全部 / 近 7 天）
+    const practice = await query(
+      `SELECT COUNT(*)::int AS total,
+              SUM(CASE WHEN is_correct THEN 1 ELSE 0 END)::int AS correct,
+              SUM(CASE WHEN answered_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 ELSE 0 END)::int AS last7d
+       FROM student_question_practice
+       WHERE student_id = $1 AND ($2::text IS NULL OR subject = $2)`,
+      [studentId, subject || null]
+    );
+    const p = practice.rows[0] || { total: 0, correct: 0, last7d: 0 };
+    const practiceStats = {
+      total: p.total || 0,
+      correct: p.correct || 0,
+      correctRate: p.total > 0 ? Math.round((p.correct / p.total) * 100) : null,
+      last7d: p.last7d || 0
+    };
+
+    // 4) 每日推题今日完成度（全部科目口径）
+    const dailyDone = await query(
+      `SELECT COALESCE(SUM(cardinality(question_ids)), 0)::int AS total
+       FROM daily_question_sets
+       WHERE student_id = $1 AND stat_date = CURRENT_DATE`,
+      [studentId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        subject: subject || null,
+        ability,
+        weakPoints: weak.rows.map((r) => ({
+          knowledge_point: r.knowledge_point,
+          accuracy_rate: parseFloat(r.accuracy_rate) || 0,
+          total_questions: r.total_questions,
+          correct_count: r.correct_count
+        })),
+        practice: practiceStats,
+        dailyTotal: dailyDone.rows[0]?.total || 0
+      }
+    });
+  } catch (error) {
+    logger.error('Learning profile error:', error);
+    res.status(500).json({ success: false, message: '获取学习画像失败', error: error.message });
+  }
+});
+
 // 客观题本地判题（编程/问答/匹配返回 null 表示不支持自动判题）
 function judgeObjective(type, studentAnswer, correctAnswer) {
   if (type === 'code' || type === 'essay' || type === 'matching') return null;
@@ -204,6 +282,12 @@ router.post('/recommend/:questionId/answer', authMiddleware, async (req, res) =>
          answered_at = CURRENT_TIMESTAMP`,
       [req.user.id, parseInt(questionId, 10), question.draft_id || null, subject, correct]
     );
+
+    // P0 知识点掌握度回流：推荐作答也驱动薄弱度/能力值进化
+    await KnowledgeStatsService.applyAnswerResult(req.user.id, {
+      knowledgePoints: question.knowledge_points,
+      subject
+    }, correct);
 
     const WrongQuestion = require('../models/WrongQuestion');
     let awarded = 0;

@@ -135,9 +135,25 @@ class DailyQuestionService {
     );
     const map = {};
     det.rows.forEach((d) => { map[d.question_id] = d; });
+
+    // P1：标记当日题集中已作答的题（刷新/重进后不再"复活"，前端过滤并展示进度）
+    const answered = await query(
+      `SELECT question_id, is_correct FROM student_question_practice
+       WHERE student_id = $1 AND question_id = ANY($2::int[])`,
+      [studentId, row.question_ids]
+    );
+    const answeredMap = {};
+    answered.rows.forEach((a) => { answeredMap[a.question_id] = a.is_correct; });
+
     row.questions = row.question_ids
       .map((qid) => map[qid])
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((q) => ({
+        ...q,
+        answered: answeredMap[q.question_id] !== undefined,
+        is_correct: answeredMap[q.question_id] === true
+      }));
+    row.answered_count = row.questions.filter((q) => q.answered).length;
     return row;
   }
 

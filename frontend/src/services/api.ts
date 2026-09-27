@@ -1590,6 +1590,12 @@ export const recommendApi = {
     const response = await api.get(`/student/activities/recommend${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
   },
+  learningProfile: async (subject?: string) => {
+    const params = new URLSearchParams();
+    if (subject) params.append('subject', subject);
+    const response = await api.get(`/student/activities/learning-profile${params.toString() ? '?' + params.toString() : ''}`);
+    return response.data;
+  },
   dailyQuestions: async (subject?: string) => {
     const params = new URLSearchParams();
     if (subject) params.append('subject', subject);

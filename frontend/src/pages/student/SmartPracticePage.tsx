@@ -17,7 +17,16 @@ interface QuestionItem {
   options?: any;
   type?: string;
   score?: number;
-  factors?: { mastery: number; zpd: number; spaced: number; novelty: number };
+  answered?: boolean;
+  is_correct?: boolean;
+  factors?: { mastery: number; zpd: number; spaced: number; novelty: number; review?: boolean; dueScore?: number };
+}
+
+interface LearningProfile {
+  ability: number | null;
+  weakPoints: { knowledge_point: string; accuracy_rate: number; total_questions: number }[];
+  practice: { total: number; correct: number; correctRate: number | null; last7d: number };
+  dailyTotal: number;
 }
 
 interface DailySet {
@@ -80,6 +89,7 @@ const SmartPracticePage: React.FC = () => {
   const [recLoading, setRecLoading] = useState(false);
   const [recs, setRecs] = useState<QuestionItem[]>([]);
   const [ability, setAbility] = useState<number | undefined>();
+  const [profile, setProfile] = useState<LearningProfile | null>(null);
 
   // 答题弹窗状态
   const [current, setCurrent] = useState<QuestionItem | null>(null);
@@ -95,6 +105,16 @@ const SmartPracticePage: React.FC = () => {
 
   // 碎片化推荐：本会话已展示过的 question_id（换一批时累积排除，强制换内容；题库用尽则重置循环）
   const shownRecIdsRef = useRef<number[]>([]);
+
+  // 智能学习效率画像：能力估计 + 薄弱知识点 + 推荐练习统计
+  const fetchProfile = async () => {
+    try {
+      const r = await recommendApi.learningProfile(subject);
+      setProfile(r.data || null);
+    } catch {
+      setProfile(null);
+    }
+  };
 
   const fetchDaily = async () => {
     setDailyLoading(true);
@@ -141,6 +161,7 @@ const SmartPracticePage: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchProfile();
     if (tab === 'daily') fetchDaily();
   }, [tab, subject]);
 
@@ -187,11 +208,26 @@ const SmartPracticePage: React.FC = () => {
       } else {
         message.error('回答错误，已加入错题集');
       }
+      fetchProfile();   // 掌握度回流后刷新学习画像
     } catch (e: any) {
       message.error(e.response?.data?.message || e.response?.data?.error || '提交失败');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // 能力等级文案
+  const abilityLabel = (a: number | null | undefined) =>
+    a == null ? null : a < 0.4 ? '待巩固' : a < 0.6 ? '一般' : a < 0.8 ? '良好' : '优秀';
+
+  // 推荐理由标签（个性化：把算法因子翻译成人话）
+  const getReasonTags = (item: QuestionItem): string[] => {
+    const f: any = item.factors || {};
+    if (f.review) return ['错题复习'];
+    const tags: string[] = [];
+    if ((f.mastery ?? 0) >= 0.6) tags.push('薄弱巩固');
+    if ((f.zpd ?? 0) >= 0.9) tags.push('难度适配');
+    return tags.length ? tags : ['为你推荐'];
   };
 
   // 题目内容摘要
@@ -201,8 +237,12 @@ const SmartPracticePage: React.FC = () => {
     return plain.length > max ? plain.slice(0, max) + '...' : plain;
   };
 
-  const dailyQuestions: QuestionItem[] = (dailySet?.questions || []).filter(
-    (q) => !dailyAnswered.includes(q.question_id)
+  const dailyAll: QuestionItem[] = dailySet?.questions || [];
+  const dailyDoneCount = dailyAll.filter(
+    (q) => q.answered || dailyAnswered.includes(q.question_id)
+  ).length;
+  const dailyQuestions: QuestionItem[] = dailyAll.filter(
+    (q) => !q.answered && !dailyAnswered.includes(q.question_id)
   );
   const visibleRecs = recs.filter((r) => !recAnswered.includes(r.question_id));
 
@@ -219,6 +259,45 @@ const SmartPracticePage: React.FC = () => {
       <Paragraph type="secondary">
         系统根据你的掌握度、难度匹配与错题复习情况智能推题，巩固薄弱知识点。答错的题自动加入错题集，答对的题不再重复推送。
       </Paragraph>
+
+      {profile && (
+        <Card style={{ marginBottom: 16 }} title={<span><ThunderboltOutlined /> 智能学习效率</span>}>
+          <Space direction="vertical" style={{ width: '100%' }} size={10}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <Text strong>科目能力</Text>
+              {profile.ability != null ? (
+                <>
+                  <Text style={{ color: '#0ea5e9', fontWeight: 700 }}>
+                    {Math.round(profile.ability * 100)}%
+                  </Text>
+                  <Text type="secondary">{abilityLabel(profile.ability)}</Text>
+                </>
+              ) : (
+                <Text type="secondary">完成练习后自动生成</Text>
+              )}
+              <Text type="secondary" style={{ marginLeft: 'auto' }}>
+                推荐练习 {profile.practice.total} 题
+                {profile.practice.correctRate != null && <> · 正确率 {profile.practice.correctRate}%</>}
+                {profile.practice.last7d > 0 && <> · 近 7 天 {profile.practice.last7d} 题</>}
+              </Text>
+            </div>
+            {profile.weakPoints.length > 0 && (
+              <div>
+                <Text type="secondary">薄弱知识点（建议优先巩固）：</Text>
+                <div style={{ marginTop: 6 }}>
+                  {profile.weakPoints.map((w) => (
+                    <Tooltip key={w.knowledge_point} title={`作答 ${w.total_questions} 题 · 正确率 ${Math.round(w.accuracy_rate)}%`}>
+                      <Tag color="warning" style={{ marginBottom: 4 }}>
+                        {w.knowledge_point} {Math.round(w.accuracy_rate)}%
+                      </Tag>
+                    </Tooltip>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Space>
+        </Card>
+      )}
 
       <Card style={{ marginBottom: 16 }}>
         <Space>
@@ -246,10 +325,12 @@ const SmartPracticePage: React.FC = () => {
               <Card extra={<Button icon={<ReloadOutlined />} onClick={fetchDaily} loading={dailyLoading}>刷新</Button>}>
                 {dailyLoading ? (
                   <Spin />
+                ) : dailyAll.length && dailyQuestions.length === 0 ? (
+                  <Empty description={`今日推题已完成（${dailyDoneCount}/${dailyAll.length}），明天再来！`} />
                 ) : dailyQuestions.length ? (
                   <>
                     <Text type="secondary">
-                      剩余 {dailyQuestions.length} 题（{formatDay(dailySet?.stat_date)}），含错题复习与新题巩固
+                      今日 {dailyAll.length} 题 · 已完成 {dailyDoneCount}（{formatDay(dailySet?.stat_date)}），含错题复习与新题巩固
                     </Text>
                     <List
                       style={{ marginTop: 16 }}
@@ -277,6 +358,9 @@ const SmartPracticePage: React.FC = () => {
                               </Tag>
                             )}
                             {q.type && <Tag>{QUESTION_TYPE_LABEL[q.type] || q.type}</Tag>}
+                            {getReasonTags(q).map((t) => (
+                              <Tag key={t} color="cyan" style={{ margin: 0 }}>{t}</Tag>
+                            ))}
                             <Text strong>{renderContent(q.content)}</Text>
                           </Space>
                         </List.Item>
@@ -337,9 +421,12 @@ const SmartPracticePage: React.FC = () => {
                             </Space>
                           }
                           title={
-                            <Space>
+                            <Space wrap>
                               <Tag color="blue" style={{ margin: 0 }}>第 {idx + 1} 题</Tag>
                               <Text strong>{renderContent(item.content, 60)}</Text>
+                              {getReasonTags(item).map((t) => (
+                                <Tag key={t} color="cyan" style={{ margin: 0 }}>{t}</Tag>
+                              ))}
                             </Space>
                           }
                           description={
@@ -369,7 +456,17 @@ const SmartPracticePage: React.FC = () => {
         destroyOnClose
         footer={
           result
-            ? [<Button key="ok" type="primary" onClick={closeAnswer}>知道了</Button>]
+            ? [
+                (() => {
+                  const list = currentSource === 'daily' ? dailyQuestions : visibleRecs;
+                  const nextIdx = list.findIndex((q) => q.question_id === current?.question_id);
+                  const next = nextIdx >= 0 ? list[nextIdx + 1] : list[0];
+                  return next ? (
+                    <Button key="next" onClick={() => openAnswer(next, currentSource)}>下一题</Button>
+                  ) : null;
+                })(),
+                <Button key="ok" type="primary" onClick={closeAnswer}>知道了</Button>,
+              ]
             : unsupported
               ? [<Button key="close" onClick={closeAnswer}>关闭</Button>]
               : [
