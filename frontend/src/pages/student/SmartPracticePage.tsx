@@ -3,6 +3,7 @@ import { Card, Tabs, Button, Select, Space, Tag, List, Empty, Spin, Typography, 
 import { message } from '../../lib/feedback';
 import { ReloadOutlined, FireOutlined, ThunderboltOutlined, EditOutlined } from '@ant-design/icons';
 import { recommendApi } from '../../services/api';
+import { QUESTION_TYPE_LABEL, DIFFICULTY_META, formatDay } from '../../config/questionDisplay';
 import RichTextViewer from '../../components/common/RichTextViewer';
 
 const { Title, Text, Paragraph } = Typography;
@@ -37,12 +38,6 @@ interface AnswerResult {
   explanation?: string;
 }
 
-const difficultyMap: Record<string, { text: string; color: string }> = {
-  easy: { text: '简单', color: 'green' },
-  medium: { text: '中等', color: 'orange' },
-  hard: { text: '困难', color: 'red' },
-};
-
 const SUBJECT_OPTIONS = [
   { value: '数学', label: '数学' },
   { value: '信息科技', label: '信息科技' },
@@ -50,16 +45,6 @@ const SUBJECT_OPTIONS = [
   { value: '英语', label: '英语' },
   { value: '科学', label: '科学' },
 ];
-
-const TYPE_LABEL: Record<string, string> = {
-  single: '单选',
-  multiple: '多选',
-  blank: '填空',
-  true_false: '判断',
-  code: '编程',
-  essay: '问答',
-  matching: '匹配',
-};
 
 // 不支持在线自动判题的题型
 const UNSUPPORTED_TYPES = ['code', 'essay', 'matching'];
@@ -264,7 +249,7 @@ const SmartPracticePage: React.FC = () => {
                 ) : dailyQuestions.length ? (
                   <>
                     <Text type="secondary">
-                      剩余 {dailyQuestions.length} 题（{dailySet?.stat_date}），含错题复习与新题巩固
+                      剩余 {dailyQuestions.length} 题（{formatDay(dailySet?.stat_date)}），含错题复习与新题巩固
                     </Text>
                     <List
                       style={{ marginTop: 16 }}
@@ -287,12 +272,12 @@ const SmartPracticePage: React.FC = () => {
                           <Space align="start">
                             <Tag color="blue">第 {idx + 1} 题</Tag>
                             {q.difficulty && (
-                              <Tag color={difficultyMap[q.difficulty]?.color}>
-                                {difficultyMap[q.difficulty]?.text}
+                              <Tag color={DIFFICULTY_META[q.difficulty]?.color}>
+                                {DIFFICULTY_META[q.difficulty]?.text}
                               </Tag>
                             )}
-                            {q.type && <Tag>{TYPE_LABEL[q.type] || q.type}</Tag>}
-                            <Text>{renderContent(q.content)}</Text>
+                            {q.type && <Tag>{QUESTION_TYPE_LABEL[q.type] || q.type}</Tag>}
+                            <Text strong>{renderContent(q.content)}</Text>
                           </Space>
                         </List.Item>
                       )}
@@ -344,17 +329,17 @@ const SmartPracticePage: React.FC = () => {
                           avatar={
                             <Space direction="vertical" size={2}>
                               {item.difficulty && (
-                                <Tag color={difficultyMap[item.difficulty]?.color} style={{ margin: 0 }}>
-                                  {difficultyMap[item.difficulty]?.text}
+                                <Tag color={DIFFICULTY_META[item.difficulty]?.color} style={{ margin: 0 }}>
+                                  {DIFFICULTY_META[item.difficulty]?.text}
                                 </Tag>
                               )}
-                              {item.type && <Tag style={{ margin: 0 }}>{TYPE_LABEL[item.type] || item.type}</Tag>}
+                              {item.type && <Tag style={{ margin: 0 }}>{QUESTION_TYPE_LABEL[item.type] || item.type}</Tag>}
                             </Space>
                           }
                           title={
                             <Space>
-                              <Text strong>#{idx + 1}</Text>
-                              <span>{renderContent(item.content, 60)}</span>
+                              <Tag color="blue" style={{ margin: 0 }}>第 {idx + 1} 题</Tag>
+                              <Text strong>{renderContent(item.content, 60)}</Text>
                             </Space>
                           }
                           description={
@@ -397,11 +382,11 @@ const SmartPracticePage: React.FC = () => {
           <div>
             <Space style={{ marginBottom: 8 }}>
               {current.difficulty && (
-                <Tag color={difficultyMap[current.difficulty]?.color}>
-                  {difficultyMap[current.difficulty]?.text}
+                <Tag color={DIFFICULTY_META[current.difficulty]?.color}>
+                  {DIFFICULTY_META[current.difficulty]?.text}
                 </Tag>
               )}
-              {current.type && <Tag>{TYPE_LABEL[current.type] || current.type}</Tag>}
+              {current.type && <Tag>{QUESTION_TYPE_LABEL[current.type] || current.type}</Tag>}
             </Space>
             <div style={{ marginBottom: 16, fontSize: 16, lineHeight: 1.8 }}>
               <RichTextViewer content={current.content} />

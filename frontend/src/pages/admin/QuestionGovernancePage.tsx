@@ -158,6 +158,7 @@ const QuestionGovernancePage: React.FC = () => {
     {
       title: '题目',
       dataIndex: 'content',
+      ellipsis: true,
       render: (c: string, r) => (
         <Tooltip title={`草稿ID #${r.draft_id}`}>
           <div style={{ maxWidth: 300 }}>{plainTextPreview(c, 50) || `题目#${r.draft_id}`}</div>

@@ -115,6 +115,7 @@ const MyRegistrationsPage: React.FC = () => {
     {
       title: '测评名称',
       dataIndex: 'activity_title',
+      ellipsis: true,
       key: 'activity_title',
       width: 200,
       render: (title: string, record: AssessmentRegistration) => (

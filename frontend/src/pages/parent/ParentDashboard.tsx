@@ -105,7 +105,7 @@ const ParentDashboard: React.FC = () => {
   };
 
   const resultColumns: ColumnsType<ResultRow> = [
-    { title: '活动', dataIndex: 'title', render: (t: string) => t || '-' },
+    { title: '活动', dataIndex: 'title', ellipsis: true, render: (t: string) => t || '-' },
     { title: '科目', dataIndex: 'subject', width: 90 },
     {
       title: '分数',
@@ -207,6 +207,7 @@ const ParentDashboard: React.FC = () => {
                         {
                           title: '题目',
                           dataIndex: 'content',
+                          ellipsis: true,
                           render: (c: string) => (
                             <div style={{ maxWidth: 300 }}>{plainTextPreview(c, 40)}</div>
                           ),

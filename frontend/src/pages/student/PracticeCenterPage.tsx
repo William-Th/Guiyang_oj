@@ -156,6 +156,7 @@ const PracticeCenterPage: React.FC = () => {
   const columns = [
     {
       title: '练习名称', dataIndex: 'title', key: 'title', width: isMobile ? undefined : 200,
+      ellipsis: true,
       render: (title: string, record: Practice) => {
         const myStatus = record.my_status ?? record.student_status;
         return (
@@ -275,6 +276,7 @@ const PracticeCenterPage: React.FC = () => {
     const completedColumns = [
       {
         title: '练习名称', dataIndex: 'title', key: 'title', width: isMobile ? undefined : 200,
+        ellipsis: true,
         render: (title: string, record: HistoryActivity) => (
           <Space direction={isMobile ? 'vertical' : 'horizontal'} size={4} className="activity-title-cell">
             <span className="activity-title-text">{title}</span>

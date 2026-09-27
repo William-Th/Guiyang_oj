@@ -1015,7 +1015,10 @@
   color: var(--student-ink);
   font-weight: 600;
   line-height: 1.6;
-  overflow-wrap: anywhere;
+  /* 重要信息列单行展示，完整内容悬停可见 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .wrong-questions-page__mobile-list {

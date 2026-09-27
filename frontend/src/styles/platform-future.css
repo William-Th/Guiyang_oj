@@ -325,6 +325,49 @@
   border-bottom-color: rgba(2, 132, 199, 0.1);
 }
 
+/* ===== 全站表格统一紧凑风格 =====
+   所有页面表格：行高紧凑、字号统一 13px、表头弱化；
+   表格内按钮一律小标签式（26px、小圆角），覆盖全站 44px 大按钮规则 */
+.app-shell .app-page-surface :where(.ant-table-thead > tr > th) {
+  padding-block: 9px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.app-shell .app-page-surface :where(.ant-table-tbody > tr > td) {
+  padding-block: 9px;
+  font-size: 13px;
+}
+
+.app-shell .app-page-surface .ant-table .ant-btn {
+  min-height: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  box-shadow: none;
+}
+
+.app-shell .app-page-surface .ant-table :where(.ant-btn-primary) {
+  background: var(--bohe-mint-600);
+}
+
+.app-shell .app-page-surface .ant-table :where(.ant-btn-primary:hover) {
+  background: var(--bohe-mint-700) !important;
+  transform: none;
+}
+
+.app-shell .app-page-surface .ant-table :where(.ant-btn-link) {
+  padding: 0 6px;
+}
+
+/* 表格内标签与文本对齐紧凑 */
+.app-shell .app-page-surface .ant-table :where(.ant-tag) {
+  margin-inline-end: 0;
+  line-height: 20px;
+}
+
 /* 测试用例表：紧凑排版（题库编程题配置），覆盖全站大单元格内边距与大按钮 */
 .testcase-table .ant-table-cell {
   padding-block: 7px !important;

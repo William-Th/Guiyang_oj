@@ -152,7 +152,7 @@ const AssessmentCenterPage: React.FC = () => {
   };
 
   const availableColumns = [
-    { title: '测评名称', dataIndex: 'title', key: 'title', width: 250 },
+    { title: '测评名称', dataIndex: 'title', key: 'title', width: 250, ellipsis: true },
     { title: '科目', dataIndex: 'subject', key: 'subject', width: 100, render: (s: string) => getSubjectTag(s) },
     { title: '年级', dataIndex: 'grade', key: 'grade', width: 100 },
     { title: '能力等级', dataIndex: 'ability_level', key: 'ability_level', width: 120, render: (l: string) => getAbilityLevelTag(l) },
@@ -206,7 +206,7 @@ const AssessmentCenterPage: React.FC = () => {
   ];
 
   const completedColumns = [
-    { title: '测评名称', dataIndex: 'title', key: 'title', width: 250 },
+    { title: '测评名称', dataIndex: 'title', key: 'title', width: 250, ellipsis: true },
     { title: '科目', dataIndex: 'subject', key: 'subject', width: 100, render: (s: string) => getSubjectTag(s) },
     { title: '年级', dataIndex: 'grade', key: 'grade', width: 100, render: (g: string) => g || '-' },
     {

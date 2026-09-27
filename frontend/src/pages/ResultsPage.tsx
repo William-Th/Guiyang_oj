@@ -122,6 +122,7 @@ const ResultsPage: React.FC = () => {
     {
       title: '活动名称',
       dataIndex: 'title',
+      ellipsis: true,
       key: 'title',
       width: 250,
       render: (title: string) => (

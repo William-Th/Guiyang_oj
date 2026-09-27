@@ -268,7 +268,7 @@ const TeachingClassDetailPage: React.FC = () => {
   ];
 
   const activityColumns = [
-    { title: '活动名称', dataIndex: 'title', key: 'title', width: 200 },
+    { title: '活动名称', dataIndex: 'title', key: 'title', width: 200, ellipsis: true },
     {
       title: '类型',
       dataIndex: 'type',

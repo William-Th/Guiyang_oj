@@ -184,6 +184,7 @@ const GradingListPage: React.FC = () => {
     {
       title: '活动名称',
       dataIndex: 'activity_title',
+      ellipsis: true,
       key: 'activity_title',
       width: 200,
     },

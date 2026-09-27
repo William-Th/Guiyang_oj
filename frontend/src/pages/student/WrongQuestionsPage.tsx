@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-import { plainTextPreview } from '@/utils/richText';
+import { plainTextPreview, stripHtml } from '@/utils/richText';
 import { Card, Table, Tag, Button, Select, Space, Modal, Input, Radio, Checkbox, Alert, Empty, Spin, Typography, Tabs, List } from 'antd';
+import { QUESTION_TYPE_LABEL, DIFFICULTY_META, formatDateTime } from '../../config/questionDisplay';
 import { message, modal } from '../../lib/feedback';
 import {
   CheckOutlined,
@@ -33,22 +34,6 @@ interface WrongQuestion {
   explanation: string;
   status?: string;
 }
-
-const difficultyMap: Record<string, { text: string; color: string }> = {
-  easy: { text: '简单', color: 'green' },
-  medium: { text: '中等', color: 'orange' },
-  hard: { text: '困难', color: 'red' },
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  single: '单选题',
-  multiple: '多选题',
-  true_false: '判断题',
-  blank: '填空题',
-  code: '编程题',
-  essay: '问答题',
-  matching: '匹配题',
-};
 
 // 科目筛选下拉选项（覆盖项目主要科目，所有 Tab 通用，避免只显示活跃错题的科目）
 const SUBJECT_OPTIONS = [
@@ -203,23 +188,30 @@ const WrongQuestionsPage: React.FC = () => {
     {
       title: '题目',
       dataIndex: 'content',
+      ellipsis: true,
       render: (c: string) => (
-        <div className="wrong-question-title">{plainTextPreview(c, 80)}</div>
+        <div className="wrong-question-title" title={stripHtml(c)}>{plainTextPreview(c, 80)}</div>
       ),
     },
     { title: '科目', dataIndex: 'subject', width: 90 },
     {
+      title: '题型',
+      dataIndex: 'type',
+      width: 90,
+      render: (t: string) => <Tag>{QUESTION_TYPE_LABEL[t] || t}</Tag>,
+    },
+    {
       title: '难度',
       dataIndex: 'difficulty',
       width: 80,
-      render: (d: string) => <Tag color={difficultyMap[d]?.color}>{difficultyMap[d]?.text || d}</Tag>,
+      render: (d: string) => <Tag color={DIFFICULTY_META[d]?.color}>{DIFFICULTY_META[d]?.text || d}</Tag>,
     },
     { title: '错误次数', dataIndex: 'error_count', width: 90 },
     {
       title: '最近错误',
       dataIndex: 'last_wrong_at',
       width: 160,
-      render: (t: string) => (t ? new Date(t).toLocaleString('zh-CN') : '-'),
+      render: (t: string) => (t ? formatDateTime(t) : '-'),
     },
     {
       title: '操作',
@@ -315,10 +307,10 @@ const WrongQuestionsPage: React.FC = () => {
                   <article className="wrong-question-card">
                     <div className="wrong-question-card__meta">
                       <Tag color="cyan">{item.subject}</Tag>
-                      <Tag color={difficultyMap[item.difficulty]?.color}>
-                        {difficultyMap[item.difficulty]?.text || item.difficulty}
+                      <Tag color={DIFFICULTY_META[item.difficulty]?.color}>
+                        {DIFFICULTY_META[item.difficulty]?.text || item.difficulty}
                       </Tag>
-                      <Tag>{TYPE_LABEL[item.type] || item.type}</Tag>
+                      <Tag>{QUESTION_TYPE_LABEL[item.type] || item.type}</Tag>
                     </div>
                     <RichTextViewer content={item.content} className="wrong-question-card__content" />
                     <div className="wrong-question-card__footer">
@@ -352,11 +344,11 @@ const WrongQuestionsPage: React.FC = () => {
             <div>
               <Space style={{ marginBottom: 8 }}>
                 {redoing.difficulty && (
-                  <Tag color={difficultyMap[redoing.difficulty]?.color}>
-                    {difficultyMap[redoing.difficulty]?.text}
+                  <Tag color={DIFFICULTY_META[redoing.difficulty]?.color}>
+                    {DIFFICULTY_META[redoing.difficulty]?.text}
                   </Tag>
                 )}
-                {redoing.type && <Tag>{TYPE_LABEL[redoing.type] || redoing.type}</Tag>}
+                {redoing.type && <Tag>{QUESTION_TYPE_LABEL[redoing.type] || redoing.type}</Tag>}
               </Space>
               <RichTextViewer content={redoing.content} className="wrong-question-redo-modal__content" />
               {unsupported ? (
