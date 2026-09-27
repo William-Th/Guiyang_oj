@@ -217,7 +217,8 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
     {
       title: '#',
       key: 'index',
-      width: 50,
+      width: 44,
+      align: 'center' as const,
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
@@ -225,10 +226,10 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
       dataIndex: 'input_data',
       key: 'input_data',
       ellipsis: true,
-      width: 200,
+      width: '34%',
       render: (text: string) => (
-        <Text code style={{ maxWidth: 180 }}>
-          {text ? (text.length > 30 ? text.substring(0, 30) + '...' : text) : '(空)'}
+        <Text code style={{ maxWidth: 360, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}>
+          {text ? (text.length > 40 ? text.substring(0, 40) + '…' : text) : '(空)'}
         </Text>
       ),
     },
@@ -237,10 +238,10 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
       dataIndex: 'expected_output',
       key: 'expected_output',
       ellipsis: true,
-      width: 200,
+      width: '34%',
       render: (text: string) => (
-        <Text code style={{ maxWidth: 180 }}>
-          {text ? (text.length > 30 ? text.substring(0, 30) + '...' : text) : '(空)'}
+        <Text code style={{ maxWidth: 360, display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}>
+          {text ? (text.length > 40 ? text.substring(0, 40) + '…' : text) : '(空)'}
         </Text>
       ),
     },
@@ -248,25 +249,29 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
       title: '分值',
       dataIndex: 'score',
       key: 'score',
-      width: 70,
+      width: 64,
+      align: 'center' as const,
     },
     {
       title: '时限(ms)',
       dataIndex: 'time_limit',
       key: 'time_limit',
-      width: 80,
+      width: 88,
+      align: 'center' as const,
     },
     {
       title: '样例',
       dataIndex: 'is_sample',
       key: 'is_sample',
-      width: 70,
+      width: 64,
+      align: 'center' as const,
       render: (isSample: boolean) => (isSample ? '是' : '否'),
     },
     {
       title: '操作',
       key: 'actions',
-      width: 120,
+      width: 108,
+      align: 'center' as const,
       render: (_: any, record: TestCase, index: number) => (
         <Space size="small">
           <Tooltip title="编辑">
@@ -326,7 +331,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
                 step={100}
                 value={config.time_limit}
                 onChange={(v) => handleConfigChange('time_limit', v || 1000)}
-                style={{ width: '100%' }}
+                style={{ width: '100%', maxWidth: 260 }}
                 disabled={readOnly}
               />
             </Form.Item>
@@ -348,7 +353,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
                 step={16}
                 value={config.memory_limit}
                 onChange={(v) => handleConfigChange('memory_limit', v || 256)}
-                style={{ width: '100%' }}
+                style={{ width: '100%', maxWidth: 260 }}
                 disabled={readOnly}
               />
             </Form.Item>
@@ -367,6 +372,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
               <Select
                 value={config.judge_mode}
                 onChange={(v) => handleConfigChange('judge_mode', v)}
+                style={{ width: '100%', maxWidth: 260 }}
                 disabled={readOnly}
               >
                 <Option value="standard">标准判题</Option>
@@ -403,7 +409,7 @@ const CodeQuestionForm: React.FC<CodeQuestionFormProps> = ({
           }
         >
           <TextArea
-            rows={6}
+            rows={10}
             value={config.code_template}
             onChange={(e) => handleConfigChange('code_template', e.target.value)}
             placeholder={`// 在此输入代码模板
@@ -472,6 +478,7 @@ int main() {
         )}
 
         <Table
+          className="testcase-table"
           columns={testCaseColumns}
           dataSource={testCases}
           rowKey={(_, index) => `testcase-${index}`}

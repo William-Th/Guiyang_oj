@@ -477,7 +477,8 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
               help="编程题的参考代码，仅供教师参考，不用于自动评分"
             >
               <TextArea
-                rows={4}
+                rows={6}
+                autoSize={{ minRows: 6, maxRows: 20 }}
                 placeholder="请输入参考代码（可选）"
                 style={{ fontFamily: 'monospace' }}
               />
@@ -506,7 +507,12 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
   }
 
   return (
-    <div>
+    <div
+      style={{
+        maxWidth: 920,
+        margin: '0 auto',
+      }}
+    >
       <Card
         title={isEditMode ? '编辑题目' : '新建题目'}
       >
@@ -523,6 +529,15 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          onFinishFailed={({ errorFields }) => {
+            // 校验失败给出全局提示并滚动到第一个错误字段：
+            // 表单很长、保存按钮在页底，只靠字段下红字用户会以为"点了没反应"
+            message.warning('还有必填项未完成，已定位到第一处，请按提示补充');
+            const first = errorFields?.[0];
+            if (first?.name?.length) {
+              form.scrollToField(first.name, { behavior: 'smooth', block: 'center' });
+            }
+          }}
           initialValues={{
             type: 'single',
             difficulty: 'medium',
@@ -679,7 +694,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
             ]}
             help="支持加粗、颜色、列表、表格等排版，可点击工具栏图片按钮插入配图"
           >
-            <RichTextEditor placeholder="请输入题目内容，支持富文本排版与配图" height={260} testId="question-content" />
+            <RichTextEditor placeholder="请输入题目内容，支持富文本排版与配图" height={400} testId="question-content" />
           </Form.Item>
 
           {/* 题目图片上传 */}
@@ -785,7 +800,7 @@ const QuestionFormPage: React.FC<QuestionFormPageProps> = ({ editQuestionId, onS
           </Row>
 
           <Form.Item label="题目解析" name="explanation">
-            <RichTextEditor placeholder="请输入题目解析（选填），支持富文本排版与配图" height={180} testId="question-explanation" />
+            <RichTextEditor placeholder="请输入题目解析（选填），支持富文本排版与配图" height={240} testId="question-explanation" />
           </Form.Item>
 
           <Form.Item label="标签" name="tags" help="多个标签用逗号分隔">

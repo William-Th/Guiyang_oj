@@ -142,6 +142,52 @@ const ActivityResultPage: React.FC = () => {
     }
   };
 
+  // 判断题答案归一化为中文（学生答案 'true'/'false'，正确答案 boolean/字母/中文）
+  const normalizeTrueFalse = (value: any): string => {
+    if (value === true) return '正确';
+    if (value === false) return '错误';
+    const s = String(value ?? '').trim().toLowerCase().replace(/^"|"$/g, '');
+    if (['true', '1', 't', 'y', 'yes', '正确', '对', '是', 'a'].includes(s)) return '正确';
+    if (['false', '0', 'f', 'n', 'no', '错误', '错', '否', 'b'].includes(s)) return '错误';
+    return String(value ?? '');
+  };
+
+  // 判断题/填空题/编程题答案的展示文本（数组用顿号连接、布尔转中文、编程题显示提交信息）
+  const formatAnswerForDisplay = (type: string, raw: any): string => {
+    if (raw == null || raw === '') return '';
+    if (typeof raw === 'string') {
+      const t = raw.trim();
+      // JSON 字符串形态（数组/对象/带引号）先解析
+      if (t.startsWith('[') || t.startsWith('{')) {
+        try {
+          return formatAnswerForDisplay(type, JSON.parse(t));
+        } catch { /* 非 JSON，按原文展示 */ }
+      }
+      if (type === 'true_false') return normalizeTrueFalse(t);
+      return raw;
+    }
+    if (type === 'true_false') return normalizeTrueFalse(raw);
+    if (Array.isArray(raw)) {
+      return raw.filter(a => a != null && a !== '').map(a => (typeof a === 'boolean' ? normalizeTrueFalse(a) : String(a))).join('、');
+    }
+    if (typeof raw === 'boolean') return normalizeTrueFalse(raw);
+    if (typeof raw === 'object') {
+      if ('answer' in (raw as any)) return formatAnswerForDisplay(type, (raw as any).answer);
+      return JSON.stringify(raw);
+    }
+    const s = String(raw).trim();
+    if (type === 'code') {
+      // 编程题 answer 存的是 {submissionId} JSON，展示友好提交信息
+      try {
+        const parsed = JSON.parse(s);
+        if (parsed && typeof parsed === 'object' && parsed.submissionId) {
+          return `已提交在线评测（提交号 #${parsed.submissionId}）`;
+        }
+      } catch { /* 非 JSON，按原文展示 */ }
+    }
+    return s;
+  };
+
   // 解析 correct_answer 字段（可能是 JSON 字符串）
   const parseCorrectAnswer = (raw: string | null | undefined): string => {
     if (!raw) return '';
@@ -218,9 +264,14 @@ const ActivityResultPage: React.FC = () => {
 
     const myAns = parseAnswer(answer.my_answer);
     const correctAns = data?.can_show_answers ? parseCorrectAnswer(answer.correct_answer) : '';
-    // 支持多选答案如 "A,B" 或 "AB"
-    const myAnsLetters = myAns.replace(/[,，\s]/g, '').split('');
-    const correctAnsLetters = correctAns.replace(/[,，\s]/g, '').split('');
+    // 支持多选答案如 "A,B"、"AB"、数组 ["A","C"]，统一拆为字母数组
+    const toLetters = (v: any): string[] => {
+      if (v == null) return [];
+      const s = Array.isArray(v) ? v.map(x => String(x)).join(',') : String(v);
+      return s.replace(/[[\]"']/g, '').split(/[,，\s]+/).map(x => x.trim().toUpperCase()).filter(Boolean).join('').split('');
+    };
+    const myAnsLetters = toLetters(myAns);
+    const correctAnsLetters = toLetters(correctAns);
 
     return (
       <div style={{ marginTop: 8 }}>
@@ -289,11 +340,16 @@ const ActivityResultPage: React.FC = () => {
 
   const renderYourAnswer = (answer: AnswerResult) => {
     const myAns = parseAnswer(answer.my_answer);
-    const isChoiceType = ['single', 'multiple', 'true_false'].includes(answer.question_type);
+    const isChoiceType = ['single', 'multiple'].includes(answer.question_type);
 
     // 选择题：直接显示在选项中标记，不需要额外文本
     if (isChoiceType) {
       return <Text type="secondary">已选择：{myAns}</Text>;
+    }
+
+    // 判断题：显示中文
+    if (answer.question_type === 'true_false') {
+      return <Text type="secondary">已选择：{normalizeTrueFalse(myAns)}</Text>;
     }
 
     if (answer.question_type === 'essay' || answer.question_type === 'blank' || answer.question_type === 'fill_blank') {
@@ -313,6 +369,10 @@ const ActivityResultPage: React.FC = () => {
     }
 
     if (answer.question_type === 'code') {
+      const display = formatAnswerForDisplay('code', myAns);
+      if (display.startsWith('已提交在线评测')) {
+        return <Text type="secondary">{display}</Text>;
+      }
       return (
         <pre
           style={{
@@ -352,15 +412,32 @@ const ActivityResultPage: React.FC = () => {
       );
     }
 
-    const correctAns = parseCorrectAnswer(answer.correct_answer);
-    const isChoiceType = ['single', 'multiple', 'true_false'].includes(answer.question_type);
+    const isChoiceType = ['single', 'multiple'].includes(answer.question_type);
+    const correctDisplay = formatAnswerForDisplay(answer.question_type, answer.correct_answer);
 
     // 选择题的正确答案已在选项中标注
     if (isChoiceType) {
-      if (correctAns) {
-        return <Text type="secondary">正确答案：<Text strong style={{ color: '#0ea5e9' }}>{correctAns}</Text></Text>;
+      if (correctDisplay) {
+        return <Text type="secondary">正确答案：<Text strong style={{ color: '#0ea5e9' }}>{correctDisplay}</Text></Text>;
       }
       return null;
+    }
+
+    // 判断题：正确答案显示中文
+    if (answer.question_type === 'true_false') {
+      if (!correctDisplay) return null;
+      return <Text type="secondary">正确答案：<Text strong style={{ color: '#0ea5e9' }}>{correctDisplay}</Text></Text>;
+    }
+
+    // 编程题：无参考答案文本，仅显示提交与判分信息
+    if (answer.question_type === 'code') {
+      return (
+        <Text type="secondary">
+          {answer.my_answer && formatAnswerForDisplay('code', parseAnswer(answer.my_answer))?.startsWith('已提交在线评测')
+            ? `${formatAnswerForDisplay('code', parseAnswer(answer.my_answer))}，得分以评测结果为准`
+            : '未提交代码'}
+        </Text>
+      );
     }
 
     // 填空/主观题
@@ -376,7 +453,7 @@ const ActivityResultPage: React.FC = () => {
             whiteSpace: 'pre-wrap',
           }}
         >
-          {correctAns || '暂无参考答案'}
+          {correctDisplay || '暂无参考答案'}
         </Paragraph>
       </div>
     );

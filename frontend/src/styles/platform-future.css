@@ -325,6 +325,28 @@
   border-bottom-color: rgba(2, 132, 199, 0.1);
 }
 
+/* 测试用例表：紧凑排版（题库编程题配置），覆盖全站大单元格内边距与大按钮 */
+.testcase-table .ant-table-cell {
+  padding-block: 7px !important;
+}
+
+.testcase-table .ant-table-thead > tr > th {
+  padding-inline: 10px !important;
+  font-size: 13px;
+}
+
+.testcase-table .ant-table-tbody > tr > td {
+  padding-inline: 10px !important;
+  font-size: 13px;
+}
+
+.testcase-table .ant-btn {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  width: 26px;
+  height: 26px;
+}
+
 .app-shell .app-page-surface :where(.ant-tabs-nav) {
   min-height: 52px;
   padding: var(--bohe-space-1);

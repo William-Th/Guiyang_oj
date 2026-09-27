@@ -574,6 +574,12 @@ class AutoGradingService {
         if (correctAnswer.alternatives) {
           correctAnswers = correctAnswers.concat(correctAnswer.alternatives);
         }
+      } else if (Array.isArray(correctAnswer)) {
+        // 题库表单以 jsonb 数组保存（每空/每个可接受答案一项）；
+        // 学生端为单一作答框，与数组任一项匹配即判对
+        correctAnswers = correctAnswer
+          .map(a => (a == null ? '' : typeof a === 'object' ? JSON.stringify(a) : String(a).trim()))
+          .filter(Boolean);
       } else if (typeof correctAnswer === 'string') {
         // Support format: "answer1|answer2|answer3"
         correctAnswers = correctAnswer.split('|').map(a => a.trim());
@@ -729,13 +735,19 @@ class AutoGradingService {
    */
   static async gradeCodeQuestion(studentActivityId, questionId, sourceCode, maxScore) {
     try {
-      // Parse source code - it might be JSON with code and language
+      // 答题页保存的答案有两种形态：
+      // 1. {submissionId, questionId, timestamp} —— 学生在编辑器内已提交判题，直接复用该次结果
+      // 2. {code, language} —— 携带源码，重新提交判题
       let code = sourceCode;
       let language = 'cpp';
+      let priorSubmissionId = null;
 
       if (sourceCode && sourceCode.startsWith('{')) {
         try {
           const parsed = JSON.parse(sourceCode);
+          if (Number.isInteger(parsed.submissionId) && parsed.submissionId > 0) {
+            priorSubmissionId = parsed.submissionId;
+          }
           code = parsed.code || sourceCode;
           language = parsed.language || 'cpp';
         } catch (e) {
@@ -753,63 +765,92 @@ class AutoGradingService {
         };
       }
 
-      // Get question draft ID from question_bank
-      const questionResult = await query(`
+      let judgeResult;
+
+      if (priorSubmissionId) {
+        // 学生点击提交时判题已完成，轮询该提交号即时返回结果
+        judgeResult = await this.pollJudgeResult(priorSubmissionId);
+
+        if (!judgeResult) {
+          return {
+            success: false,
+            error: '判题超时'
+          };
+        }
+
+        // 取回真实源码与语言用于落库
+        try {
+          const detailResponse = await fetch(`${JUDGE_SERVICE_URL}/api/judge/submission/${priorSubmissionId}`);
+          const detail = await detailResponse.json();
+          if (detail.success && detail.data) {
+            code = detail.data.code || code;
+            language = detail.data.language || language;
+          }
+        } catch (detailError) {
+          logger.warn('Failed to fetch prior submission detail:', detailError.message);
+        }
+      } else {
+        // Get question draft ID from question_bank
+        const questionResult = await query(`
         SELECT qb.draft_id, qd.time_limit, qd.memory_limit
         FROM question_bank qb
         JOIN question_drafts qd ON qb.draft_id = qd.id
         WHERE qb.id = $1
       `, [questionId]);
 
-      if (questionResult.rows.length === 0) {
-        return {
-          success: false,
-          error: '题目不存在'
-        };
+        if (questionResult.rows.length === 0) {
+          return {
+            success: false,
+            error: '题目不存在'
+          };
+        }
+
+        const { draft_id, time_limit, memory_limit } = questionResult.rows[0];
+
+        // Submit to judge service
+        logger.info(`Submitting code to judge service for question ${questionId}`);
+
+        const response = await fetch(`${JUDGE_SERVICE_URL}/api/judge/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            questionId: draft_id, // Use draft_id for test cases lookup
+            studentActivityId,
+            code,
+            language,
+            timeLimit: time_limit || 1000,
+            memoryLimit: memory_limit || 256
+          })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          return {
+            success: false,
+            error: result.message || 'Judge service error'
+          };
+        }
+
+        // Poll for result (judge is async)
+        const submissionId = result.data.submissionId;
+        judgeResult = await this.pollJudgeResult(submissionId);
+
+        if (!judgeResult) {
+          return {
+            success: false,
+            error: '判题超时'
+          };
+        }
       }
 
-      const { draft_id, time_limit, memory_limit } = questionResult.rows[0];
-
-      // Submit to judge service
-      logger.info(`Submitting code to judge service for question ${questionId}`);
-
-      const response = await fetch(`${JUDGE_SERVICE_URL}/api/judge/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questionId: draft_id, // Use draft_id for test cases lookup
-          studentActivityId,
-          code,
-          language,
-          timeLimit: time_limit || 1000,
-          memoryLimit: memory_limit || 256
-        })
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        return {
-          success: false,
-          error: result.message || 'Judge service error'
-        };
-      }
-
-      // Poll for result (judge is async)
-      const submissionId = result.data.submissionId;
-      const judgeResult = await this.pollJudgeResult(submissionId);
-
-      if (!judgeResult) {
-        return {
-          success: false,
-          error: '判题超时'
-        };
-      }
-
-      // Calculate score based on test results
-      const earnedScore = judgeResult.score || 0;
+      // Calculate score based on test results（判题用例分与题目满分不一致时等比换算）
+      const judgeMax = judgeResult.maxScore || 0;
+      const earnedScore = judgeMax > 0 && judgeMax !== maxScore
+        ? Math.round(((judgeResult.score || 0) / judgeMax) * maxScore)
+        : (judgeResult.score || 0);
       const isAccepted = judgeResult.status === 'AC' || judgeResult.status === 'accepted';
 
       // Generate feedback
