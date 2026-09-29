@@ -1457,3 +1457,39 @@
 .result-answer-anchor {
   scroll-margin-top: 84px;
 }
+
+/* 结果页：答题卡钉在左侧（sticky 跟随滚动），窄屏回落为上下布局 */
+.result-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.result-layout__side {
+  position: sticky;
+  top: 88px;
+}
+
+.result-layout__main {
+  min-width: 0;
+}
+
+.result-answer-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(2, 132, 199, 0.12);
+}
+
+@media (max-width: 900px) {
+  .result-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .result-layout__side {
+    position: static;
+  }
+}
