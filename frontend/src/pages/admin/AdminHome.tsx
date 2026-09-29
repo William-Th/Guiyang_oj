@@ -15,6 +15,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useNavigate } from 'react-router-dom';
+import { getGreeting } from '@/utils/greeting';
 import api from '@/services/api';
 
 interface WorkflowItem {
@@ -123,12 +124,14 @@ const AdminHome: React.FC = () => {
           <Col flex="auto">
             <div>
               <h2 style={{ margin: 0, fontSize: 24, fontWeight: 500 }}>
-                欢迎回来，{user?.realName || user?.username}
+                {getGreeting()}，{user?.realName || user?.username}
               </h2>
               <p style={{ margin: '8px 0 0 0', color: '#8c8c8c', fontSize: 14 }}>
                 <Badge status="success" text={getAdminLevelName()} />
                 <span style={{ margin: '0 8px' }}>|</span>
                 管理范围：{getAdminScope()}
+                <span style={{ margin: '0 8px' }}>|</span>
+                待办与数据已就绪，今天也从从容开始。
               </p>
             </div>
           </Col>

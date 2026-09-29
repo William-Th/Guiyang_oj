@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import type { RootState } from '@/store';
 import { activityApi, statisticsApi } from '../services/api';
+import { getGreeting } from '@/utils/greeting';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -69,8 +70,7 @@ const StudentHomePage: React.FC = () => {
   const displayName = user?.realName || user?.username || '同学';
 
   // 时段问候：让欢迎语跟着一天的时间走
-  const hour = new Date().getHours();
-  const greeting = hour < 6 ? '夜深了' : hour < 9 ? '早上好' : hour < 12 ? '上午好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
+  const greeting = getGreeting();
 
   // 温暖副标题：结合完成数据给一句鼓励
   const heroSubText = stats.completed > 0

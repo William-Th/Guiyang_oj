@@ -621,3 +621,41 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
+
+/* 管理端首页问候横幅：与登录/注册页同族的蓝色渐变 */
+.admin-home__hero {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 32px;
+  margin-bottom: 20px;
+  border-radius: var(--bohe-radius-xl);
+  color: #fff;
+  background: linear-gradient(120deg, #0369a1 0%, #0284c7 55%, #38bdf8 100%);
+  box-shadow: 0 14px 36px rgba(3, 60, 90, 0.2);
+}
+
+.admin-home__hero h1 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  text-shadow: 0 2px 12px rgba(3, 60, 90, 0.25);
+}
+
+.admin-home__hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+}
+
+.admin-home__hero::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}

@@ -424,8 +424,6 @@ const TeacherDashboard: React.FC = () => {
 
   return (
     <div>
-      <h2>教师工作台</h2>
-
       {/* 教师个人信息 */}
       <Card title="个人信息" style={{ marginTop: '24px' }}>
         <Row gutter={[24, 16]}>
@@ -464,7 +462,7 @@ const TeacherDashboard: React.FC = () => {
               title="创建题目总数"
               value={stats.totalQuestions}
               prefix={<BookOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: '#0ea5e9' }}
             />
           </Card>
         </Col>
@@ -474,7 +472,7 @@ const TeacherDashboard: React.FC = () => {
               title="创建活动总数"
               value={stats.totalActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#0ea5e9' }}
+              valueStyle={{ color: '#10b981' }}
             />
           </Card>
         </Col>
@@ -484,7 +482,7 @@ const TeacherDashboard: React.FC = () => {
               title="进行中的活动"
               value={stats.activeActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: '#6366f1' }}
             />
           </Card>
         </Col>
@@ -494,7 +492,7 @@ const TeacherDashboard: React.FC = () => {
               title="已完成的活动"
               value={stats.completedActivities}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>
@@ -539,7 +537,7 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </>
         ) : (
-          <Empty description="暂无题目" />
+          <Empty description="题库还空着～点上方「创建题目」，出你的第一道题吧" />
         )}
       </Card>
 
@@ -582,7 +580,7 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </>
         ) : (
-          <Empty description="暂无活动" />
+          <Empty description="还没有活动～创建一个，学生的练习就有着落了" />
         )}
       </Card>
     </div>

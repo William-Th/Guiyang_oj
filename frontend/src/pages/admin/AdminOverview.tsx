@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Spin } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin, Typography } from 'antd';
 import { message } from '../../lib/feedback';
 import { UserOutlined, FileTextOutlined, TrophyOutlined, TeamOutlined } from '@ant-design/icons';
+
+const { Text } = Typography;
 import api from '@/services/api';
 
 interface DashboardStats {
@@ -65,15 +67,15 @@ const AdminOverview: React.FC = () => {
 
   return (
     <div>
-      <h2>数据概览</h2>
-      <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
+      <Text type="secondary">数据每天自动汇总，帮你把握教学与测评的全貌。</Text>
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="总学生数"
               value={stats.totalStudents}
               prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: '#0284c7' }}
             />
           </Card>
         </Col>
@@ -83,7 +85,7 @@ const AdminOverview: React.FC = () => {
               title="总考试数"
               value={stats.totalExams}
               prefix={<FileTextOutlined />}
-              valueStyle={{ color: '#0ea5e9' }}
+              valueStyle={{ color: '#10b981' }}
             />
           </Card>
         </Col>
@@ -93,7 +95,7 @@ const AdminOverview: React.FC = () => {
               title="本月考试"
               value={stats.thisMonthExams}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: '#6366f1' }}
             />
           </Card>
         </Col>
@@ -103,7 +105,7 @@ const AdminOverview: React.FC = () => {
               title="在线教师"
               value={stats.onlineTeachers}
               prefix={<TeamOutlined />}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>
