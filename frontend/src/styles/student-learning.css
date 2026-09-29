@@ -530,9 +530,9 @@
 }
 
 .activity-question-nav__button--answered.ant-btn {
-  color: var(--bohe-mint-800);
-  border-color: var(--bohe-mint-200);
-  background: var(--bohe-mint-50);
+  color: #075985;
+  border-color: #38bdf8;
+  background: #bae6fd;
 }
 
 .activity-question-nav__button--current.ant-btn {
@@ -555,9 +555,9 @@
 .activity-workspace .activity-question-nav__button--answered.ant-btn:not(:disabled):hover,
 .activity-workspace .activity-question-nav__button--answered.ant-btn:not(:disabled):active,
 .activity-workspace .activity-question-nav__button--answered.ant-btn:not(:disabled):focus-visible {
-  color: var(--bohe-mint-800);
-  border-color: var(--bohe-mint-600);
-  background: var(--bohe-mint-100);
+  color: #075985;
+  border-color: #0284c7;
+  background: #7dd3fc;
 }
 
 .activity-workspace .activity-question-nav__button--current.ant-btn:not(:disabled):hover,
@@ -1394,4 +1394,66 @@
     transition: none !important;
     transform: none !important;
   }
+}
+
+/* 结果页答题卡：按对错着色的题号按钮（点击跳转对应题目） */
+.result-answer-sheet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ras-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ras-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28);
+}
+
+.ras-btn--correct {
+  color: #fff;
+  background: #10b981;
+}
+
+.ras-btn--wrong {
+  color: #fff;
+  background: #f04438;
+}
+
+.ras-btn--pending {
+  color: #b45309;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.ras-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bohe-text-secondary);
+  font-size: 13px;
+}
+
+.ras-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.ras-dot--correct { background: #10b981; }
+.ras-dot--wrong { background: #f04438; }
+.ras-dot--pending { background: #fef3c7; border: 1px solid #fcd34d; }
+
+.result-answer-anchor {
+  scroll-margin-top: 84px;
 }

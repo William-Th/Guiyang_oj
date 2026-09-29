@@ -635,6 +635,46 @@ const ActivityResultPage: React.FC = () => {
         </Row>
       </Card>
 
+      {/* 答题卡：按对错着色，点击题号跳转到对应题目 */}
+      {answers && answers.length > 0 && (
+        <Card
+          style={{ marginBottom: 24 }}
+          styles={{ body: { padding: '16px 20px' } }}
+          title={<Title level={4} style={{ margin: 0 }}>答题卡</Title>}
+          extra={
+            <Space size={16}>
+              <span className="ras-legend"><span className="ras-dot ras-dot--correct" />答对</span>
+              <span className="ras-legend"><span className="ras-dot ras-dot--wrong" />答错</span>
+              <span className="ras-legend"><span className="ras-dot ras-dot--pending" />待批改</span>
+            </Space>
+          }
+        >
+          <div className="result-answer-sheet">
+            {groupAnswersByType(answers).flatMap(([, list]) => list).map((answer, idx) => {
+              const statusClass =
+                answer.is_correct === true ? 'ras-btn--correct'
+                : answer.is_correct === false ? 'ras-btn--wrong'
+                : 'ras-btn--pending';
+              return (
+                <button
+                  key={answer.id}
+                  type="button"
+                  className={`ras-btn ${statusClass}`}
+                  title={`第 ${idx + 1} 题 · ${getQuestionTypeName(answer.question_type)} · 得 ${Number(answer.score) || 0} 分`}
+                  onClick={() => {
+                    document
+                      .getElementById(`result-answer-${answer.id}`)
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  {idx + 1}
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       {/* Answers Detail */}
       <Card
         title={<Title level={4} style={{ margin: 0 }}>答题详情</Title>}
@@ -671,6 +711,8 @@ const ActivityResultPage: React.FC = () => {
                 {list.map((answer, idx) => (
                   <Card
                     key={answer.id}
+                    id={`result-answer-${answer.id}`}
+                    className="result-answer-anchor"
                     type="inner"
                     style={{ marginBottom: 12 }}
                     title={
