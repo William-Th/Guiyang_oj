@@ -116,11 +116,16 @@ const SmartPracticePage: React.FC = () => {
     }
   };
 
-  const fetchDaily = async () => {
+  const fetchDaily = async (explicit?: string) => {
     setDailyLoading(true);
     try {
-      const r = await recommendApi.dailyQuestions(subject);
+      const use = explicit ?? subject;
+      const r = await recommendApi.dailyQuestions(use);
       setDailySet(r.data || null);
+      // 默认科目：页面打开未选择时，采用后端自动解析的科目（今日题集/最近练习）
+      if (!explicit && !subject && r.data?.subject) {
+        setSubject(r.data.subject);
+      }
     } catch (e: any) {
       message.error(e.response?.data?.error || '获取每日推题失败');
     } finally {
@@ -322,7 +327,7 @@ const SmartPracticePage: React.FC = () => {
             key: 'daily',
             label: <span><FireOutlined /> 每日推题</span>,
             children: (
-              <Card extra={<Button icon={<ReloadOutlined />} onClick={fetchDaily} loading={dailyLoading}>刷新</Button>}>
+              <Card extra={<Button icon={<ReloadOutlined />} onClick={() => fetchDaily()} loading={dailyLoading}>刷新</Button>}>
                 {dailyLoading ? (
                   <Spin />
                 ) : dailyAll.length && dailyQuestions.length === 0 ? (

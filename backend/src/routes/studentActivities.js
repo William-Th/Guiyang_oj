@@ -128,8 +128,35 @@ router.get('/daily-questions', authMiddleware, async (req, res) => {
     }
     const { subject } = req.query;
     const DailyQuestionService = require('../services/recommend/DailyQuestionService');
-    const set = await DailyQuestionService.getToday(req.user.id, subject || null);
-    res.json({ success: true, data: set });
+
+    // 未指定科目时自动解析默认科目，让学生打开页面即有推题：
+    // 1) 今日已生成的题集（任一科目）优先  2) 最近一次练习/活动的科目  3) 默认数学
+    let resolved = subject || null;
+    if (!resolved) {
+      const todaySet = await query(
+        `SELECT subject FROM daily_question_sets
+         WHERE student_id = $1 AND stat_date = CURRENT_DATE AND subject IS NOT NULL
+         ORDER BY created_at DESC LIMIT 1`,
+        [req.user.id]
+      );
+      if (todaySet.rows[0]?.subject) {
+        resolved = todaySet.rows[0].subject;
+      } else {
+        const lastSub = await query(
+          `SELECT act.subject
+           FROM student_activities sa
+           JOIN activities act ON act.id = sa.activity_id
+           WHERE sa.student_id = $1 AND act.subject IS NOT NULL
+           ORDER BY COALESCE(sa.submit_time, sa.started_at, sa.created_at) DESC
+           LIMIT 1`,
+          [req.user.id]
+        );
+        resolved = lastSub.rows[0]?.subject || '数学';
+      }
+    }
+
+    const set = await DailyQuestionService.getToday(req.user.id, resolved);
+    res.json({ success: true, data: { ...set, subject: resolved } });
   } catch (error) {
     logger.error('Daily questions error:', error);
     res.status(500).json({ success: false, message: '获取每日推题失败', error: error.message });
