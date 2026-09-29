@@ -176,6 +176,14 @@ const SmartPracticePage: React.FC = () => {
     setRecs([]);
   }, [subject]);
 
+  // 碎片化推荐：切到该 Tab（或在其上切科目）时自动加载一批，无需手动点「换一批」；
+  // 沿用累积排除逻辑，自动加载的也是本会话未展示过的新题
+  useEffect(() => {
+    if (tab === 'recommend' && subject) {
+      fetchRecommend(false);
+    }
+  }, [tab, subject]);
+
   // 打开答题弹窗：按题型初始化答案，记录作答来源
   const openAnswer = (q: QuestionItem, source: 'daily' | 'recommend') => {
     setCurrent(q);
