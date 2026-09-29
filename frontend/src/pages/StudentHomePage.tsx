@@ -23,6 +23,7 @@ import {
   ClockCircleOutlined,
   FileTextOutlined,
   RiseOutlined,
+  SmileOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { RootState } from '@/store';
@@ -66,6 +67,15 @@ const StudentHomePage: React.FC = () => {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
 
   const displayName = user?.realName || user?.username || '同学';
+
+  // 时段问候：让欢迎语跟着一天的时间走
+  const hour = new Date().getHours();
+  const greeting = hour < 6 ? '夜深了' : hour < 9 ? '早上好' : hour < 12 ? '上午好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
+
+  // 温暖副标题：结合完成数据给一句鼓励
+  const heroSubText = stats.completed > 0
+    ? `你已经完成了 ${stats.completed} 次活动，每一份努力都被记录着。今天也从一组适合你的小练习开始吧！`
+    : '全新的学习旅程从这里开始，我们为你准备了刚刚好的练习，放心大胆去试！';
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -227,10 +237,10 @@ const StudentHomePage: React.FC = () => {
             <ThunderboltOutlined aria-hidden="true" /> 今日学习空间
           </span>
           <Title id="student-home-title" level={1}>
-            欢迎回来，{displayName}
+            {greeting}，{displayName}
           </Title>
           <Paragraph>
-            今天从一组智能练习开始，系统会根据你的掌握情况推荐合适的题目。
+            {heroSubText}
           </Paragraph>
           <Space className="student-home__hero-actions" wrap>
             <Button
@@ -261,9 +271,9 @@ const StudentHomePage: React.FC = () => {
           <div className="student-home__orbit student-home__orbit--outer" />
           <div className="student-home__orbit student-home__orbit--inner" />
           <div className="student-home__visual-core">
-            <ThunderboltOutlined />
-            <strong>智能推荐</strong>
-            <span>从适合你的题目开始</span>
+            <SmileOutlined />
+            <strong>为你推荐</strong>
+            <span>每一道都刚刚好</span>
           </div>
           <span className="student-home__visual-dot student-home__visual-dot--one" />
           <span className="student-home__visual-dot student-home__visual-dot--two" />
@@ -286,7 +296,7 @@ const StudentHomePage: React.FC = () => {
             <Text className="student-section-heading__kicker">学习快照</Text>
             <Title id="learning-overview-title" level={2}>学习概览</Title>
           </div>
-          <Text type="secondary">看清今天的进度，再决定下一步</Text>
+          <Text type="secondary">每一次练习，都在悄悄点亮你的知识地图</Text>
         </div>
         <Row gutter={[16, 16]}>
           {statItems.map((item) => (
@@ -354,7 +364,7 @@ const StudentHomePage: React.FC = () => {
                 )}
               />
             ) : (
-              <Empty description="暂时没有活动，先去完成一组智能练习吧" />
+              <Empty description="学习足迹还空着～先去做一组练习，让它热闹起来吧" />
             )}
           </Card>
         </Col>
