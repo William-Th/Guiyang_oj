@@ -306,7 +306,7 @@ const PointsPage: React.FC = () => {
             <Text type="secondary">今日获得</Text>
             <div style={{ marginTop: 4 }}>
               <Text style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>
-                +{summary.todayEarned}
+                {summary.todayEarned > 0 ? `+${summary.todayEarned}` : summary.todayEarned}
               </Text>
             </div>
           </Col>
@@ -314,7 +314,7 @@ const PointsPage: React.FC = () => {
             <Text type="secondary">本周获得</Text>
             <div style={{ marginTop: 4 }}>
               <Text style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>
-                +{summary.weekEarned}
+                {summary.weekEarned > 0 ? `+${summary.weekEarned}` : summary.weekEarned}
               </Text>
             </div>
           </Col>
@@ -329,8 +329,8 @@ const PointsPage: React.FC = () => {
           <Col xs={12} sm={8} lg={4}>
             <Text type="secondary">累计消耗</Text>
             <div style={{ marginTop: 4 }}>
-              <Text style={{ fontSize: 24, fontWeight: 700, color: '#f5222d' }}>
-                -{summary.totalSpent}
+              <Text style={{ fontSize: 24, fontWeight: 700, color: summary.totalSpent > 0 ? '#f5222d' : undefined }}>
+                {summary.totalSpent > 0 ? `-${summary.totalSpent}` : summary.totalSpent}
               </Text>
             </div>
           </Col>
