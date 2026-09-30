@@ -15,7 +15,8 @@
   position: relative;
   min-height: calc(100vh - 176px);
   margin: calc(var(--bohe-space-6) * -1);
-  padding: var(--bohe-space-8);
+  /* 顶部 48px：抵消负外边距后，导航到首块 = 16-24+48 = 40px，与标准页统一 */
+  padding: 48px var(--bohe-space-8) var(--bohe-space-8);
   overflow: hidden;
   color: var(--student-ink);
   background:
@@ -249,7 +250,7 @@
 }
 
 .student-home__section {
-  margin-top: var(--bohe-space-10);
+  margin-top: 16px;
 }
 
 .student-section-heading {
@@ -257,7 +258,7 @@
   gap: var(--bohe-space-4);
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: var(--bohe-space-5);
+  margin-bottom: 6px;
 }
 
 /* 首页次级小字：统一蓝灰调，不用黑灰 */
@@ -378,7 +379,7 @@
 }
 
 .student-home__content-grid {
-  margin-top: var(--bohe-space-8);
+  margin-top: 6px;
 }
 
 .student-panel-card.ant-card {
@@ -667,7 +668,7 @@
 }
 
 .activity-section {
-  margin-bottom: var(--bohe-space-10);
+  margin-bottom: 6px;
 }
 
 .activity-section__header {
@@ -894,7 +895,7 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: var(--bohe-space-8);
-  margin-bottom: var(--bohe-space-6);
+  margin-bottom: 6px;
   overflow: hidden;
   border: 1px solid var(--student-border);
   border-radius: var(--bohe-radius-xl);
@@ -1216,7 +1217,7 @@
   }
 
   .student-home__section {
-    margin-top: var(--bohe-space-8);
+    margin-top: 16px;
   }
 
   .student-stat-card {
@@ -1225,7 +1226,7 @@
   }
 
   .student-home__content-grid {
-    margin-top: var(--bohe-space-6);
+    margin-top: 6px;
   }
 
   .student-activity-list .ant-list-item {
@@ -1281,7 +1282,7 @@
   }
 
   .activity-section {
-    margin-bottom: var(--bohe-space-8);
+    margin-bottom: 6px;
   }
 
   .activity-section__header {
