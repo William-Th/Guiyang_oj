@@ -11,6 +11,7 @@ import {
   AuditOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import dayjs from 'dayjs';
 import { gradingApi, activityApi } from '../../services/api';
 import { ApiError, FilterParams } from '../../types';
 import { SUBJECTS } from '../../config/subjects';
@@ -271,15 +272,14 @@ const GradingListPage: React.FC = () => {
     completed: completedCount,
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载评卷列表中..." />
-      </div>
-    );
-  }
+  // 日期选择器的受控值：从筛选状态还原，避免加载过程丢显示
+  const dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null =
+    filters.startDate && filters.endDate
+      ? [dayjs(filters.startDate), dayjs(filters.endDate)]
+      : null;
 
   return (
+    <Spin spinning={loading}>
     <div>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={12} md={6}>
@@ -403,6 +403,7 @@ const GradingListPage: React.FC = () => {
           </Select>
 
           <RangePicker
+            value={dateRange}
             placeholder={['开始日期', '结束日期']}
             onChange={(dates) => {
               if (dates && dates[0] && dates[1]) {
@@ -441,6 +442,7 @@ const GradingListPage: React.FC = () => {
         />
       </Card>
     </div>
+    </Spin>
   );
 };
 
