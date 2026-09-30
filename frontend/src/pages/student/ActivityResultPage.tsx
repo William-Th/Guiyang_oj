@@ -4,7 +4,6 @@ import {
   Card,
   Row,
   Col,
-  Statistic,
   Alert,
   Spin,
   Button,
@@ -505,9 +504,9 @@ const ActivityResultPage: React.FC = () => {
 
   return (
     <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
-      {/* Header */}
-      <Card style={{ marginBottom: 24 }}>
-        <Row justify="space-between" align="middle">
+      {/* 顶部信息卡：标题、统计与时间整合为一张卡，不再每项一个方框 */}
+      <Card style={{ marginBottom: 24 }} styles={{ body: { padding: '24px 28px' } }}>
+        <Row justify="space-between" align="top">
           <Col>
             <Title level={3} style={{ margin: 0 }}>
               {student_activity.activity_title}
@@ -527,6 +526,79 @@ const ActivityResultPage: React.FC = () => {
             </Button>
           </Col>
         </Row>
+
+        <Divider style={{ margin: '18px 0' }} />
+
+        <Row gutter={24}>
+          <Col flex="1 1 0">
+            <Text type="secondary">总分</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 26, fontWeight: 700, color: Number(student_activity.score) >= 60 ? '#52c41a' : '#f5222d' }}>
+                <TrophyOutlined style={{ marginRight: 8 }} />
+                {Number(student_activity.score)}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 14 }}> / {student_activity.activity_total_score}</Text>
+            </div>
+            <Progress
+              percent={scorePercentage}
+              status={Number(student_activity.score) >= 60 ? 'success' : 'exception'}
+              showInfo={false}
+              style={{ marginTop: 8, maxWidth: 260 }}
+            />
+          </Col>
+          <Col flex="1 1 0">
+            <Text type="secondary">正确率</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 26, fontWeight: 700, color: correctRate >= 60 ? '#52c41a' : '#f5222d' }}>
+                {correctRate}%
+              </Text>
+            </div>
+          </Col>
+          <Col flex="1 1 0">
+            <Text type="secondary">答对题数</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 26, fontWeight: 700 }}>
+                {statistics.correct_questions}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 14 }}> / {statistics.total_questions}</Text>
+            </div>
+          </Col>
+          <Col flex="1 1 0">
+            <Text type="secondary">批改状态</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 20, fontWeight: 700, color: statistics.pending_questions === 0 ? '#52c41a' : '#faad14' }}>
+                {statistics.pending_questions === 0
+                  ? '已完成'
+                  : `${statistics.auto_graded_questions + statistics.manual_graded_questions}/${statistics.total_questions}`}
+              </Text>
+            </div>
+          </Col>
+        </Row>
+
+        <Divider style={{ margin: '18px 0' }} />
+
+        <Space size={48} wrap>
+          <span>
+            <Text type="secondary">开始时间：</Text>
+            <Text>{student_activity.started_at ? new Date(student_activity.started_at).toLocaleString('zh-CN') : '-'}</Text>
+          </span>
+          <span>
+            <Text type="secondary">提交时间：</Text>
+            <Text>{student_activity.submit_time ? new Date(student_activity.submit_time).toLocaleString('zh-CN') : '-'}</Text>
+          </span>
+          <span>
+            <Text type="secondary">用时：</Text>
+            <Text strong>
+              {student_activity.started_at && student_activity.submit_time
+                ? `${Math.round(
+                    (new Date(student_activity.submit_time).getTime() -
+                      new Date(student_activity.started_at).getTime()) /
+                      1000 / 60
+                  )} 分钟`
+                : '-'}
+            </Text>
+          </span>
+        </Space>
       </Card>
 
       {/* Warning if answers not published */}
@@ -549,91 +621,6 @@ const ActivityResultPage: React.FC = () => {
           style={{ marginBottom: 24 }}
         />
       )}
-
-      {/* Score Statistics */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总分"
-              value={Number(student_activity.score)}
-              suffix={`/ ${student_activity.activity_total_score}`}
-              valueStyle={{ color: Number(student_activity.score) >= 60 ? '#52c41a' : '#f5222d', fontSize: 28 }}
-              prefix={<TrophyOutlined />}
-            />
-            <Progress
-              percent={scorePercentage}
-              status={Number(student_activity.score) >= 60 ? 'success' : 'exception'}
-              showInfo={false}
-              style={{ marginTop: 8 }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="正确率"
-              value={correctRate}
-              suffix="%"
-              valueStyle={{ color: correctRate >= 60 ? '#52c41a' : '#f5222d' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="答对题数"
-              value={statistics.correct_questions}
-              suffix={`/ ${statistics.total_questions}`}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="批改状态"
-              value={
-                statistics.pending_questions === 0
-                  ? '已完成'
-                  : `${statistics.auto_graded_questions + statistics.manual_graded_questions}/${statistics.total_questions}`
-              }
-              valueStyle={{
-                color: statistics.pending_questions === 0 ? '#52c41a' : '#faad14',
-                fontSize: 20,
-              }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Time Information */}
-      <Card style={{ marginBottom: 24 }}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Text type="secondary">开始时间：</Text>
-            <br />
-            <Text>{student_activity.started_at ? new Date(student_activity.started_at).toLocaleString('zh-CN') : '-'}</Text>
-          </Col>
-          <Col span={8}>
-            <Text type="secondary">提交时间：</Text>
-            <br />
-            <Text>{new Date(student_activity.submit_time).toLocaleString('zh-CN')}</Text>
-          </Col>
-          <Col span={8}>
-            <Text type="secondary">用时：</Text>
-            <br />
-            <Text>
-              {student_activity.started_at && student_activity.submit_time
-                ? `${Math.round(
-                    (new Date(student_activity.submit_time).getTime() -
-                      new Date(student_activity.started_at).getTime()) /
-                      1000 / 60
-                  )} 分钟`
-                : '-'}
-            </Text>
-          </Col>
-        </Row>
-      </Card>
 
       {/* 答题卡钉在左侧（sticky 跟随滚动），答题详情在右侧——与考卷答题页一致 */}
       <div className="result-layout">
