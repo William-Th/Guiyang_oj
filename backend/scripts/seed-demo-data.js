@@ -861,7 +861,7 @@ async function seedRewards() {
     let balance = 0;
     let earned = 0;
     let spent = 0;
-    let dayOffset = txs.length;
+    let dayOffset = txs.length - 1; // 最后一笔落在今天，保证「今日获得」有数据
     for (const [type, desc, change] of txs) {
       const before = balance;
       balance += change;
@@ -946,6 +946,92 @@ async function seedRewards() {
     );
   }
   console.log(`✓ 证书：张小明 ${certActs.rows.length} 张（${certNos.slice(0, certActs.rows.length).join(' / ')}）`);
+
+  // 12.6 积分排行榜（调用后端 LeaderboardService 单例即时物化总榜/周榜/月榜）
+  try {
+    const leaderboardService = require('../src/services/points/LeaderboardService');
+    await leaderboardService.generateAllLeaderboards();
+    const lb = await pool.query(`SELECT leaderboard_type, count(*) FROM leaderboards GROUP BY leaderboard_type`);
+    console.log(`✓ 排行榜：${lb.rows.map(r => `${r.leaderboard_type} ${r.count} 条`).join(' / ')}`);
+  } catch (e) {
+    console.log(`  ⚠ 排行榜生成失败（每小时定时任务也会补）：${e.message}`);
+  }
+}
+
+// ---------- 13. 身份一致性自检：每张学生表按自己的 ID 空间解析学生名 ----------
+// 平台存在双 ID 空间（历史设计）：
+//   users.id   系：student_activities/answers、student_wrong_questions、
+//              student_question_practice、student_knowledge_stats
+//   students.id 系：student_points/points_transactions/student_points_daily、
+//              student_streaks、student_achievements、certificates、leaderboards
+// 本自检逐表解析学生名，任何一行“张冠李戴”（解析不到或解析成非演示学生）都直接报错，
+// 防止再出现「证书验证显示别人名字」这类 ID 错位问题。
+async function verifyIdentity() {
+  const expected = {
+    users: { 30: '13800138003', 33: '13812340001', 34: '13812340002' },
+    students: { 28: '13800138003', 31: '13812340001', 32: '13812340002' },
+  };
+  const checks = [
+    ['student_activities', 'users', 't.student_id IN (30,33,34)', 3],
+    ['student_wrong_questions', 'users', "t.student_id = 30 AND t.status = 'active'", 5],
+    ['student_points', 'students', 't.student_id IN (28,31,32)', 3],
+    ['points_transactions', 'students', 't.student_id IN (28,31,32)', 23],
+    ['student_points_daily', 'students', 't.student_id IN (28,31,32)', 42],
+    ['student_streaks', 'students', 't.student_id IN (28,31,32)', 3],
+    ['student_achievements', 'students', 't.student_id IN (28,31,32)', 13],
+    ['certificates', 'students', 't.student_id = 28', 2],
+  ];
+
+  const problems = [];
+  for (const [table, space, cond, minRows] of checks) {
+    const join = space === 'users'
+      ? 'JOIN users u ON t.student_id = u.id'
+      : 'JOIN students s ON t.student_id = s.id JOIN users u ON u.id = s.user_id';
+    const r = await pool.query(
+      `SELECT u.username, u.real_name, count(*)::int AS n
+         FROM ${table} t ${join} WHERE ${cond}
+        GROUP BY u.username, u.real_name`
+    );
+    if (r.rows.length === 0) {
+      problems.push(`${table}: 无数据`);
+      continue;
+    }
+    const total = r.rows.reduce((sum, row) => sum + row.n, 0);
+    if (total < minRows) {
+      problems.push(`${table}: 行数 ${total} < 预期 ${minRows}`);
+    }
+    for (const row of r.rows) {
+      if (expected[space][0] !== undefined && !(row.username in Object.fromEntries(
+        Object.entries(expected[space]).map(([id, un]) => [un, id])
+      ))) {
+        problems.push(`${table}: 意外学生 ${row.username}(${row.real_name})`);
+      }
+    }
+  }
+
+  // 独立校验： 三名演示学生的每张表数据都能解析到本人用户名
+  const resolveCheck = await pool.query(`
+    SELECT u.username, u.real_name,
+           (SELECT count(*) FROM student_activities t WHERE t.student_id = u.id) AS acts,
+           (SELECT count(*) FROM student_wrong_questions t WHERE t.student_id = u.id) AS wrong,
+           (SELECT count(*) FROM student_points t WHERE t.student_id = s.id) AS pts,
+           (SELECT count(*) FROM student_achievements t WHERE t.student_id = s.id) AS ach,
+           (SELECT count(*) FROM certificates t WHERE t.student_id = s.id) AS certs,
+           (SELECT current_streak FROM student_streaks t WHERE t.student_id = s.id) AS streak
+      FROM users u
+      JOIN students s ON s.user_id = u.id
+     WHERE u.username IN ('13800138003', '13812340001', '13812340002')
+  `);
+  console.log('\n===== 身份一致性自检 =====');
+  for (const row of resolveCheck.rows) {
+    console.log(`  ${row.real_name}(${row.username}): 答卷${row.acts} 错题${row.wrong} 积分户${row.pts} 成就${row.ach} 证书${row.certs} 连胜${row.streak ?? 0}`);
+  }
+  if (problems.length > 0) {
+    console.error('\n⚠ 身份一致性检查未通过:');
+    problems.forEach(p => console.error('  - ' + p));
+    throw new Error('身份一致性自检失败');
+  }
+  console.log('✓ 身份一致性：全部学生表解析正确，无张冠李戴');
 }
 
 async function verify() {
@@ -981,6 +1067,7 @@ async function main() {
   await seedWorkflows(idMap);
   await seedAnalytics(idMap);
   await seedRewards();
+  await verifyIdentity();
   await verify();
   await pool.end();
   console.log('\n全部完成。');

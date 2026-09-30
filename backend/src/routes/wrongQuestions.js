@@ -228,9 +228,11 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
     }
 
     // D2 连胜：无论对错都更新（错则归零）
+    // student_streaks 按 students.id 读写，需先解析（req.user.id 是 users.id）
     try {
       const StreakService = require('../services/streak/StreakService');
-      streak = await StreakService.recordResult(req.user.id, correct);
+      const studentRow = await resolveStudent(req.user.id);
+      streak = await StreakService.recordResult(studentRow.student_id, correct);
     } catch (e) {
       console.error('update streak failed:', e.message);
     }
