@@ -659,3 +659,15 @@
   background: rgba(255, 255, 255, 0.1);
   pointer-events: none;
 }
+
+/* 管理端横幅内的联系信息行（个人信息卡已并入横幅） */
+.admin-home__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.88);
+}

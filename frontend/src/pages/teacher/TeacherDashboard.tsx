@@ -7,15 +7,9 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
-  UserOutlined,
-  PhoneOutlined,
-  MailOutlined,
-  IdcardOutlined,
   CopyOutlined,
   EyeOutlined
 } from '@ant-design/icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import api, { questionBankApi } from '@/services/api';
 import { plainTextPreview } from '@/utils/richText';
@@ -50,7 +44,6 @@ interface Activity {
 }
 
 const TeacherDashboard: React.FC = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<TeacherStats>({
@@ -424,38 +417,8 @@ const TeacherDashboard: React.FC = () => {
 
   return (
     <div>
-      {/* 教师个人信息 */}
-      <Card title="个人信息" style={{ marginTop: '24px' }}>
-        <Row gutter={[24, 16]}>
-          <Col span={12}>
-            <Space>
-              <UserOutlined />
-              <span><strong>姓名：</strong>{user?.realName || user?.username || '未设置'}</span>
-            </Space>
-          </Col>
-          <Col span={12}>
-            <Space>
-              <IdcardOutlined />
-              <span><strong>角色：</strong>教师</span>
-            </Space>
-          </Col>
-          <Col span={12}>
-            <Space>
-              <PhoneOutlined />
-              <span><strong>手机号：</strong>{user?.phone || '未设置'}</span>
-            </Space>
-          </Col>
-          <Col span={12}>
-            <Space>
-              <MailOutlined />
-              <span><strong>邮箱：</strong>{user?.email || '未设置'}</span>
-            </Space>
-          </Col>
-        </Row>
-      </Card>
-
       {/* 统计数据 */}
-      <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Tabs } from 'antd';
+import { Tabs, Tag } from 'antd';
 import {
   DashboardOutlined,
   BookOutlined,
   TeamOutlined,
   SettingOutlined,
+  UserOutlined,
+  PhoneOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -38,8 +41,18 @@ const AdminTeacherDashboard: React.FC = () => {
 
   const hero = (
     <div className="admin-home__hero">
-      <h1>{getGreeting()}，{displayName}</h1>
-      <p>{heroSubtitle}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <h1 style={{ margin: 0 }}>{getGreeting()}，{displayName}</h1>
+        <Tag color="blue" style={{ marginRight: 0 }}>{isTeacher() ? '教师工作台' : '管理控制台'}</Tag>
+      </div>
+      <p style={{ marginBottom: 0 }}>{heroSubtitle}</p>
+      {isTeacher() && (
+        <div className="admin-home__meta">
+          <span><UserOutlined style={{ marginRight: 5 }} />{user?.realName || '未设置'}</span>
+          <span><PhoneOutlined style={{ marginRight: 5 }} />{user?.phone || '未设置'}</span>
+          <span><MailOutlined style={{ marginRight: 5 }} />{user?.email || '未设置'}</span>
+        </div>
+      )}
     </div>
   );
 
