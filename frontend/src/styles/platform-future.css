@@ -687,3 +687,8 @@
 .app-shell :where(.ant-modal-body) :where(.ant-card) {
   margin-bottom: 0 !important;
 }
+
+/* ===== 卡片内边距全局收紧：内容与卡片边缘更贴合，视觉更紧凑 ===== */
+.app-shell .app-page-surface .ant-card > .ant-card-body {
+  padding: 16px 20px;
+}
