@@ -39,6 +39,7 @@ interface Activity {
   type: 'practice' | 'assessment';
   start_time: string;
   end_time: string;
+  time_limit_type?: 'unlimited' | 'scheduled' | 'timed';
   status: string;
   total_score: number;
 }
@@ -394,7 +395,10 @@ const TeacherDashboard: React.FC = () => {
       dataIndex: 'start_time',
       key: 'start_time',
       width: 180,
-      render: (time: string) => new Date(time).toLocaleString('zh-CN')
+      render: (time: string, record: Activity) => {
+        if (time) return new Date(time).toLocaleString('zh-CN');
+        return record.time_limit_type === 'unlimited' ? '不限时' : '未排期';
+      }
     },
     {
       title: '状态',

@@ -156,8 +156,14 @@ const AssessmentCenterPage: React.FC = () => {
     { title: '科目', dataIndex: 'subject', key: 'subject', width: 100, render: (s: string) => getSubjectTag(s) },
     { title: '年级', dataIndex: 'grade', key: 'grade', width: 100 },
     { title: '能力等级', dataIndex: 'ability_level', key: 'ability_level', width: 120, render: (l: string) => getAbilityLevelTag(l) },
-    { title: '开始时间', dataIndex: 'start_time', key: 'start_time', width: 160, render: (t: string) => formatDateTime(t) },
-    { title: '时长', dataIndex: 'duration', key: 'duration', width: 100, render: (d: number) => d ? `${d}分钟` : '-' },
+    { title: '开始时间', dataIndex: 'start_time', key: 'start_time', width: 160, render: (t: string, r: any) => {
+      if (t) return formatDateTime(t);
+      return r?.time_limit_type === 'unlimited' ? '不限时' : '未排期';
+    } },
+    { title: '时长', dataIndex: 'duration', key: 'duration', width: 100, render: (d: number, r: any) => {
+      if (d) return `${d}分钟`;
+      return r?.time_limit_type === 'unlimited' ? '不限' : '-';
+    } },
     { title: '总分', dataIndex: 'total_score', key: 'total_score', width: 80 },
     {
       title: '官方测评', dataIndex: 'is_official', key: 'is_official', width: 100,

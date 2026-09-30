@@ -21,6 +21,7 @@ interface Activity {
   start_time: string;
   end_time: string;
   duration: number;
+  timeLimitType?: 'unlimited' | 'scheduled' | 'timed';
   total_score: number;
   pass_score: number;
   status: string;
@@ -279,13 +280,17 @@ const ActivityDetailPage: React.FC = () => {
               </Descriptions.Item>
             )}
             <Descriptions.Item label="开始时间">
-              {formatDateTime(activity.start_time)}
+              {activity.start_time
+                ? formatDateTime(activity.start_time)
+                : activity.timeLimitType === 'unlimited' ? '不限时' : '未排期'}
             </Descriptions.Item>
             <Descriptions.Item label="结束时间">
-              {formatDateTime(activity.end_time)}
+              {activity.end_time
+                ? formatDateTime(activity.end_time)
+                : activity.timeLimitType === 'unlimited' ? '长期开放' : '-'}
             </Descriptions.Item>
             <Descriptions.Item label="答题时长">
-              {activity.duration} 分钟
+              {activity.duration ? `${activity.duration} 分钟` : '不限'}
             </Descriptions.Item>
             <Descriptions.Item label="总分">
               {activity.total_score}
