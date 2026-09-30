@@ -677,7 +677,7 @@
    栅格(Row/Col)中的卡片间距由 gutter 控制、不额外加外边距；
    弹窗内的单卡片不产生影响 */
 .app-shell .app-page-surface :where(.ant-card) {
-  margin-bottom: 16px !important;
+  margin-bottom: 12px !important;
 }
 
 .app-shell .app-page-surface .ant-col > :where(.ant-card) {
