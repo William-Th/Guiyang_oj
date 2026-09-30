@@ -113,8 +113,8 @@ class DailyQuestionService {
     };
 
     let row = await fetchRow();
-    if (!row) {
-      // 即时生成
+    if (!row || !Array.isArray(row.question_ids) || row.question_ids.length === 0) {
+      // 即时生成（含历史遗留的空题集：按解析出的科目重新生成）
       await DailyQuestionService.generateForStudent(studentId, subject);
       row = await fetchRow();
     }

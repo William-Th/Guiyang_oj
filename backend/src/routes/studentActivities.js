@@ -18,6 +18,7 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../database/connection');
 const KnowledgeStatsService = require('../services/recommend/KnowledgeStatsService');
+const { resolveStudent } = require('../services/studentAccessControl');
 const { authMiddleware } = require('../middleware/auth');
 const { body, param, validationResult } = require('express-validator');
 const logger = require('../utils/logger');
@@ -136,6 +137,7 @@ router.get('/daily-questions', authMiddleware, async (req, res) => {
       const todaySet = await query(
         `SELECT subject FROM daily_question_sets
          WHERE student_id = $1 AND stat_date = CURRENT_DATE AND subject IS NOT NULL
+           AND COALESCE(array_length(question_ids, 1), 0) > 0
          ORDER BY created_at DESC LIMIT 1`,
         [req.user.id]
       );
@@ -324,7 +326,8 @@ router.post('/recommend/:questionId/answer', authMiddleware, async (req, res) =>
       // 答对：积分 + 若在错题集则标记掌握
       const PointsPolicy = require('../services/points/PointsPolicy');
       try {
-        const award = await PointsPolicy.awardForCorrectAnswer(req.user.id, {
+        const studentRow = await resolveStudent(req.user.id);
+        const award = await PointsPolicy.awardForCorrectAnswer(studentRow.student_id, {
           difficulty: question.difficulty,
           isRedo: false,
           sourceType: 'recommend_practice',
@@ -990,7 +993,8 @@ router.post('/:id/submit',
             [row.is_correct ? 1 : 0, row.question_id]
           );
           if (row.is_correct) {
-            await PointsPolicy.awardForCorrectAnswer(studentId, {
+            const actStudentRow = await resolveStudent(studentId);
+            await PointsPolicy.awardForCorrectAnswer(actStudentRow.student_id, {
               difficulty: row.difficulty,
               sourceId: row.answer_id,
               sourceType: 'answer',

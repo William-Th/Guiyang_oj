@@ -1,4 +1,5 @@
 const express = require('express');
+const { resolveStudent } = require('../services/studentAccessControl');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const WrongQuestion = require('../models/WrongQuestion');
@@ -197,7 +198,8 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
       const redoMax = policy.wrong_redo_max != null ? policy.wrong_redo_max : 2;
       // 重做次数未达上限才发分
       if ((wq.review_count || 0) < redoMax) {
-        const award = await PointsPolicy.awardForCorrectAnswer(req.user.id, {
+        const studentRow0 = await resolveStudent(req.user.id);
+        const award = await PointsPolicy.awardForCorrectAnswer(studentRow0.student_id, {
           difficulty: question.difficulty,
           isRedo: true,
           sourceType: 'wrong_redo',
