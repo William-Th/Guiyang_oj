@@ -671,3 +671,19 @@
   font-size: 13px;
   color: rgba(255, 255, 255, 0.88);
 }
+
+/* ===== 卡片纵向堆叠间距统一（紧凑）=====
+   页面纵向堆叠的卡片间距统一 16px（覆盖页面内联的 24px）；
+   栅格(Row/Col)中的卡片间距由 gutter 控制、不额外加外边距；
+   弹窗内的单卡片不产生影响 */
+.app-shell .app-page-surface :where(.ant-card) {
+  margin-bottom: 16px !important;
+}
+
+.app-shell .app-page-surface .ant-col > :where(.ant-card) {
+  margin-bottom: 0 !important;
+}
+
+.app-shell :where(.ant-modal-body) :where(.ant-card) {
+  margin-bottom: 0 !important;
+}
