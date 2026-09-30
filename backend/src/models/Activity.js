@@ -419,7 +419,7 @@ class Activity {
     const result = await query(`
       SELECT id, title, subject, grade, type, ability_level, scope, status,
              total_score, is_official, created_at, updated_at,
-             start_time, end_time,
+             start_time, end_time, duration, time_limit_type,
              (SELECT COUNT(*) FROM student_activities WHERE activity_id = activities.id) as participant_count
       FROM activities
       WHERE created_by = $1

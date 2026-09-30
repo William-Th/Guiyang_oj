@@ -19,6 +19,7 @@ interface Activity {
   start_time: string;
   end_time: string;
   duration: number;
+  time_limit_type?: 'unlimited' | 'scheduled' | 'timed';
   total_score: number;
   status: string;
   is_official: boolean;
@@ -199,14 +200,21 @@ const ActivityListPage: React.FC = () => {
       dataIndex: 'start_time',
       key: 'start_time',
       width: 150,
-      render: (time: string) => formatDateTime(time),
+      render: (time: string, record: Activity) => {
+        if (time) return formatDateTime(time);
+        // 不限时练习无排期属正常状态，明示比「-」更清晰
+        return record.time_limit_type === 'unlimited' ? '不限时' : '未排期';
+      },
     },
     {
       title: '时长',
       dataIndex: 'duration',
       key: 'duration',
-      width: 80,
-      render: (duration: number) => duration ? `${duration}分钟` : '-',
+      width: 90,
+      render: (duration: number, record: Activity) => {
+        if (duration) return `${duration}分钟`;
+        return record.time_limit_type === 'unlimited' ? '不限' : '-';
+      },
     },
     {
       title: '总分',
