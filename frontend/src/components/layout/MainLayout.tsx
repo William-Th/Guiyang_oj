@@ -199,14 +199,14 @@ const MainLayout: React.FC = () => {
       label: '首页',
     },
     {
-      key: '/student/practice',
-      icon: <ProjectOutlined />,
-      label: '练习中心',
-    },
-    {
       key: '/student/smart-practice',
       icon: <ThunderboltOutlined />,
       label: '智能练习',
+    },
+    {
+      key: '/student/practice',
+      icon: <ProjectOutlined />,
+      label: '练习中心',
     },
     {
       key: '/student/assessments',
