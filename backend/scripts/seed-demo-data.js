@@ -382,6 +382,9 @@ async function clean() {
     `DELETE FROM audit_logs`,
     `DELETE FROM import_logs`,
     `DELETE FROM student_wrong_questions`,
+    `DELETE FROM student_points_daily`,
+    `DELETE FROM student_streaks`,
+    `DELETE FROM student_points`,
     `DELETE FROM teacher_permissions`,
     `DELETE FROM teaching_class_approvals`,
     `DELETE FROM teaching_class_activities`,
@@ -741,7 +744,9 @@ async function seedAnalytics(idMap) {
   }
 
   // 每个学生的正确率（影响统计图表的多样性）
+  // 张小明（users.id=30）整卷已评完：供「成绩查看」等学生演示页面开箱有数据
   const students = [
+    { userId: 30, name: '张小明', correctRatio: 0.8, fullyGraded: true },
     { userId: 33, name: '王明', correctRatio: 0.8 },
     { userId: 34, name: '李华', correctRatio: 0.5 },
   ];
@@ -778,22 +783,169 @@ async function seedAnalytics(idMap) {
           isEssay ? '略。学生作答内容。' : isCorrect ? 'A' : 'B',
           isEssay ? null : isCorrect,
           score, isEssay ? null : score,
-          isEssay ? 'pending' : 'auto_graded',
+          isEssay ? (stu.fullyGraded ? 'manual_graded' : 'pending') : 'auto_graded',
         ]
       );
       idx++;
     }
 
-    // 客观题总分写入，主观题待批（进入教师评卷列表）
+    // 张小明整卷已评完（出历史成绩）；其余客观题总分写入、主观题待批（进入教师评卷列表）
     await pool.query(
       `UPDATE student_activities
-       SET score = $2, grading_status = 'partial_graded'
+       SET score = $2, grading_status = $3
        WHERE id = $1`,
-      [saId, total]
+      [saId, total, stu.fullyGraded ? 'completed' : 'partial_graded']
     );
     console.log(`  ✓ ${stu.name} 历史答卷：${questions.length} 题，得分 ${total}`);
   }
-  console.log('✓ 数据分析历史数据：2 份云岩一小学生答卷已生成');
+  console.log('✓ 数据分析历史数据：云岩一小学生答卷已生成（张小明含已完成卷）');
+}
+
+// ---------- 12. 积分 / 连胜 / 成就 / 证书：让奖励体系演示页面开箱有数据 ----------
+// 注意：points/streaks/achievements/certificates 均按 students.id 读写
+// （students.id=28 → users.id=30 张小明；31 → users.id=33 王明；32 → users.id=34 李华）
+async function seedRewards() {
+  const students = [
+    { sid: 28, name: '张小明', streak: 7, maxStreak: 12 },
+    { sid: 31, name: '王明', streak: 3, maxStreak: 5 },
+    { sid: 32, name: '李华', streak: 1, maxStreak: 2 },
+  ];
+
+  // 12.1 连胜
+  for (const s of students) {
+    await pool.query(
+      `INSERT INTO student_streaks (student_id, current_streak, max_streak, last_correct_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+       ON CONFLICT (student_id) DO UPDATE
+         SET current_streak = $2, max_streak = $3, last_correct_at = CURRENT_TIMESTAMP`,
+      [s.sid, s.streak, s.maxStreak]
+    );
+  }
+  console.log('✓ 连胜：张小明 7 题 / 王明 3 题 / 李华 1 题');
+
+  // 12.2 积分流水 + 账户（balance 前后衔接）
+  const txSets = {
+    28: [
+      ['shop_purchase', '兑换「满分错题本」', -60],
+      ['shop_purchase', '兑换「学习加油包」', -45],
+      ['achievement', '解锁成就「初次试炼」', 20],
+      ['daily_task', '完成每日任务：今日 5 题', 10],
+      ['practice', '完成练习「三年级数学基础练习（一）」', 30],
+      ['achievement', '解锁成就「连胜达人」', 15],
+      ['daily_task', '完成每日任务：错题清一题', 8],
+      ['streak', '连胜 7 天奖励', 35],
+      ['practice', '完成练习「信息科技小练」', 25],
+      ['achievement', '解锁成就「百题斩」', 50],
+      ['daily_task', '完成每日任务：知识点复习', 10],
+      ['practice', '完成练习「数学思维训练」', 40],
+      ['achievement', '解锁成就「积分新贵」', 20],
+      ['daily_task', '完成每日任务：今日 5 题', 10],
+      ['practice', '完成练习「判断题专项」', 18],
+      ['streak', '连胜奖励', 14],
+    ],
+    31: [
+      ['achievement', '解锁成就「初次试炼」', 20],
+      ['practice', '完成练习「三年级数学基础练习（一）」', 30],
+      ['daily_task', '完成每日任务：今日 5 题', 10],
+      ['shop_purchase', '兑换「错题本」', -25],
+    ],
+    32: [
+      ['achievement', '解锁成就「初次试炼」', 15],
+      ['practice', '完成练习「三年级数学基础练习（一）」', 20],
+      ['daily_task', '完成每日任务：今日 5 题', 10],
+    ],
+  };
+
+  for (const s of students) {
+    const txs = txSets[s.sid] || [];
+    let balance = 0;
+    let earned = 0;
+    let spent = 0;
+    let dayOffset = txs.length;
+    for (const [type, desc, change] of txs) {
+      const before = balance;
+      balance += change;
+      if (change > 0) earned += change; else spent += -change;
+      await pool.query(
+        `INSERT INTO points_transactions
+          (student_id, points_change, transaction_type, description, balance_before, balance_after, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP - ($7 || ' days')::interval)`,
+        [s.sid, change, type, desc, before, balance, dayOffset]
+      );
+      dayOffset -= 1;
+    }
+    await pool.query(
+      `INSERT INTO student_points (student_id, current_points, total_points, spent_points)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (student_id) DO UPDATE
+         SET current_points = $2, total_points = $3, spent_points = $4, last_updated = CURRENT_TIMESTAMP`,
+      [s.sid, balance, earned, spent]
+    );
+    console.log(`  ✓ ${s.name} 积分：当前 ${balance}（累计 ${earned} / 消耗 ${spent}）`);
+  }
+
+  // 12.3 每日积分统计（近 7 天，供「今日/本周获得」统计展示）
+  for (const s of students) {
+    for (let d = 0; d < 7; d++) {
+      const easy = 6 + ((d * 3 + s.sid) % 5);
+      const medium = 4 + ((d * 2 + s.sid) % 6);
+      await pool.query(
+        `INSERT INTO student_points_daily (student_id, stat_date, difficulty, correct_count, earned_points, daily_total_earned)
+         VALUES ($1, CURRENT_DATE - $2::int, 'easy', $3, $3 * 2, $3 * 2),
+                ($1, CURRENT_DATE - $2::int, 'medium', $4, $4 * 3, $3 * 2 + $4 * 3)
+         ON CONFLICT (student_id, stat_date, difficulty) DO UPDATE
+           SET correct_count = EXCLUDED.correct_count,
+               earned_points = EXCLUDED.earned_points,
+               daily_total_earned = EXCLUDED.daily_total_earned,
+               updated_at = CURRENT_TIMESTAMP`,
+        [s.sid, d, easy, medium]
+      );
+    }
+  }
+  console.log('✓ 每日积分统计：近 7 天已生成');
+
+  // 12.4 成就：张小明 8 个、王明 3 个、李华 2 个（从成就定义表顺序取）
+  const defs = await pool.query(
+    `SELECT achievement_id, points_reward FROM achievements WHERE is_active = true ORDER BY achievement_id`
+  );
+  if (defs.rows.length >= 13) {
+    const plan = [
+      { sid: 28, ids: defs.rows.slice(0, 8), days: [21, 18, 15, 12, 9, 6, 3, 1] },
+      { sid: 31, ids: defs.rows.slice(8, 11), days: [10, 5, 2] },
+      { sid: 32, ids: defs.rows.slice(11, 13), days: [8, 3] },
+    ];
+    for (const p of plan) {
+      for (let i = 0; i < p.ids.length; i++) {
+        await pool.query(
+          `INSERT INTO student_achievements
+            (student_id, achievement_id, achieved_at, points_awarded, is_displayed, display_order, times_achieved)
+           VALUES ($1, $2, CURRENT_TIMESTAMP - ($3 || ' days')::interval, $4, true, $5, 1)`,
+          [p.sid, p.ids[i].achievement_id, p.days[i] ?? 1, p.ids[i].points_reward || 0, i]
+        );
+      }
+    }
+    console.log('✓ 成就：张小明 8 / 王明 3 / 李华 2 已解锁');
+  } else {
+    console.log('  ⚠ 成就定义不足 13 条，跳过成就种子');
+  }
+
+  // 12.5 证书：张小明 2 张（数学/信息科技各一张，挂在已发布活动上）
+  // 编号必须匹配公共验证接口的格式校验：GY-YYYY-XXXXXXXX（大写字母/数字，8 位）
+  const certActs = await pool.query(
+    `SELECT id, subject FROM activities WHERE status = 'published' ORDER BY id LIMIT 2`
+  );
+  const certLevels = ['优秀', '良好'];
+  const certNos = ['GY-2026-MATH0001', 'GY-2026-IT000002'];
+  for (let i = 0; i < certActs.rows.length; i++) {
+    const act = certActs.rows[i];
+    await pool.query(
+      `INSERT INTO certificates (student_id, exam_id, cert_no, issue_date, level, file_url)
+       VALUES ($1, $2, $3, CURRENT_DATE - $4::int, $5, '')
+       ON CONFLICT (cert_no) DO NOTHING`,
+      [28, act.id, certNos[i], 10 + i, certLevels[i]]
+    );
+  }
+  console.log(`✓ 证书：张小明 ${certActs.rows.length} 张（${certNos.slice(0, certActs.rows.length).join(' / ')}）`);
 }
 
 async function verify() {
@@ -828,6 +980,7 @@ async function main() {
   await seedActivities(idMap);
   await seedWorkflows(idMap);
   await seedAnalytics(idMap);
+  await seedRewards();
   await verify();
   await pool.end();
   console.log('\n全部完成。');

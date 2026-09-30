@@ -313,11 +313,42 @@ async function main() {
   await sleep(2000);
   await screenshot(studentPage, '22_student_practice');
 
-  // 33 - 在线答题页面（直接进入已发布的练习活动30）
+  // 35 - 智能练习（个性化推荐）
+  await studentPage.goto(`${BASE}/student/smart-practice`, { waitUntil: 'networkidle' });
+  await sleep(2500);
+  await screenshot(studentPage, '35_smart_practice');
+
+  // 36 - 错题巩固站
+  await studentPage.goto(`${BASE}/student/wrong-questions`, { waitUntil: 'networkidle' });
+  await sleep(2000);
+  await screenshot(studentPage, '36_wrong_questions');
+
+  // 37 - 成长中心
+  await studentPage.goto(`${BASE}/student/growth`, { waitUntil: 'networkidle' });
+  await sleep(2000);
+  await screenshot(studentPage, '37_growth_center');
+
+  // 38 - 积分商店
+  await studentPage.goto(`${BASE}/student/shop`, { waitUntil: 'networkidle' });
+  await sleep(2000);
+  await screenshot(studentPage, '38_student_shop');
+
+  // 33 - 在线答题页面（动态取一个可参加的练习活动，替代旧的硬编码 id=30）
   try {
-    await studentPage.goto(`${BASE}/student/activity/30`, { waitUntil: 'networkidle' });
-    await sleep(3000);
-    await screenshot(studentPage, '33_student_taking_activity');
+    const token3 = await studentPage.evaluate(() => localStorage.getItem('token'));
+    const pracResp = await fetch(`${BASE}/api/activities/student/practices?page=1&pageSize=10`, {
+      headers: { 'Authorization': `Bearer ${token3}` }
+    });
+    const pracData = await pracResp.json();
+    const practices = pracData.practices || pracData.activities || pracData.data || [];
+    const practiceId = (practices.find(p => p.my_status !== 'completed') || practices[0] || {}).id;
+    if (practiceId) {
+      await studentPage.goto(`${BASE}/student/activity/${practiceId}`, { waitUntil: 'networkidle' });
+      await sleep(3000);
+      await screenshot(studentPage, '33_student_taking_activity');
+    } else {
+      console.log('  ⚠️ 无可参加练习，跳过在线答题截图');
+    }
   } catch (e) {
     console.log('  ⚠️ 在线答题页面截图跳过:', e.message.split('\n')[0]);
   }
