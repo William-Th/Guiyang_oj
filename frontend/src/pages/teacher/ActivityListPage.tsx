@@ -153,9 +153,10 @@ const ActivityListPage: React.FC = () => {
       title: '创建人',
       dataIndex: 'creator_name',
       key: 'creator_name',
-      width: 100,
+      width: 120,
+      ellipsis: true,
       render: (name: string, record: Activity) =>
-        record.created_by === user?.id ? <Tag color="blue">我</Tag> : (name || '-'),
+        record.created_by === user?.id ? '我' : (name || '-'),
     },
     {
       title: '类型',
