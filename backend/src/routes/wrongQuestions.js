@@ -1,5 +1,4 @@
 const express = require('express');
-const { resolveStudent } = require('../services/studentAccessControl');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const WrongQuestion = require('../models/WrongQuestion');
@@ -198,8 +197,7 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
       const redoMax = policy.wrong_redo_max != null ? policy.wrong_redo_max : 2;
       // 重做次数未达上限才发分
       if ((wq.review_count || 0) < redoMax) {
-        const studentRow0 = await resolveStudent(req.user.id);
-        const award = await PointsPolicy.awardForCorrectAnswer(studentRow0.student_id, {
+        const award = await PointsPolicy.awardForCorrectAnswer(req.user.id, {
           difficulty: question.difficulty,
           isRedo: true,
           sourceType: 'wrong_redo',
@@ -228,11 +226,10 @@ router.post('/:questionId/redo', authMiddleware, studentOnly, async (req, res) =
     }
 
     // D2 连胜：无论对错都更新（错则归零）
-    // student_streaks 按 students.id 读写，需先解析（req.user.id 是 users.id）
+    // student_streaks 统一按 users.id 读写（20260930 全站 ID 统一后无需再解析 students.id）
     try {
       const StreakService = require('../services/streak/StreakService');
-      const studentRow = await resolveStudent(req.user.id);
-      streak = await StreakService.recordResult(studentRow.student_id, correct);
+      streak = await StreakService.recordResult(req.user.id, correct);
     } catch (e) {
       console.error('update streak failed:', e.message);
     }

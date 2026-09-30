@@ -46,12 +46,8 @@ router.post('/items/:itemId/purchase', authMiddleware, studentOnly, async (req, 
   const client = await pool.connect();
   try {
     const itemId = parseInt(req.params.itemId, 10);
-    // req.user.id 是 user_id，积分/购买按 students.id 口径存储，需转换
-    const studentRow = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
-    if (!studentRow.rows[0]) {
-      return res.status(404).json({ success: false, error: '学生档案不存在' });
-    }
-    const studentId = studentRow.rows[0].id;
+    // 20260930 全站 ID 统一：积分/购买直接按 users.id 口径
+    const studentId = req.user.id;
 
     await client.query('BEGIN');
 
@@ -131,8 +127,7 @@ router.post('/items/:itemId/purchase', authMiddleware, studentOnly, async (req, 
  */
 router.get('/my-items', authMiddleware, studentOnly, async (req, res) => {
   try {
-    const studentRow = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
-    const studentId = studentRow.rows[0]?.id;
+    const studentId = req.user.id;
     const r = await query(
       `SELECT sp.id, sp.is_equipped, sp.purchased_at,
               vi.item_code, vi.name, vi.category, vi.config
@@ -158,11 +153,7 @@ router.post('/my-items/:purchaseId/equip', authMiddleware, studentOnly, async (r
   try {
     const purchaseId = parseInt(req.params.purchaseId, 10);
     const { equip } = req.body;
-    const studentRow = await query('SELECT id FROM students WHERE user_id = $1', [req.user.id]);
-    if (!studentRow.rows[0]) {
-      return res.status(404).json({ success: false, error: '学生档案不存在' });
-    }
-    const studentId = studentRow.rows[0].id;
+    const studentId = req.user.id;
 
     await client.query('BEGIN');
 

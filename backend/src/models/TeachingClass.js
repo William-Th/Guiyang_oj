@@ -593,8 +593,8 @@ class TeachingClass {
              tcm.joined_at,
              tcm.is_active
       FROM teaching_class_members tcm
-      JOIN students s ON tcm.student_id = s.id
-      JOIN users u ON s.user_id = u.id
+      JOIN students s ON s.user_id = tcm.student_id
+      JOIN users u ON u.id = tcm.student_id
       LEFT JOIN schools sch ON s.school_id = sch.id
       ${whereClause}
       ORDER BY u.real_name ASC

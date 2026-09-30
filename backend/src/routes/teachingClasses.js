@@ -972,11 +972,12 @@ async function getUserDistrict(userId) {
  */
 async function validateStudentScope(teachingClass, studentId) {
   // Get student info
+  // 20260930 全站 ID 统一：teaching_class_members.student_id = 学生的 users.id
   const studentResult = await query(`
     SELECT s.school_id, sch.district_id
     FROM students s
     LEFT JOIN schools sch ON s.school_id = sch.id
-    WHERE s.id = $1
+    WHERE s.user_id = $1
   `, [studentId]);
 
   if (studentResult.rows.length === 0) {

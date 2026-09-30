@@ -99,7 +99,7 @@ router.get('/student/:studentId', authMiddleware, async (req, res) => {
     const student = await getAuthorizedStudent(req, res, req.params.studentId);
     if (!student) return;
 
-    const achievements = await Achievement.getStudentAchievements(student.student_id);
+    const achievements = await Achievement.getStudentAchievements(student.user_id);
     res.json({
       success: true,
       data: achievements
@@ -123,7 +123,7 @@ router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
     const student = await getAuthorizedStudent(req, res, req.params.studentId);
     if (!student) return;
 
-    const progress = await Achievement.getStudentProgress(student.student_id);
+    const progress = await Achievement.getStudentProgress(student.user_id);
     res.json({
       success: true,
       data: progress
@@ -165,7 +165,7 @@ router.post('/award', authMiddleware, async (req, res) => {
 
     // 使用Service层授予成就（自动添加积分）
     const result = await achievementService.awardAchievement(
-      student.student_id,
+      student.user_id,
       parseInt(achievementId)
     );
 

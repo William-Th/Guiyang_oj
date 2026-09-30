@@ -27,7 +27,7 @@ router.get('/account/:studentId', authMiddleware, async (req, res) => {
     const student = await getAuthorizedStudent(req, res, req.params.studentId);
     if (!student) return;
 
-    const account = await StudentPoints.getPointsAccount(student.student_id);
+    const account = await StudentPoints.getPointsAccount(student.user_id);
 
     if (!account) {
       return res.status(404).json({
@@ -69,8 +69,8 @@ router.get('/transactions/:studentId', authMiddleware, async (req, res) => {
     if (offset) filters.offset = parseInt(offset);
 
     const [transactions, total] = await Promise.all([
-      StudentPoints.getTransactionHistory(student.student_id, filters),
-      StudentPoints.countTransactionHistory(student.student_id, filters)
+      StudentPoints.getTransactionHistory(student.user_id, filters),
+      StudentPoints.countTransactionHistory(student.user_id, filters)
     ]);
 
     res.json({
@@ -97,7 +97,7 @@ router.get('/summary/:studentId', authMiddleware, async (req, res) => {
     const student = await getAuthorizedStudent(req, res, req.params.studentId);
     if (!student) return;
 
-    const summary = await StudentPoints.getSummary(student.student_id);
+    const summary = await StudentPoints.getSummary(student.user_id);
 
     res.json({
       success: true,
@@ -149,7 +149,7 @@ router.post('/add', authMiddleware, async (req, res) => {
     };
 
     const transaction = await StudentPoints.addPoints(
-      student.student_id,
+      student.user_id,
       parseInt(points),
       transactionType,
       metadata
@@ -184,10 +184,13 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
       params.push(requestedScope);
       scopeFilter = ` AND l.scope = $${params.length}`;
     }
-    const accessScope = await getStudentQueryScope(req.user, {
-      studentAlias: 's',
-      firstParam: params.length + 1
-    });
+    // 排行榜是公开脱敏数据：学生可见完整榜单，家长/教师仍按监护与管理范围过滤
+    const accessScope = req.user.role === 'student'
+      ? { allowed: true, sql: 'TRUE', params: [] }
+      : await getStudentQueryScope(req.user, {
+        studentAlias: 's',
+        firstParam: params.length + 1
+      });
     if (!accessScope.allowed) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
@@ -197,7 +200,7 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
       `SELECT l.student_id, l.student_name, l.school_name, l.class_name,
               l.points, l.rank, l.rank_change, l.period_start, l.period_end
          FROM leaderboards l
-         JOIN students s ON s.id = l.student_id
+         JOIN students s ON s.user_id = l.student_id
         WHERE l.leaderboard_type = $1${scopeFilter}
           AND ${accessScope.sql}
         ORDER BY l.rank ASC
@@ -233,7 +236,7 @@ router.get('/streak', authMiddleware, async (req, res) => {
     }
     const student = await getAuthorizedStudent(req, res, studentId);
     if (!student) return;
-    const streak = await StreakService.get(student.student_id);
+    const streak = await StreakService.get(student.user_id);
     res.json({ success: true, data: streak });
   } catch (error) {
     console.error('Error fetching streak:', error);

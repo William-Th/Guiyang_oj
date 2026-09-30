@@ -21,7 +21,7 @@ router.get('/student/:studentId', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: '没有权限访问此数据' });
     }
 
-    const results = await StudentExam.getStudentExamHistory(access.student.student_id);
+    const results = await StudentExam.getStudentExamHistory(access.student.user_id);
     res.json({ results });
   } catch (error) {
     console.error('Get student results error:', error);
@@ -42,7 +42,7 @@ router.get('/exam/:examId', authMiddleware, async (req, res) => {
     }
 
     // Get student exam record
-    const studentExam = await StudentExam.findByStudentAndExam(access.student.student_id, examId);
+    const studentExam = await StudentExam.findByStudentAndExam(access.student.user_id, examId);
     if (!studentExam) {
       return res.status(404).json({ message: '未找到考试记录' });
     }
@@ -124,7 +124,7 @@ router.get('/exam/:examId/statistics', authMiddleware, async (req, res) => {
         COUNT(*) FILTER (WHERE sa.score >= a.total_score * 0.9) as excellent_count,
         COUNT(*) FILTER (WHERE sa.score >= a.total_score * 0.6) as pass_count
       FROM student_activities sa
-      JOIN students s ON s.id = sa.student_id
+      JOIN students s ON s.user_id = sa.student_id
       JOIN activities a ON sa.activity_id = a.id
       WHERE sa.activity_id = $1 AND sa.status = 'completed'
         AND ${scope.sql}
@@ -167,11 +167,8 @@ router.get('/certificates/available', authMiddleware, async (req, res) => {
         CASE WHEN c.id IS NOT NULL THEN true ELSE false END AS "canApply"
       FROM student_activities sa
       JOIN activities a ON sa.activity_id = a.id
-      LEFT JOIN certificates c ON c.exam_id = a.id AND c.student_id = (
-        SELECT s.id FROM students s WHERE s.user_id = $1
-      )
-      JOIN students s ON s.user_id = $1
-      WHERE sa.student_id = s.id
+      LEFT JOIN certificates c ON c.exam_id = a.id AND c.student_id = $1
+      WHERE sa.student_id = $1
         AND sa.status = 'completed'
         AND a.is_official = true
         AND sa.score >= a.total_score * 0.6
@@ -195,12 +192,8 @@ router.post('/certificate', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'examId is required' });
     }
 
-    // 获取学生信息
-    const studentResult = await query('SELECT id FROM students WHERE user_id = $1', [userId]);
-    if (studentResult.rows.length === 0) {
-      return res.status(404).json({ error: '学生记录不存在' });
-    }
-    const studentId = studentResult.rows[0].id;
+    // 20260930 全站 ID 统一：student_activities 与 certificates 均按 users.id 口径
+    const studentId = userId;
 
     // 检查是否已有证书
     const existingCert = await query(
@@ -283,10 +276,9 @@ router.get('/certificate/:examId/download', authMiddleware, async (req, res) => 
         sa.score
       FROM certificates c
       JOIN activities a ON c.exam_id = a.id
-      JOIN students s ON c.student_id = s.id
-      JOIN users u ON s.user_id = u.id
-      LEFT JOIN student_activities sa ON sa.student_id = s.id AND sa.activity_id = a.id
-      WHERE c.exam_id = $1 AND s.user_id = $2
+      JOIN users u ON c.student_id = u.id
+      LEFT JOIN student_activities sa ON sa.student_id = c.student_id AND sa.activity_id = a.id
+      WHERE c.exam_id = $1 AND c.student_id = $2
     `, [examId, userId]);
 
     if (certResult.rows.length === 0) {
@@ -336,8 +328,8 @@ router.get('/export/:examId', authMiddleware, async (req, res) => {
         sa.status,
         sa.submit_time
       FROM student_activities sa
-      JOIN students s ON sa.student_id = s.id
-      JOIN users u ON s.user_id = u.id
+      JOIN students s ON s.user_id = sa.student_id
+      JOIN users u ON u.id = sa.student_id
       JOIN activities a ON sa.activity_id = a.id
       WHERE sa.activity_id = $1 AND ${scope.sql}
       ORDER BY sa.score DESC

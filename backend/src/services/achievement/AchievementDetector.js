@@ -141,18 +141,9 @@ class AchievementDetector {
 
       const { studentId: userId } = eventData;
 
-      // Convert user_id to student_id (student_achievements references students.id, not users.id)
-      const studentResult = await query(
-        'SELECT id FROM students WHERE user_id = $1',
-        [userId]
-      );
-
-      if (studentResult.rows.length === 0) {
-        logger.debug(`No student record found for user_id ${userId}, skipping achievement detection`);
-        return;
-      }
-
-      const studentId = studentResult.rows[0].id;
+      // 20260930 全站 ID 统一：student_achievements/achievement_progress 按 users.id 口径，
+      // 事件里的 studentId 即 users.id，无需再经 students 表转换
+      const studentId = userId;
 
       for (const achievement of rules) {
         const satisfied = await this.checkCondition(achievement, eventData);

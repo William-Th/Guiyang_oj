@@ -25,8 +25,7 @@ class Certificate {
   }
 
   // 根据证书编号查找证书
-  // 注意：certificates.student_id 存的是 students.id（由 results.js 经 students 表解析写入），
-  // 必须先连 students 再连 users，直接连 users.id 会显示成另一个学生
+  // 20260930 全站 ID 统一：certificates.student_id = 学生的 users.id，直接连 users
   static async findByCertNumber(certNumber) {
     const queryStr = `
             SELECT
@@ -37,8 +36,8 @@ class Certificate {
                 s.school_id,
                 sc.name as school_name
             FROM certificates c
-            JOIN students s ON c.student_id = s.id
-            JOIN users u ON s.user_id = u.id
+            JOIN users u ON c.student_id = u.id
+            LEFT JOIN students s ON s.user_id = c.student_id
             JOIN exams e ON c.exam_id = e.id
             LEFT JOIN schools sc ON s.school_id = sc.id
             WHERE c.cert_no = $1
@@ -76,8 +75,8 @@ class Certificate {
                 s.grade,
                 s.class
             FROM certificates c
-            JOIN students s ON c.student_id = s.id
-            JOIN users u ON s.user_id = u.id
+            JOIN users u ON c.student_id = u.id
+            LEFT JOIN students s ON s.user_id = c.student_id
             WHERE c.exam_id = $1
             ORDER BY c.score DESC, c.issue_date DESC
         `;

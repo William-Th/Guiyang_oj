@@ -62,7 +62,7 @@ docker exec guiyang_oj_backend node scripts/seed-demo-data.js
 | 证书 | 2 | 张小明数学/信息科技证书（编号可在证书验证页查验） |
 | 注册申请 | 30+ | 供注册审批演示 |
 
-> ⚠️ 注意：积分/连胜/成就/证书按 `students.id` 读写，答卷按 `users.id` 读写——种子脚本已分别处理，勿混用。
+> ✅ ID 规范（2026-09-30 统一）：所有学生业务表的 `student_id` 一律为学生的 **users.id**（登录身份），不再存在双 ID 空间；`students` 表仅作属性扩展（school/class/student_no/grade，经 `students.user_id` 关联）。种子脚本末尾的 `verifyIdentity()` 会对每张表做身份一致性自检。
 
 ---
 

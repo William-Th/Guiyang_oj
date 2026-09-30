@@ -28,7 +28,7 @@ class LeaderboardService {
           sp.total_points as points,
           ROW_NUMBER() OVER (ORDER BY sp.total_points DESC, sp.student_id ASC) as rank
         FROM student_points sp
-        JOIN students s ON sp.student_id = s.id
+        JOIN students s ON s.user_id = sp.student_id
         JOIN users u ON s.user_id = u.id
         LEFT JOIN schools sch ON s.school_id = sch.id
         WHERE sp.total_points > 0
@@ -149,7 +149,7 @@ class LeaderboardService {
           wp.week_points as points,
           ROW_NUMBER() OVER (ORDER BY wp.week_points DESC, wp.student_id ASC) as rank
         FROM weekly_points wp
-        JOIN students s ON wp.student_id = s.id
+        JOIN students s ON s.user_id = wp.student_id
         JOIN users u ON s.user_id = u.id
         LEFT JOIN schools sch ON s.school_id = sch.id
         WHERE wp.week_points > 0
@@ -266,7 +266,7 @@ class LeaderboardService {
           mp.month_points as points,
           ROW_NUMBER() OVER (ORDER BY mp.month_points DESC, mp.student_id ASC) as rank
         FROM monthly_points mp
-        JOIN students s ON mp.student_id = s.id
+        JOIN students s ON s.user_id = mp.student_id
         JOIN users u ON s.user_id = u.id
         LEFT JOIN schools sch ON s.school_id = sch.id
         WHERE mp.month_points > 0

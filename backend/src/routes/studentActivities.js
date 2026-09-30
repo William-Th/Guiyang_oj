@@ -18,7 +18,6 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../database/connection');
 const KnowledgeStatsService = require('../services/recommend/KnowledgeStatsService');
-const { resolveStudent } = require('../services/studentAccessControl');
 const { authMiddleware } = require('../middleware/auth');
 const { body, param, validationResult } = require('express-validator');
 const logger = require('../utils/logger');
@@ -326,8 +325,7 @@ router.post('/recommend/:questionId/answer', authMiddleware, async (req, res) =>
       // 答对：积分 + 若在错题集则标记掌握
       const PointsPolicy = require('../services/points/PointsPolicy');
       try {
-        const studentRow = await resolveStudent(req.user.id);
-        const award = await PointsPolicy.awardForCorrectAnswer(studentRow.student_id, {
+        const award = await PointsPolicy.awardForCorrectAnswer(req.user.id, {
           difficulty: question.difficulty,
           isRedo: false,
           sourceType: 'recommend_practice',
@@ -353,11 +351,10 @@ router.post('/recommend/:questionId/answer', authMiddleware, async (req, res) =>
     }
 
     // 连胜：无论对错都更新（错则归零）
-    // student_streaks 按 students.id 读写，需先解析（req.user.id 是 users.id）
+    // student_streaks 统一按 users.id 读写（20260930 全站 ID 统一后无需再解析 students.id）
     try {
       const StreakService = require('../services/streak/StreakService');
-      const studentRowForStreak = await resolveStudent(req.user.id);
-      streak = await StreakService.recordResult(studentRowForStreak.student_id, correct);
+      streak = await StreakService.recordResult(req.user.id, correct);
     } catch (e) {
       logger.error('update streak failed:', e.message);
     }
@@ -995,8 +992,7 @@ router.post('/:id/submit',
             [row.is_correct ? 1 : 0, row.question_id]
           );
           if (row.is_correct) {
-            const actStudentRow = await resolveStudent(studentId);
-            await PointsPolicy.awardForCorrectAnswer(actStudentRow.student_id, {
+            await PointsPolicy.awardForCorrectAnswer(studentId, {
               difficulty: row.difficulty,
               sourceId: row.answer_id,
               sourceType: 'answer',

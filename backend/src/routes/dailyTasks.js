@@ -303,7 +303,7 @@ router.get('/student/:studentId/progress', authMiddleware, async (req, res) => {
     const student = await getAuthorizedStudent(req, res, req.params.studentId);
     if (!student) return;
 
-    const progress = await DailyTask.getStudentTaskProgress(student.student_id, {
+    const progress = await DailyTask.getStudentTaskProgress(student.user_id, {
       category: category || null,
       periodStart: periodStart || null,
       periodEnd: periodEnd || null
@@ -356,7 +356,7 @@ router.post('/:taskId/progress', authMiddleware, async (req, res) => {
     if (!student) return;
 
     const updatedProgress = await DailyTask.updateTaskProgress(
-      student.student_id,
+      student.user_id,
       taskId,
       incrementValue,
       periodStart,
@@ -364,7 +364,7 @@ router.post('/:taskId/progress', authMiddleware, async (req, res) => {
     );
 
     logger.info('Task progress updated', {
-      studentId: student.student_id,
+      studentId: student.user_id,
       taskId,
       incrementValue,
       isCompleted: updatedProgress.is_completed
@@ -407,7 +407,7 @@ router.get('/student/:studentId/current', authMiddleware, async (req, res) => {
     });
 
     // Get student's progress for current period
-    const progress = await DailyTask.getStudentTaskProgress(student.student_id, {
+    const progress = await DailyTask.getStudentTaskProgress(student.user_id, {
       category: category || null,
       periodStart: currentDate,
       periodEnd: null

@@ -309,7 +309,7 @@ router.get('/teacher/school-abilities', authMiddleware, async (req, res) => {
           ROUND(AVG(v.avg_score), 1) as avg_score,
           MAX(v.last_activity_time) as last_activity_time
         FROM v_student_ability_realtime v
-        JOIN students st ON v.student_id = st.id
+        JOIN students st ON st.user_id = v.student_id
         WHERE 1=1
       `;
       const fallbackParams = [];

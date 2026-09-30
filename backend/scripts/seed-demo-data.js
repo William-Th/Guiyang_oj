@@ -691,8 +691,9 @@ async function seedWorkflows(idMap) {
     [c1, c2]
   );
 
-  // 学生成员（云岩一小：31 王明 / 32 李华 / 33 张伟，均为三年级）
-  for (const sid of [31, 32, 33]) {
+  // 学生成员（users.id：33 王明 / 34 李华 / 35 张伟，云岩一小三年级；
+  // teaching_class_members.student_id 统一为 users.id 口径）
+  for (const sid of [33, 34, 35]) {
     await pool.query(
       `INSERT INTO teaching_class_members (teaching_class_id, student_id, is_active)
        VALUES ($1, $2, true), ($3, $2, true)
@@ -802,13 +803,13 @@ async function seedAnalytics(idMap) {
 }
 
 // ---------- 12. 积分 / 连胜 / 成就 / 证书：让奖励体系演示页面开箱有数据 ----------
-// 注意：points/streaks/achievements/certificates 均按 students.id 读写
-// （students.id=28 → users.id=30 张小明；31 → users.id=33 王明；32 → users.id=34 李华）
+// 20260930 全站 ID 统一：points/streaks/achievements/certificates 均按 users.id 读写
+// （张小明=30、王明=33、李华=34，与答卷/错题等表一致，不再有双 ID 空间）
 async function seedRewards() {
   const students = [
-    { sid: 28, name: '张小明', streak: 7, maxStreak: 12 },
-    { sid: 31, name: '王明', streak: 3, maxStreak: 5 },
-    { sid: 32, name: '李华', streak: 1, maxStreak: 2 },
+    { sid: 30, name: '张小明', streak: 7, maxStreak: 12 },
+    { sid: 33, name: '王明', streak: 3, maxStreak: 5 },
+    { sid: 34, name: '李华', streak: 1, maxStreak: 2 },
   ];
 
   // 12.1 连胜
@@ -825,7 +826,7 @@ async function seedRewards() {
 
   // 12.2 积分流水 + 账户（balance 前后衔接）
   const txSets = {
-    28: [
+    30: [
       ['shop_purchase', '兑换「满分错题本」', -60],
       ['shop_purchase', '兑换「学习加油包」', -45],
       ['achievement', '解锁成就「初次试炼」', 20],
@@ -843,13 +844,13 @@ async function seedRewards() {
       ['practice', '完成练习「判断题专项」', 18],
       ['streak', '连胜奖励', 14],
     ],
-    31: [
+    33: [
       ['achievement', '解锁成就「初次试炼」', 20],
       ['practice', '完成练习「三年级数学基础练习（一）」', 30],
       ['daily_task', '完成每日任务：今日 5 题', 10],
       ['shop_purchase', '兑换「错题本」', -25],
     ],
-    32: [
+    34: [
       ['achievement', '解锁成就「初次试炼」', 15],
       ['practice', '完成练习「三年级数学基础练习（一）」', 20],
       ['daily_task', '完成每日任务：今日 5 题', 10],
@@ -910,9 +911,9 @@ async function seedRewards() {
   );
   if (defs.rows.length >= 13) {
     const plan = [
-      { sid: 28, ids: defs.rows.slice(0, 8), days: [21, 18, 15, 12, 9, 6, 3, 1] },
-      { sid: 31, ids: defs.rows.slice(8, 11), days: [10, 5, 2] },
-      { sid: 32, ids: defs.rows.slice(11, 13), days: [8, 3] },
+      { sid: 30, ids: defs.rows.slice(0, 8), days: [21, 18, 15, 12, 9, 6, 3, 1] },
+      { sid: 33, ids: defs.rows.slice(8, 11), days: [10, 5, 2] },
+      { sid: 34, ids: defs.rows.slice(11, 13), days: [8, 3] },
     ];
     for (const p of plan) {
       for (let i = 0; i < p.ids.length; i++) {
@@ -942,7 +943,7 @@ async function seedRewards() {
       `INSERT INTO certificates (student_id, exam_id, cert_no, issue_date, level, file_url)
        VALUES ($1, $2, $3, CURRENT_DATE - $4::int, $5, '')
        ON CONFLICT (cert_no) DO NOTHING`,
-      [28, act.id, certNos[i], 10 + i, certLevels[i]]
+      [30, act.id, certNos[i], 10 + i, certLevels[i]]
     );
   }
   console.log(`✓ 证书：张小明 ${certActs.rows.length} 张（${certNos.slice(0, certActs.rows.length).join(' / ')}）`);
@@ -958,38 +959,30 @@ async function seedRewards() {
   }
 }
 
-// ---------- 13. 身份一致性自检：每张学生表按自己的 ID 空间解析学生名 ----------
-// 平台存在双 ID 空间（历史设计）：
-//   users.id   系：student_activities/answers、student_wrong_questions、
-//              student_question_practice、student_knowledge_stats
-//   students.id 系：student_points/points_transactions/student_points_daily、
-//              student_streaks、student_achievements、certificates、leaderboards
-// 本自检逐表解析学生名，任何一行“张冠李戴”（解析不到或解析成非演示学生）都直接报错，
+// ---------- 13. 身份一致性自检 ----------
+// 20260930 全站 ID 统一：所有学生业务表的 student_id 均为用户的 users.id，
+// 不再存在双 ID 空间。本自检逐表解析学生名，任何一行“张冠李戴”
+// （解析不到或解析成非演示学生）都直接报错，
 // 防止再出现「证书验证显示别人名字」这类 ID 错位问题。
 async function verifyIdentity() {
-  const expected = {
-    users: { 30: '13800138003', 33: '13812340001', 34: '13812340002' },
-    students: { 28: '13800138003', 31: '13812340001', 32: '13812340002' },
-  };
+  const expectedUsers = ['13800138003', '13812340001', '13812340002', '13812340003'];
   const checks = [
-    ['student_activities', 'users', 't.student_id IN (30,33,34)', 3],
-    ['student_wrong_questions', 'users', "t.student_id = 30 AND t.status = 'active'", 5],
-    ['student_points', 'students', 't.student_id IN (28,31,32)', 3],
-    ['points_transactions', 'students', 't.student_id IN (28,31,32)', 23],
-    ['student_points_daily', 'students', 't.student_id IN (28,31,32)', 42],
-    ['student_streaks', 'students', 't.student_id IN (28,31,32)', 3],
-    ['student_achievements', 'students', 't.student_id IN (28,31,32)', 13],
-    ['certificates', 'students', 't.student_id = 28', 2],
+    ['student_activities', 't.student_id IN (30,33,34)', 3],
+    ['student_wrong_questions', "t.student_id = 30 AND t.status = 'active'", 5],
+    ['student_points', 't.student_id IN (30,33,34)', 3],
+    ['points_transactions', 't.student_id IN (30,33,34)', 23],
+    ['student_points_daily', 't.student_id IN (30,33,34)', 42],
+    ['student_streaks', 't.student_id IN (30,33,34)', 3],
+    ['student_achievements', 't.student_id IN (30,33,34)', 13],
+    ['certificates', 't.student_id = 30', 2],
+    ['teaching_class_members', 't.student_id IN (30,33,34,35)', 6],
   ];
 
   const problems = [];
-  for (const [table, space, cond, minRows] of checks) {
-    const join = space === 'users'
-      ? 'JOIN users u ON t.student_id = u.id'
-      : 'JOIN students s ON t.student_id = s.id JOIN users u ON u.id = s.user_id';
+  for (const [table, cond, minRows] of checks) {
     const r = await pool.query(
       `SELECT u.username, u.real_name, count(*)::int AS n
-         FROM ${table} t ${join} WHERE ${cond}
+         FROM ${table} t JOIN users u ON t.student_id = u.id WHERE ${cond}
         GROUP BY u.username, u.real_name`
     );
     if (r.rows.length === 0) {
@@ -1001,9 +994,7 @@ async function verifyIdentity() {
       problems.push(`${table}: 行数 ${total} < 预期 ${minRows}`);
     }
     for (const row of r.rows) {
-      if (expected[space][0] !== undefined && !(row.username in Object.fromEntries(
-        Object.entries(expected[space]).map(([id, un]) => [un, id])
-      ))) {
+      if (!expectedUsers.includes(row.username)) {
         problems.push(`${table}: 意外学生 ${row.username}(${row.real_name})`);
       }
     }
@@ -1014,12 +1005,11 @@ async function verifyIdentity() {
     SELECT u.username, u.real_name,
            (SELECT count(*) FROM student_activities t WHERE t.student_id = u.id) AS acts,
            (SELECT count(*) FROM student_wrong_questions t WHERE t.student_id = u.id) AS wrong,
-           (SELECT count(*) FROM student_points t WHERE t.student_id = s.id) AS pts,
-           (SELECT count(*) FROM student_achievements t WHERE t.student_id = s.id) AS ach,
-           (SELECT count(*) FROM certificates t WHERE t.student_id = s.id) AS certs,
-           (SELECT current_streak FROM student_streaks t WHERE t.student_id = s.id) AS streak
+           (SELECT count(*) FROM student_points t WHERE t.student_id = u.id) AS pts,
+           (SELECT count(*) FROM student_achievements t WHERE t.student_id = u.id) AS ach,
+           (SELECT count(*) FROM certificates t WHERE t.student_id = u.id) AS certs,
+           (SELECT current_streak FROM student_streaks t WHERE t.student_id = u.id) AS streak
       FROM users u
-      JOIN students s ON s.user_id = u.id
      WHERE u.username IN ('13800138003', '13812340001', '13812340002')
   `);
   console.log('\n===== 身份一致性自检 =====');
