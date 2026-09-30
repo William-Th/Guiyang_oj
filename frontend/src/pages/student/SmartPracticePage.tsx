@@ -312,24 +312,25 @@ const SmartPracticePage: React.FC = () => {
         </Card>
       )}
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space>
-          <Text>选择科目：</Text>
-          <Select
-            allowClear
-            showSearch
-            placeholder="如：数学、信息科技"
-            style={{ width: 200 }}
-            value={subject}
-            onChange={setSubject}
-            options={SUBJECT_OPTIONS}
-          />
-        </Space>
-      </Card>
-
       <Tabs
         activeKey={tab}
         onChange={setTab}
+        tabBarExtraContent={{
+          right: (
+            <Space size={8}>
+              <Text type="secondary">科目</Text>
+              <Select
+                allowClear
+                showSearch
+                placeholder="全部科目"
+                style={{ minWidth: 160 }}
+                value={subject}
+                onChange={setSubject}
+                options={SUBJECT_OPTIONS}
+              />
+            </Space>
+          ),
+        }}
         items={[
           {
             key: 'daily',
