@@ -49,14 +49,6 @@ const AdminOverview: React.FC = () => {
     { title: '日期', dataIndex: 'date', key: 'date' },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" tip="加载统计数据..." />
-      </div>
-    );
-  }
-
   if (!stats) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -66,6 +58,7 @@ const AdminOverview: React.FC = () => {
   }
 
   return (
+    <Spin spinning={loading}>
     <div>
       <Text type="secondary">数据每天自动汇总，帮你把握教学与测评的全貌。</Text>
       <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
@@ -120,6 +113,7 @@ const AdminOverview: React.FC = () => {
         />
       </Card>
     </div>
+    </Spin>
   );
 };
 

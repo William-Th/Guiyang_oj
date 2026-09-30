@@ -113,14 +113,6 @@ const RegisterStatusPage: React.FC = () => {
     return <Badge status={config.status} text={config.text} />;
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载中..." />
-      </div>
-    );
-  }
-
   if (error || !status) {
     return (
       <div style={{
@@ -164,6 +156,7 @@ const RegisterStatusPage: React.FC = () => {
   }
 
   return (
+    <Spin spinning={loading}>
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
@@ -322,6 +315,7 @@ const RegisterStatusPage: React.FC = () => {
         </Card>
       </div>
     </div>
+    </Spin>
   );
 };
 

@@ -249,14 +249,6 @@ const TeachingClassStudents: React.FC = () => {
       s.school_name.includes(searchText)
   );
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   if (!teachingClass) {
     return (
       <Card>
@@ -295,6 +287,7 @@ const TeachingClassStudents: React.FC = () => {
   const activeStudents = students.filter(s => s.is_active);
 
   return (
+    <Spin spinning={loading}>
     <Card
       title={
         <Space>
@@ -396,6 +389,7 @@ const TeachingClassStudents: React.FC = () => {
         </Space>
       </Modal>
     </Card>
+    </Spin>
   );
 };
 

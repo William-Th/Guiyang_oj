@@ -217,15 +217,8 @@ const AssessmentManagementPage: React.FC = () => {
     },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载活动列表中..." />
-      </div>
-    );
-  }
-
   return (
+    <Spin spinning={loading}>
     <div>
       <Card
         title="活动管理中心"
@@ -316,6 +309,7 @@ const AssessmentManagementPage: React.FC = () => {
         />
       </Card>
     </div>
+    </Spin>
   );
 };
 

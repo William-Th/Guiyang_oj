@@ -411,15 +411,8 @@ const TeacherDashboard: React.FC = () => {
     }
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" tip="加载中..." />
-      </div>
-    );
-  }
-
   return (
+    <Spin spinning={loading}>
     <div>
       {/* 统计数据 */}
       <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
@@ -551,6 +544,7 @@ const TeacherDashboard: React.FC = () => {
         )}
       </Card>
     </div>
+    </Spin>
   );
 };
 

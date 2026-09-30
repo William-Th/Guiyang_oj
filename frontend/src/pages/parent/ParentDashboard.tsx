@@ -120,11 +120,8 @@ const ParentDashboard: React.FC = () => {
     },
   ];
 
-  if (loading) {
-    return <Spin style={{ display: 'block', padding: 100 }} />;
-  }
-
   return (
+    <Spin spinning={loading}>
     <div style={{ padding: 24 }}>
       <Title level={3}>
         <TeamOutlined /> 家长中心
@@ -250,6 +247,7 @@ const ParentDashboard: React.FC = () => {
         </Card>
       )}
     </div>
+    </Spin>
   );
 };
 

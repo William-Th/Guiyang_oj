@@ -187,14 +187,6 @@ const ActivityDetailPage: React.FC = () => {
     },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载活动详情中..." />
-      </div>
-    );
-  }
-
   if (!activity) {
     return (
       <Card title="活动不存在">
@@ -207,6 +199,7 @@ const ActivityDetailPage: React.FC = () => {
   }
 
   return (
+    <Spin spinning={loading}>
     <div>
       <Card
         title={
@@ -402,6 +395,7 @@ const ActivityDetailPage: React.FC = () => {
         )}
       </Card>
     </div>
+    </Spin>
   );
 };
 

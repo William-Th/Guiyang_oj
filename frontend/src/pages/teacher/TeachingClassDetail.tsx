@@ -199,14 +199,6 @@ const TeachingClassDetailPage: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   if (!detail) {
     return (
       <Card>
@@ -446,6 +438,7 @@ const TeachingClassDetailPage: React.FC = () => {
   ];
 
   return (
+    <Spin spinning={loading}>
     <Card
       title={
         <Space>
@@ -499,6 +492,7 @@ const TeachingClassDetailPage: React.FC = () => {
     >
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </Card>
+    </Spin>
   );
 };
 

@@ -621,14 +621,6 @@ const TakeActivityPage: React.FC = () => {
     submitAnswers();
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载活动中..." />
-      </div>
-    );
-  }
-
   if (!activity || !studentActivity) {
     return (
       <Alert
@@ -688,6 +680,7 @@ const TakeActivityPage: React.FC = () => {
   const questionGroups = groupQuestionsByType();
 
   return (
+    <Spin spinning={loading}>
     <main className="activity-workspace" aria-labelledby="activity-title">
       {/* Left Sidebar - Question Navigation */}
       <aside className="activity-workspace__sidebar" aria-label="答题导航">
@@ -1081,6 +1074,7 @@ const TakeActivityPage: React.FC = () => {
         </div>
       </div>
     </main>
+    </Spin>
   );
 };
 

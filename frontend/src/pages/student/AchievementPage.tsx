@@ -322,15 +322,8 @@ const AchievementPage: React.FC = () => {
   const earnedAchievements = sortAchievements(allAchievements.filter(a => isAchievementEarned(a.achievement_id)));
   const lockedAchievements = sortAchievements(allAchievements.filter(a => !isAchievementEarned(a.achievement_id)));
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
+    <Spin spinning={loading}>
     <div className="achievement-page" style={{ padding: '24px' }}>
       <Title level={2}>
         <TrophyOutlined /> 我的成就
@@ -581,6 +574,7 @@ const AchievementPage: React.FC = () => {
         </Modal>
       )}
     </div>
+    </Spin>
   );
 };
 

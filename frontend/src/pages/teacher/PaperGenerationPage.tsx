@@ -575,14 +575,6 @@ const PaperGenerationPage: React.FC = () => {
     onChange: (keys: React.Key[]) => setSelectedPaperRowKeys(keys),
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   if (!activity) {
     return (
       <Card>
@@ -657,6 +649,7 @@ const PaperGenerationPage: React.FC = () => {
   };
 
   return (
+    <Spin spinning={loading}>
     <div>
       <Card
         title={
@@ -1308,6 +1301,7 @@ const PaperGenerationPage: React.FC = () => {
         </div>
       </Modal>
     </div>
+    </Spin>
   );
 };
 

@@ -458,14 +458,6 @@ const ActivityResultPage: React.FC = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载结果中..." />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div style={{ padding: '24px' }}>
@@ -503,6 +495,7 @@ const ActivityResultPage: React.FC = () => {
     : 0;
 
   return (
+    <Spin spinning={loading}>
     <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
       {/* 顶部信息卡（紧凑）：标题、指标与时间一行式排布 */}
       <Card style={{ marginBottom: 20 }} styles={{ body: { padding: '14px 22px' } }}>
@@ -774,6 +767,7 @@ const ActivityResultPage: React.FC = () => {
         </div>
       </div>
     </div>
+    </Spin>
   );
 };
 

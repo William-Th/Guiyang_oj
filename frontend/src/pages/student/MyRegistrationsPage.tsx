@@ -215,15 +215,8 @@ const MyRegistrationsPage: React.FC = () => {
     }
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载报名记录中..." />
-      </div>
-    );
-  }
-
   return (
+    <Spin spinning={loading}>
     <div>
       <Card
         title="我的报名"
@@ -279,6 +272,7 @@ const MyRegistrationsPage: React.FC = () => {
         />
       </Modal>
     </div>
+    </Spin>
   );
 };
 

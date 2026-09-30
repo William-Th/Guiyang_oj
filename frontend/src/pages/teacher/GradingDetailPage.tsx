@@ -486,14 +486,6 @@ const GradingDetailPage: React.FC = () => {
       }));
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载评卷详情中..." />
-      </div>
-    );
-  }
-
   if (!detail) {
     return <div>未找到评卷详情</div>;
   }
@@ -505,6 +497,7 @@ const GradingDetailPage: React.FC = () => {
     : 0;
 
   return (
+    <Spin spinning={loading}>
     <div style={{ display: 'flex', gap: 16 }}>
       {/* Main Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -928,6 +921,7 @@ const GradingDetailPage: React.FC = () => {
         </Card>
       </Affix>
     </div>
+    </Spin>
   );
 };
 

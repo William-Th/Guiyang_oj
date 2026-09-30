@@ -100,7 +100,8 @@ router.get('/pending', authMiddleware, async (req, res) => {
     }
 
     if (endDate) {
-      queryStr += ` AND sa.submit_time <= $${++paramCount}`;
+      // submit_time 是时间戳，直接 <= 日期会把结束当天排除；改为 < 次日 0 点，含当天全部提交
+      queryStr += ` AND sa.submit_time < $${++paramCount}::date + INTERVAL '1 day'`;
       params.push(endDate);
     }
 

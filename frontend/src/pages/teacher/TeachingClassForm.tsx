@@ -113,15 +113,8 @@ const TeachingClassForm: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
+    <Spin spinning={loading}>
     <Card
       title={
         <Space>
@@ -254,6 +247,7 @@ const TeachingClassForm: React.FC = () => {
         </Form.Item>
       </Form>
     </Card>
+    </Spin>
   );
 };
 

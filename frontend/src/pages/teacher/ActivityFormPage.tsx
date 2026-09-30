@@ -211,15 +211,8 @@ const ActivityFormPage: React.FC = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="加载活动数据中..." />
-      </div>
-    );
-  }
-
   return (
+    <Spin spinning={loading}>
     <div>
       <Card
         title={isEditMode ? '编辑活动' : '创建活动'}
@@ -524,6 +517,7 @@ const ActivityFormPage: React.FC = () => {
         </Form>
       </Card>
     </div>
+    </Spin>
   );
 };
 

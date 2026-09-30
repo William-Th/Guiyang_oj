@@ -1051,12 +1051,18 @@ export const gradingApi = {
     subject?: string;
     grade?: string;
     grading_status?: string;
+    startDate?: string;
+    endDate?: string;
+    searchText?: string;
   }) => {
     const params = new URLSearchParams();
     if (filters?.activityId) params.append('activityId', filters.activityId.toString());
     if (filters?.subject) params.append('subject', filters.subject);
     if (filters?.grade) params.append('grade', filters.grade);
     if (filters?.grading_status) params.append('grading_status', filters.grading_status);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.searchText) params.append('searchText', filters.searchText);
 
     const response = await api.get(`/teacher/grading/pending${params.toString() ? '?' + params.toString() : ''}`);
     return response.data;
