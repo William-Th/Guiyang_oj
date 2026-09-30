@@ -504,68 +504,62 @@ const ActivityResultPage: React.FC = () => {
 
   return (
     <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
-      {/* 顶部信息卡：标题、统计与时间整合为一张卡，不再每项一个方框 */}
-      <Card style={{ marginBottom: 24 }} styles={{ body: { padding: '24px 28px' } }}>
+      {/* 顶部信息卡（紧凑）：标题、指标与时间一行式排布 */}
+      <Card style={{ marginBottom: 20 }} styles={{ body: { padding: '14px 22px' } }}>
         <Row justify="space-between" align="top">
           <Col>
-            <Title level={3} style={{ margin: 0 }}>
-              {student_activity.activity_title}
-            </Title>
-            <Space style={{ marginTop: 8 }}>
-              <Tag color={student_activity.activity_type === 'practice' ? 'blue' : 'purple'}>
+            <Space size={10} align="center">
+              <Title level={4} style={{ margin: 0 }}>{student_activity.activity_title}</Title>
+              <Tag color={student_activity.activity_type === 'practice' ? 'blue' : 'purple'} style={{ marginRight: 0 }}>
                 {student_activity.activity_type === 'practice' ? '练习' : '测评'}
               </Tag>
-              <Text type="secondary">
-                第 {student_activity.attempt_number} 次尝试
-              </Text>
+              <Text type="secondary">第 {student_activity.attempt_number} 次尝试</Text>
             </Space>
           </Col>
           <Col>
-            <Button onClick={handleBack}>
-              返回
-            </Button>
+            <Button onClick={handleBack}>返回</Button>
           </Col>
         </Row>
 
-        <Divider style={{ margin: '18px 0' }} />
+        <Divider style={{ margin: '10px 0' }} />
 
-        <Row gutter={24}>
+        <Row gutter={24} align="middle">
           <Col flex="1 1 0">
-            <Text type="secondary">总分</Text>
-            <div style={{ marginTop: 4 }}>
-              <Text style={{ fontSize: 26, fontWeight: 700, color: Number(student_activity.score) >= 60 ? '#52c41a' : '#f5222d' }}>
-                <TrophyOutlined style={{ marginRight: 8 }} />
+            <Text type="secondary" style={{ fontSize: 13 }}>总分</Text>
+            <div style={{ marginTop: 2 }}>
+              <Text style={{ fontSize: 20, fontWeight: 700, color: Number(student_activity.score) >= 60 ? '#52c41a' : '#f5222d' }}>
+                <TrophyOutlined style={{ marginRight: 6 }} />
                 {Number(student_activity.score)}
               </Text>
-              <Text type="secondary" style={{ fontSize: 14 }}> / {student_activity.activity_total_score}</Text>
+              <Text type="secondary" style={{ fontSize: 13 }}> / {student_activity.activity_total_score}</Text>
             </div>
             <Progress
               percent={scorePercentage}
               status={Number(student_activity.score) >= 60 ? 'success' : 'exception'}
               showInfo={false}
-              style={{ marginTop: 8, maxWidth: 260 }}
+              style={{ marginTop: 6, maxWidth: 200 }}
             />
           </Col>
           <Col flex="1 1 0">
-            <Text type="secondary">正确率</Text>
-            <div style={{ marginTop: 4 }}>
-              <Text style={{ fontSize: 26, fontWeight: 700, color: correctRate >= 60 ? '#52c41a' : '#f5222d' }}>
+            <Text type="secondary" style={{ fontSize: 13 }}>正确率</Text>
+            <div style={{ marginTop: 2 }}>
+              <Text style={{ fontSize: 20, fontWeight: 700, color: correctRate >= 60 ? '#52c41a' : '#f5222d' }}>
                 {correctRate}%
               </Text>
             </div>
           </Col>
           <Col flex="1 1 0">
-            <Text type="secondary">答对题数</Text>
-            <div style={{ marginTop: 4 }}>
-              <Text style={{ fontSize: 26, fontWeight: 700 }}>
+            <Text type="secondary" style={{ fontSize: 13 }}>答对题数</Text>
+            <div style={{ marginTop: 2 }}>
+              <Text style={{ fontSize: 20, fontWeight: 700 }}>
                 {statistics.correct_questions}
               </Text>
-              <Text type="secondary" style={{ fontSize: 14 }}> / {statistics.total_questions}</Text>
+              <Text type="secondary" style={{ fontSize: 13 }}> / {statistics.total_questions}</Text>
             </div>
           </Col>
           <Col flex="1 1 0">
-            <Text type="secondary">批改状态</Text>
-            <div style={{ marginTop: 4 }}>
+            <Text type="secondary" style={{ fontSize: 13 }}>批改状态</Text>
+            <div style={{ marginTop: 2 }}>
               <Text style={{ fontSize: 20, fontWeight: 700, color: statistics.pending_questions === 0 ? '#52c41a' : '#faad14' }}>
                 {statistics.pending_questions === 0
                   ? '已完成'
@@ -575,9 +569,9 @@ const ActivityResultPage: React.FC = () => {
           </Col>
         </Row>
 
-        <Divider style={{ margin: '18px 0' }} />
+        <Divider style={{ margin: '10px 0' }} />
 
-        <Space size={48} wrap>
+        <Space size={40} wrap>
           <span>
             <Text type="secondary">开始时间：</Text>
             <Text>{student_activity.started_at ? new Date(student_activity.started_at).toLocaleString('zh-CN') : '-'}</Text>
