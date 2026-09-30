@@ -421,7 +421,8 @@ async function clean() {
   }
 
   // 学生积分账户：确保人人有账户并清零（保留账户行，避免前端 404）
-  await pool.query(`INSERT INTO student_points (student_id) SELECT id FROM students ON CONFLICT DO NOTHING`);
+  // 20260930 全站 ID 统一：student_points.student_id = 学生的 users.id
+  await pool.query(`INSERT INTO student_points (student_id) SELECT u.id FROM users u WHERE u.role = 'student' ON CONFLICT DO NOTHING`);
   await pool.query(`UPDATE student_points SET current_points = 0, total_points = 0, spent_points = 0, frozen_points = 0`);
 
   console.log('✓ 清理完成：活动、答卷、题库、积分流水等事务性数据已清空');

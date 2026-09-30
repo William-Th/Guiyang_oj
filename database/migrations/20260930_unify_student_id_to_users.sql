@@ -84,3 +84,29 @@ UPDATE student_login_history slh
 
 -- teaching_class_members：当前数据已是 users.id 口径，不翻数据；
 -- 代码侧 validateStudentScope 已改为按 user_id 校验。
+
+-- ============================================================================
+-- 第二部分：外键约束翻转到 users(id)
+-- 统一后这些表的 student_id 必须引用 users(id)（原引用 students(id)，
+-- 会因 users.id 数值不在 students.id 值域内而插入失败）
+-- ============================================================================
+ALTER TABLE achievement_progress DROP CONSTRAINT achievement_progress_student_id_fkey;
+ALTER TABLE achievement_progress ADD CONSTRAINT achievement_progress_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE leaderboards DROP CONSTRAINT leaderboards_student_id_fkey;
+ALTER TABLE leaderboards ADD CONSTRAINT leaderboards_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE points_transactions DROP CONSTRAINT points_transactions_student_id_fkey;
+ALTER TABLE points_transactions ADD CONSTRAINT points_transactions_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE student_achievements DROP CONSTRAINT student_achievements_student_id_fkey;
+ALTER TABLE student_achievements ADD CONSTRAINT student_achievements_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE student_daily_tasks DROP CONSTRAINT student_daily_tasks_student_id_fkey;
+ALTER TABLE student_daily_tasks ADD CONSTRAINT student_daily_tasks_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE student_login_history DROP CONSTRAINT fk_student_login_student;
+ALTER TABLE student_login_history ADD CONSTRAINT fk_student_login_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE student_points DROP CONSTRAINT student_points_student_id_fkey;
+ALTER TABLE student_points ADD CONSTRAINT student_points_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE student_task_progress DROP CONSTRAINT student_task_progress_student_id_fkey;
+ALTER TABLE student_task_progress ADD CONSTRAINT student_task_progress_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE task_completion_history DROP CONSTRAINT task_completion_history_student_id_fkey;
+ALTER TABLE task_completion_history ADD CONSTRAINT task_completion_history_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE teaching_class_members DROP CONSTRAINT teaching_class_members_student_id_fkey;
+ALTER TABLE teaching_class_members ADD CONSTRAINT teaching_class_members_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
