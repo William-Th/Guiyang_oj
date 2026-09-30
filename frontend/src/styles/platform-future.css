@@ -680,6 +680,18 @@
   margin-bottom: 6px !important;
 }
 
+/* 页面级“Row 包卡片栅格”（统计卡一排）：Row 上的内联 marginBottom 一并收紧，
+   否则同一页里“卡片→卡片栅格”是 6px、“栅格→下一个块”仍是 24px，间距不一致 */
+.app-shell .app-page-surface :where(.ant-row):has(.ant-col .ant-card) {
+  margin-bottom: 6px !important;
+}
+
+/* 提示条、页签这类块级信息组件与相邻内容的间距同步收紧 */
+.app-shell .app-page-surface :where(.ant-alert),
+.app-shell .app-page-surface :where(.ant-tabs) {
+  margin-bottom: 6px !important;
+}
+
 .app-shell .app-page-surface .ant-col > :where(.ant-card) {
   margin-bottom: 0 !important;
 }

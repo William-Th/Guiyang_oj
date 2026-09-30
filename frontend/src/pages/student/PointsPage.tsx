@@ -406,7 +406,7 @@ const PointsPage: React.FC = () => {
       />
 
       {pointsAccount && (
-        <Card style={{ marginTop: 16 }} size="small">
+        <Card style={{ marginTop: 6 }} size="small">
           <Text type="secondary" style={{ fontSize: 12 }}>
             最后更新时间: {new Date(pointsAccount.last_updated).toLocaleString()}
           </Text>
