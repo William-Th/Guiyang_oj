@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Typography, Row, Col, Statistic, Table, Tag, Space, Tabs, Empty, Spin, Select } from 'antd';
+import { Card, Typography, Row, Col, Table, Tag, Space, Tabs, Empty, Spin, Select } from 'antd';
 import { message } from '../../lib/feedback';
 import {
   StarOutlined,
@@ -283,71 +283,59 @@ const PointsPage: React.FC = () => {
         <StarOutlined /> 我的积分
       </Title>
 
-      {/* 当前积分（突出展示） + 连胜 */}
-      <Card style={{ marginBottom: 16 }}>
-        <Row align="middle" justify="space-between">
-          <Col>
-            <Statistic
-              title="当前可用积分"
-              value={pointsAccount?.current_points || 0}
-              prefix={<StarOutlined />}
-              valueStyle={{ color: '#0ea5e9', fontSize: 40 }}
-            />
+      {/* 积分总览：当前可用 / 连胜 / 今日 / 本周 / 累计 一卡整合 */}
+      <Card style={{ marginBottom: 16 }} styles={{ body: { padding: '20px 24px' } }}>
+        <Row gutter={16}>
+          <Col xs={12} sm={8} lg={4}>
+            <Text type="secondary">当前可用积分</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 30, fontWeight: 700, color: '#0ea5e9' }}>
+                <StarOutlined style={{ marginRight: 6 }} />{pointsAccount?.current_points || 0}
+              </Text>
+            </div>
           </Col>
-          <Col>
-            <div style={{ textAlign: 'right' }}>
-              <Text type="secondary">当前连胜</Text>
-              <div style={{ fontSize: 24, color: '#faad14', fontWeight: 600, marginTop: 4 }}>
-                <FireOutlined /> {streak} 题
-              </div>
+          <Col xs={12} sm={8} lg={4}>
+            <Text type="secondary">当前连胜</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 24, fontWeight: 700, color: '#faad14' }}>
+                <FireOutlined style={{ marginRight: 6 }} />{streak} 题
+              </Text>
+            </div>
+          </Col>
+          <Col xs={12} sm={8} lg={4}>
+            <Text type="secondary">今日获得</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>
+                +{summary.todayEarned}
+              </Text>
+            </div>
+          </Col>
+          <Col xs={12} sm={8} lg={4}>
+            <Text type="secondary">本周获得</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>
+                +{summary.weekEarned}
+              </Text>
+            </div>
+          </Col>
+          <Col xs={12} sm={8} lg={4}>
+            <Text type="secondary">累计获得</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 24, fontWeight: 700, color: '#faad14' }}>
+                <TrophyOutlined style={{ marginRight: 6 }} />{summary.totalEarned}
+              </Text>
+            </div>
+          </Col>
+          <Col xs={12} sm={8} lg={4}>
+            <Text type="secondary">累计消耗</Text>
+            <div style={{ marginTop: 4 }}>
+              <Text style={{ fontSize: 24, fontWeight: 700, color: '#f5222d' }}>
+                -{summary.totalSpent}
+              </Text>
             </div>
           </Col>
         </Row>
       </Card>
-
-      {/* 积分汇总卡片：今日 / 本周 / 累计获得 / 累计消耗 */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={12} sm={6}>
-          <Card>
-            <Statistic
-              title="今日获得"
-              value={summary.todayEarned}
-              prefix={<RiseOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card>
-            <Statistic
-              title="本周获得"
-              value={summary.weekEarned}
-              prefix={<RiseOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card>
-            <Statistic
-              title="累计获得"
-              value={summary.totalEarned}
-              prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card>
-            <Statistic
-              title="累计消耗"
-              value={summary.totalSpent}
-              prefix={<FallOutlined />}
-              valueStyle={{ color: '#f5222d' }}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {/* 交易记录和排行榜 */}
       <Tabs
