@@ -139,6 +139,11 @@ INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
 INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
 ((SELECT id FROM users WHERE username = 'base_school_admin'), 5, '{"school": "贵阳市信息技术基地校", "permissions": ["manage_students", "manage_teachers", "manage_exams", "manage_level_5_6_exams", "view_reports"]}');
 
+-- Municipal school administrator（市直属学校 = 贵阳市实验小学，schools.type='municipal'）
+-- 缺此行时该账号 getAdminScope 为空，所有管理接口 403
+INSERT INTO admin_permissions (user_id, school_id, permission_scope) VALUES
+((SELECT id FROM users WHERE username = 'municipal_school_admin'), 3, '{"school": "贵阳市实验小学", "permissions": ["manage_students", "manage_teachers", "manage_exams", "view_reports"]}');
+
 -- Insert sample activities (using new school-specific teachers)
 -- Note: 系统已从 exams 表迁移到 activities 表
 INSERT INTO activities (title, description, subject, grade, type, time_limit_type, start_time, end_time, total_score, pass_score, status, created_by, scope, ability_level) VALUES
