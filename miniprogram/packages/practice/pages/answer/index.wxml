@@ -119,10 +119,12 @@
 
   <view class="answer-nav">
     <view class="nav-btn-wrap">
-      <van-button block round disabled="{{current === 0}}" bind:click="onPrev">上一题</van-button>
+      <van-button block round size="small" custom-class="nav-btn" disabled="{{current === 0}}" bind:click="onPrev">
+        上一题
+      </van-button>
     </view>
     <view class="nav-btn-wrap">
-      <van-button block round type="primary" disabled="{{current >= total - 1}}" bind:click="onNext">
+      <van-button block round size="small" custom-class="nav-btn" type="primary" disabled="{{current >= total - 1}}" bind:click="onNext">
         下一题
       </van-button>
     </view>

@@ -229,6 +229,13 @@
   min-width: 0;
 }
 
+/* 比默认 small 再高一点，保证触达面积（≥44px 热区规范），但明显比常规按钮轻量 */
+.nav-btn {
+  height: 76rpx !important;
+  line-height: 76rpx !important;
+  font-size: 28rpx;
+}
+
 .sheet {
   padding: 36rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
 }
