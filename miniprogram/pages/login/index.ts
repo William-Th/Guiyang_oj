@@ -46,4 +46,8 @@ Page({
       this.setData({ loading: false });
     }
   },
+
+  goRegister() {
+    wx.navigateTo({ url: '/pages/register/index' });
+  },
 });

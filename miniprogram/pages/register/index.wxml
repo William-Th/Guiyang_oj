@@ -1,0 +1,82 @@
+<view class="register-page">
+  <view class="auth-hero">
+    <view class="auth-mark">评</view>
+    <view class="auth-title">贵阳市小学生测评平台</view>
+    <view class="auth-slogan">以测评看见每一步成长</view>
+  </view>
+
+  <view class="auth-card">
+    <van-tabs active="{{ activeTab }}" bind:change="onTabChange">
+      <van-tab title="申请注册">
+        <block wx:if="{{!result}}">
+          <view class="auth-note">提交后由学校管理员审核，3 个工作日内出结果</view>
+          <van-cell-group border="{{ false }}">
+            <van-field label="手机号" type="number" maxlength="11" placeholder="用于接收审核通知和登录" value="{{ phone }}" data-field="phone" bind:change="onField" clearable />
+            <van-field label="姓名" placeholder="考生真实姓名" value="{{ realName }}" data-field="realName" bind:change="onField" />
+            <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ birthDate }}" bindchange="onBirthChange">
+              <van-field label="出生日期" readonly value="{{ birthDate }}" placeholder="请选择出生日期" right-icon="arrow-down" />
+            </picker>
+            <van-field label="身份证后4位" type="idcard" maxlength="4" placeholder="登录初始密码会用到" value="{{ idCardLast4 }}" data-field="idCardLast4" bind:change="onField" />
+            <picker mode="selector" range="{{ districtNames }}" bindchange="onDistrictChange">
+              <van-field label="所在区县" readonly value="{{ districtIndex >= 0 ? districtNames[districtIndex] : '' }}" placeholder="请选择区县" right-icon="arrow-down" />
+            </picker>
+            <picker mode="selector" range="{{ schoolNames }}" disabled="{{ districtIndex < 0 }}" bindchange="onSchoolChange">
+              <van-field label="所在学校" readonly value="{{ schoolIndex >= 0 ? schoolNames[schoolIndex] : '' }}" placeholder="{{ districtIndex < 0 ? '请先选择区县' : '请选择学校' }}" right-icon="arrow-down" />
+            </picker>
+            <picker mode="selector" range="{{ grades }}" bindchange="onGradeChange">
+              <van-field label="年级" readonly value="{{ gradeIndex >= 0 ? grades[gradeIndex] : '' }}" placeholder="请选择年级" right-icon="arrow-down" />
+            </picker>
+          </van-cell-group>
+
+          <van-button type="primary" block round loading="{{ submitting }}" bind:click="onSubmit" custom-class="submit-btn">
+            提交注册申请
+          </van-button>
+          <view class="auth-tip">审核通过后，初始密码为：身份证后4位 + 出生年月日</view>
+        </block>
+
+        <block wx:else>
+          <view class="reg-result">
+            <view class="reg-result-title">申请已提交，等待学校审核</view>
+            <view class="reg-result-row">申请编号：{{ result.id }}</view>
+            <view class="reg-result-row">预计 {{ result.estimatedReviewTime }} 完成审核</view>
+            <view class="reg-code-card">
+              <view class="reg-code-label">注册查询码 · 仅显示一次，请立即保存</view>
+              <view class="reg-code">{{ result.inquiryCode }}</view>
+              <van-button size="small" round bind:click="copyInquiryCode">复制查询码</van-button>
+            </view>
+            <view class="auth-tip">查询码配合手机号可在「查进度」中查询审核状态，请截图或复制保存</view>
+            <van-button block round type="primary" bind:click="backToLogin" custom-class="submit-btn">返回登录</van-button>
+          </view>
+        </block>
+      </van-tab>
+
+      <van-tab title="查进度">
+        <view class="auth-note">使用提交申请时保存的查询码查询</view>
+        <van-cell-group border="{{ false }}">
+          <van-field label="手机号" type="number" maxlength="11" placeholder="注册时填写的手机号" value="{{ queryPhone }}" data-field="queryPhone" bind:change="onField" clearable />
+          <van-field label="查询码" placeholder="提交申请时返回的查询码" value="{{ queryCode }}" data-field="queryCode" bind:change="onField" clearable />
+        </van-cell-group>
+
+        <van-button type="primary" block round loading="{{ querying }}" bind:click="onQuery" custom-class="submit-btn">
+          查询审核状态
+        </van-button>
+
+        <view wx:if="{{ statusInfo }}" class="status-card">
+          <view class="status-head">
+            <view class="status-title">{{ statusInfo.school_name }}</view>
+            <van-tag type="{{ statusTagType }}">{{ statusInfo.statusText }}</van-tag>
+          </view>
+          <view class="status-row" wx:if="{{ statusInfo.grade }}">年级：{{ statusInfo.grade }}</view>
+          <view class="status-row" wx:if="{{ statusInfo.submitted_at }}">提交于：{{ statusInfo.submitted_at }}</view>
+          <view class="status-row" wx:if="{{ statusInfo.reviewed_at }}">审核于：{{ statusInfo.reviewed_at }}</view>
+          <view class="status-row" wx:if="{{ statusInfo.review_comment }}">审核意见：{{ statusInfo.review_comment }}</view>
+          <view class="status-row" wx:if="{{ statusInfo.status === 'approved' }}">可用手机号登录，初始密码为身份证后4位 + 出生年月日</view>
+        </view>
+      </van-tab>
+    </van-tabs>
+  </view>
+
+  <view class="auth-footer" bind:tap="backToLogin">
+    已有账号？<text class="link">去登录</text>
+  </view>
+</view>

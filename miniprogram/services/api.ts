@@ -73,6 +73,69 @@ export function getAssessmentActivities() {
   return request<unknown>('GET', '/activities/assessment').then(normalizeList<ActivityItem>);
 }
 
+// ---------- 学生注册（审核制，与 web 端同构；接口公开无需登录） ----------
+
+export interface DistrictOption {
+  code: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+export interface SchoolOption {
+  code: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+export function getDistricts() {
+  return request<{ success: boolean; data: DistrictOption[] }>('GET', '/registration/config/districts', undefined, { auth: false });
+}
+
+export function getSchools(districtCode: string) {
+  return request<{ success: boolean; data: SchoolOption[] }>('GET', `/registration/config/schools/${districtCode}`, undefined, { auth: false });
+}
+
+export interface RegistrationPayload {
+  phone: string;
+  realName: string;
+  birthDate: string;
+  idCardLast4: string;
+  districtCode: string;
+  schoolCode: string;
+  grade?: string;
+}
+
+/** 成功后 data.inquiryCode 仅本次返回，必须引导用户保存 */
+export function submitRegistration(payload: RegistrationPayload) {
+  return request<{ success: boolean; message: string; data: { id: number; estimatedReviewTime: string; inquiryCode: string } }>(
+    'POST',
+    '/registration/student',
+    payload as unknown as Record<string, unknown>,
+    { auth: false }
+  );
+}
+
+export interface RegistrationStatusInfo {
+  id: number;
+  school_name?: string;
+  grade?: string | null;
+  status: string;
+  current_reviewer_level?: number;
+  submitted_at?: string;
+  reviewed_at?: string;
+  review_comment?: string | null;
+  statusText: string;
+}
+
+export function queryRegistrationStatus(phone: string, inquiryCode: string) {
+  return request<{ success: boolean; data: RegistrationStatusInfo }>(
+    'POST',
+    '/registration/status',
+    { phone, inquiryCode },
+    { auth: false }
+  );
+}
+
 // ---------- 管理端（复用现有接口，零新增） ----------
 
 export interface AdminDashboardStats {

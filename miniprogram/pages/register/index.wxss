@@ -1,0 +1,65 @@
+.submit-btn {
+  margin-top: 40rpx;
+}
+
+.reg-result-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--mp-success);
+  margin-bottom: 16rpx;
+}
+
+.reg-result-row {
+  font-size: 27rpx;
+  color: var(--mp-text);
+  margin-bottom: 10rpx;
+}
+
+.reg-code-card {
+  margin: 28rpx 0;
+  padding: 28rpx;
+  border-radius: 20rpx;
+  background: #f0f6fb;
+  border: 2rpx dashed var(--mp-primary);
+  text-align: center;
+}
+
+.reg-code-label {
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
+
+.reg-code {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--mp-primary);
+  letter-spacing: 2rpx;
+  margin: 16rpx 0 20rpx;
+  word-break: break-all;
+}
+
+.status-card {
+  margin-top: 36rpx;
+  padding: 28rpx;
+  border-radius: 20rpx;
+  background: #f7f9fb;
+}
+
+.status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14rpx;
+}
+
+.status-title {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.status-row {
+  font-size: 25rpx;
+  color: var(--mp-text-secondary);
+  margin-top: 8rpx;
+  line-height: 1.6;
+}

@@ -1,31 +1,40 @@
 <view class="login-page">
-  <view class="login-hero">
-    <view class="login-title">贵阳 OJ</view>
-    <view class="login-sub">每天进步一点点</view>
+  <view class="auth-hero">
+    <view class="auth-mark">评</view>
+    <view class="auth-title">贵阳市小学生测评平台</view>
+    <view class="auth-slogan">以测评看见每一步成长</view>
   </view>
 
-  <van-cell-group border="{{ false }}" class="login-form">
-    <van-field
-      label="账号"
-      placeholder="手机号或用户名"
-      value="{{ username }}"
-      data-field="username"
-      bind:change="onFieldChange"
-      clearable
-    />
-    <van-field
-      label="密码"
-      password
-      placeholder="请输入密码"
-      value="{{ password }}"
-      data-field="password"
-      bind:change="onFieldChange"
-    />
-  </van-cell-group>
+  <view class="auth-card">
+    <van-cell-group border="{{ false }}">
+      <van-field
+        label="账号"
+        placeholder="手机号或用户名"
+        value="{{ username }}"
+        data-field="username"
+        bind:change="onFieldChange"
+        clearable
+        left-icon="user-o"
+      />
+      <van-field
+        label="密码"
+        password
+        placeholder="请输入密码"
+        value="{{ password }}"
+        data-field="password"
+        bind:change="onFieldChange"
+        left-icon="lock"
+      />
+    </van-cell-group>
 
-  <van-button type="primary" block loading="{{ loading }}" bind:click="onLogin" custom-class="login-btn">
-    登录
-  </van-button>
+    <van-button type="primary" block round loading="{{ loading }}" bind:click="onLogin" custom-class="login-btn">
+      登 录
+    </van-button>
 
-  <view class="login-tip">首次登录即完成账号绑定，之后可快捷进入</view>
+    <view class="auth-tip">首次登录即完成账号绑定，之后可快捷进入</view>
+  </view>
+
+  <view class="auth-footer" bind:tap="goRegister">
+    还没有账号？<text class="link">去注册</text>
+  </view>
 </view>

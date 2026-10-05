@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/login/index",
+    "pages/register/index",
     "pages/home/index",
     "pages/practice/index",
     "pages/growth/index",
@@ -18,7 +19,7 @@
   "window": {
     "navigationBarBackgroundColor": "#52708f",
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "贵阳OJ",
+    "navigationBarTitleText": "贵阳市小学生测评平台",
     "backgroundColor": "#f5f7fa",
     "backgroundTextStyle": "dark"
   },
