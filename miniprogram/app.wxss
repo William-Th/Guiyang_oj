@@ -91,6 +91,8 @@ page {
   text-align: center;
   font-size: 26rpx;
   color: var(--mp-text-secondary);
+  /* 底部安全区适配：避免被 iPhone 小黑条遮挡 */
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 }
 
 .auth-footer .link {
