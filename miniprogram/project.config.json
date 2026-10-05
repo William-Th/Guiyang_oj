@@ -1,8 +1,8 @@
 {
   "compileType": "miniprogram",
-  "appid": "touristappid",
+  "appid": "wxabcdaace4621a23d",
   "projectname": "guiyang-oj-miniprogram",
-  "libVersion": "3.8.1",
+  "libVersion": "3.17.3",
   "setting": {
     "es6": true,
     "enhance": true,
@@ -13,8 +13,26 @@
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
-    }
+    },
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": [
+      "typescript"
+    ],
+    "condition": false
   },
   "condition": {},
-  "editorSetting": {}
+  "editorSetting": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  }
 }
