@@ -613,24 +613,26 @@ router.post('/:id/start',
 
       // Create new attempt
       // 表上存在 (student_id, activity_id) 唯一约束，重做时复用原行并推进 attempt_number
+      // 渠道埋点（计划书第8章）：记录本次开始作答来源（web/mp），用于移动端练习占比统计
+      const startSource = req.body && req.body.source === 'mp' ? 'mp' : 'web';
       let attemptRow;
       if (existingResult.rows.length > 0) {
         attemptRow = await query(`
           UPDATE student_activities
           SET status = 'in_progress', start_time = CURRENT_TIMESTAMP, started_at = CURRENT_TIMESTAMP,
-              time_limit_deadline = $1, grading_status = 'pending', attempt_number = $3
+              time_limit_deadline = $1, grading_status = 'pending', attempt_number = $3, start_source = $4
           WHERE id = $2
           RETURNING id, start_time, time_limit_deadline
-        `, [timeLimitDeadline, existingResult.rows[0].id, attemptNumber]);
+        `, [timeLimitDeadline, existingResult.rows[0].id, attemptNumber, startSource]);
       } else {
         attemptRow = await query(`
           INSERT INTO student_activities (
             student_id, activity_id, status, start_time, started_at,
-            time_limit_deadline, ip_address, attempt_number, grading_status
+            time_limit_deadline, ip_address, attempt_number, grading_status, start_source
           )
-          VALUES ($1, $2, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $3, $4, $5, 'pending')
+          VALUES ($1, $2, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $3, $4, $5, 'pending', $6)
           RETURNING id, start_time, time_limit_deadline
-        `, [studentId, activityId, timeLimitDeadline, ipAddress, attemptNumber]);
+        `, [studentId, activityId, timeLimitDeadline, ipAddress, attemptNumber, startSource]);
       }
       const insertResult = attemptRow;
 

@@ -58,6 +58,7 @@ export interface QuestionRaw {
 }
 
 export function startActivity(id: number) {
+  // source 埋点：移动端练习占比统计（student_activities.start_source，计划书目标3）
   return request<{
     success: boolean;
     message?: string;
@@ -66,7 +67,7 @@ export function startActivity(id: number) {
     started_at: string;
     deadline: string | null;
     attempt_number: number;
-  }>('POST', `${BASE}/${id}/start`, {});
+  }>('POST', `${BASE}/${id}/start`, { source: 'mp' });
 }
 
 export function getActivityQuestions(id: number) {
@@ -155,4 +156,34 @@ export interface ActivityResult {
 
 export function getActivityResult(id: number) {
   return request<ActivityResult & { success: boolean }>('GET', `${BASE}/${id}/result`);
+}
+
+// ---------- 测评报名（复用 /api/assessmentRegistration） ----------
+
+export interface MyRegistration {
+  id: number;
+  activity_id: number;
+  status?: string; // registered | cancelled
+  registered_at?: string;
+  activity_title?: string;
+  subject?: string;
+  grade?: string;
+  activity_status?: string;
+  exam_start_time?: string;
+  location_name?: string;
+  address?: string;
+  exam_date?: string;
+  exam_time_start?: string;
+  exam_time_end?: string;
+  [key: string]: unknown;
+}
+
+export function getMyRegistrations() {
+  return request<{ success: boolean; registrations: MyRegistration[] }>('GET', '/assessments/my-registrations').then(
+    (res) => res.registrations ?? []
+  );
+}
+
+export function cancelRegistration(activityId: number) {
+  return request<{ success: boolean; message?: string }>('POST', `/activities/${activityId}/register/cancel`, {});
 }

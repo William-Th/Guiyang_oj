@@ -1,4 +1,4 @@
-import { getPointsAccount, getStreak, getUnreadCount } from '../../services/api';
+import { getMpHome, getStreak, getUnreadCount } from '../../services/api';
 import { getUser, requireLogin } from '../../utils/auth';
 
 const GRID_ITEMS = [
@@ -19,6 +19,8 @@ Page({
     maxStreak: 0,
     points: 0,
     unread: 0,
+    dailyDone: 0,
+    dailyTarget: 10,
     gridItems: GRID_ITEMS,
   },
 
@@ -39,21 +41,38 @@ Page({
     tabBar?.setData({ selected: 0 });
   },
 
-  /** 首页数据允许降级：任一接口失败不影响其余展示；M1 换 /api/mp/home 一次聚合 */
+  /** 首选 /api/mp/home 一次聚合（首屏预算）；聚合不可用时降级为多接口并行 */
   async loadData() {
+    try {
+      const res = await getMpHome();
+      const d = res.data;
+      this.setData({
+        streakDays: d.streak?.current ?? 0,
+        maxStreak: d.streak?.max ?? 0,
+        points: d.points ?? 0,
+        unread: d.unread ?? 0,
+        dailyDone: d.daily?.done ?? 0,
+        dailyTarget: d.daily?.target ?? 10,
+        statusText: this.isCheckedToday(d.streak?.lastCorrectAt)
+          ? '今日已打卡，保持住连胜'
+          : '今天还没打卡，练一题就有连胜',
+      });
+      return;
+    } catch {
+      /* 降级 */
+    }
+
     const user = getUser();
-    const [streak, unread, points] = await Promise.all([
+    const [streak, unread] = await Promise.all([
       getStreak().catch(() => null),
       getUnreadCount().catch(() => null),
-      user ? getPointsAccount(user.id).catch(() => null) : Promise.resolve(null),
     ]);
     const streakData = streak?.data;
     this.setData({
       // 后端 student_streaks 表为 snake_case 字段（current_streak/max_streak/last_correct_at）
       streakDays: streakData?.current_streak ?? 0,
       maxStreak: streakData?.max_streak ?? 0,
-      points: points?.data?.current_points ?? 0,
-      unread: unread?.count ?? unread?.data?.count ?? 0,
+      unread: unread?.count?.total ?? 0,
       statusText: this.isCheckedToday(streakData?.last_correct_at)
         ? '今日已打卡，保持住连胜'
         : '今天还没打卡，练一题就有连胜',

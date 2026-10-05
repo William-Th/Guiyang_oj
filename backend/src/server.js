@@ -141,6 +141,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/admin', require('./routes/admin')); // 管理员管理功能
 app.use('/api/activities', require('./routes/activities')); // New activity system (测评/练习)
 app.use('/api/student/activities', require('./routes/studentActivities')); // 学生答题系统
+app.use('/api/mp', require('./routes/mp')); // 小程序聚合接口（只读包装）
 app.use('/api/teacher/grading', require('./routes/grading')); // 教师评卷系统
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/question-bank', require('./routes/questionBank'));

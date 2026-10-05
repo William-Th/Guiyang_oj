@@ -19,7 +19,9 @@ router.post('/login', [
   }
   
   try {
-    const { username, password, loginType = 'username' } = req.body;
+    const { username, password, loginType = 'username', source } = req.body;
+    // 渠道埋点（计划书第8章）：web/小程序来源
+    const clientSource = source === 'mp' ? 'mp' : 'web';
     
     // Find user by username or ID card
     let user;
@@ -53,14 +55,15 @@ router.post('/login', [
 
         // 记录登录历史（使用 INSERT ... ON CONFLICT 避免同一天多次记录）
         await pool.query(`
-            INSERT INTO student_login_history (student_id, user_id, login_date, login_time, login_method, ip_address, user_agent)
-            VALUES ($1, $2, CURRENT_DATE, CURRENT_TIMESTAMP, $3, $4, $5)
+            INSERT INTO student_login_history (student_id, user_id, login_date, login_time, login_method, ip_address, user_agent, client_source)
+            VALUES ($1, $2, CURRENT_DATE, CURRENT_TIMESTAMP, $3, $4, $5, $6)
             ON CONFLICT (student_id, login_date) DO UPDATE
             SET login_time = CURRENT_TIMESTAMP,
                 login_method = EXCLUDED.login_method,
                 ip_address = EXCLUDED.ip_address,
-                user_agent = EXCLUDED.user_agent
-          `, [studentId, user.id, loginType, req.ip, req.get('user-agent')]);
+                user_agent = EXCLUDED.user_agent,
+                client_source = EXCLUDED.client_source
+          `, [studentId, user.id, loginType, req.ip, req.get('user-agent'), clientSource]);
 
         // 检测是否首次登录
         const loginCountResult = await pool.query(

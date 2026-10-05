@@ -52,7 +52,25 @@ export function getPointsAccount(studentId: number) {
 }
 
 export function getUnreadCount() {
-  return request<{ count?: number; data?: { count: number } }>('GET', '/notifications/unread-count');
+  // 后端返回 {count: {notifications, announcements, total}}
+  return request<{
+    success: boolean;
+    count: { notifications: number; announcements: number; total: number };
+  }>('GET', '/notifications/unread-count');
+}
+
+// ---------- 小程序聚合（计划书第8章：/api/mp/home 一次取全，替代首页多请求） ----------
+
+export interface MpHomeData {
+  streak: { current: number; max: number; lastCorrectAt: string | null };
+  points: number;
+  unread: number;
+  daily: { done: number; target: number };
+  ongoingPractices: number;
+}
+
+export function getMpHome() {
+  return request<{ success: boolean; data: MpHomeData }>('GET', '/mp/home');
 }
 
 // ---------- 学生注册（审核制，与 web 端同构；接口公开无需登录） ----------

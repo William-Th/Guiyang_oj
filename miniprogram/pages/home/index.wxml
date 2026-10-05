@@ -35,7 +35,7 @@
     </view>
     <view class="home-task-body">
       <view class="home-task-title">每日推题</view>
-      <view class="home-task-desc">每天 10 题，答完积分和连胜都到手</view>
+      <view class="home-task-desc">今日已完成 {{dailyDone}}/{{dailyTarget}} 题，答完积分和连胜都到手</view>
     </view>
     <van-icon name="arrow" color="#c8c9cc" />
   </view>

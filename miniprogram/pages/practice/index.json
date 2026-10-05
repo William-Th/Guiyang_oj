@@ -3,7 +3,8 @@
     "van-tabs": "@vant/weapp/tabs/index",
     "van-tab": "@vant/weapp/tab/index",
     "van-tag": "@vant/weapp/tag/index",
-    "van-empty": "@vant/weapp/empty/index"
+    "van-empty": "@vant/weapp/empty/index",
+    "van-button": "@vant/weapp/button/index"
   },
   "navigationBarTitleText": "练习"
 }

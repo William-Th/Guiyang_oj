@@ -14,3 +14,9 @@
   font-size: 24rpx;
   color: var(--mp-text-secondary);
 }
+
+.reg-cancel-row {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: flex-end;
+}

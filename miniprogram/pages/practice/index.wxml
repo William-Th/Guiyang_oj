@@ -40,20 +40,19 @@
 
     <van-tab title="我的报名">
       <block wx:if="{{!loading}}">
-        <view
-          wx:for="{{registrations}}"
-          wx:key="id"
-          class="card practice-item"
-          data-id="{{item.id}}"
-          bind:tap="onItemTap"
-        >
-        <view class="practice-item-title">{{item.title}}</view>
-        <view class="practice-item-meta">
-          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-          <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
+        <view wx:for="{{registrationList}}" wx:key="id" class="card practice-item">
+          <view class="practice-item-title">{{item.title}}</view>
+          <view class="practice-item-meta">
+            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+            <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
+          </view>
+          <view wx:if="{{item.canCancel}}" class="reg-cancel-row">
+            <van-button size="small" round bind:click="onCancelReg" data-activity-id="{{item.activityId}}">
+              取消报名
+            </van-button>
+          </view>
         </view>
-      </view>
-      <van-empty wx:if="{{registrations.length === 0}}" description="暂无报名记录" />
+        <van-empty wx:if="{{registrationList.length === 0}}" description="暂无报名记录" />
       </block>
     </van-tab>
   </van-tabs>
