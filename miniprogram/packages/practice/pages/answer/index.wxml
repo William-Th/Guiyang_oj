@@ -12,8 +12,14 @@
       <view class="answer-title">{{title}}</view>
       <view class="answer-progress">第 {{current + 1}} / {{total}} 题 · 已答 {{answeredCount}}</view>
     </view>
-    <view wx:if="{{remainingSeconds >= 0}}" class="answer-countdown {{remainingSeconds <= 60 ? 'danger' : ''}}">
-      {{countdownText}}
+    <view class="answer-head-right">
+      <view wx:if="{{remainingSeconds >= 0}}" class="answer-countdown {{remainingSeconds <= 60 ? 'danger' : ''}}">
+        {{countdownText}}
+      </view>
+      <view class="answer-sheet-btn" bind:tap="openSheet">
+        <van-icon name="apps-o" size="28rpx" />
+        <text>答题卡</text>
+      </view>
     </view>
   </view>
 
@@ -112,14 +118,14 @@
   </view>
 
   <view class="answer-nav">
-    <van-button round size="small" disabled="{{current === 0}}" bind:click="onPrev">上一题</van-button>
-    <view class="answer-sheet-btn" bind:tap="openSheet">
-      <van-icon name="apps-o" size="32rpx" />
-      <text>答题卡 {{answeredCount}}/{{total}}</text>
+    <view class="nav-btn-wrap">
+      <van-button block round disabled="{{current === 0}}" bind:click="onPrev">上一题</van-button>
     </view>
-    <van-button round size="small" type="primary" disabled="{{current >= total - 1}}" bind:click="onNext">
-      下一题
-    </van-button>
+    <view class="nav-btn-wrap">
+      <van-button block round type="primary" disabled="{{current >= total - 1}}" bind:click="onNext">
+        下一题
+      </van-button>
+    </view>
   </view>
 
   <van-popup show="{{showSheet}}" position="bottom" round bind:close="closeSheet">
