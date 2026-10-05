@@ -1,22 +1,24 @@
-<view class="card growth-summary">
-  <view class="growth-summary-title">学习画像</view>
-  <view class="growth-summary-desc">
-    连续练习 {{streakDays}} 天。知识掌握与能力值分析将随版本开放，先从每日推题开始积累吧。
+<view class="tab-page-padding">
+  <view class="card growth-summary">
+    <view class="growth-summary-title">学习画像</view>
+    <view class="growth-summary-desc">
+      连续练习 {{streakDays}} 天。知识掌握与能力值分析将随版本开放，先从每日推题开始积累吧。
+    </view>
   </view>
+
+  <view class="section-title">成长中心</view>
+  <van-grid column-num="3" border="{{ false }}" gutter="{{ 0 }}">
+    <van-grid-item icon="gem-o" text="积分" data-path="/packages/growth/pages/points/index" bind:click="onFeature" />
+    <van-grid-item icon="medal-o" text="成就" data-path="/packages/growth/pages/achievements/index" bind:click="onFeature" />
+    <van-grid-item icon="shop-o" text="商店" data-path="/packages/growth/pages/shop/index" bind:click="onFeature" />
+    <van-grid-item icon="fire-o" text="排行榜" data-path="/packages/growth/pages/ranking/index" bind:click="onFeature" />
+    <van-grid-item icon="bookmark-o" text="错题本" data-path="/packages/growth/pages/wrong-questions/index" bind:click="onFeature" />
+    <van-grid-item icon="chart-trending-o" text="统计" data-path="/packages/growth/pages/statistics/index" bind:click="onFeature" />
+  </van-grid>
+
+  <view class="section-title">推荐</view>
+  <van-cell-group inset>
+    <van-cell title="智能练习" label="按你的掌握情况每天推 10 题" is-link bind:click="onFeature" />
+    <van-cell title="学习统计" label="科目/知识点维度的掌握分析" is-link bind:click="onFeature" />
+  </van-cell-group>
 </view>
-
-<view class="section-title">成长中心</view>
-<van-grid column-num="3" border="{{ false }}" gutter="{{ 0 }}">
-  <van-grid-item icon="gem-o" text="积分" data-path="/packages/growth/pages/points/index" bind:click="onFeature" />
-  <van-grid-item icon="medal-o" text="成就" data-path="/packages/growth/pages/achievements/index" bind:click="onFeature" />
-  <van-grid-item icon="shop-o" text="商店" data-path="/packages/growth/pages/shop/index" bind:click="onFeature" />
-  <van-grid-item icon="fire-o" text="排行榜" data-path="/packages/growth/pages/ranking/index" bind:click="onFeature" />
-  <van-grid-item icon="bookmark-o" text="错题本" data-path="/packages/growth/pages/wrong-questions/index" bind:click="onFeature" />
-  <van-grid-item icon="chart-trending-o" text="统计" data-path="/packages/growth/pages/statistics/index" bind:click="onFeature" />
-</van-grid>
-
-<view class="section-title">推荐</view>
-<van-cell-group inset>
-  <van-cell title="智能练习" label="按你的掌握情况每天推 10 题" is-link bind:click="onFeature" />
-  <van-cell title="学习统计" label="科目/知识点维度的掌握分析" is-link bind:click="onFeature" />
-</van-cell-group>

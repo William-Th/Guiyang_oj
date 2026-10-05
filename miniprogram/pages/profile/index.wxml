@@ -1,23 +1,25 @@
-<view class="card profile-card">
-  <view class="profile-avatar">{{avatarText}}</view>
-  <view class="profile-info">
-    <view class="profile-name">{{user.realName || user.username}}</view>
-    <view class="profile-role">
-      <van-tag plain type="primary">{{roleText}}</van-tag>
-      <text class="profile-username">{{user.username}}</text>
+<view class="tab-page-padding">
+  <view class="card profile-card">
+    <view class="profile-avatar">{{avatarText}}</view>
+    <view class="profile-info">
+      <view class="profile-name">{{user.realName || user.username}}</view>
+      <view class="profile-role">
+        <van-tag plain type="primary">{{roleText}}</van-tag>
+        <text class="profile-username">{{user.username}}</text>
+      </view>
     </view>
   </view>
-</view>
 
-<van-cell-group inset>
-  <van-cell wx:if="{{isAdmin}}" title="管理入口" label="总览看数与审批中心" icon="manager-o" is-link bind:click="goAdmin" />
-  <van-cell title="报名记录" icon="calendar-o" is-link bind:click="onFeature" />
-  <van-cell title="我的证书" icon="certificate" is-link bind:click="onFeature" />
-  <van-cell title="通知中心" icon="bell" is-link bind:click="onFeature" />
-  <van-cell title="设置" icon="setting-o" is-link bind:click="onFeature" />
-</van-cell-group>
+  <van-cell-group inset>
+    <van-cell wx:if="{{isAdmin}}" title="管理入口" label="总览看数与审批中心" icon="manager-o" is-link bind:click="goAdmin" />
+    <van-cell title="报名记录" icon="calendar-o" is-link bind:click="onFeature" />
+    <van-cell title="我的证书" icon="certificate" is-link bind:click="onFeature" />
+    <van-cell title="通知中心" icon="bell" is-link bind:click="onFeature" />
+    <van-cell title="设置" icon="setting-o" is-link bind:click="onFeature" />
+  </van-cell-group>
 
-<view class="profile-footer">
-  <van-button block round bind:click="onLogout">退出登录</van-button>
-  <view class="profile-version">贵阳OJ小程序 v{{version}}</view>
+  <view class="profile-footer">
+    <van-button block round bind:click="onLogout">退出登录</van-button>
+    <view class="profile-version">贵阳市小学生测评平台小程序 v{{version}}</view>
+  </view>
 </view>

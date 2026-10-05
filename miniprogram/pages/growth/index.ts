@@ -8,8 +8,12 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
+    const tabBar = (
+      this as unknown as { getTabBar?: () => { setData: (d: Record<string, unknown>) => void } }
+    ).getTabBar?.();
+    tabBar?.setData({ selected: 2 });
     getStreak()
-      .then((res) => this.setData({ streakDays: res.data?.currentStreak ?? 0 }))
+      .then((res) => this.setData({ streakDays: res.data?.current_streak ?? 0 }))
       .catch(() => {
         /* 画像摘要允许降级 */
       });

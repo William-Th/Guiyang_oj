@@ -27,13 +27,28 @@ export function logout() {
 // ---------- 学生：首页/成长 ----------
 
 export interface StreakInfo {
-  currentStreak?: number;
-  longestStreak?: number;
+  /** 后端 student_streaks 表为 snake_case 字段 */
+  current_streak?: number;
+  max_streak?: number;
+  last_correct_at?: string | null;
   [key: string]: unknown;
 }
 
 export function getStreak() {
   return request<{ success: boolean; data: StreakInfo }>('GET', '/points/streak');
+}
+
+export interface PointsAccount {
+  current_points?: number;
+  total_points?: number;
+  spent_points?: number;
+  frozen_points?: number;
+  [key: string]: unknown;
+}
+
+/** 积分账户（后端惰性初始化，新学生也返回零账户） */
+export function getPointsAccount(studentId: number) {
+  return request<{ success: boolean; data: PointsAccount }>('GET', `/points/account/${studentId}`);
 }
 
 export function getUnreadCount() {

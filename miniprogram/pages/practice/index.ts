@@ -46,6 +46,10 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
+    const tabBar = (
+      this as unknown as { getTabBar?: () => { setData: (d: Record<string, unknown>) => void } }
+    ).getTabBar?.();
+    tabBar?.setData({ selected: 1 });
     this.loadTab(this.data.activeTab);
   },
 

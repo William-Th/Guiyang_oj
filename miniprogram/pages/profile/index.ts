@@ -24,6 +24,10 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
+    const tabBar = (
+      this as unknown as { getTabBar?: () => { setData: (d: Record<string, unknown>) => void } }
+    ).getTabBar?.();
+    tabBar?.setData({ selected: 3 });
     const user = getUser() ?? { id: 0, username: '', role: '' };
     const name = user.realName || user.username || '';
     this.setData({

@@ -26,6 +26,11 @@ page {
   color: var(--mp-text-secondary);
 }
 
+/* 自定义 tabBar 悬浮，tab 页底部留白避免内容被遮挡 */
+.tab-page-padding {
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+
 /* ---------- 认证页共用（登录/注册）：品牌区 + 浮动表单卡 ---------- */
 
 .auth-hero {

@@ -1,60 +1,62 @@
-<van-tabs active="{{ activeTab }}" bind:change="onTabChange" sticky>
-  <van-tab title="练习">
-    <block wx:if="{{!loading}}">
-      <view
-        wx:for="{{practiceList}}"
-        wx:key="id"
-        class="card practice-item"
-        data-id="{{item.id}}"
-        bind:tap="onItemTap"
-      >
-        <view class="practice-item-title">{{item.title}}</view>
-        <view class="practice-item-meta">
-          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-          <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+<view class="tab-page-padding">
+  <van-tabs active="{{ activeTab }}" bind:change="onTabChange" sticky>
+    <van-tab title="练习">
+      <block wx:if="{{!loading}}">
+        <view
+          wx:for="{{practiceList}}"
+          wx:key="id"
+          class="card practice-item"
+          data-id="{{item.id}}"
+          bind:tap="onItemTap"
+        >
+          <view class="practice-item-title">{{item.title}}</view>
+          <view class="practice-item-meta">
+            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+            <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+          </view>
         </view>
-      </view>
-      <van-empty wx:if="{{practiceList.length === 0}}" description="暂无练习" />
-    </block>
-  </van-tab>
+        <van-empty wx:if="{{practiceList.length === 0}}" description="暂无练习" />
+      </block>
+    </van-tab>
 
-  <van-tab title="测评">
-    <block wx:if="{{!loading}}">
-      <view
-        wx:for="{{assessmentList}}"
-        wx:key="id"
-        class="card practice-item"
-        data-id="{{item.id}}"
-        bind:tap="onItemTap"
-      >
-        <view class="practice-item-title">{{item.title}}</view>
-        <view class="practice-item-meta">
-          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-          <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+    <van-tab title="测评">
+      <block wx:if="{{!loading}}">
+        <view
+          wx:for="{{assessmentList}}"
+          wx:key="id"
+          class="card practice-item"
+          data-id="{{item.id}}"
+          bind:tap="onItemTap"
+        >
+          <view class="practice-item-title">{{item.title}}</view>
+          <view class="practice-item-meta">
+            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+            <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+          </view>
         </view>
-      </view>
-      <van-empty wx:if="{{assessmentList.length === 0}}" description="暂无测评" />
-    </block>
-  </van-tab>
+        <van-empty wx:if="{{assessmentList.length === 0}}" description="暂无测评" />
+      </block>
+    </van-tab>
 
-  <van-tab title="我的报名">
-    <block wx:if="{{!loading}}">
-      <view
-        wx:for="{{registrations}}"
-        wx:key="id"
-        class="card practice-item"
-        data-id="{{item.id}}"
-        bind:tap="onItemTap"
-      >
-        <view class="practice-item-title">{{item.title}}</view>
-        <view class="practice-item-meta">
-          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-          <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+    <van-tab title="我的报名">
+      <block wx:if="{{!loading}}">
+        <view
+          wx:for="{{registrations}}"
+          wx:key="id"
+          class="card practice-item"
+          data-id="{{item.id}}"
+          bind:tap="onItemTap"
+        >
+          <view class="practice-item-title">{{item.title}}</view>
+          <view class="practice-item-meta">
+            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+            <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
+          </view>
         </view>
-      </view>
-      <van-empty wx:if="{{registrations.length === 0}}" description="暂无报名记录" />
-    </block>
-  </van-tab>
-</van-tabs>
+        <van-empty wx:if="{{registrations.length === 0}}" description="暂无报名记录" />
+      </block>
+    </van-tab>
+  </van-tabs>
 
-<view wx:if="{{loading}}" class="page-loading">加载中…</view>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</view>
