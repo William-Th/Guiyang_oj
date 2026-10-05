@@ -33,6 +33,9 @@ interface JudgeState {
 
 const DIFF_TEXT: Record<string, string> = { easy: '简单', medium: '中等', hard: '困难' };
 
+/** 即答即判仅支持客观题（后端 judgeObjective 同口径） */
+const AUTO_JUDGE_TYPES = new Set(['single', 'multiple', 'true_false', 'blank']);
+
 function hasAnswer(value: AnswerValue | undefined): boolean {
   if (value === undefined || value === null) return false;
   if (Array.isArray(value)) return value.length > 0;
@@ -109,7 +112,10 @@ Page({
     try {
       const res = await getDailyQuestions();
       const set = res.data;
-      const questions = (set.questions ?? []).map(normalizeQuestion);
+      // 客户端兜底过滤：非客观题（问答/匹配/编程）无法即答即判，不进入单题流
+      const questions = (set.questions ?? [])
+        .filter((q) => AUTO_JUDGE_TYPES.has(q.type))
+        .map(normalizeQuestion);
       const answers: Record<string, AnswerValue> = {};
       const localAnswered: Record<string, boolean> = {};
       (set.questions ?? []).forEach((q) => {

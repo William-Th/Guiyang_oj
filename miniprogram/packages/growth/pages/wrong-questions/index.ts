@@ -23,7 +23,11 @@ interface DisplayWrong {
   error_count: number;
   lastWrongText: string;
   canRedo: boolean;
+  needsPc: boolean;
 }
+
+/** 后端 redo/recommend 判题仅支持这四种客观题，问答/匹配/编程需电脑端 */
+const AUTO_JUDGE_TYPES = new Set(['single', 'multiple', 'true_false', 'blank']);
 
 function decorate(item: WrongQuestionItem): DisplayWrong {
   const status = STATUS_TEXT[item.status ?? 'active'] ?? STATUS_TEXT.active;
@@ -38,7 +42,8 @@ function decorate(item: WrongQuestionItem): DisplayWrong {
     kpTags: kps,
     error_count: item.error_count ?? 0,
     lastWrongText: item.last_wrong_at ? String(item.last_wrong_at).slice(0, 10) : '',
-    canRedo: item.status !== 'removed',
+    canRedo: item.status !== 'removed' && AUTO_JUDGE_TYPES.has(item.type),
+    needsPc: !AUTO_JUDGE_TYPES.has(item.type),
   };
 }
 

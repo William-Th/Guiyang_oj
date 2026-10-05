@@ -38,6 +38,7 @@
       <view class="wq-meta">
         <text wx:if="{{item.error_count}}" class="wq-error">错 {{item.error_count}} 次</text>
         <text wx:if="{{item.lastWrongText}}">最近 {{item.lastWrongText}}</text>
+        <text wx:if="{{item.needsPc}}" class="wq-pc-hint">该题型请在电脑端重练</text>
       </view>
       <van-button wx:if="{{item.canRedo}}" size="small" round type="primary" bind:click="onRedo" data-id="{{item.id}}">
         重练这题

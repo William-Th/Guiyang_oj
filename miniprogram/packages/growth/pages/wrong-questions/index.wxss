@@ -86,3 +86,7 @@
   color: var(--mp-danger);
   font-weight: 600;
 }
+
+.wq-pc-hint {
+  color: var(--mp-text-secondary);
+}
