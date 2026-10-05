@@ -1,6 +1,8 @@
 <view class="register-page">
   <view class="auth-hero">
-    <view class="auth-mark">评</view>
+    <view class="auth-mark">
+      <image class="auth-mark-img" src="/assets/logo.png" mode="aspectFit" />
+    </view>
     <view class="auth-title">贵阳市小学生测评平台</view>
     <view class="auth-slogan">以测评看见每一步成长</view>
   </view>

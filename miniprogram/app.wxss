@@ -48,11 +48,15 @@ page {
   border-radius: 34rpx;
   background: rgba(255, 255, 255, 0.16);
   border: 2rpx solid rgba(255, 255, 255, 0.35);
-  font-size: 56rpx;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 与 web 端 LoginPage BrandMark 同源：frontend/public/logo.png */
+.auth-mark-img {
+  width: 80rpx;
+  height: 80rpx;
 }
 
 .auth-title {
