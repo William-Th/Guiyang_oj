@@ -71,7 +71,11 @@ export function startActivity(id: number) {
 }
 
 export function getActivityQuestions(id: number) {
-  return request<{ success: boolean; questions: QuestionRaw[] }>('GET', `${BASE}/${id}/questions`);
+  return request<{
+    success: boolean;
+    activity?: { title?: string; [key: string]: unknown };
+    questions: QuestionRaw[];
+  }>('GET', `${BASE}/${id}/questions`);
 }
 
 export interface SavedAnswer {

@@ -44,7 +44,7 @@ function normalizeQuestion(q: QuestionRaw): NormalQuestion {
     type: q.type,
     typeText: TYPE_TEXT[q.type] ?? q.type,
     content: q.content ?? '',
-    maxScore: q.max_score ?? 0,
+    maxScore: parseFloat(String(q.max_score ?? 0)) || 0,
     imageUrl: q.image_url ?? '',
     codeTemplate: q.code_template ?? '',
     parsedOptions: parseOptions(q.options),
@@ -105,7 +105,7 @@ Page({
 
       this.setData({
         loading: false,
-        title: `第 ${startRes.attempt_number} 次作答`,
+        title: questionRes.activity?.title || `第 ${startRes.attempt_number} 次作答`,
         questions,
         answers,
         answeredCount: questions.filter((q) => hasAnswer(answers[String(q.question_id)])).length,
