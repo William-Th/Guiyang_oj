@@ -2,13 +2,15 @@ import { getMpHome, getStreak, getUnreadCount } from '../../services/api';
 import { getUser, requireLogin } from '../../utils/auth';
 
 const GRID_ITEMS = [
-  { icon: 'star-o', text: '智能练习' },
-  { icon: 'gem-o', text: '积分' },
-  { icon: 'medal-o', text: '成就' },
-  { icon: 'fire-o', text: '排行榜' },
-  { icon: 'bookmark-o', text: '错题本' },
-  { icon: 'chart-trending-o', text: '统计' },
+  { icon: 'star-o', text: '智能练习', path: '/packages/smart/pages/flow/index' },
+  { icon: 'gem-o', text: '积分', path: '/packages/growth/pages/points/index' },
+  { icon: 'medal-o', text: '成就', path: '/packages/growth/pages/achievements/index' },
+  { icon: 'fire-o', text: '排行榜', path: '/packages/growth/pages/ranking/index' },
+  { icon: 'bookmark-o', text: '错题本', path: '/packages/growth/pages/wrong-questions/index' },
+  { icon: 'chart-trending-o', text: '统计', path: '' },
 ];
+
+const AVAILABLE_PATHS = new Set(GRID_ITEMS.map((item) => item.path).filter(Boolean));
 
 Page({
   data: {
@@ -91,8 +93,7 @@ Page({
   },
 
   onStartDaily() {
-    // 智能练习单题流（packages/smart）随 M2 落地
-    wx.showToast({ title: '智能练习将在后续版本开放', icon: 'none' });
+    wx.navigateTo({ url: '/packages/smart/pages/flow/index' });
   },
 
   goPractice() {
@@ -103,7 +104,12 @@ Page({
     wx.showToast({ title: '通知中心将在后续版本开放', icon: 'none' });
   },
 
-  onFeature() {
+  onFeature(e: WechatMiniprogram.CustomEvent) {
+    const path = String(e.currentTarget.dataset.path ?? '');
+    if (path && AVAILABLE_PATHS.has(path)) {
+      wx.navigateTo({ url: path });
+      return;
+    }
     wx.showToast({ title: '该功能将在后续版本开放', icon: 'none' });
   },
 });

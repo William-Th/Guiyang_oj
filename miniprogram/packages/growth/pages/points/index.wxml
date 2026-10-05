@@ -1,0 +1,40 @@
+<view class="points-hero">
+  <view class="points-num">{{account.current_points}}</view>
+  <view class="points-label">当前积分</view>
+  <view class="points-sub">累计获得 {{account.total_points}} · 已消费 {{account.spent_points}}</view>
+</view>
+
+<view class="summary-row card">
+  <view class="summary-item">
+    <view class="summary-num">+{{summary.todayEarned}}</view>
+    <view class="summary-label">今日获得</view>
+  </view>
+  <view class="summary-divider"></view>
+  <view class="summary-item">
+    <view class="summary-num">+{{summary.weekEarned}}</view>
+    <view class="summary-label">本周获得</view>
+  </view>
+  <view class="summary-divider"></view>
+  <view class="summary-item">
+    <view class="summary-num">{{summary.totalEarned}}</view>
+    <view class="summary-label">累计获得</view>
+  </view>
+</view>
+
+<view class="section-title">积分明细</view>
+<block wx:if="{{!loading}}">
+  <view wx:for="{{list}}" wx:key="transaction_id" class="card tx-item">
+    <view class="tx-icon {{item.points_change >= 0 ? 'earn' : 'spend'}}">
+      <van-icon name="{{item.points_change >= 0 ? 'plus' : 'minus'}}" size="32rpx" />
+    </view>
+    <view class="tx-body">
+      <view class="tx-desc">{{item.description}}</view>
+      <view class="tx-time">{{item.created_at}}</view>
+    </view>
+    <view class="tx-change {{item.points_change >= 0 ? 'earn-text' : 'spend-text'}}">
+      {{item.points_change >= 0 ? '+' : ''}}{{item.points_change}}
+    </view>
+  </view>
+  <van-empty wx:if="{{list.length === 0}}" description="暂无积分记录，去答几道题赚积分吧" />
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

@@ -1,0 +1,92 @@
+.ach-summary {
+  background: var(--mp-gradient);
+  color: #fff;
+  text-align: center;
+  padding: 44rpx 0 40rpx;
+  border-radius: 0 0 40rpx 40rpx;
+}
+
+.ach-summary-num {
+  font-size: 72rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ach-summary-label {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  opacity: 0.85;
+}
+
+.ach-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  padding: 0 24rpx;
+}
+
+.ach-card {
+  width: calc(50% - 10rpx);
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ach-icon {
+  font-size: 64rpx;
+  line-height: 1.2;
+}
+
+.ach-name {
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.ach-desc {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.ach-tags {
+  margin-top: 12rpx;
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.prog-card {
+  padding: 24rpx;
+}
+
+.prog-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14rpx;
+}
+
+.prog-name {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.prog-pct {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--mp-primary);
+}
+
+.prog-desc {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}

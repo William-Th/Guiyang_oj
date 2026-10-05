@@ -16,6 +16,21 @@
       ]
     },
     {
+      "root": "packages/smart",
+      "pages": [
+        "pages/flow/index"
+      ]
+    },
+    {
+      "root": "packages/growth",
+      "pages": [
+        "pages/points/index",
+        "pages/achievements/index",
+        "pages/ranking/index",
+        "pages/wrong-questions/index"
+      ]
+    },
+    {
       "root": "packages/admin",
       "pages": [
         "pages/home/index",

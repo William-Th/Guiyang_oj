@@ -19,10 +19,16 @@ Page({
       });
   },
 
-  /** 成长子页（积分/成就/商店/排行/错题本/统计）随 M2 落地；已存在的路径在 AVAILABLE 登记后即自动放行 */
+  /** 成长子页导航：已上线路径在此登记，其余提示开发中 */
   onFeature(e: WechatMiniprogram.CustomEvent) {
     const path = String(e.currentTarget.dataset.path ?? '');
-    const available: Record<string, boolean> = {};
+    const available: Record<string, boolean> = {
+      '/packages/smart/pages/flow/index': true,
+      '/packages/growth/pages/points/index': true,
+      '/packages/growth/pages/achievements/index': true,
+      '/packages/growth/pages/ranking/index': true,
+      '/packages/growth/pages/wrong-questions/index': true,
+    };
     if (path && available[path]) {
       wx.navigateTo({ url: path });
       return;

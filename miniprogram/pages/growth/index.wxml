@@ -16,9 +16,9 @@
     <van-grid-item icon="chart-trending-o" text="统计" data-path="/packages/growth/pages/statistics/index" bind:click="onFeature" />
   </van-grid>
 
-  <view class="section-title">推荐</view>
-  <van-cell-group inset>
-    <van-cell title="智能练习" label="按你的掌握情况每天推 10 题" is-link bind:click="onFeature" />
-    <van-cell title="学习统计" label="科目/知识点维度的掌握分析" is-link bind:click="onFeature" />
-  </van-cell-group>
+<view class="section-title">推荐</view>
+<van-cell-group inset>
+  <van-cell title="智能练习" label="按你的掌握情况每天推 10 题" is-link data-path="/packages/smart/pages/flow/index" bind:click="onFeature" />
+  <van-cell title="学习统计" label="科目/知识点维度的掌握分析" is-link bind:click="onFeature" />
+</van-cell-group>
 </view>

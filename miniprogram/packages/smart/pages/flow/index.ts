@@ -1,0 +1,287 @@
+import {
+  DailyQuestion,
+  getDailyQuestions,
+  getPointsSummary,
+  redoWrongQuestion,
+  submitRecommendAnswer,
+} from '../../../../services/growth';
+import { getStreak } from '../../../../services/api';
+import { getUser, requireLogin } from '../../../../utils/auth';
+import { toastError } from '../../../../utils/request';
+import { popStash } from '../../../../utils/transfer';
+import { TYPE_TEXT, NormalOption, formatCorrectDisplay, parseOptions } from '../../../../utils/questionFormat';
+
+type AnswerValue = string | string[];
+
+interface NormalQuestion {
+  question_id: number;
+  type: string;
+  typeText: string;
+  difficultyText: string;
+  content: string;
+  imageUrl: string;
+  parsedOptions: NormalOption[];
+}
+
+interface JudgeState {
+  correct: boolean;
+  awarded: number;
+  streakCurrent: number;
+  correctDisplay: string;
+  explanation: string;
+}
+
+const DIFF_TEXT: Record<string, string> = { easy: '简单', medium: '中等', hard: '困难' };
+
+function hasAnswer(value: AnswerValue | undefined): boolean {
+  if (value === undefined || value === null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  return String(value) !== '';
+}
+
+function normalizeQuestion(q: DailyQuestion): NormalQuestion {
+  return {
+    question_id: q.question_id,
+    type: q.type,
+    typeText: TYPE_TEXT[q.type] ?? q.type,
+    difficultyText: DIFF_TEXT[q.difficulty ?? ''] ?? '',
+    content: q.content ?? '',
+    imageUrl: '',
+    parsedOptions: parseOptions(q.options),
+  };
+}
+
+Page({
+  data: {
+    loading: true,
+    mode: 'daily' as 'daily' | 'redo',
+    subject: '',
+    questions: [] as NormalQuestion[],
+    current: 0,
+    answers: {} as Record<string, AnswerValue>,
+    localAnswered: {} as Record<string, boolean>,
+    judged: null as JudgeState | null,
+    submitting: false,
+    canSubmit: false,
+    hasNext: false,
+    doneCount: 0,
+    total: 0,
+    celebration: null as null | { streak: number; todayEarned: number; subject: string },
+  },
+
+  // 非渲染实例状态
+  redoQuestionId: 0 as number,
+  redoExplanation: '' as string,
+  lastStreak: 0 as number,
+
+  onLoad() {
+    if (!requireLogin()) return;
+    const redoItem = popStash<{ question_id: number; type: string; content?: string; options?: unknown; explanation?: string | null; image_url?: string | null }>(
+      'wrong_redo_question'
+    );
+    if (redoItem) {
+      this.mode = 'redo';
+      this.redoQuestionId = redoItem.question_id;
+      this.redoExplanation = redoItem.explanation ?? '';
+      this.setData({
+        loading: false,
+        mode: 'redo',
+        questions: [
+          {
+            question_id: redoItem.question_id,
+            type: redoItem.type,
+            typeText: TYPE_TEXT[redoItem.type] ?? redoItem.type,
+            difficultyText: '',
+            content: redoItem.content ?? '',
+            imageUrl: redoItem.image_url ?? '',
+            parsedOptions: parseOptions(redoItem.options),
+          },
+        ],
+        total: 1,
+        current: 0,
+      });
+      return;
+    }
+    this.loadDailySet();
+  },
+
+  async loadDailySet() {
+    try {
+      const res = await getDailyQuestions();
+      const set = res.data;
+      const questions = (set.questions ?? []).map(normalizeQuestion);
+      const answers: Record<string, AnswerValue> = {};
+      const localAnswered: Record<string, boolean> = {};
+      (set.questions ?? []).forEach((q) => {
+        if (q.answered) localAnswered[String(q.question_id)] = true;
+      });
+      const firstUnanswered = questions.findIndex((q) => !localAnswered[String(q.question_id)]);
+      const allDone = firstUnanswered < 0;
+      this.setData({
+        loading: false,
+        subject: set.subject ?? '',
+        questions,
+        total: questions.length,
+        answers,
+        localAnswered,
+        doneCount: questions.filter((q) => localAnswered[String(q.question_id)]).length,
+        current: allDone ? 0 : firstUnanswered,
+      });
+      if (allDone) {
+        await this.showCelebration();
+      }
+    } catch (err) {
+      toastError(err, '每日推题加载失败');
+      setTimeout(() => wx.navigateBack(), 1200);
+    }
+  },
+
+  currentQuestion(): NormalQuestion | null {
+    return this.data.questions[this.data.current] ?? null;
+  },
+
+  syncCanSubmit() {
+    const q = this.currentQuestion();
+    this.setData({ canSubmit: q ? hasAnswer(this.data.answers[String(q.question_id)]) : false });
+  },
+
+  // ---------- 作答 ----------
+
+  onSingleTap(e: WechatMiniprogram.CustomEvent) {
+    if (this.data.judged) return;
+    const q = this.currentQuestion();
+    if (!q) return;
+    this.setData({ [`answers.${q.question_id}`]: String(e.currentTarget.dataset.letter) });
+    this.syncCanSubmit();
+  },
+
+  onMultipleTap(e: WechatMiniprogram.CustomEvent) {
+    if (this.data.judged) return;
+    const q = this.currentQuestion();
+    if (!q) return;
+    const letter = String(e.currentTarget.dataset.letter);
+    const current = this.data.answers[String(q.question_id)];
+    const letters = Array.isArray(current) ? [...current] : [];
+    const idx = letters.indexOf(letter);
+    if (idx > -1) letters.splice(idx, 1);
+    else letters.push(letter);
+    this.setData({ [`answers.${q.question_id}`]: letters });
+    this.syncCanSubmit();
+  },
+
+  onTfTap(e: WechatMiniprogram.CustomEvent) {
+    if (this.data.judged) return;
+    const q = this.currentQuestion();
+    if (!q) return;
+    this.setData({ [`answers.${q.question_id}`]: String(e.currentTarget.dataset.val) });
+    this.syncCanSubmit();
+  },
+
+  onTextInput(e: WechatMiniprogram.CustomEvent) {
+    if (this.data.judged) return;
+    const q = this.currentQuestion();
+    if (!q) return;
+    this.setData({ [`answers.${q.question_id}`]: String(e.detail.value ?? '') });
+    this.syncCanSubmit();
+  },
+
+  // ---------- 即答即判 ----------
+
+  async onSubmitAnswer() {
+    const q = this.currentQuestion();
+    if (!q || this.data.submitting || this.data.judged) return;
+    const answer = this.data.answers[String(q.question_id)];
+    if (!hasAnswer(answer)) return;
+    this.setData({ submitting: true });
+    try {
+      const res =
+        this.data.mode === 'redo'
+          ? await redoWrongQuestion(this.redoQuestionId, answer)
+          : await submitRecommendAnswer(q.question_id, answer);
+      const d = res.data;
+      const judged: JudgeState = {
+        correct: d.correct,
+        awarded: d.awarded ?? 0,
+        streakCurrent: d.streak?.current_streak ?? 0,
+        correctDisplay:
+          d.correct === false
+            ? formatCorrectDisplay(q.type, d.correct_answer, q.parsedOptions)
+            : '',
+        // redo 端点不回解析，用错题列表暂存的解析；每日推题答错才下发解析
+        explanation:
+          this.data.mode === 'redo' ? this.redoExplanation : (d as { explanation?: string | null }).explanation ?? '',
+      };
+      this.lastStreak = judged.streakCurrent;
+      this.setData({
+        judged,
+        localAnswered:
+          this.data.mode === 'daily'
+            ? { ...this.data.localAnswered, [String(q.question_id)]: true }
+            : this.data.localAnswered,
+        doneCount:
+          this.data.mode === 'daily'
+            ? this.data.doneCount + 1
+            : this.data.doneCount,
+      });
+    } catch (err) {
+      toastError(err, '提交失败');
+    } finally {
+      this.setData({ submitting: false });
+    }
+  },
+
+  // ---------- 下一题 / 庆祝 ----------
+
+  onNext() {
+    if (this.data.mode === 'redo') {
+      wx.navigateBack();
+      return;
+    }
+    const idx = this.data.questions.findIndex(
+      (q, i) => i > this.data.current && !this.data.localAnswered[String(q.question_id)]
+    );
+    if (idx >= 0) {
+      this.setData({ current: idx, judged: null, canSubmit: false });
+      return;
+    }
+    this.showCelebration();
+  },
+
+  async showCelebration() {
+    let streak = this.lastStreak;
+    if (!streak) {
+      try {
+        const res = await getStreak();
+        streak = res.data?.current_streak ?? 0;
+      } catch {
+        streak = 0;
+      }
+    }
+    let todayEarned = 0;
+    const user = getUser();
+    if (user) {
+      try {
+        const summary = await getPointsSummary(user.id);
+        todayEarned = summary.data?.todayEarned ?? 0;
+      } catch {
+        todayEarned = 0;
+      }
+    }
+    this.setData({
+      celebration: { streak, todayEarned, subject: this.data.subject },
+      judged: null,
+    });
+  },
+
+  goBack() {
+    wx.navigateBack();
+  },
+
+  onShareAppMessage() {
+    const streak = this.data.celebration?.streak ?? 0;
+    return {
+      title: `我在贵阳市小学生测评平台连续练习 ${streak} 天，一起来刷题吧！`,
+      path: '/pages/login/index',
+    };
+  },
+});

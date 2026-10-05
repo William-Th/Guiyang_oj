@@ -1,0 +1,37 @@
+<view class="wq-stats card">
+  <view class="wq-stat">
+    <view class="wq-stat-num">{{stats.total}}</view>
+    <view class="wq-stat-label">累计错题</view>
+  </view>
+  <view class="wq-stat">
+    <view class="wq-stat-num warn">{{stats.byStatus.active}}</view>
+    <view class="wq-stat-label">待攻克</view>
+  </view>
+  <view class="wq-stat">
+    <view class="wq-stat-num ok">{{stats.byStatus.mastered}}</view>
+    <view class="wq-stat-label">已掌握</view>
+  </view>
+</view>
+
+<block wx:if="{{!loading}}">
+  <view wx:for="{{list}}" wx:key="id" class="card wq-item">
+    <view class="wq-head">
+      <van-tag plain type="primary" wx:if="{{item.subject}}">{{item.subject}}</van-tag>
+      <van-tag plain type="{{item.statusTag}}">{{item.statusText}}</van-tag>
+      <view class="wq-error" wx:if="{{item.error_count}}">错 {{item.error_count}} 次</view>
+    </view>
+
+    <rich-text class="wq-content" nodes="{{item.excerpt}}" />
+
+    <view class="wq-tags" wx:if="{{item.kpTags.length > 0}}">
+      <van-tag plain wx:for="{{item.kpTags}}" wx:for-item="kp" wx:key="*this">{{kp}}</van-tag>
+    </view>
+    <view class="wq-time" wx:if="{{item.lastWrongText}}">最近做错：{{item.lastWrongText}}</view>
+
+    <view class="wq-actions" wx:if="{{item.canRedo}}">
+      <van-button size="small" round type="primary" bind:click="onRedo" data-id="{{item.id}}">重练这题</van-button>
+    </view>
+  </view>
+  <van-empty wx:if="{{list.length === 0}}" description="太棒了，暂时没有待攻克的错题" />
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

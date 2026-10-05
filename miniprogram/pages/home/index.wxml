@@ -50,17 +50,18 @@
     <van-icon name="arrow" color="#c8c9cc" />
   </view>
 
-  <view class="section-title">快捷入口</view>
-  <view class="card grid-card">
-    <van-grid column-num="3" border="{{ false }}">
-      <van-grid-item
-        wx:for="{{gridItems}}"
-        wx:key="text"
-        icon="{{item.icon}}"
-        text="{{item.text}}"
-        icon-class="grid-icon"
-        bind:click="onFeature"
-      />
-    </van-grid>
-  </view>
+<view class="section-title">快捷入口</view>
+<view class="card grid-card">
+  <van-grid column-num="3" border="{{ false }}">
+    <van-grid-item
+      wx:for="{{gridItems}}"
+      wx:key="text"
+      icon="{{item.icon}}"
+      text="{{item.text}}"
+      icon-class="grid-icon"
+      data-path="{{item.path}}"
+      bind:click="onFeature"
+    />
+  </van-grid>
+</view>
 </view>

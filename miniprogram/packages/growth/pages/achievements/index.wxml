@@ -1,0 +1,33 @@
+<view class="ach-summary">
+  <view class="ach-summary-num">{{unlocked.length}}</view>
+  <view class="ach-summary-label">已解锁成就</view>
+</view>
+
+<view class="section-title">已解锁</view>
+<block wx:if="{{!loading}}">
+  <view wx:if="{{unlocked.length > 0}}" class="ach-grid">
+    <view wx:for="{{unlocked}}" wx:key="achievement_id" class="card ach-card">
+      <view class="ach-icon">{{item.achievement_icon || '🏅'}}</view>
+      <view class="ach-name">{{item.achievement_name}}</view>
+      <view class="ach-desc">{{item.achievement_desc}}</view>
+      <view class="ach-tags">
+        <van-tag plain type="warning" wx:if="{{item.rarity}}">{{rarityText[item.rarity] || item.rarity}}</van-tag>
+        <van-tag plain type="primary" wx:if="{{item.points_reward}}">+{{item.points_reward}} 分</van-tag>
+      </view>
+    </view>
+  </view>
+  <van-empty wx:if="{{unlocked.length === 0}}" description="还没有解锁成就，坚持每日推题吧" />
+
+  <block wx:if="{{progress.length > 0}}">
+    <view class="section-title">进度中</view>
+    <view wx:for="{{progress}}" wx:key="achievement_id" class="card prog-card">
+      <view class="prog-head">
+        <view class="prog-name">{{item.achievement_name}}</view>
+        <view class="prog-pct">{{item.progress_percentage}}%</view>
+      </view>
+      <van-progress percentage="{{item.progress_percentage}}" stroke-width="8" color="#0ea5e9" track-color="#eef2f6" />
+      <view class="prog-desc">{{item.current_value}}/{{item.target_value}} · {{item.achievement_desc}}</view>
+    </view>
+  </block>
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

@@ -1,0 +1,133 @@
+<wxs module="fmt">
+  var has = function (arr, letter) {
+    if (!arr || !arr.indexOf) return false;
+    return arr.indexOf(letter) > -1;
+  };
+  module.exports = { has: has };
+</wxs>
+
+<!-- 单题流（每日推题 / 错题重练共用） -->
+<view class="flow-page" wx:if="{{!loading && currentQuestion && !celebration}}">
+  <view class="flow-head">
+    <view class="flow-head-left">
+      <view class="flow-title">{{mode === 'redo' ? '错题重练' : '智能练习'}}</view>
+      <view class="flow-progress" wx:if="{{mode === 'daily'}}">
+        第 {{current + 1}} / {{total}} 题 · 今日已完成 {{doneCount}}{{subject ? ' · ' + subject : ''}}
+      </view>
+    </view>
+  </view>
+
+  <view class="card question-card">
+    <view class="tag-row">
+      <van-tag plain type="primary">{{currentQuestion.typeText}}</van-tag>
+      <van-tag plain wx:if="{{currentQuestion.difficultyText}}">{{currentQuestion.difficultyText}}</van-tag>
+    </view>
+
+    <rich-text class="q-content" nodes="{{currentQuestion.content}}" />
+    <image wx:if="{{currentQuestion.imageUrl}}" src="{{currentQuestion.imageUrl}}" mode="widthFix" class="q-image" />
+
+    <!-- 单选 -->
+    <view wx:if="{{currentQuestion.type === 'single'}}" class="options {{judged ? 'locked' : ''}}">
+      <view
+        wx:for="{{currentQuestion.parsedOptions}}"
+        wx:key="letter"
+        class="option {{answers[currentQuestion.question_id] === item.letter ? 'selected' : ''}}"
+        data-letter="{{item.letter}}"
+        bind:tap="onSingleTap"
+      >
+        <view class="option-letter">{{item.letter}}</view>
+        <view class="option-text">{{item.text}}</view>
+      </view>
+    </view>
+
+    <!-- 多选 -->
+    <block wx:elif="{{currentQuestion.type === 'multiple'}}">
+      <view class="options {{judged ? 'locked' : ''}}">
+        <view
+          wx:for="{{currentQuestion.parsedOptions}}"
+          wx:key="letter"
+          class="option {{fmt.has(answers[currentQuestion.question_id], item.letter) ? 'selected' : ''}}"
+          data-letter="{{item.letter}}"
+          bind:tap="onMultipleTap"
+        >
+          <view class="option-letter">{{item.letter}}</view>
+          <view class="option-text">{{item.text}}</view>
+        </view>
+      </view>
+      <view class="type-hint" wx:if="{{!judged}}">多选题：再次点击可取消选择</view>
+    </block>
+
+    <!-- 判断 -->
+    <view wx:elif="{{currentQuestion.type === 'true_false'}}" class="tf-row {{judged ? 'locked' : ''}}">
+      <view class="tf-btn {{answers[currentQuestion.question_id] === 'true' ? 'selected' : ''}}" data-val="true" bind:tap="onTfTap">
+        <van-icon name="passed" size="40rpx" /> 正确
+      </view>
+      <view class="tf-btn {{answers[currentQuestion.question_id] === 'false' ? 'selected' : ''}}" data-val="false" bind:tap="onTfTap">
+        <van-icon name="close" size="40rpx" /> 错误
+      </view>
+    </view>
+
+    <!-- 填空 -->
+    <view wx:elif="{{currentQuestion.type === 'blank'}}" class="blank-wrap">
+      <input class="blank-input {{judged ? 'locked' : ''}}" value="{{answers[currentQuestion.question_id] || ''}}" placeholder="请输入答案" bindinput="onTextInput" />
+    </view>
+  </view>
+
+  <!-- 即答即判结果 -->
+  <view wx:if="{{judged}}" class="card judge-card {{judged.correct ? 'ok' : 'no'}}">
+    <view class="judge-title">
+      <van-icon name="{{judged.correct ? 'passed' : 'close'}}" size="40rpx" />
+      <text>{{judged.correct ? '回答正确' : '回答错误'}}</text>
+    </view>
+    <view class="judge-meta">
+      <text wx:if="{{judged.correct && judged.awarded > 0}}" class="judge-points">积分 +{{judged.awarded}}</text>
+      <text>当前连胜 {{judged.streakCurrent}} 天</text>
+    </view>
+    <view wx:if="{{judged.correctDisplay}}" class="judge-answer">正确答案：{{judged.correctDisplay}}</view>
+    <view wx:if="{{judged.explanation}}" class="judge-explain">
+      <view class="explain-title">解析</view>
+      <rich-text nodes="{{judged.explanation}}" />
+    </view>
+    <view wx:if="{{!judged.correct && mode === 'daily'}}" class="judge-wrong-tip">已自动加入错题本，可在「成长 → 错题本」重练</view>
+  </view>
+
+  <view class="flow-nav">
+    <van-button
+      wx:if="{{!judged}}"
+      block
+      round
+      type="primary"
+      loading="{{submitting}}"
+      disabled="{{!canSubmit}}"
+      bind:click="onSubmitAnswer"
+    >
+      提交答案
+    </van-button>
+    <van-button wx:else block round type="primary" bind:click="onNext">
+      {{mode === 'redo' ? '完成' : (hasNext ? '下一题' : '完成今日推题')}}
+    </van-button>
+  </view>
+</view>
+
+<!-- 完成庆祝页 -->
+<view class="celebrate" wx:if="{{celebration}}">
+  <view class="celebrate-emoji">🎉</view>
+  <view class="celebrate-title">{{mode === 'redo' ? '重练完成！' : '今日推题完成！'}}</view>
+  <view class="celebrate-sub" wx:if="{{celebration.subject}}">科目：{{celebration.subject}}</view>
+  <view class="celebrate-stats">
+    <view class="cstat">
+      <view class="cstat-num">{{celebration.streak}}</view>
+      <view class="cstat-label">连胜天数</view>
+    </view>
+    <view class="cstat">
+      <view class="cstat-num">+{{celebration.todayEarned}}</view>
+      <view class="cstat-label">今日积分</view>
+    </view>
+  </view>
+  <view class="celebrate-actions">
+    <van-button block round type="primary" open-type="share" custom-class="share-btn">分享战绩</van-button>
+    <van-button block round custom-class="home-btn" bind:click="goBack">返回</van-button>
+  </view>
+</view>
+
+<view wx:if="{{loading}}" class="page-loading">正在加载…</view>
