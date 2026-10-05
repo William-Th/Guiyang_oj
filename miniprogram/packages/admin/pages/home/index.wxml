@@ -28,6 +28,7 @@
 
   <van-cell-group inset title="待办">
     <van-cell title="审批中心" label="注册申请快速审批" icon="todo-list-o" is-link bind:click="goApprovals" />
+    <van-cell title="用户查询" label="学生/教师信息检索" icon="search" is-link bind:click="goUsers" />
   </van-cell-group>
 
   <view class="section-title">最近测评</view>

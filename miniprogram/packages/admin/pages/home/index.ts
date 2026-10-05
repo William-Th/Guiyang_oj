@@ -33,4 +33,8 @@ Page({
   goApprovals() {
     wx.navigateTo({ url: '/packages/admin/pages/approvals/index' });
   },
+
+  goUsers() {
+    wx.navigateTo({ url: '/packages/admin/pages/users/index' });
+  },
 });

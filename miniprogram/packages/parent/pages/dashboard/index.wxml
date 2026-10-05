@@ -1,0 +1,59 @@
+<view class="pd-page">
+  <view class="pd-hero">
+    <view class="pd-hero-left">
+      <view class="pd-hero-title">孩子学习看板</view>
+      <view class="pd-hero-sub">{{child ? child.real_name + ' · ' + (child.grade || '') + (child.class || '') : '加载中'}}</view>
+    </view>
+    <view class="pd-me" bind:tap="goProfile">
+      <van-icon name="user-o" size="40rpx" />
+      <text>我的</text>
+    </view>
+  </view>
+
+  <!-- 孩子切换（多孩时显示） -->
+  <view wx:if="{{children.length > 1}}" class="pd-children">
+    <view
+      wx:for="{{children}}"
+      wx:key="student_user_id"
+      class="pd-child-chip {{child && child.student_user_id === item.student_user_id ? 'active' : ''}}"
+      data-id="{{item.student_user_id}}"
+      bind:tap="onSwitchChild"
+    >
+      {{item.real_name || item.username}}
+    </view>
+  </view>
+
+  <block wx:if="{{child}}">
+    <view class="section-title">科目掌握</view>
+    <block wx:if="{{!loading}}">
+      <view wx:if="{{stats.length > 0}}" class="card">
+        <view wx:for="{{stats}}" wx:key="subject" class="pd-stat">
+          <view class="pd-stat-head">
+            <view class="pd-stat-name">{{item.subject}}</view>
+            <view class="pd-stat-pct {{item.levelClass}}">{{item.pct}}%</view>
+          </view>
+          <view class="pd-stat-bar">
+            <view class="pd-stat-fill {{item.levelClass}}" style="width: {{item.pct}}%;"></view>
+          </view>
+          <view class="pd-stat-meta">已练 {{item.total_questions}} 题 · 答对 {{item.correct_count}}</view>
+        </view>
+      </view>
+      <van-empty wx:else description="孩子还没有答题记录" />
+
+      <view class="section-title">最近成绩</view>
+      <block wx:if="{{results.length > 0}}">
+        <view wx:for="{{results}}" wx:key="activity_id" class="card pd-result">
+          <view class="pd-result-body">
+            <view class="pd-result-title">{{item.title}}</view>
+            <view class="pd-result-meta">{{item.subject || ''}}{{item.timeText ? ' · ' + item.timeText : ''}}</view>
+          </view>
+          <view class="pd-result-score">{{item.score === null ? '待批改' : item.score + ' 分'}}</view>
+        </view>
+      </block>
+      <van-empty wx:else description="暂无成绩记录" />
+    </block>
+    <view wx:else class="page-loading">加载中…</view>
+  </block>
+
+  <van-empty wx:if="{{!loading && children.length === 0}}" description="还没有绑定孩子，请联系管理员建立家长-学生关联" />
+</view>

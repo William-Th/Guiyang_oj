@@ -7,7 +7,7 @@ const GRID_ITEMS = [
   { icon: 'medal-o', text: '成就', path: '/packages/growth/pages/achievements/index' },
   { icon: 'fire-o', text: '排行榜', path: '/packages/growth/pages/ranking/index' },
   { icon: 'bookmark-o', text: '错题本', path: '/packages/growth/pages/wrong-questions/index' },
-  { icon: 'chart-trending-o', text: '统计', path: '' },
+  { icon: 'chart-trending-o', text: '统计', path: '/packages/growth/pages/statistics/index' },
 ];
 
 const AVAILABLE_PATHS = new Set(GRID_ITEMS.map((item) => item.path).filter(Boolean));
@@ -28,6 +28,11 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
+    // 家长不使用学生首页（学生接口对其不可用），回看板
+    if (getUser()?.role === 'parent') {
+      wx.reLaunch({ url: '/packages/parent/pages/dashboard/index' });
+      return;
+    }
     this.updateTabBar();
     const user = getUser();
     const hour = new Date().getHours();

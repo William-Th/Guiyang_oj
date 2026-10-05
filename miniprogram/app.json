@@ -27,7 +27,14 @@
         "pages/points/index",
         "pages/achievements/index",
         "pages/ranking/index",
-        "pages/wrong-questions/index"
+        "pages/wrong-questions/index",
+        "pages/statistics/index"
+      ]
+    },
+    {
+      "root": "packages/parent",
+      "pages": [
+        "pages/dashboard/index"
       ]
     },
     {

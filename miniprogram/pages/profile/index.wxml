@@ -10,13 +10,14 @@
     </view>
   </view>
 
-  <van-cell-group inset>
-    <van-cell wx:if="{{isAdmin}}" title="管理入口" label="总览看数与审批中心" icon="manager-o" is-link bind:click="goAdmin" />
-    <van-cell title="报名记录" icon="calendar-o" is-link bind:click="onFeature" />
-    <van-cell title="我的证书" icon="certificate" is-link bind:click="onFeature" />
-    <van-cell title="通知中心" icon="bell" is-link bind:click="onFeature" />
-    <van-cell title="设置" icon="setting-o" is-link bind:click="onFeature" />
-  </van-cell-group>
+<van-cell-group inset>
+  <van-cell wx:if="{{isParent}}" title="孩子学习看板" label="成绩 / 科目掌握 / 最近动态" icon="friends-o" is-link bind:click="goParentDashboard" />
+  <van-cell wx:if="{{isAdmin}}" title="管理入口" label="总览看数与审批中心" icon="manager-o" is-link bind:click="goAdmin" />
+  <van-cell wx:if="{{!isParent}}" title="报名记录" icon="calendar-o" is-link bind:click="onFeature" />
+  <van-cell wx:if="{{!isParent}}" title="我的证书" icon="certificate" is-link bind:click="onFeature" />
+  <van-cell title="通知中心" icon="bell" is-link bind:click="onFeature" />
+  <van-cell title="设置" icon="setting-o" is-link bind:click="onFeature" />
+</van-cell-group>
 
   <view class="profile-footer">
     <van-button block round bind:click="onLogout">退出登录</van-button>

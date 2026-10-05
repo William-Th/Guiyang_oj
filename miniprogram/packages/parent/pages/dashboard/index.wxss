@@ -1,0 +1,157 @@
+.pd-page {
+  padding-bottom: 60rpx;
+}
+
+.pd-hero {
+  background: var(--mp-gradient);
+  color: #fff;
+  padding: 40rpx 32rpx;
+  border-radius: 0 0 40rpx 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pd-hero-title {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.pd-hero-sub {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  opacity: 0.85;
+}
+
+.pd-me {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 22rpx;
+  padding: 12rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pd-children {
+  display: flex;
+  gap: 16rpx;
+  padding: 24rpx 24rpx 0;
+  flex-wrap: wrap;
+}
+
+.pd-child-chip {
+  padding: 12rpx 32rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  border: 2rpx solid var(--mp-border);
+  font-size: 26rpx;
+  color: var(--mp-text-secondary);
+}
+
+.pd-child-chip.active {
+  background: var(--mp-primary-bg);
+  border-color: var(--mp-primary);
+  color: var(--mp-primary-dark);
+  font-weight: 600;
+}
+
+.pd-stat {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.pd-stat:last-child {
+  border-bottom: none;
+}
+
+.pd-stat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.pd-stat-name {
+  font-size: 29rpx;
+  font-weight: 600;
+}
+
+.pd-stat-pct {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.pd-stat-pct.good {
+  color: var(--mp-success);
+}
+
+.pd-stat-pct.mid {
+  color: var(--mp-warning);
+}
+
+.pd-stat-pct.weak {
+  color: var(--mp-danger);
+}
+
+.pd-stat-bar {
+  margin-top: 12rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.pd-stat-fill {
+  height: 100%;
+  border-radius: 999rpx;
+}
+
+.pd-stat-fill.good {
+  background: var(--mp-success);
+}
+
+.pd-stat-fill.mid {
+  background: var(--mp-warning);
+}
+
+.pd-stat-fill.weak {
+  background: var(--mp-danger);
+}
+
+.pd-stat-meta {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}
+
+.pd-result {
+  display: flex;
+  align-items: center;
+}
+
+.pd-result-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-result-title {
+  font-size: 29rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pd-result-meta {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}
+
+.pd-result-score {
+  margin-left: 16rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--mp-primary-dark);
+}

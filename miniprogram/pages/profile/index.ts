@@ -19,6 +19,7 @@ Page({
     avatarText: '',
     roleText: '',
     isAdmin: false,
+    isParent: false,
     version: '0.1.0',
   },
 
@@ -29,13 +30,23 @@ Page({
     ).getTabBar?.();
     tabBar?.setData({ selected: 3 });
     const user = getUser() ?? { id: 0, username: '', role: '' };
+    const isParent = user.role === 'parent';
+    if (isParent) {
+      // 家长模式：隐藏学生 tabBar，看板为唯一主页入口
+      wx.hideTabBar({ fail: () => {} });
+    }
     const name = user.realName || user.username || '';
     this.setData({
       user,
       avatarText: name.slice(0, 1).toUpperCase() || '?',
       roleText: ROLE_TEXT[user.role] ?? user.role,
-      isAdmin: isAdmin(),
+      isAdmin: !isParent && isAdmin(),
+      isParent,
     });
+  },
+
+  goParentDashboard() {
+    wx.navigateTo({ url: '/packages/parent/pages/dashboard/index' });
   },
 
   goAdmin() {

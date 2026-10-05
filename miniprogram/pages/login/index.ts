@@ -39,7 +39,12 @@ Page({
     try {
       const res = await login(username.trim(), password);
       saveSession(res.token, res.refreshToken, res.user);
-      wx.reLaunch({ url: '/pages/home/index' });
+      // 角色化落地（计划书 5.4/5.6）：家长进看板，其余进学生首页（管理员经「我的」进管理分包）
+      if (res.user?.role === 'parent') {
+        wx.reLaunch({ url: '/packages/parent/pages/dashboard/index' });
+      } else {
+        wx.reLaunch({ url: '/pages/home/index' });
+      }
     } catch (err) {
       toastError(err, '登录失败，请检查账号密码');
     } finally {

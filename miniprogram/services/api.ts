@@ -136,6 +136,29 @@ export function queryRegistrationStatus(phone: string, inquiryCode: string) {
   );
 }
 
+// ---------- 管理端：用户查询（响应外壳为裸 {students|teachers}，无分页，前端过滤） ----------
+
+export interface UserRow {
+  id: number;
+  username: string;
+  real_name?: string | null;
+  phone?: string | null;
+  status?: string;
+  school_name?: string | null;
+  grade?: string | null;
+  class?: string | null;
+  student_no?: string | null;
+  [key: string]: unknown;
+}
+
+export function getStudentUsers() {
+  return request<{ students: UserRow[] }>('GET', '/users/students').then((res) => res.students ?? []);
+}
+
+export function getTeacherUsers() {
+  return request<{ teachers: UserRow[] }>('GET', '/users/teachers').then((res) => res.teachers ?? []);
+}
+
 // ---------- 管理端（复用现有接口，零新增） ----------
 
 export interface AdminDashboardStats {

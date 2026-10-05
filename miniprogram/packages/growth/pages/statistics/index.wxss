@@ -1,0 +1,68 @@
+.stat-item {
+  padding: 24rpx;
+}
+
+.stat-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.stat-name {
+  font-size: 29rpx;
+  font-weight: 600;
+}
+
+.stat-sub {
+  font-size: 23rpx;
+  font-weight: 400;
+  color: var(--mp-text-secondary);
+}
+
+.stat-pct {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.stat-pct.good {
+  color: var(--mp-success);
+}
+
+.stat-pct.mid {
+  color: var(--mp-warning);
+}
+
+.stat-pct.weak {
+  color: var(--mp-danger);
+}
+
+.stat-bar {
+  margin-top: 14rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 999rpx;
+}
+
+.stat-bar-fill.good {
+  background: var(--mp-success);
+}
+
+.stat-bar-fill.mid {
+  background: var(--mp-warning);
+}
+
+.stat-bar-fill.weak {
+  background: var(--mp-danger);
+}
+
+.stat-meta {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}

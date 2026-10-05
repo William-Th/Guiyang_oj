@@ -1,0 +1,37 @@
+<view class="user-search">
+  <van-field
+    label="搜索"
+    title-width="88rpx"
+    placeholder="姓名或账号"
+    value="{{ keyword }}"
+    bind:change="onKeyword"
+    clearable
+  />
+</view>
+
+<view class="user-tabs">
+  <view
+    wx:for="{{tabs}}"
+    wx:key="value"
+    class="user-tab {{tab === item.value ? 'active' : ''}}"
+    data-tab="{{item.value}}"
+    bind:tap="onTabChange"
+  >
+    {{item.label}}
+  </view>
+</view>
+
+<block wx:if="{{!loading}}">
+  <view wx:for="{{list}}" wx:key="id" class="card user-item">
+    <view class="user-item-head">
+      <view class="user-name">{{item.real_name || item.username}}</view>
+      <van-tag plain type="{{item.status === 'active' ? 'success' : 'danger'}}">
+        {{item.status === 'active' ? '正常' : '停用'}}
+      </van-tag>
+    </view>
+    <view class="user-meta">账号：{{item.username}}</view>
+    <view class="user-meta" wx:if="{{item.metaText}}">{{item.metaText}}</view>
+  </view>
+  <van-empty wx:if="{{list.length === 0}}" description="没有匹配的用户" />
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

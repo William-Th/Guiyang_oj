@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "van-field": "@vant/weapp/field/index",
+    "van-tag": "@vant/weapp/tag/index",
+    "van-empty": "@vant/weapp/empty/index"
+  },
+  "navigationBarTitleText": "用户查询"
+}

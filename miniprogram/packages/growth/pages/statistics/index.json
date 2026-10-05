@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "van-tag": "@vant/weapp/tag/index",
+    "van-empty": "@vant/weapp/empty/index"
+  },
+  "navigationBarTitleText": "学习统计"
+}

@@ -1,0 +1,32 @@
+<block wx:if="{{!loading}}">
+  <view class="section-title">能力掌握</view>
+  <block wx:if="{{abilities.length > 0}}">
+    <view wx:for="{{abilities}}" wx:key="index" class="card stat-item">
+      <view class="stat-head">
+        <view class="stat-name">{{item.ability}}<text class="stat-sub" wx:if="{{item.subject}}"> · {{item.subject}}</text></view>
+        <view class="stat-pct {{item.levelClass}}">{{item.pct}}%</view>
+      </view>
+      <view class="stat-bar">
+        <view class="stat-bar-fill {{item.levelClass}}" style="width: {{item.pct}}%;"></view>
+      </view>
+      <view class="stat-meta">已练 {{item.total_questions}} 题 · 答对 {{item.correct_count}}</view>
+    </view>
+  </block>
+  <van-empty wx:else description="先去完成一些练习，能力值就会在这里出现" />
+
+  <view class="section-title">知识点掌握</view>
+  <block wx:if="{{knowledge.length > 0}}">
+    <view wx:for="{{knowledge}}" wx:key="index" class="card stat-item">
+      <view class="stat-head">
+        <view class="stat-name">{{item.knowledge_point}}<text class="stat-sub" wx:if="{{item.subject}}"> · {{item.subject}}</text></view>
+        <view class="stat-pct {{item.levelClass}}">{{item.pct}}%</view>
+      </view>
+      <view class="stat-bar">
+        <view class="stat-bar-fill {{item.levelClass}}" style="width: {{item.pct}}%;"></view>
+      </view>
+      <view class="stat-meta">已练 {{item.total_questions}} 题 · 答对 {{item.correct_count}}<text wx:if="{{item.levelClass === 'weak'}}"> · 建议重点复习</text></view>
+    </view>
+  </block>
+  <van-empty wx:else description="暂无知识点统计" />
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

@@ -6,7 +6,8 @@ type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface ApiError {
   statusCode?: number;
-  data?: { message?: string; errors?: { msg?: string }[] };
+  /** 家长端接口错误字段为 error，其余多为 message */
+  data?: { message?: string; error?: string; errors?: { msg?: string }[] };
 }
 
 interface RequestOptions {
@@ -93,6 +94,6 @@ export function idempotencyKey(): string {
 
 export function toastError(err: unknown, fallback = '请求失败，请稍后重试'): void {
   const e = err as ApiError;
-  const msg = e?.data?.message || e?.data?.errors?.[0]?.msg || fallback;
+  const msg = e?.data?.message || e?.data?.error || e?.data?.errors?.[0]?.msg || fallback;
   wx.showToast({ title: msg, icon: 'none' });
 }
