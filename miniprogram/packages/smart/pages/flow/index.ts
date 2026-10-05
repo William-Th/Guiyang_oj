@@ -2,6 +2,7 @@ import {
   DailyQuestion,
   getDailyQuestions,
   getPointsSummary,
+  getSubjectsSimple,
   redoWrongQuestion,
   submitRecommendAnswer,
 } from '../../../../services/growth';
@@ -59,6 +60,7 @@ Page({
     loading: true,
     mode: 'daily' as 'daily' | 'redo',
     subject: '',
+    subjects: [] as string[],
     questions: [] as NormalQuestion[],
     current: 0,
     answers: {} as Record<string, AnswerValue>,
@@ -105,13 +107,24 @@ Page({
       });
       return;
     }
+    this.loadSubjects();
     this.loadDailySet();
   },
 
-  async loadDailySet() {
+  /** 科目列表（/subjects/simple 公开接口），供每日推题切换科目 */
+  async loadSubjects() {
     try {
-      const res = await getDailyQuestions();
-      const set = res.data;
+      const subjects = await getSubjectsSimple();
+      this.setData({ subjects: subjects.map((s) => s.value) });
+    } catch {
+      /* 科目切换条允许降级隐藏 */
+    }
+  },
+
+  async loadDailySet(subject?: string) {
+    try {
+      const res = await getDailyQuestions(subject);
+      const set = res.data ?? { subject: subject ?? '', questions: [] as DailyQuestion[] };
       // 客户端兜底过滤：非客观题（问答/匹配/编程）无法即答即判，不进入单题流
       const questions = (set.questions ?? [])
         .filter((q) => AUTO_JUDGE_TYPES.has(q.type))
@@ -141,6 +154,14 @@ Page({
       toastError(err, '每日推题加载失败');
       setTimeout(() => wx.navigateBack(), 1200);
     }
+  },
+
+  /** 切换科目重新拉取当日题集 */
+  onSubjectTap(e: WechatMiniprogram.CustomEvent) {
+    const subject = String(e.currentTarget.dataset.subject ?? '');
+    if (!subject || subject === this.data.subject) return;
+    this.setData({ loading: true, subject, judged: null });
+    this.loadDailySet(subject);
   },
 
   currentQuestion(): NormalQuestion | null {

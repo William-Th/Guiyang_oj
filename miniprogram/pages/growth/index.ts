@@ -29,6 +29,7 @@ Page({
       '/packages/growth/pages/ranking/index': true,
       '/packages/growth/pages/wrong-questions/index': true,
       '/packages/growth/pages/statistics/index': true,
+      '/packages/growth/pages/shop/index': true,
     };
     if (path && available[path]) {
       wx.navigateTo({ url: path });

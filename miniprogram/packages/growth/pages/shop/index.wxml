@@ -1,0 +1,63 @@
+<view class="shop-hero">
+  <view class="shop-hero-num">{{balance}}</view>
+  <view class="shop-hero-label">当前积分 · 兑换虚拟装扮</view>
+</view>
+
+<view class="filter-bar">
+  <view
+    wx:for="{{categories}}"
+    wx:key="value"
+    class="filter-item {{category === item.value ? 'active' : ''}}"
+    data-category="{{item.value}}"
+    bind:tap="onCategoryChange"
+  >
+    {{item.label}}
+  </view>
+</view>
+
+<block wx:if="{{!loading}}">
+  <view class="section-title">商品</view>
+  <view wx:for="{{items}}" wx:key="id" class="card shop-item">
+    <view class="shop-item-icon" style="{{item.color ? 'background:' + item.color : ''}}">
+      <text wx:if="{{item.color}}" class="shop-item-color-check">✓</text>
+      <van-icon wx:else name="{{item.icon}}" size="40rpx" color="#0ea5e9" />
+    </view>
+    <view class="shop-item-body">
+      <view class="shop-item-name">{{item.name}}</view>
+      <view class="shop-item-meta">{{item.categoryText}}</view>
+    </view>
+    <view class="shop-item-action">
+      <view class="shop-item-price">{{item.price}} 积分</view>
+      <van-tag wx:if="{{item.owned}}" type="success">已拥有</van-tag>
+      <van-button wx:else size="small" round type="primary" data-id="{{item.id}}" bind:click="onPurchase">
+        兑换
+      </van-button>
+    </view>
+  </view>
+  <van-empty wx:if="{{items.length === 0}}" description="该分类暂无商品" />
+
+  <block wx:if="{{owned.length > 0}}">
+    <view class="section-title">我的物品</view>
+    <view wx:for="{{owned}}" wx:key="id" class="card shop-item">
+      <view class="shop-item-icon" style="{{item.color ? 'background:' + item.color : ''}}">
+        <text wx:if="{{item.color}}" class="shop-item-color-check">✓</text>
+        <van-icon wx:else name="{{item.icon}}" size="40rpx" color="#0ea5e9" />
+      </view>
+      <view class="shop-item-body">
+        <view class="shop-item-name">{{item.name}}</view>
+        <view class="shop-item-meta">{{item.categoryText}}</view>
+      </view>
+      <van-button
+        size="small"
+        round
+        type="{{item.is_equipped ? 'default' : 'primary'}}"
+        data-id="{{item.id}}"
+        data-equipped="{{item.is_equipped}}"
+        bind:click="onToggleEquip"
+      >
+        {{item.is_equipped ? '卸下' : '装备'}}
+      </van-button>
+    </view>
+  </block>
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

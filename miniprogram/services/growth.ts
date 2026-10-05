@@ -28,7 +28,7 @@ export interface DailyQuestionSet {
 
 export function getDailyQuestions(subject?: string) {
   const query = subject ? `?subject=${encodeURIComponent(subject)}` : '';
-  return request<{ success: boolean; data: DailyQuestionSet }>(
+  return request<{ success: boolean; data: DailyQuestionSet | null }>(
     'GET',
     `/student/activities/daily-questions${query}`
   );
@@ -206,4 +206,67 @@ export function getStudentAbilities() {
 
 export function getStudentKnowledgePoints() {
   return request<{ success: boolean; data: KnowledgeStat[] }>('GET', '/statistics/student/knowledge-points');
+}
+
+// ---------- 积分商店（虚拟物品，错误字段为 error） ----------
+
+export type ShopCategory = 'skin' | 'avatar_frame' | 'name_color' | 'other';
+
+export interface ShopItem {
+  id: number;
+  item_code: string;
+  name: string;
+  category: string;
+  price: number;
+  config?: { color?: string; [key: string]: unknown };
+}
+
+export interface ShopOwnedItem {
+  id: number; // student_purchases.id
+  is_equipped: boolean;
+  purchased_at?: string;
+  item_code: string;
+  name: string;
+  category: string;
+  config?: { color?: string; [key: string]: unknown };
+}
+
+export function getShopItems() {
+  return request<{ success: boolean; data: ShopItem[] }>('GET', '/shop/items');
+}
+
+export function getMyShopItems() {
+  return request<{ success: boolean; data: ShopOwnedItem[] }>('GET', '/shop/my-items');
+}
+
+/** 同商品限购一次；积分不足/已拥有时返回 400 + error 字段 */
+export function purchaseShopItem(itemId: number) {
+  return request<{ success: boolean; data: { points_cost: number }; message?: string }>(
+    'POST',
+    `/shop/items/${itemId}/purchase`,
+    {}
+  );
+}
+
+/** 同类别互斥：装备一个会自动卸下同类别其他 */
+export function equipShopItem(purchaseId: number, equip: boolean) {
+  return request<{ success: boolean; message?: string }>(
+    'POST',
+    `/shop/my-items/${purchaseId}/equip`,
+    { equip }
+  );
+}
+
+// ---------- 科目（公开接口，外壳为 {subjects}） ----------
+
+export interface SubjectOption {
+  value: string;
+  label: string;
+  code: string;
+}
+
+export function getSubjectsSimple() {
+  return request<{ subjects: SubjectOption[] }>('GET', '/subjects/simple', undefined, { auth: false }).then(
+    (res) => res.subjects ?? []
+  );
 }

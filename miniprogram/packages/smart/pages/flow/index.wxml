@@ -17,6 +17,21 @@
     </view>
   </view>
 
+  <!-- 科目切换（每日推题） -->
+  <scroll-view scroll-x class="subject-scroll" wx:if="{{mode === 'daily' && subjects.length > 0}}">
+    <view class="subject-chips">
+      <view
+        wx:for="{{subjects}}"
+        wx:key="*this"
+        class="subject-chip {{subject === item ? 'active' : ''}}"
+        data-subject="{{item}}"
+        bind:tap="onSubjectTap"
+      >
+        {{item}}
+      </view>
+    </view>
+  </scroll-view>
+
   <view class="card question-card">
     <view class="tag-row">
       <van-tag plain type="primary">{{questions[current].typeText}}</van-tag>

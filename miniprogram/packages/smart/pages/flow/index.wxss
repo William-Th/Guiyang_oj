@@ -17,6 +17,34 @@
   color: var(--mp-text-secondary);
 }
 
+.subject-scroll {
+  margin-top: 12rpx;
+  white-space: nowrap;
+}
+
+.subject-chips {
+  display: inline-flex;
+  gap: 16rpx;
+  padding: 4rpx 24rpx;
+}
+
+.subject-chip {
+  padding: 10rpx 28rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  border: 2rpx solid var(--mp-border);
+  color: var(--mp-text-secondary);
+  font-size: 25rpx;
+  flex-shrink: 0;
+}
+
+.subject-chip.active {
+  background: var(--mp-primary-bg);
+  border-color: var(--mp-primary);
+  color: var(--mp-primary-dark);
+  font-weight: 600;
+}
+
 .question-card {
   margin-top: 20rpx;
 }
