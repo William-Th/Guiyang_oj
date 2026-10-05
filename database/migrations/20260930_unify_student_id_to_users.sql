@@ -110,3 +110,16 @@ ALTER TABLE task_completion_history DROP CONSTRAINT task_completion_history_stud
 ALTER TABLE task_completion_history ADD CONSTRAINT task_completion_history_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE teaching_class_members DROP CONSTRAINT teaching_class_members_student_id_fkey;
 ALTER TABLE teaching_class_members ADD CONSTRAINT teaching_class_members_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+
+-- ============================================================================
+-- 第三部分：教师 ID 同步统一为 users(id)
+-- teaching_class_teachers.teacher_id 原为 teachers.id（与学生双 ID 同构），
+-- 统一后存教师的 users(id)；students/teachers 表保留为属性扩展表。
+-- ============================================================================
+ALTER TABLE teaching_class_teachers DROP CONSTRAINT IF EXISTS teaching_class_teachers_teacher_id_fkey;
+ALTER TABLE teaching_class_teachers ADD CONSTRAINT teaching_class_teachers_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE;
+
+UPDATE teaching_class_teachers tct
+   SET teacher_id = t.user_id
+  FROM teachers t
+ WHERE tct.teacher_id = t.id;

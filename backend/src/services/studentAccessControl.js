@@ -46,7 +46,7 @@ async function teacherCanAccessStudent(userId, student) {
                 JOIN teaching_class_members tcm
                   ON tcm.teaching_class_id = tct.teaching_class_id
                  AND tcm.is_active = TRUE
-               WHERE tct.teacher_id = t.id
+               WHERE tct.teacher_id = $1
                  AND tct.is_active = TRUE
                  AND tcm.student_id = $3
             )
@@ -193,7 +193,7 @@ async function getStudentQueryScope(user, { studentAlias = 's', firstParam = 1 }
                  JOIN teaching_class_members scope_tcm
                    ON scope_tcm.teaching_class_id = scope_tct.teaching_class_id
                   AND scope_tcm.is_active = TRUE
-                WHERE scope_tct.teacher_id = scope_teacher.id
+                WHERE scope_tct.teacher_id = ${userParam}
                   AND scope_tct.is_active = TRUE
                   AND scope_tcm.student_id = ${studentAlias}.id
              )

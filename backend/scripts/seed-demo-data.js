@@ -686,8 +686,8 @@ async function seedWorkflows(idMap) {
 
   // 任课教师（teachers 表行 id：user 24 → 13，user 25 → 14）
   await pool.query(
-    `INSERT INTO teaching_class_teachers (teaching_class_id, teacher_id, role, is_active)
-     VALUES ($1, 13, 'creator', true), ($2, 14, 'teacher', true)
+    `INSERT INTO teaching_class_teachers (teaching_class_id, teacher_id=教师users.id, role, is_active)
+     VALUES ($1, 24, 'creator', true), ($2, 25, 'teacher', true)
      ON CONFLICT DO NOTHING`,
     [c1, c2]
   );

@@ -143,9 +143,8 @@ class TeachingClass {
     if (filters.teacher_user_id) {
       whereClause += ` AND EXISTS (
         SELECT 1 FROM teaching_class_teachers tct
-        JOIN teachers t ON tct.teacher_id = t.id
         WHERE tct.teaching_class_id = tc.id
-          AND t.user_id = $${++paramCount}
+          AND tct.teacher_id = $${++paramCount}
           AND tct.is_active = TRUE
       )`;
       params.push(filters.teacher_user_id);
@@ -612,23 +611,9 @@ class TeachingClass {
    * @param {string} role - Role: creator/teacher/assistant
    * @returns {Promise<Object>} Teacher record
    */
-  static async addTeacher(teachingClassId, userIdOrTeacherId, role = 'teacher') {
-    // First try to find teacher by user_id
-    let teacherResult = await query('SELECT id FROM teachers WHERE user_id = $1', [userIdOrTeacherId]);
-
-    let teacherId;
-    if (teacherResult.rows.length > 0) {
-      teacherId = teacherResult.rows[0].id;
-    } else {
-      // Check if it's already a teacher_id
-      teacherResult = await query('SELECT id FROM teachers WHERE id = $1', [userIdOrTeacherId]);
-      if (teacherResult.rows.length > 0) {
-        teacherId = userIdOrTeacherId;
-      } else {
-        throw new Error('Teacher not found');
-      }
-    }
-
+  static async addTeacher(teachingClassId, userId, role = 'teacher') {
+    // 20260930 全站 ID 统一：teaching_class_teachers.teacher_id = 教师的 users.id，
+    // 不再接受 teachers.id（避免 users.id 与 teachers.id 撞号时加错教师）
     const sql = `
       INSERT INTO teaching_class_teachers (teaching_class_id, teacher_id, role)
       VALUES ($1, $2, $3)
@@ -636,7 +621,7 @@ class TeachingClass {
       DO UPDATE SET role = $3, is_active = TRUE
       RETURNING *
     `;
-    const result = await query(sql, [teachingClassId, teacherId, role]);
+    const result = await query(sql, [teachingClassId, userId, role]);
     return result.rows[0];
   }
 
@@ -647,16 +632,21 @@ class TeachingClass {
    */
   static async getTeachers(teachingClassId) {
     const sql = `
-      SELECT t.*,
+      SELECT u.id,
              u.username,
              u.real_name,
              u.phone,
+             t.teacher_no,
+             t.subjects,
+             t.title,
+             sch.name AS school_name,
              tct.role,
              tct.assigned_at,
              tct.is_active
       FROM teaching_class_teachers tct
-      JOIN teachers t ON tct.teacher_id = t.id
-      JOIN users u ON t.user_id = u.id
+      JOIN users u ON u.id = tct.teacher_id
+      LEFT JOIN teachers t ON t.user_id = tct.teacher_id
+      LEFT JOIN schools sch ON t.school_id = sch.id
       WHERE tct.teaching_class_id = $1 AND tct.is_active = TRUE
       ORDER BY tct.role ASC, u.real_name ASC
     `;
