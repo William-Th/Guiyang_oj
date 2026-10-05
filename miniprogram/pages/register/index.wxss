@@ -19,7 +19,7 @@
   margin: 28rpx 0;
   padding: 28rpx;
   border-radius: 20rpx;
-  background: #f0f6fb;
+  background: var(--mp-primary-bg);
   border: 2rpx dashed var(--mp-primary);
   text-align: center;
 }
@@ -42,7 +42,7 @@
   margin-top: 36rpx;
   padding: 28rpx;
   border-radius: 20rpx;
-  background: #f7f9fb;
+  background: var(--mp-bg);
 }
 
 .status-head {

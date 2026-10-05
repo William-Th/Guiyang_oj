@@ -7,7 +7,7 @@
 .filter-item {
   padding: 10rpx 28rpx;
   border-radius: 999rpx;
-  background: #eef2f6;
+  background: #f3f4f6;
   color: var(--mp-text-secondary);
   font-size: 26rpx;
 }

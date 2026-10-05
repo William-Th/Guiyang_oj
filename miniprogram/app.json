@@ -17,15 +17,15 @@
     }
   ],
   "window": {
-    "navigationBarBackgroundColor": "#52708f",
+    "navigationBarBackgroundColor": "#0284c7",
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "贵阳市小学生测评平台",
     "backgroundColor": "#f5f7fa",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#8a94a6",
-    "selectedColor": "#52708f",
+    "color": "#6b7280",
+    "selectedColor": "#0ea5e9",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [

@@ -1,21 +1,34 @@
 /**
- * 主题令牌——从 web 端学生页蓝灰体系提取（#52708f 一族），双端视觉同源。
- * Vant Weapp 通过 CSS 变量覆盖主题。
+ * 主题令牌——与 web 端 frontend/src/theme/boheTheme.ts 完全对齐（天空蓝体系）。
+ * 品牌主色 #0ea5e9；品牌渐变 #0284c7 → #38bdf8；登录品牌区渐变同 web LoginPage。
+ * 功能色/文字/背景/圆角均取自 boheTheme token，双端视觉同源。
  */
 page {
-  --mp-primary: #52708f;
-  --mp-primary-dark: #3f5a74;
-  --mp-success: #07c160;
-  --mp-warning: #ff976a;
-  --mp-danger: #ee0a24;
-  --mp-text: #323233;
-  --mp-text-secondary: #646566;
-  --mp-bg: #f5f7fa;
-  --mp-card-radius: 16rpx;
+  /* 品牌色 */
+  --mp-primary: #0ea5e9;        /* boheTheme.colorPrimary（sky-500） */
+  --mp-primary-dark: #0284c7;   /* active/深色（sky-700） */
+  --mp-primary-deep: #0369a1;   /* 登录品牌区渐变起点 */
+  --mp-primary-light: #38bdf8;  /* 渐变终点（sky-400） */
+  --mp-primary-bg: #f0f9ff;     /* 选中/高亮背景（sky-50） */
+  --mp-gradient: linear-gradient(135deg, #0369a1 0%, #0284c7 45%, #38bdf8 100%);
 
+  /* 功能色（boheTheme.semanticColors） */
+  --mp-success: #52c41a;
+  --mp-warning: #faad14;
+  --mp-danger: #f5222d;
+
+  /* 文字/背景/边框（boheTheme token） */
+  --mp-text: #1f2937;
+  --mp-text-secondary: #6b7280;
+  --mp-bg: #f9fafb;
+  --mp-border: #e5e7eb;
+  --mp-card-radius: 32rpx;      /* borderRadiusLG 16px */
+
+  /* Vant Weapp 主题覆盖 */
   --button-primary-background-color: var(--mp-primary);
   --button-primary-border-color: var(--mp-primary);
   --button-info-background-color: var(--mp-primary);
   --button-info-border-color: var(--mp-primary);
   --tabs-bottom-bar-color: var(--mp-primary);
+  --tag-primary-color: var(--mp-primary);
 }

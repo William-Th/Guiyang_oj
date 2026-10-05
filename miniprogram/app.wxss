@@ -29,7 +29,7 @@ page {
 /* ---------- 认证页共用（登录/注册）：品牌区 + 浮动表单卡 ---------- */
 
 .auth-hero {
-  background: linear-gradient(165deg, #3f5a74 0%, #52708f 55%, #6d89a5 100%);
+  background: var(--mp-gradient);
   padding: 120rpx 40rpx 150rpx;
   border-radius: 0 0 56rpx 56rpx;
   text-align: center;
@@ -66,7 +66,7 @@ page {
 .auth-card {
   margin: -84rpx 40rpx 0;
   background: #fff;
-  border-radius: 28rpx;
+  border-radius: var(--mp-card-radius);
   box-shadow: 0 16rpx 48rpx rgba(63, 90, 116, 0.14);
   padding: 40rpx 32rpx 44rpx;
   position: relative;

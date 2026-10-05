@@ -35,7 +35,7 @@
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  background: #eef2f6;
+  background: #f3f4f6;
   color: var(--mp-text-secondary);
   display: flex;
   align-items: center;
