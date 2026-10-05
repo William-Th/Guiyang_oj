@@ -6,8 +6,8 @@
   module.exports = { has: has };
 </wxs>
 
-<!-- 单题流（每日推题 / 错题重练共用） -->
-<view class="flow-page" wx:if="{{!loading && currentQuestion && !celebration}}">
+<!-- 单题流（每日推题 / 错题重练共用）；当前题直接索引 questions[current] -->
+<view class="flow-page" wx:if="{{!loading && questions.length > 0 && !celebration}}">
   <view class="flow-head">
     <view class="flow-head-left">
       <view class="flow-title">{{mode === 'redo' ? '错题重练' : '智能练习'}}</view>
@@ -19,19 +19,19 @@
 
   <view class="card question-card">
     <view class="tag-row">
-      <van-tag plain type="primary">{{currentQuestion.typeText}}</van-tag>
-      <van-tag plain wx:if="{{currentQuestion.difficultyText}}">{{currentQuestion.difficultyText}}</van-tag>
+      <van-tag plain type="primary">{{questions[current].typeText}}</van-tag>
+      <van-tag plain wx:if="{{questions[current].difficultyText}}">{{questions[current].difficultyText}}</van-tag>
     </view>
 
-    <rich-text class="q-content" nodes="{{currentQuestion.content}}" />
-    <image wx:if="{{currentQuestion.imageUrl}}" src="{{currentQuestion.imageUrl}}" mode="widthFix" class="q-image" />
+    <rich-text class="q-content" nodes="{{questions[current].content}}" />
+    <image wx:if="{{questions[current].imageUrl}}" src="{{questions[current].imageUrl}}" mode="widthFix" class="q-image" />
 
     <!-- 单选 -->
-    <view wx:if="{{currentQuestion.type === 'single'}}" class="options {{judged ? 'locked' : ''}}">
+    <view wx:if="{{questions[current].type === 'single'}}" class="options {{judged ? 'locked' : ''}}">
       <view
-        wx:for="{{currentQuestion.parsedOptions}}"
+        wx:for="{{questions[current].parsedOptions}}"
         wx:key="letter"
-        class="option {{answers[currentQuestion.question_id] === item.letter ? 'selected' : ''}}"
+        class="option {{answers[questions[current].question_id] === item.letter ? 'selected' : ''}}"
         data-letter="{{item.letter}}"
         bind:tap="onSingleTap"
       >
@@ -41,12 +41,12 @@
     </view>
 
     <!-- 多选 -->
-    <block wx:elif="{{currentQuestion.type === 'multiple'}}">
+    <block wx:elif="{{questions[current].type === 'multiple'}}">
       <view class="options {{judged ? 'locked' : ''}}">
         <view
-          wx:for="{{currentQuestion.parsedOptions}}"
+          wx:for="{{questions[current].parsedOptions}}"
           wx:key="letter"
-          class="option {{fmt.has(answers[currentQuestion.question_id], item.letter) ? 'selected' : ''}}"
+          class="option {{fmt.has(answers[questions[current].question_id], item.letter) ? 'selected' : ''}}"
           data-letter="{{item.letter}}"
           bind:tap="onMultipleTap"
         >
@@ -58,18 +58,18 @@
     </block>
 
     <!-- 判断 -->
-    <view wx:elif="{{currentQuestion.type === 'true_false'}}" class="tf-row {{judged ? 'locked' : ''}}">
-      <view class="tf-btn {{answers[currentQuestion.question_id] === 'true' ? 'selected' : ''}}" data-val="true" bind:tap="onTfTap">
+    <view wx:elif="{{questions[current].type === 'true_false'}}" class="tf-row {{judged ? 'locked' : ''}}">
+      <view class="tf-btn {{answers[questions[current].question_id] === 'true' ? 'selected' : ''}}" data-val="true" bind:tap="onTfTap">
         <van-icon name="passed" size="40rpx" /> 正确
       </view>
-      <view class="tf-btn {{answers[currentQuestion.question_id] === 'false' ? 'selected' : ''}}" data-val="false" bind:tap="onTfTap">
+      <view class="tf-btn {{answers[questions[current].question_id] === 'false' ? 'selected' : ''}}" data-val="false" bind:tap="onTfTap">
         <van-icon name="close" size="40rpx" /> 错误
       </view>
     </view>
 
     <!-- 填空 -->
-    <view wx:elif="{{currentQuestion.type === 'blank'}}" class="blank-wrap">
-      <input class="blank-input {{judged ? 'locked' : ''}}" value="{{answers[currentQuestion.question_id] || ''}}" placeholder="请输入答案" bindinput="onTextInput" />
+    <view wx:elif="{{questions[current].type === 'blank'}}" class="blank-wrap">
+      <input class="blank-input {{judged ? 'locked' : ''}}" value="{{answers[questions[current].question_id] || ''}}" placeholder="请输入答案" bindinput="onTextInput" />
     </view>
   </view>
 
@@ -131,3 +131,6 @@
 </view>
 
 <view wx:if="{{loading}}" class="page-loading">正在加载…</view>
+
+<!-- 每日题集为空 / 无可练题 -->
+<van-empty wx:if="{{!loading && questions.length === 0 && !celebration}}" description="今天暂时没有可练的题，去练习页看看吧" />

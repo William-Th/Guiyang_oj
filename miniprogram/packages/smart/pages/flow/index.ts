@@ -127,6 +127,7 @@ Page({
         doneCount: questions.filter((q) => localAnswered[String(q.question_id)]).length,
         current: allDone ? 0 : firstUnanswered,
       });
+      this.updateHasNext();
       if (allDone) {
         await this.showCelebration();
       }
@@ -138,6 +139,14 @@ Page({
 
   currentQuestion(): NormalQuestion | null {
     return this.data.questions[this.data.current] ?? null;
+  },
+
+  /** 当前题之后是否还有未答的题（决定底栏文案“下一题/完成今日推题”） */
+  updateHasNext() {
+    const hasNext = this.data.questions.some(
+      (q, i) => i > this.data.current && !this.data.localAnswered[String(q.question_id)]
+    );
+    this.setData({ hasNext });
   },
 
   syncCanSubmit() {
@@ -223,6 +232,7 @@ Page({
             ? this.data.doneCount + 1
             : this.data.doneCount,
       });
+      this.updateHasNext();
     } catch (err) {
       toastError(err, '提交失败');
     } finally {
@@ -242,6 +252,7 @@ Page({
     );
     if (idx >= 0) {
       this.setData({ current: idx, judged: null, canSubmit: false });
+      this.updateHasNext();
       return;
     }
     this.showCelebration();

@@ -1,0 +1,88 @@
+.wq-stats {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+  margin-top: 20rpx;
+}
+
+.wq-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.wq-stat-num {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--mp-primary-dark);
+}
+
+.wq-stat-num.warn {
+  color: var(--mp-warning);
+}
+
+.wq-stat-num.ok {
+  color: var(--mp-success);
+}
+
+.wq-stat-label {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}
+
+.wq-item {
+  padding: 24rpx;
+}
+
+.wq-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.wq-head-tags {
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+/* 题干富文本：两行截断 */
+.wq-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 29rpx;
+  line-height: 1.65;
+  color: var(--mp-text);
+  word-break: break-all;
+}
+
+.wq-kps {
+  margin-top: 14rpx;
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.wq-foot {
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wq-meta {
+  display: flex;
+  gap: 20rpx;
+  font-size: 23rpx;
+  color: var(--mp-text-secondary);
+}
+
+.wq-error {
+  color: var(--mp-danger);
+  font-weight: 600;
+}

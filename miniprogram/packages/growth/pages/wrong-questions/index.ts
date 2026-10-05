@@ -2,6 +2,7 @@ import { WrongQuestionItem, getWrongQuestionStats, getWrongQuestions } from '../
 import { requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
 import { setStash } from '../../../../utils/transfer';
+import { TYPE_TEXT } from '../../../../utils/questionFormat';
 
 const STATUS_TEXT: Record<string, { text: string; tag: 'success' | 'warning' | 'default' }> = {
   active: { text: '待攻克', tag: 'warning' },
@@ -9,30 +10,31 @@ const STATUS_TEXT: Record<string, { text: string; tag: 'success' | 'warning' | '
   removed: { text: '已移除', tag: 'default' },
 };
 
+const DIFF_TEXT: Record<string, string> = { easy: '简单', medium: '中等', hard: '困难' };
+
 interface DisplayWrong {
   id: number;
   statusText: string;
   statusTag: 'success' | 'warning' | 'default';
-  excerpt: string;
+  typeText: string;
+  difficultyText: string;
+  contentHtml: string;
   kpTags: string[];
   error_count: number;
   lastWrongText: string;
   canRedo: boolean;
 }
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
 function decorate(item: WrongQuestionItem): DisplayWrong {
   const status = STATUS_TEXT[item.status ?? 'active'] ?? STATUS_TEXT.active;
-  const text = stripHtml(item.content ?? '');
   const kps = Array.isArray(item.knowledge_points) ? item.knowledge_points.slice(0, 3) : [];
   return {
     id: item.id,
     statusText: status.text,
     statusTag: status.tag,
-    excerpt: text.length > 80 ? `${text.slice(0, 80)}…` : text || '（题目内容为图片）',
+    typeText: TYPE_TEXT[item.type] ?? item.type,
+    difficultyText: DIFF_TEXT[item.difficulty ?? ''] ?? '',
+    contentHtml: item.content || '（题目内容为图片，重练后作答）',
     kpTags: kps,
     error_count: item.error_count ?? 0,
     lastWrongText: item.last_wrong_at ? String(item.last_wrong_at).slice(0, 10) : '',

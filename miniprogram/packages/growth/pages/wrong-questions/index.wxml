@@ -15,21 +15,33 @@
 
 <block wx:if="{{!loading}}">
   <view wx:for="{{list}}" wx:key="id" class="card wq-item">
+    <!-- 行1：科目/题型/难度 + 状态 -->
     <view class="wq-head">
-      <van-tag plain type="primary" wx:if="{{item.subject}}">{{item.subject}}</van-tag>
-      <van-tag plain type="{{item.statusTag}}">{{item.statusText}}</van-tag>
-      <view class="wq-error" wx:if="{{item.error_count}}">错 {{item.error_count}} 次</view>
+      <view class="wq-head-tags">
+        <van-tag plain type="primary" wx:if="{{item.subject}}">{{item.subject}}</van-tag>
+        <van-tag plain>{{item.typeText}}</van-tag>
+        <van-tag plain wx:if="{{item.difficultyText}}">{{item.difficultyText}}</van-tag>
+      </view>
+      <van-tag type="{{item.statusTag}}">{{item.statusText}}</van-tag>
     </view>
 
-    <rich-text class="wq-content" nodes="{{item.excerpt}}" />
+    <!-- 行2：题干（两行截断） -->
+    <rich-text class="wq-content" nodes="{{item.contentHtml}}" />
 
-    <view class="wq-tags" wx:if="{{item.kpTags.length > 0}}">
+    <!-- 行3：知识点 -->
+    <view class="wq-kps" wx:if="{{item.kpTags.length > 0}}">
       <van-tag plain wx:for="{{item.kpTags}}" wx:for-item="kp" wx:key="*this">{{kp}}</van-tag>
     </view>
-    <view class="wq-time" wx:if="{{item.lastWrongText}}">最近做错：{{item.lastWrongText}}</view>
 
-    <view class="wq-actions" wx:if="{{item.canRedo}}">
-      <van-button size="small" round type="primary" bind:click="onRedo" data-id="{{item.id}}">重练这题</van-button>
+    <!-- 行4：元信息 + 重练 -->
+    <view class="wq-foot">
+      <view class="wq-meta">
+        <text wx:if="{{item.error_count}}" class="wq-error">错 {{item.error_count}} 次</text>
+        <text wx:if="{{item.lastWrongText}}">最近 {{item.lastWrongText}}</text>
+      </view>
+      <van-button wx:if="{{item.canRedo}}" size="small" round type="primary" bind:click="onRedo" data-id="{{item.id}}">
+        重练这题
+      </van-button>
     </view>
   </view>
   <van-empty wx:if="{{list.length === 0}}" description="太棒了，暂时没有待攻克的错题" />
