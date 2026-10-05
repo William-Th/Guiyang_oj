@@ -1,0 +1,148 @@
+<wxs module="fmt">
+  var has = function (arr, letter) {
+    if (!arr || !arr.indexOf) return false;
+    return arr.indexOf(letter) > -1;
+  };
+  module.exports = { has: has };
+</wxs>
+
+<view class="answer-page" wx:if="{{!loading}}">
+  <view class="answer-head">
+    <view class="answer-head-left">
+      <view class="answer-title">{{title}}</view>
+      <view class="answer-progress">第 {{current + 1}} / {{total}} 题 · 已答 {{answeredCount}}</view>
+    </view>
+    <view wx:if="{{remainingSeconds >= 0}}" class="answer-countdown {{remainingSeconds <= 60 ? 'danger' : ''}}">
+      {{countdownText}}
+    </view>
+  </view>
+
+  <view class="card question-card">
+    <view class="question-tag-row">
+      <van-tag plain type="primary">{{questions[current].typeText}}</van-tag>
+      <van-tag plain type="success" wx:if="{{questions[current].maxScore}}">{{questions[current].maxScore}} 分</van-tag>
+    </view>
+
+    <rich-text class="question-content" nodes="{{questions[current].content}}" />
+    <image
+      wx:if="{{questions[current].imageUrl}}"
+      src="{{questions[current].imageUrl}}"
+      mode="widthFix"
+      class="question-image"
+    />
+
+    <!-- 单选 -->
+    <view wx:if="{{questions[current].type === 'single'}}" class="options">
+      <view
+        wx:for="{{questions[current].parsedOptions}}"
+        wx:key="letter"
+        class="option {{answers[questions[current].question_id] === item.letter ? 'selected' : ''}}"
+        data-letter="{{item.letter}}"
+        bind:tap="onSingleTap"
+      >
+        <view class="option-letter">{{item.letter}}</view>
+        <view class="option-text">{{item.text}}</view>
+      </view>
+    </view>
+
+    <!-- 多选 -->
+    <block wx:elif="{{questions[current].type === 'multiple'}}">
+      <view class="options">
+        <view
+          wx:for="{{questions[current].parsedOptions}}"
+          wx:key="letter"
+          class="option {{fmt.has(answers[questions[current].question_id], item.letter) ? 'selected' : ''}}"
+          data-letter="{{item.letter}}"
+          bind:tap="onMultipleTap"
+        >
+          <view class="option-letter">{{item.letter}}</view>
+          <view class="option-text">{{item.text}}</view>
+        </view>
+      </view>
+      <view class="type-hint">多选题：再次点击可取消选择</view>
+    </block>
+
+    <!-- 判断 -->
+    <view wx:elif="{{questions[current].type === 'true_false'}}" class="tf-row">
+      <view
+        class="tf-btn {{answers[questions[current].question_id] === 'true' ? 'selected' : ''}}"
+        data-val="true"
+        bind:tap="onTfTap"
+      >
+        <van-icon name="passed" size="40rpx" /> 正确
+      </view>
+      <view
+        class="tf-btn {{answers[questions[current].question_id] === 'false' ? 'selected' : ''}}"
+        data-val="false"
+        bind:tap="onTfTap"
+      >
+        <van-icon name="close" size="40rpx" /> 错误
+      </view>
+    </view>
+
+    <!-- 填空 -->
+    <view wx:elif="{{questions[current].type === 'blank'}}" class="blank-wrap">
+      <input
+        class="blank-input"
+        value="{{answers[questions[current].question_id] || ''}}"
+        placeholder="请输入答案"
+        bindinput="onTextInput"
+      />
+    </view>
+
+    <!-- 问答 / 匹配（与 web 端一致：文本作答） -->
+    <view wx:elif="{{questions[current].type === 'essay' || questions[current].type === 'matching'}}" class="area-wrap">
+      <textarea
+        class="essay-area"
+        value="{{answers[questions[current].question_id] || ''}}"
+        placeholder="{{questions[current].type === 'essay' ? '请输入你的回答（1000 字以内）' : '按题目要求填写对应关系，如：A-键盘'}}"
+        maxlength="1000"
+        bindinput="onTextInput"
+      />
+      <view class="type-hint">{{answers[questions[current].question_id] ? answers[questions[current].question_id].length : 0}} / 1000</view>
+    </view>
+
+    <!-- 编程题：只读引导（计划书 6.3 只读期） -->
+    <view wx:elif="{{questions[current].type === 'code'}}" class="code-card">
+      <view class="code-tip">
+        <van-icon name="desktop-o" size="32rpx" /> 编程题请在电脑端完成，手机端可查看题目
+      </view>
+      <view wx:if="{{questions[current].codeTemplate}}" class="code-template">{{questions[current].codeTemplate}}</view>
+    </view>
+  </view>
+
+  <view class="answer-nav">
+    <van-button round size="small" disabled="{{current === 0}}" bind:click="onPrev">上一题</van-button>
+    <view class="answer-sheet-btn" bind:tap="openSheet">
+      <van-icon name="apps-o" size="32rpx" />
+      <text>答题卡 {{answeredCount}}/{{total}}</text>
+    </view>
+    <van-button round size="small" type="primary" disabled="{{current >= total - 1}}" bind:click="onNext">
+      下一题
+    </van-button>
+  </view>
+
+  <van-popup show="{{showSheet}}" position="bottom" round bind:close="closeSheet">
+    <view class="sheet">
+      <view class="sheet-title">答题卡（已答 {{answeredCount}}/{{total}}）</view>
+      <scroll-view scroll-y class="sheet-scroll">
+        <view class="sheet-grid">
+          <view
+            wx:for="{{questions}}"
+            wx:key="question_id"
+            class="sheet-item {{answers[item.question_id] ? 'answered' : ''}} {{index === current ? 'current' : ''}}"
+            data-index="{{index}}"
+            bind:tap="onSheetJump"
+          >
+            {{index + 1}}
+          </view>
+        </view>
+      </scroll-view>
+      <van-button type="primary" block round loading="{{submitting}}" bind:click="onSubmit" custom-class="sheet-submit">
+        交卷
+      </van-button>
+    </view>
+  </van-popup>
+</view>
+
+<view wx:else class="page-loading">正在进入答题…</view>

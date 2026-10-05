@@ -55,39 +55,6 @@ export function getUnreadCount() {
   return request<{ count?: number; data?: { count: number } }>('GET', '/notifications/unread-count');
 }
 
-// ---------- 学生：活动列表 ----------
-
-export interface ActivityItem {
-  id: number;
-  title: string;
-  type?: string;
-  status?: string;
-  start_time?: string;
-  end_time?: string;
-  subject_name?: string;
-  question_count?: number;
-  [key: string]: unknown;
-}
-
-/** 后端列表响应存在数组 / {activities} / {data} 多种形态，统一归一化 */
-function normalizeList<T>(res: unknown): T[] {
-  if (Array.isArray(res)) return res as T[];
-  const obj = res as { activities?: T[]; data?: T[] | { list?: T[] }; list?: T[] };
-  if (Array.isArray(obj?.activities)) return obj.activities;
-  if (Array.isArray(obj?.data)) return obj.data;
-  if (Array.isArray(obj?.data?.list)) return obj.data.list;
-  if (Array.isArray(obj?.list)) return obj.list;
-  return [];
-}
-
-export function getPracticeActivities() {
-  return request<unknown>('GET', '/activities/practice').then(normalizeList<ActivityItem>);
-}
-
-export function getAssessmentActivities() {
-  return request<unknown>('GET', '/activities/assessment').then(normalizeList<ActivityItem>);
-}
-
 // ---------- 学生注册（审核制，与 web 端同构；接口公开无需登录） ----------
 
 export interface DistrictOption {

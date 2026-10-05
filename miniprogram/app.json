@@ -9,6 +9,13 @@
   ],
   "subPackages": [
     {
+      "root": "packages/practice",
+      "pages": [
+        "pages/answer/index",
+        "pages/result/index"
+      ]
+    },
+    {
       "root": "packages/admin",
       "pages": [
         "pages/home/index",

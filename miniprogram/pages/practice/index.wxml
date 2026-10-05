@@ -9,13 +9,13 @@
           data-id="{{item.id}}"
           bind:tap="onItemTap"
         >
-          <view class="practice-item-title">{{item.title}}</view>
-          <view class="practice-item-meta">
-            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-            <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
-          </view>
+        <view class="practice-item-title">{{item.title}}</view>
+        <view class="practice-item-meta">
+          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+          <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
         </view>
-        <van-empty wx:if="{{practiceList.length === 0}}" description="暂无练习" />
+      </view>
+      <van-empty wx:if="{{practiceList.length === 0}}" description="暂无练习" />
       </block>
     </van-tab>
 
@@ -28,13 +28,13 @@
           data-id="{{item.id}}"
           bind:tap="onItemTap"
         >
-          <view class="practice-item-title">{{item.title}}</view>
-          <view class="practice-item-meta">
-            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-            <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
-          </view>
+        <view class="practice-item-title">{{item.title}}</view>
+        <view class="practice-item-meta">
+          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+          <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
         </view>
-        <van-empty wx:if="{{assessmentList.length === 0}}" description="暂无测评" />
+      </view>
+      <van-empty wx:if="{{assessmentList.length === 0}}" description="暂无测评" />
       </block>
     </van-tab>
 
@@ -47,13 +47,13 @@
           data-id="{{item.id}}"
           bind:tap="onItemTap"
         >
-          <view class="practice-item-title">{{item.title}}</view>
-          <view class="practice-item-meta">
-            <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-            <text class="practice-item-time" wx:if="{{item.timeText}}">{{item.timeText}}</text>
-          </view>
+        <view class="practice-item-title">{{item.title}}</view>
+        <view class="practice-item-meta">
+          <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+          <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
         </view>
-        <van-empty wx:if="{{registrations.length === 0}}" description="暂无报名记录" />
+      </view>
+      <van-empty wx:if="{{registrations.length === 0}}" description="暂无报名记录" />
       </block>
     </van-tab>
   </van-tabs>

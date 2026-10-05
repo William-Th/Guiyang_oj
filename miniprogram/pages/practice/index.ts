@@ -1,4 +1,4 @@
-import { ActivityItem, getAssessmentActivities, getPracticeActivities } from '../../services/api';
+import { StudentActivityItem, getStudentAssessmentList, getStudentPracticeList } from '../../services/activities';
 import { requireLogin } from '../../utils/auth';
 
 interface DisplayItem {
@@ -6,29 +6,42 @@ interface DisplayItem {
   title: string;
   statusText: string;
   statusType: 'primary' | 'success' | 'danger' | 'warning' | 'default';
-  timeText: string;
+  metaText: string;
+  done: boolean;
 }
 
-/** 活动状态 → 小屏标签文案与颜色（字段以 web 端 activities 类型为准，未知状态兜底灰标） */
-function decorate(list: ActivityItem[]): DisplayItem[] {
+/** 学生侧状态：以 my_status（我的 attempt）为准，辅以时间窗 */
+function decorate(list: StudentActivityItem[]): DisplayItem[] {
+  const now = Date.now();
   return list.map((a) => {
-    const status = String(a.status ?? '').toLowerCase();
     let statusText = '进行中';
     let statusType: DisplayItem['statusType'] = 'primary';
-    if (status === 'finished' || status === 'completed' || status === 'ended') {
+    if (a.my_status === 'in_progress') {
+      statusText = '答题中';
+    } else if (a.my_status === 'submitted' || a.my_status === 'graded') {
+      statusText = '已交卷';
+      statusType = 'success';
+    } else if (a.end_time && new Date(a.end_time).getTime() < now) {
       statusText = '已结束';
       statusType = 'default';
-    } else if (status === 'draft' || status === 'pending') {
+    } else if (a.start_time && new Date(a.start_time).getTime() > now) {
       statusText = '未开始';
       statusType = 'warning';
     }
-    const raw = a.end_time || a.startTime || a.endTime;
+    const metaParts: string[] = [];
+    if (a.question_count) metaParts.push(`${a.question_count} 题`);
+    if (a.my_status === 'submitted' || a.my_status === 'graded') {
+      if (a.my_score !== undefined && a.my_score !== null) metaParts.push(`${a.my_score} 分`);
+    } else if (a.end_time) {
+      metaParts.push(`截止 ${String(a.end_time).slice(5, 10)}`);
+    }
     return {
       id: a.id,
       title: a.title,
       statusText,
       statusType,
-      timeText: raw ? String(raw).slice(0, 10) : '',
+      metaText: metaParts.join(' · '),
+      done: a.my_status === 'submitted' || a.my_status === 'graded',
     };
   });
 }
@@ -62,13 +75,13 @@ Page({
   async loadTab(index: number) {
     const key = TAB_KEYS[index] ?? 'practice';
     if (key === 'registrations') {
-      // 报名记录 M1 接测评报名接口；先复用测评列表占位
+      // 报名记录 M1 接测评报名接口（/api/assessments/my-registrations）；先复用测评列表占位
       this.setData({ registrations: this.data.assessmentList });
       return;
     }
     this.setData({ loading: true });
     try {
-      const list = key === 'practice' ? await getPracticeActivities() : await getAssessmentActivities();
+      const list = key === 'practice' ? await getStudentPracticeList() : await getStudentAssessmentList();
       this.setData(
         key === 'practice' ? { practiceList: decorate(list) } : { assessmentList: decorate(list) }
       );
@@ -80,8 +93,11 @@ Page({
   },
 
   onItemTap(e: WechatMiniprogram.CustomEvent) {
-    const id = e.currentTarget.dataset.id;
-    // 答题页（packages/practice/answer）随 M1 落地
-    wx.showToast({ title: `答题页将在后续版本开放（活动 ${id}）`, icon: 'none' });
+    const { id, done } = e.currentTarget.dataset as { id: number; done: boolean };
+    if (done) {
+      wx.navigateTo({ url: `/packages/practice/pages/result/index?id=${id}` });
+    } else {
+      wx.navigateTo({ url: `/packages/practice/pages/answer/index?id=${id}` });
+    }
   },
 });

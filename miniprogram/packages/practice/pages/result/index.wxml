@@ -1,0 +1,92 @@
+<view class="result-page" wx:if="{{!loading}}">
+  <view class="result-hero">
+    <view class="result-hero-title">{{title}}</view>
+    <view class="result-hero-tags">
+      <van-tag plain color="#ffffff" text-color="#ffffff" custom-class="result-type-tag">{{typeText}}</van-tag>
+      <van-tag plain color="#ffffff" text-color="#ffffff">第 {{attemptNumber}} 次作答</van-tag>
+    </view>
+    <view class="result-score-row">
+      <view class="result-score">{{score}}</view>
+      <view class="result-total">/ {{totalScore}} 分 · {{percentText}}</view>
+    </view>
+    <view class="result-meta">
+      <view>答对 {{correctCount}}/{{totalQuestions}} 题</view>
+      <view wx:if="{{usedTimeText}}">用时 {{usedTimeText}}</view>
+      <view wx:if="{{submittedAt}}">交卷于 {{submittedAt}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!canShow}}" class="card result-pending">
+    <van-icon name="clock-o" size="36rpx" color="#0ea5e9" />
+    <text>解析将在 {{publishText}} 公布，先看看成绩吧</text>
+  </view>
+
+  <block wx:if="{{canShow}}">
+    <view class="section-title">答题卡</view>
+    <view class="card">
+      <view class="strip">
+        <view
+          wx:for="{{strip}}"
+          wx:key="index"
+          class="strip-item {{item.status}}"
+        >
+          {{index + 1}}
+        </view>
+      </view>
+      <view class="strip-legend">
+        <text class="legend-correct">答对</text>
+        <text class="legend-wrong">答错</text>
+        <text class="legend-pending">待批改</text>
+      </view>
+    </view>
+
+    <view class="section-title">逐题解析</view>
+    <view wx:for="{{list}}" wx:key="index" class="card analysis-card">
+      <view class="analysis-head">
+        <view class="analysis-index {{item.statusClass}}">{{index + 1}}</view>
+        <van-tag plain type="primary">{{item.typeText}}</van-tag>
+        <view class="analysis-score">{{item.score}}/{{item.maxScore}} 分</view>
+      </view>
+
+      <rich-text class="analysis-content" nodes="{{item.contentHtml}}" />
+
+      <block wx:if="{{item.options.length > 0}}">
+        <view
+          wx:for="{{item.options}}"
+          wx:for-item="opt"
+          wx:key="letter"
+          class="result-option {{opt.state}}"
+        >
+          <view class="result-option-letter">{{opt.letter}}</view>
+          <view class="result-option-text">{{opt.text}}</view>
+          <van-icon wx:if="{{opt.state === 'correct' || opt.state === 'both'}}" name="passed" color="#52c41a" size="32rpx" />
+          <van-icon wx:if="{{opt.state === 'mine' || opt.state === 'wrong-mine'}}" name="close" color="#f5222d" size="32rpx" />
+        </view>
+      </block>
+
+      <view class="analysis-line">
+        <text class="line-label">我的作答</text>
+        <text class="{{item.statusClass === 'wrong' ? 'line-wrong' : ''}}">{{item.myDisplay}}</text>
+      </view>
+      <view class="analysis-line" wx:if="{{item.correctDisplay}}">
+        <text class="line-label">正确答案</text>
+        <text class="line-correct">{{item.correctDisplay}}</text>
+      </view>
+      <view class="analysis-line" wx:if="{{item.feedback}}">
+        <text class="line-label">评语</text>
+        <text>{{item.feedback}}</text>
+      </view>
+      <view wx:if="{{item.explanationHtml}}" class="analysis-explain">
+        <view class="explain-title">解析</view>
+        <rich-text nodes="{{item.explanationHtml}}" />
+      </view>
+    </view>
+    <van-empty wx:if="{{list.length === 0}}" description="暂无解析数据" />
+  </block>
+
+  <view class="result-footer">
+    <van-button block round type="primary" bind:click="goBack">返回练习列表</van-button>
+  </view>
+</view>
+
+<view wx:else class="page-loading">加载成绩中…</view>
