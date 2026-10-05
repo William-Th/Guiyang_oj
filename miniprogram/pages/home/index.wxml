@@ -1,0 +1,35 @@
+<view class="home-greeting card">
+  <view class="home-hello">{{greeting}}，{{realName}}</view>
+  <view class="home-streak-row">
+    <view class="home-streak-num">{{streakDays}}</view>
+    <view class="home-streak-label">连续练习天数</view>
+  </view>
+  <view class="home-week">
+    <view wx:for="{{week}}" wx:key="label" class="home-day {{item.today ? 'today' : ''}}">{{item.label}}</view>
+  </view>
+</view>
+
+<van-notice-bar
+  wx:if="{{unread > 0}}"
+  left-icon="bell"
+  text="你有 {{unread}} 条未读通知，可在「我的」查看"
+/>
+
+<view class="section-title">今日任务</view>
+<view class="card home-task">
+  <view class="home-task-title">每日推题</view>
+  <view class="home-task-desc">每天 10 题，答完积分和连胜都到手</view>
+  <van-button type="primary" round size="small" bind:click="onStartDaily">开始答题</van-button>
+</view>
+<view class="card home-task">
+  <view class="home-task-title">老师发布的练习</view>
+  <view class="home-task-desc">按科目和状态筛选，随时开练</view>
+  <van-button round size="small" bind:click="goPractice">去练习</van-button>
+</view>
+
+<view class="section-title">快捷入口</view>
+<van-grid column-num="3" border="{{ false }}">
+  <van-grid-item icon="edit" text="练习" bind:click="goPractice" />
+  <van-grid-item icon="bar-chart-o" text="成长" bind:click="goGrowth" />
+  <van-grid-item wx:if="{{isAdmin}}" icon="manager-o" text="管理入口" bind:click="goAdmin" />
+</van-grid>

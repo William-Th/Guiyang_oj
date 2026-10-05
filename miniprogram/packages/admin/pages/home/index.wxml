@@ -1,0 +1,43 @@
+<block wx:if="{{!loading}}">
+  <van-grid column-num="2" border="{{ false }}">
+    <van-grid-item text="学生总数">
+      <view slot="default" class="stat-block">
+        <view class="stat-num">{{stats.totalStudents}}</view>
+        <view class="stat-label">学生总数</view>
+      </view>
+    </van-grid-item>
+    <van-grid-item>
+      <view class="stat-block">
+        <view class="stat-num">{{stats.totalExams}}</view>
+        <view class="stat-label">测评总数</view>
+      </view>
+    </van-grid-item>
+    <van-grid-item>
+      <view class="stat-block">
+        <view class="stat-num">{{stats.thisMonthExams}}</view>
+        <view class="stat-label">本月测评</view>
+      </view>
+    </van-grid-item>
+    <van-grid-item>
+      <view class="stat-block">
+        <view class="stat-num">{{stats.onlineTeachers}}</view>
+        <view class="stat-label">活跃教师</view>
+      </view>
+    </van-grid-item>
+  </van-grid>
+
+  <van-cell-group inset title="待办">
+    <van-cell title="审批中心" label="注册申请快速审批" icon="todo-list-o" is-link bind:click="goApprovals" />
+  </van-cell-group>
+
+  <view class="section-title">最近测评</view>
+  <view wx:for="{{stats.recentExams}}" wx:key="id" class="card exam-item">
+    <view class="exam-item-name">{{item.name}}</view>
+    <view class="exam-item-meta">
+      <text>{{item.date}}</text>
+      <text>{{item.participants}} 人参与 · 均分 {{item.avgScore}}</text>
+    </view>
+  </view>
+  <van-empty wx:if="{{stats.recentExams.length === 0}}" description="暂无测评数据" />
+</block>
+<view wx:else class="page-loading">加载中…</view>

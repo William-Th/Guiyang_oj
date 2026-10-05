@@ -1,0 +1,21 @@
+/**
+ * 主题令牌——从 web 端学生页蓝灰体系提取（#52708f 一族），双端视觉同源。
+ * Vant Weapp 通过 CSS 变量覆盖主题。
+ */
+page {
+  --mp-primary: #52708f;
+  --mp-primary-dark: #3f5a74;
+  --mp-success: #07c160;
+  --mp-warning: #ff976a;
+  --mp-danger: #ee0a24;
+  --mp-text: #323233;
+  --mp-text-secondary: #646566;
+  --mp-bg: #f5f7fa;
+  --mp-card-radius: 16rpx;
+
+  --button-primary-background-color: var(--mp-primary);
+  --button-primary-border-color: var(--mp-primary);
+  --button-info-background-color: var(--mp-primary);
+  --button-info-border-color: var(--mp-primary);
+  --tabs-bottom-bar-color: var(--mp-primary);
+}

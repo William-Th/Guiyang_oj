@@ -1,0 +1,27 @@
+@import './theme.wxss';
+
+page {
+  background: var(--mp-bg);
+  color: var(--mp-text);
+  font-size: 28rpx;
+}
+
+.card {
+  background: #fff;
+  border-radius: var(--mp-card-radius);
+  padding: 24rpx;
+  margin: 0 24rpx 16rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin: 24rpx 24rpx 12rpx;
+  color: var(--mp-text);
+}
+
+.page-loading {
+  padding: 80rpx 0;
+  text-align: center;
+  color: var(--mp-text-secondary);
+}

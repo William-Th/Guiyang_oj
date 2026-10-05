@@ -1,0 +1,32 @@
+<view class="filter-bar">
+  <view
+    wx:for="{{filters}}"
+    wx:key="value"
+    class="filter-item {{status === item.value ? 'active' : ''}}"
+    data-status="{{item.value}}"
+    bind:tap="onStatusChange"
+  >
+    {{item.label}}
+  </view>
+</view>
+
+<block wx:if="{{!loading}}">
+  <view wx:for="{{list}}" wx:key="id" class="card approval-item">
+    <view class="approval-item-head">
+      <view class="approval-item-name">{{item.real_name || item.username}}</view>
+      <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+    </view>
+    <view class="approval-item-meta" wx:if="{{item.school_name || item.district_name}}">
+      {{item.school_name || ''}}{{item.district_name ? ' · ' + item.district_name : ''}}
+    </view>
+    <view class="approval-item-meta" wx:if="{{item.submitted_at}}">提交于 {{item.submitted_at}}</view>
+    <view wx:if="{{status === 'pending'}}" class="approval-item-actions">
+      <van-button size="small" round bind:click="onReject" data-id="{{item.id}}">驳回</van-button>
+      <van-button size="small" round type="primary" loading="{{actingId === item.id}}" bind:click="onApprove" data-id="{{item.id}}">
+        通过
+      </van-button>
+    </view>
+  </view>
+  <van-empty wx:if="{{list.length === 0}}" description="暂无{{statusText}}" />
+</block>
+<view wx:if="{{loading}}" class="page-loading">加载中…</view>

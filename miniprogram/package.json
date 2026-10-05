@@ -1,0 +1,17 @@
+{
+  "name": "guiyang-oj-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "贵阳OJ微信小程序端（计划书见 docs/MINIPROGRAM_PLAN.md）",
+  "scripts": {
+    "build-npm": "node build-npm.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vant/weapp": "^1.11.6"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^4.0.5",
+    "typescript": "^5.6.3"
+  }
+}

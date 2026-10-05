@@ -1,0 +1,40 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/home/index",
+    "pages/practice/index",
+    "pages/growth/index",
+    "pages/profile/index"
+  ],
+  "subPackages": [
+    {
+      "root": "packages/admin",
+      "pages": [
+        "pages/home/index",
+        "pages/approvals/index"
+      ]
+    }
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#52708f",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "贵阳OJ",
+    "backgroundColor": "#f5f7fa",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8a94a6",
+    "selectedColor": "#52708f",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/practice/index", "text": "练习" },
+      { "pagePath": "pages/growth/index", "text": "成长" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
+    ]
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

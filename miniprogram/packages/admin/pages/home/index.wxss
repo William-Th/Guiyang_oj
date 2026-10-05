@@ -1,0 +1,28 @@
+.stat-block {
+  padding: 24rpx 0;
+}
+
+.stat-num {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: var(--mp-primary);
+}
+
+.stat-label {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
+
+.exam-item-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.exam-item-meta {
+  margin-top: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}

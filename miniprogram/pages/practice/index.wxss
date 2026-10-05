@@ -1,0 +1,16 @@
+.practice-item-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+
+.practice-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.practice-item-time {
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}

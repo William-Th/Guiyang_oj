@@ -1,0 +1,40 @@
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #52708f 0%, #6d89a5 30%, var(--mp-bg) 60%);
+  padding-top: 140rpx;
+}
+
+.login-hero {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 120rpx;
+}
+
+.login-title {
+  font-size: 52rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+}
+
+.login-sub {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  opacity: 0.85;
+}
+
+.login-form {
+  margin: 0 40rpx 48rpx;
+  border-radius: var(--mp-card-radius);
+  overflow: hidden;
+}
+
+.login-btn {
+  margin: 0 40rpx;
+}
+
+.login-tip {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
