@@ -26,6 +26,7 @@
     "useCompilerPlugins": [
       "typescript"
     ],
+    "ignoreDevUnusedFiles": false,
     "condition": false
   },
   "condition": {},
