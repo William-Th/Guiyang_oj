@@ -11,6 +11,7 @@
     <van-cell-group border="{{ false }}">
       <van-field
         label="账号"
+        title-width="72rpx"
         placeholder="手机号或用户名"
         value="{{ username }}"
         data-field="username"
@@ -20,6 +21,7 @@
       />
       <van-field
         label="密码"
+        title-width="72rpx"
         password
         placeholder="请输入密码"
         value="{{ password }}"
