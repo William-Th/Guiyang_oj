@@ -14,6 +14,27 @@ WHERE p.username = 'mp_parent_test' AND s.username = '13800138003'
     WHERE r.parent_user_id = p.id AND r.student_user_id = s.id
   );
 
+-- 4) E2E 专属练习活动：可无限重做、不限时间（流程③整卷作答定向使用，与运行历史解耦）
+INSERT INTO activities (title, description, subject, grade, type, time_limit_type, total_score, pass_score, status, created_by, scope, allow_retake, max_attempts)
+SELECT '【E2E】小程序整卷作答练习', '小程序 E2E 专用，可重复作答', '数学', NULL, 'practice', 'unlimited', 100, 60, 'published',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'school', true, 999
+WHERE NOT EXISTS (SELECT 1 FROM activities WHERE title = '【E2E】小程序整卷作答练习');
+
+-- 给该活动绑 3 道单选题（幂等：已有题目则跳过）
+INSERT INTO activity_questions (activity_id, question_id, order_index, score)
+SELECT a.id, t.qid, t.rn, 10
+FROM activities a
+JOIN (
+  SELECT qb.id AS qid, ROW_NUMBER() OVER (ORDER BY qb.id) AS rn
+  FROM question_bank qb
+  JOIN question_drafts qd ON qd.id = qb.draft_id
+  WHERE qb.is_active = true AND qd.is_active = true AND qd.type = 'single'
+  ORDER BY qb.id
+  LIMIT 3
+) t ON true
+WHERE a.title = '【E2E】小程序整卷作答练习'
+  AND NOT EXISTS (SELECT 1 FROM activity_questions aq WHERE aq.activity_id = a.id);
+
 -- 3) 学生错题：取一道未入错题本的单选题（供流程⑤错题重练）
 INSERT INTO student_wrong_questions (student_id, question_id, draft_id, subject, knowledge_points, difficulty, error_count, status)
 SELECT s.id, qb.id, qb.draft_id, qd.subject, COALESCE(qd.knowledge_points, ARRAY[]::text[]), 2, 1, 'active'

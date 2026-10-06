@@ -124,9 +124,14 @@ Page({
     }
   },
 
-  async loadDailySet(subject?: string) {
+  async loadDailySet(subject?: string, retried = false) {
     try {
       const res = await getDailyQuestions(subject);
+      // 服务端即时生成偶发失败返回 null：静默重试一次再落空态
+      if ((!res.data || !(res.data.questions ?? []).length) && !retried) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        return this.loadDailySet(subject, true);
+      }
       const set = res.data ?? { subject: subject ?? '', questions: [] as DailyQuestion[] };
       // 客户端兜底过滤：非客观题（问答/匹配/编程）无法即答即判，不进入单题流
       const questions = (set.questions ?? [])
@@ -186,16 +191,20 @@ Page({
 
   // ---------- 作答 ----------
 
-  onSingleTap(e: WechatMiniprogram.CustomEvent) {
+  /** 统一作答入口（与答题页同构）：判后锁定，写入当前题答案并同步提交按钮态 */
+  applyAnswer(value: AnswerValue) {
     if (this.data.judged) return;
     const q = this.currentQuestion();
     if (!q) return;
-    this.setData({ [`answers.${q.question_id}`]: String(e.currentTarget.dataset.letter) });
+    this.setData({ [`answers.${q.question_id}`]: value });
     this.syncCanSubmit();
   },
 
+  onSingleTap(e: WechatMiniprogram.CustomEvent) {
+    this.applyAnswer(String(e.currentTarget.dataset.letter));
+  },
+
   onMultipleTap(e: WechatMiniprogram.CustomEvent) {
-    if (this.data.judged) return;
     const q = this.currentQuestion();
     if (!q) return;
     const letter = String(e.currentTarget.dataset.letter);
@@ -204,24 +213,15 @@ Page({
     const idx = letters.indexOf(letter);
     if (idx > -1) letters.splice(idx, 1);
     else letters.push(letter);
-    this.setData({ [`answers.${q.question_id}`]: letters });
-    this.syncCanSubmit();
+    this.applyAnswer(letters);
   },
 
   onTfTap(e: WechatMiniprogram.CustomEvent) {
-    if (this.data.judged) return;
-    const q = this.currentQuestion();
-    if (!q) return;
-    this.setData({ [`answers.${q.question_id}`]: String(e.currentTarget.dataset.val) });
-    this.syncCanSubmit();
+    this.applyAnswer(String(e.currentTarget.dataset.val));
   },
 
   onTextInput(e: WechatMiniprogram.CustomEvent) {
-    if (this.data.judged) return;
-    const q = this.currentQuestion();
-    if (!q) return;
-    this.setData({ [`answers.${q.question_id}`]: String(e.detail.value ?? '') });
-    this.syncCanSubmit();
+    this.applyAnswer(String(e.detail.value ?? ''));
   },
 
   // ---------- 即答即判 ----------
