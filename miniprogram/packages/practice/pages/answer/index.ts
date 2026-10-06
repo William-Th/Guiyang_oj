@@ -61,6 +61,7 @@ Page({
     title: '',
     questions: [] as NormalQuestion[],
     current: 0,
+    total: 0,
     answers: {} as Record<string, AnswerValue>,
     answeredCount: 0,
     showSheet: false,
@@ -107,6 +108,7 @@ Page({
         loading: false,
         title: questionRes.activity?.title || `第 ${startRes.attempt_number} 次作答`,
         questions,
+        total: questions.length,
         answers,
         answeredCount: questions.filter((q) => hasAnswer(answers[String(q.question_id)])).length,
       });
