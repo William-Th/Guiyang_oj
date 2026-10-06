@@ -152,6 +152,16 @@ export interface RegistrationStatusInfo {
   statusText: string;
 }
 
+/** 方式二：手机号 + 出生日期 + 完整身份证号（无需查询码） */
+export function queryRegistrationStatusByIdentity(phone: string, birthDate: string, idCard: string) {
+  return request<{ success: boolean; data: RegistrationStatusInfo }>(
+    'POST',
+    '/registration/status',
+    { phone, birthDate, idCard },
+    { auth: false }
+  );
+}
+
 export function queryRegistrationStatus(phone: string, inquiryCode: string) {
   return request<{ success: boolean; data: RegistrationStatusInfo }>(
     'POST',

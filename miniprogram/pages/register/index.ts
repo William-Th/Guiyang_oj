@@ -5,6 +5,7 @@ import {
   getDistricts,
   getSchools,
   queryRegistrationStatus,
+  queryRegistrationStatusByIdentity,
   submitRegistration,
 } from '../../services/api';
 import { toastError } from '../../utils/request';
@@ -31,7 +32,10 @@ Page({
     // 提交成功结果（查询码仅此一次展示）
     result: null as null | { id: number; estimatedReviewTime: string; inquiryCode: string },
     // 查进度
+    queryMode: 'id' as 'id' | 'code',
     queryPhone: '',
+    queryBirthDate: '',
+    queryIdCard: '',
     queryCode: '',
     querying: false,
     statusInfo: null as RegistrationStatusInfo | null,
@@ -46,8 +50,22 @@ Page({
     this.setData({ activeTab: Number(e.detail.index ?? 0) });
   },
 
+  onQueryBirthChange(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ queryBirthDate: String(e.detail.value ?? '') });
+  },
+
+  toggleQueryMode() {
+    this.setData({ queryMode: this.data.queryMode === 'id' ? 'code' : 'id', statusInfo: null });
+  },
+
   onField(e: WechatMiniprogram.CustomEvent) {
-    const field = e.currentTarget.dataset.field as 'phone' | 'realName' | 'idCardLast4' | 'queryPhone' | 'queryCode';
+    const field = e.currentTarget.dataset.field as
+      | 'phone'
+      | 'realName'
+      | 'idCardLast4'
+      | 'queryPhone'
+      | 'queryCode'
+      | 'queryIdCard';
     const patch: Record<string, string> = {};
     patch[field] = String(e.detail ?? '');
     this.setData(patch);
@@ -152,14 +170,27 @@ Page({
       wx.showToast({ title: '手机号格式不正确', icon: 'none' });
       return;
     }
-    if (!d.queryCode.trim() || d.queryCode.trim().length < 20) {
-      wx.showToast({ title: '查询码不正确', icon: 'none' });
-      return;
-    }
     if (d.querying) return;
     this.setData({ querying: true, statusInfo: null });
     try {
-      const res = await queryRegistrationStatus(d.queryPhone, d.queryCode.trim());
+      let res;
+      if (d.queryMode === 'id') {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d.queryBirthDate)) {
+          wx.showToast({ title: '请选择出生日期', icon: 'none' });
+          return;
+        }
+        if (!/^\d{17}[\dXx]$/.test(d.queryIdCard)) {
+          wx.showToast({ title: '请填写完整的18位身份证号', icon: 'none' });
+          return;
+        }
+        res = await queryRegistrationStatusByIdentity(d.queryPhone, d.queryBirthDate, d.queryIdCard);
+      } else {
+        if (!d.queryCode.trim() || d.queryCode.trim().length < 20) {
+          wx.showToast({ title: '查询码不正确', icon: 'none' });
+          return;
+        }
+        res = await queryRegistrationStatus(d.queryPhone, d.queryCode.trim());
+      }
       const info = res.data;
       const statusTagType =
         info.status === 'approved' ? 'success' : info.status === 'rejected' ? 'danger' : 'warning';

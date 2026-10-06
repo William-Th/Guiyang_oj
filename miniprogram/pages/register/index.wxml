@@ -53,15 +53,27 @@
       </van-tab>
 
       <van-tab title="查进度">
-        <view class="auth-note">使用提交申请时保存的查询码查询</view>
+        <view class="auth-note">{{queryMode === 'id' ? '用本人手机号、出生日期和身份证号查询，无需查询码' : '使用提交申请时保存的查询码查询'}}</view>
         <van-cell-group border="{{ false }}">
           <van-field label="手机号" title-width="132rpx" type="number" maxlength="11" placeholder="注册时填写的手机号" value="{{ queryPhone }}" data-field="queryPhone" bind:change="onField" clearable />
-          <van-field label="查询码" title-width="132rpx" left-icon="label-o" placeholder="提交申请时返回的查询码" value="{{ queryCode }}" data-field="queryCode" bind:change="onField" clearable />
+          <block wx:if="{{queryMode === 'id'}}">
+            <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ queryBirthDate }}" bindchange="onQueryBirthChange">
+              <van-field label="出生日期" title-width="132rpx" readonly value="{{ queryBirthDate }}" placeholder="请选择出生日期" right-icon="arrow-down" />
+            </picker>
+            <van-field label="身份证号" title-width="132rpx" type="idcard" maxlength="18" placeholder="18 位完整身份证号" value="{{ queryIdCard }}" data-field="queryIdCard" bind:change="onField" clearable />
+          </block>
+          <block wx:else>
+            <van-field label="查询码" title-width="132rpx" left-icon="label-o" placeholder="提交申请时返回的查询码" value="{{ queryCode }}" data-field="queryCode" bind:change="onField" clearable />
+          </block>
         </van-cell-group>
 
         <van-button type="primary" block round loading="{{ querying }}" bind:click="onQuery" custom-class="submit-btn">
           查询审核状态
         </van-button>
+
+        <view class="auth-tip" bind:tap="toggleQueryMode">
+          {{queryMode === 'id' ? '忘记查询码？用身份证号查询' : '改用身份证号查询'}}
+        </view>
 
         <view wx:if="{{ statusInfo }}" class="status-card">
           <view class="status-head">
