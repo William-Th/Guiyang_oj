@@ -305,7 +305,7 @@ async function main() {
     });
 
     await step('⑥ 家长登录与看板', async () => {
-      await login(PARENT, 'packages/parent/pages/dashboard/index');
+      await login(PARENT, 'pages/parent/index');
       await waitFor((d) => (d.children || []).length >= 1, 15000, '孩子列表加载');
       const d = await waitFor((x) => !!(x.child && x.child.real_name), 15000, '看板选中孩子');
       assert(d.child.real_name.length > 0, '看板未选中孩子');

@@ -6,7 +6,7 @@ import {
   getStudentPracticeList,
 } from '../../services/activities';
 import { toastError } from '../../utils/request';
-import { requireLogin } from '../../utils/auth';
+import { getUser, requireLogin } from '../../utils/auth';
 
 interface DisplayItem {
   id: number;
@@ -106,10 +106,11 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
-    const tabBar = (
-      this as unknown as { getTabBar?: () => { setData: (d: Record<string, unknown>) => void } }
-    ).getTabBar?.();
-    tabBar?.setData({ selected: 1 });
+    // 家长不使用学生练习/测评页（仅看板 + 我的），弹回看板
+    if ((getUser()?.role ?? '') === 'parent') {
+      wx.switchTab({ url: '/pages/parent/index' });
+      return;
+    }
     this.loadTab(this.data.activeTab);
   },
 

@@ -107,7 +107,7 @@ Page({
       saveSession(res.token, res.refreshToken, res.user);
       // 角色化落地（计划书 5.4/5.6）：家长进看板，其余进学生首页（管理员经「我的」进管理分包）
       if (res.user?.role === 'parent') {
-        wx.reLaunch({ url: '/packages/parent/pages/dashboard/index' });
+        wx.reLaunch({ url: '/pages/parent/index' });
       } else {
         wx.reLaunch({ url: '/pages/home/index' });
       }

@@ -7,9 +7,9 @@ import {
   getParentChildren,
   getRegistrableAssessments,
   registerForChild,
-} from '../../../../services/parent';
-import { requireLogin } from '../../../../utils/auth';
-import { toastError } from '../../../../utils/request';
+} from '../../services/parent';
+import { requireLogin } from '../../utils/auth';
+import { toastError } from '../../utils/request';
 
 interface SubjectDisplay {
   subject: string;
@@ -123,9 +123,5 @@ Page({
         }
       },
     });
-  },
-
-  goProfile() {
-    wx.switchTab({ url: '/pages/profile/index' });
   },
 });

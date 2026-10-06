@@ -30,22 +30,14 @@ Page({
     if (!requireLogin()) return;
     // 家长不使用学生首页（学生接口对其不可用），回看板
     if (getUser()?.role === 'parent') {
-      wx.reLaunch({ url: '/packages/parent/pages/dashboard/index' });
+      wx.reLaunch({ url: '/pages/parent/index' });
       return;
     }
-    this.updateTabBar();
     const user = getUser();
     const hour = new Date().getHours();
     const greeting = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
     this.setData({ greeting, realName: user?.realName || user?.username || '' });
     this.loadData();
-  },
-
-  updateTabBar() {
-    const tabBar = (
-      this as unknown as { getTabBar?: () => { setData: (d: Record<string, unknown>) => void } }
-    ).getTabBar?.();
-    tabBar?.setData({ selected: 0 });
   },
 
   /** 首选 /api/mp/home 一次聚合（首屏预算）；聚合不可用时降级为多接口并行 */

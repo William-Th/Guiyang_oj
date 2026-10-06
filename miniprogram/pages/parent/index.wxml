@@ -1,12 +1,8 @@
-<view class="pd-page">
+<view class="pd-page tab-page-padding">
   <view class="pd-hero">
     <view class="pd-hero-left">
       <view class="pd-hero-title">孩子学习看板</view>
       <view class="pd-hero-sub">{{child ? child.real_name + ' · ' + (child.grade || '') + (child.class || '') : '加载中'}}</view>
-    </view>
-    <view class="pd-me" bind:tap="goProfile">
-      <van-icon name="user-o" size="40rpx" />
-      <text>我的</text>
     </view>
   </view>
 

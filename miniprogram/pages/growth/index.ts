@@ -1,5 +1,5 @@
 import { getStreak } from '../../services/api';
-import { requireLogin } from '../../utils/auth';
+import { getUser, requireLogin } from '../../utils/auth';
 
 Page({
   data: {
@@ -8,10 +8,11 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
-    const tabBar = (
-      this as unknown as { getTabBar?: () => { setData: (d: Record<string, unknown>) => void } }
-    ).getTabBar?.();
-    tabBar?.setData({ selected: 2 });
+    // 家长不使用学生成长页，弹回看板
+    if ((getUser()?.role ?? '') === 'parent') {
+      wx.switchTab({ url: '/pages/parent/index' });
+      return;
+    }
     getStreak()
       .then((res) => this.setData({ streakDays: res.data?.current_streak ?? 0 }))
       .catch(() => {

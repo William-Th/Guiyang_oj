@@ -5,7 +5,8 @@
     "pages/home/index",
     "pages/practice/index",
     "pages/growth/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/parent/index"
   ],
   "subPackages": [
     {
@@ -33,16 +34,11 @@
       ]
     },
     {
-      "root": "packages/parent",
-      "pages": [
-        "pages/dashboard/index"
-      ]
-    },
-    {
       "root": "packages/admin",
       "pages": [
         "pages/home/index",
-        "pages/approvals/index"
+        "pages/approvals/index",
+        "pages/users/index"
       ]
     }
   ],
@@ -60,10 +56,26 @@
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
-      { "pagePath": "pages/home/index", "text": "首页" },
-      { "pagePath": "pages/practice/index", "text": "练习" },
-      { "pagePath": "pages/growth/index", "text": "成长" },
-      { "pagePath": "pages/profile/index", "text": "我的" }
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/practice/index",
+        "text": "练习"
+      },
+      {
+        "pagePath": "pages/growth/index",
+        "text": "成长"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      },
+      {
+        "pagePath": "pages/parent/index",
+        "text": "看板"
+      }
     ]
   },
   "lazyCodeLoading": "requiredComponents",
