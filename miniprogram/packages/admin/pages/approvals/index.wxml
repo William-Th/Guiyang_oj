@@ -6,6 +6,7 @@
     data-tab="{{item.value}}"
     bind:tap="onTabChange"
   >
+    <van-icon name="{{item.value === 'registration' ? 'contact' : 'friends-o'}}" custom-class="seg-icon" />
     {{item.label}}
     <view wx:if="{{item.value === 'registration' && regPending > 0}}" class="seg-badge">{{regPending > 99 ? '99+' : regPending}}</view>
     <view wx:elif="{{item.value === 'classes' && clsPending > 0}}" class="seg-badge">{{clsPending}}</view>

@@ -9,7 +9,10 @@
           data-id="{{item.id}}"
           bind:tap="onItemTap"
         >
-        <view class="practice-item-title">{{item.title}}</view>
+        <view class="practice-item-title">
+          <van-icon name="edit" custom-class="item-icon" />
+          {{item.title}}
+        </view>
         <view class="practice-item-meta">
           <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
           <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
@@ -28,7 +31,10 @@
           data-id="{{item.id}}"
           bind:tap="onItemTap"
         >
-        <view class="practice-item-title">{{item.title}}</view>
+        <view class="practice-item-title">
+          <van-icon name="todo-list-o" custom-class="item-icon" />
+          {{item.title}}
+        </view>
         <view class="practice-item-meta">
           <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
           <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>

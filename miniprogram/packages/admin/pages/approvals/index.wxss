@@ -47,6 +47,11 @@
   gap: 16rpx;
 }
 
+.seg-icon {
+  margin-right: 6rpx;
+  vertical-align: -2rpx;
+}
+
 .seg-item {
   position: relative;
   padding: 12rpx 30rpx;

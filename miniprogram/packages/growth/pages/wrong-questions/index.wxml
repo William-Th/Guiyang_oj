@@ -1,15 +1,15 @@
 <view class="wq-stats card">
   <view class="wq-stat">
     <view class="wq-stat-num">{{stats.total}}</view>
-    <view class="wq-stat-label">累计错题</view>
+    <view class="wq-stat-label"><van-icon name="bookmark-o" /> 累计错题</view>
   </view>
   <view class="wq-stat">
     <view class="wq-stat-num warn">{{stats.byStatus.active}}</view>
-    <view class="wq-stat-label">待攻克</view>
+    <view class="wq-stat-label"><van-icon name="warning-o" /> 待攻克</view>
   </view>
   <view class="wq-stat">
     <view class="wq-stat-num ok">{{stats.byStatus.mastered}}</view>
-    <view class="wq-stat-label">已掌握</view>
+    <view class="wq-stat-label"><van-icon name="passed" /> 已掌握</view>
   </view>
 </view>
 

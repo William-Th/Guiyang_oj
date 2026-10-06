@@ -13,20 +13,20 @@
         <block wx:if="{{!result}}">
           <view class="auth-note">提交后由学校管理员审核，3 个工作日内出结果</view>
           <van-cell-group border="{{ false }}">
-            <van-field label="手机号" title-width="132rpx" type="number" maxlength="11" placeholder="用于接收审核通知和登录" value="{{ phone }}" data-field="phone" bind:change="onField" clearable />
-            <van-field label="姓名" title-width="132rpx" placeholder="考生真实姓名" value="{{ realName }}" data-field="realName" bind:change="onField" />
+            <van-field label="手机号" title-width="132rpx" left-icon="phone-o" type="number" maxlength="11" placeholder="用于接收审核通知和登录" value="{{ phone }}" data-field="phone" bind:change="onField" clearable />
+            <van-field label="姓名" title-width="132rpx" left-icon="contact" placeholder="考生真实姓名" value="{{ realName }}" data-field="realName" bind:change="onField" />
             <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ birthDate }}" bindchange="onBirthChange">
               <van-field label="出生日期" title-width="132rpx" readonly value="{{ birthDate }}" placeholder="请选择出生日期" right-icon="arrow-down" />
             </picker>
-            <van-field label="证件后4位" title-width="132rpx" type="idcard" maxlength="4" placeholder="身份证后 4 位数字，初始密码会用到" value="{{ idCardLast4 }}" data-field="idCardLast4" bind:change="onField" />
+            <van-field label="证件后4位" title-width="132rpx" left-icon="lock" type="idcard" maxlength="4" placeholder="身份证后 4 位数字，初始密码会用到" value="{{ idCardLast4 }}" data-field="idCardLast4" bind:change="onField" />
             <picker mode="selector" range="{{ districtNames }}" bindchange="onDistrictChange">
-              <van-field label="所在区县" title-width="132rpx" readonly value="{{ districtIndex >= 0 ? districtNames[districtIndex] : '' }}" placeholder="请选择区县" right-icon="arrow-down" />
+              <van-field label="所在区县" title-width="132rpx" left-icon="location-o" readonly value="{{ districtIndex >= 0 ? districtNames[districtIndex] : '' }}" placeholder="请选择区县" right-icon="arrow-down" />
             </picker>
             <picker mode="selector" range="{{ schoolNames }}" disabled="{{ districtIndex < 0 }}" bindchange="onSchoolChange">
-              <van-field label="所在学校" title-width="132rpx" readonly value="{{ schoolIndex >= 0 ? schoolNames[schoolIndex] : '' }}" placeholder="{{ districtIndex < 0 ? '请先选择区县' : '请选择学校' }}" right-icon="arrow-down" />
+              <van-field label="所在学校" title-width="132rpx" left-icon="hotel-o" readonly value="{{ schoolIndex >= 0 ? schoolNames[schoolIndex] : '' }}" placeholder="{{ districtIndex < 0 ? '请先选择区县' : '请选择学校' }}" right-icon="arrow-down" />
             </picker>
             <picker mode="selector" range="{{ grades }}" bindchange="onGradeChange">
-              <van-field label="年级" title-width="132rpx" readonly value="{{ gradeIndex >= 0 ? grades[gradeIndex] : '' }}" placeholder="请选择年级" right-icon="arrow-down" />
+              <van-field label="年级" title-width="132rpx" left-icon="medal" readonly value="{{ gradeIndex >= 0 ? grades[gradeIndex] : '' }}" placeholder="请选择年级" right-icon="arrow-down" />
             </picker>
           </van-cell-group>
 
@@ -56,7 +56,7 @@
         <view class="auth-note">使用提交申请时保存的查询码查询</view>
         <van-cell-group border="{{ false }}">
           <van-field label="手机号" title-width="132rpx" type="number" maxlength="11" placeholder="注册时填写的手机号" value="{{ queryPhone }}" data-field="queryPhone" bind:change="onField" clearable />
-          <van-field label="查询码" title-width="132rpx" placeholder="提交申请时返回的查询码" value="{{ queryCode }}" data-field="queryCode" bind:change="onField" clearable />
+          <van-field label="查询码" title-width="132rpx" left-icon="label-o" placeholder="提交申请时返回的查询码" value="{{ queryCode }}" data-field="queryCode" bind:change="onField" clearable />
         </van-cell-group>
 
         <van-button type="primary" block round loading="{{ querying }}" bind:click="onQuery" custom-class="submit-btn">

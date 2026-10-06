@@ -2,7 +2,8 @@
   "usingComponents": {
     "van-tag": "@vant/weapp/tag/index",
     "van-button": "@vant/weapp/button/index",
-    "van-empty": "@vant/weapp/empty/index"
+    "van-empty": "@vant/weapp/empty/index",
+    "van-icon": "@vant/weapp/icon/index"
   },
   "navigationBarTitleText": "审批中心"
 }

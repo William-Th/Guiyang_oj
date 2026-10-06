@@ -1,3 +1,9 @@
+.item-icon {
+  margin-right: 8rpx;
+  color: var(--mp-primary);
+  vertical-align: -2rpx;
+}
+
 .practice-item-title {
   font-size: 30rpx;
   font-weight: 600;

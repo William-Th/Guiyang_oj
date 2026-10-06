@@ -10,19 +10,19 @@
   <view class="card stat-grid">
     <view class="stat-cell">
       <view class="stat-num">{{stats.totalStudents}}</view>
-      <view class="stat-label">学生总数</view>
+      <view class="stat-label"><van-icon name="friends-o" /> 学生总数</view>
     </view>
     <view class="stat-cell">
       <view class="stat-num">{{stats.totalExams}}</view>
-      <view class="stat-label">测评总数</view>
+      <view class="stat-label"><van-icon name="todo-list-o" /> 测评总数</view>
     </view>
     <view class="stat-cell">
       <view class="stat-num">{{stats.thisMonthExams}}</view>
-      <view class="stat-label">本月测评</view>
+      <view class="stat-label"><van-icon name="calendar-o" /> 本月测评</view>
     </view>
     <view class="stat-cell">
       <view class="stat-num">{{stats.onlineTeachers}}</view>
-      <view class="stat-label">活跃教师</view>
+      <view class="stat-label"><van-icon name="manager-o" /> 活跃教师</view>
     </view>
   </view>
 
