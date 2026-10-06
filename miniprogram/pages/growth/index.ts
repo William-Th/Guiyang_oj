@@ -8,9 +8,10 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
-    // 家长不使用学生成长页，弹回看板
-    if ((getUser()?.role ?? '') === 'parent') {
-      wx.switchTab({ url: '/pages/parent/index' });
+    // 成长页仅学生使用：家长回看板、管理员回管理工作台
+    const role = getUser()?.role ?? '';
+    if (role !== 'student') {
+      wx.reLaunch({ url: role === 'parent' ? '/pages/parent/index' : '/packages/admin/pages/home/index' });
       return;
     }
 (

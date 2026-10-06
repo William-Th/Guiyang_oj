@@ -12,7 +12,10 @@ interface PageData {
 }
 
 function redirectByRole(role?: string) {
-  wx.reLaunch({ url: role === 'parent' ? '/packages/parent/pages/dashboard/index' : '/pages/home/index' });
+  // 角色化落地（计划书 5.4/5.6）：家长进看板、管理员进管理工作台、学生进首页
+  if (role === 'parent') wx.reLaunch({ url: '/pages/parent/index' });
+  else if (role && role.includes('admin')) wx.reLaunch({ url: '/packages/admin/pages/home/index' });
+  else wx.reLaunch({ url: '/pages/home/index' });
 }
 
 Page({
@@ -105,12 +108,7 @@ Page({
     try {
       const res = await login(username.trim(), password);
       saveSession(res.token, res.refreshToken, res.user);
-      // 角色化落地（计划书 5.4/5.6）：家长进看板，其余进学生首页（管理员经「我的」进管理分包）
-      if (res.user?.role === 'parent') {
-        wx.reLaunch({ url: '/pages/parent/index' });
-      } else {
-        wx.reLaunch({ url: '/pages/home/index' });
-      }
+      redirectByRole(res.user?.role);
     } catch (err) {
       toastError(err, '登录失败，请检查账号密码');
     } finally {

@@ -177,7 +177,8 @@ async function login(creds, landingFragment) {
   await pageSetData({ username: creds.username, password: creds.password });
   firePageMethod('onLogin');
   await waitForRoute(landingFragment, 25000);
-  return waitFor((d) => !!(d.realName || d.child), 15000, '落点页数据');
+  // 落点页各自的数据断言由调用方完成（首页 realName / 看板 child / 工作台 pendingCount）
+  return getPageData();
 }
 
 /** 当前题按题型作答：驱动页面真实方法 applyAnswer（会走 800ms 防抖上送），等待持久化完成；返回是否为可判题型 */
@@ -316,9 +317,7 @@ async function main() {
     });
 
     await step('⑦ 管理端总览与审批', async () => {
-      await login(ADMIN, 'pages/home/index');
-      await mini.navigateTo('/packages/admin/pages/home/index');
-      await waitForRoute('packages/admin/pages/home/index');
+      await login(ADMIN, 'packages/admin/pages/home/index'); // 管理员登录直落管理工作台
       const stats = await waitFor(
         (d) => d.loading === false && typeof d.pendingCount === 'number' && d.pendingCount >= 1,
         20000,

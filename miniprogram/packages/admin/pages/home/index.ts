@@ -13,8 +13,7 @@ Page({
   onShow() {
     if (!requireLogin()) return;
     if (!isAdmin()) {
-      wx.showToast({ title: '无管理权限', icon: 'none' });
-      wx.navigateBack();
+      wx.reLaunch({ url: '/pages/home/index' });
       return;
     }
     this.load();
@@ -34,6 +33,10 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  goProfile() {
+    wx.switchTab({ url: '/pages/profile/index' });
   },
 
   goApprovals() {

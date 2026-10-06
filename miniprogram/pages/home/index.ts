@@ -28,9 +28,10 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
-    // 家长不使用学生首页（学生接口对其不可用），回看板
-    if (getUser()?.role === 'parent') {
-      wx.reLaunch({ url: '/pages/parent/index' });
+    // 学生首页仅学生使用：家长回看板、管理员回管理工作台（避免触发 student-only 接口）
+    const role = getUser()?.role ?? '';
+    if (role !== 'student') {
+      wx.reLaunch({ url: role === 'parent' ? '/pages/parent/index' : '/packages/admin/pages/home/index' });
       return;
     }
 (

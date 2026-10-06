@@ -26,3 +26,28 @@
   font-size: 24rpx;
   color: var(--mp-text-secondary);
 }
+
+.admin-hero {
+  background: var(--mp-gradient);
+  color: #fff;
+  padding: 36rpx 32rpx;
+  border-radius: 0 0 40rpx 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-hero-title {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.admin-hero-me {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+}
