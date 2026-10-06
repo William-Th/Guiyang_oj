@@ -15,10 +15,10 @@
           <van-cell-group border="{{ false }}">
             <van-field label="手机号" title-width="132rpx" left-icon="phone-o" type="number" maxlength="11" placeholder="用于接收审核通知和登录" value="{{ phone }}" data-field="phone" bind:change="onField" clearable />
             <van-field label="姓名" title-width="132rpx" left-icon="contact" placeholder="考生真实姓名" value="{{ realName }}" data-field="realName" bind:change="onField" />
-            <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ birthDate }}" bindchange="onBirthChange">
-              <van-field label="出生日期" title-width="132rpx" left-icon="calendar-o" readonly value="{{ birthDate }}" placeholder="请选择出生日期" right-icon="arrow-down" />
-            </picker>
             <van-field label="身份证号" title-width="132rpx" left-icon="lock" type="idcard" maxlength="18" placeholder="18 位完整身份证号，自动识别出生日期" value="{{ idCard }}" data-field="idCard" bind:change="onField" />
+            <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ birthDate }}" bindchange="onBirthChange">
+              <van-field label="出生日期" title-width="132rpx" left-icon="calendar-o" readonly value="{{ birthDate }}" placeholder="填写身份证号后自动识别" right-icon="arrow-down" />
+            </picker>
             <picker mode="selector" range="{{ districtNames }}" bindchange="onDistrictChange">
               <van-field label="所在区县" title-width="132rpx" left-icon="location-o" readonly value="{{ districtIndex >= 0 ? districtNames[districtIndex] : '' }}" placeholder="请选择区县" right-icon="arrow-down" />
             </picker>
