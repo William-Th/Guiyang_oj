@@ -28,9 +28,11 @@ Component({
   lifetimes: {
     attached() {
       // 列表按角色初始化（登录后角色不变，attached 时读取即可）
+      // 管理员渲染空列表隐藏整个 bar：工作台与我的均为普通页面互跳（我的页有"管理工作台"入口）
       const user = wx.getStorageSync('user_info') || null;
-      const isParent = !!user && user.role === 'parent';
-      if (isParent) this.setData({ list: PARENT_TABS });
+      const role = (user && user.role) || 'student';
+      if (role === 'parent') this.setData({ list: PARENT_TABS });
+      else if (role.includes('admin')) this.setData({ list: [] });
     },
   },
   methods: {
