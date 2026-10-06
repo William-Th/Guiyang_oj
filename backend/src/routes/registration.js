@@ -81,6 +81,7 @@ router.post('/student', async (req, res) => {
     phone,
     realName,
     birthDate,
+    idCard,
     idCardLast4,
     districtCode,
     schoolCode,
@@ -110,10 +111,29 @@ router.post('/student', async (req, res) => {
       });
     }
 
-    if (!idCardLast4 || !/^\d{4}$/.test(idCardLast4)) {
+    // 身份证：优先接受完整18位证件号（并校验与出生日期一致）；兼容旧客户端仅传后4位
+    let idLast4 = (idCardLast4 || '').trim();
+    if (idCard) {
+      if (!/^\d{17}[\dXx]$/.test(String(idCard))) {
+        return res.status(400).json({
+          success: false,
+          message: '身份证号格式不正确，应为18位'
+        });
+      }
+      const m = String(idCard).match(/^(\d{6})(\d{4})(\d{2})(\d{2})/);
+      const birthFromId = `${m[2]}-${m[3]}-${m[4]}`;
+      if (birthDate !== birthFromId) {
+        return res.status(400).json({
+          success: false,
+          message: '出生日期与身份证号不一致，请核对后重新填写'
+        });
+      }
+      idLast4 = String(idCard).slice(-4).toUpperCase();
+    }
+    if (!idLast4 || !/^[\dXx]{4}$/.test(idLast4)) {
       return res.status(400).json({
         success: false,
-        message: '身份证后4位格式不正确，必须是4位数字'
+        message: '身份证号格式不正确，应为18位或提供后4位数字'
       });
     }
 
@@ -212,7 +232,7 @@ router.post('/student', async (req, res) => {
         phone,
         realName,
         birthDate,
-        idCardLast4,
+        idLast4,
         districtId,
         districtCode,
         district.name,

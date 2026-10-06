@@ -124,7 +124,8 @@ export interface RegistrationPayload {
   phone: string;
   realName: string;
   birthDate: string;
-  idCardLast4: string;
+  /** 完整 18 位身份证号（后端取末 4 位落库并校验与出生日期一致） */
+  idCard: string;
   districtCode: string;
   schoolCode: string;
   grade?: string;

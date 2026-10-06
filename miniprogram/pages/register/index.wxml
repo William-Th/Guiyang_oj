@@ -18,7 +18,7 @@
             <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ birthDate }}" bindchange="onBirthChange">
               <van-field label="出生日期" title-width="132rpx" left-icon="calendar-o" readonly value="{{ birthDate }}" placeholder="请选择出生日期" right-icon="arrow-down" />
             </picker>
-            <van-field label="证件后4位" title-width="132rpx" left-icon="lock" type="idcard" maxlength="4" placeholder="身份证后 4 位数字，初始密码会用到" value="{{ idCardLast4 }}" data-field="idCardLast4" bind:change="onField" />
+            <van-field label="身份证号" title-width="132rpx" left-icon="lock" type="idcard" maxlength="18" placeholder="18 位完整身份证号，自动识别出生日期" value="{{ idCard }}" data-field="idCard" bind:change="onField" />
             <picker mode="selector" range="{{ districtNames }}" bindchange="onDistrictChange">
               <van-field label="所在区县" title-width="132rpx" left-icon="location-o" readonly value="{{ districtIndex >= 0 ? districtNames[districtIndex] : '' }}" placeholder="请选择区县" right-icon="arrow-down" />
             </picker>

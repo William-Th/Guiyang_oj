@@ -19,7 +19,7 @@ Page({
     phone: '',
     realName: '',
     birthDate: '',
-    idCardLast4: '',
+    idCard: '',
     districts: [] as DistrictOption[],
     districtNames: [] as string[],
     districtIndex: -1,
@@ -62,12 +62,17 @@ Page({
     const field = e.currentTarget.dataset.field as
       | 'phone'
       | 'realName'
-      | 'idCardLast4'
+      | 'idCard'
       | 'queryPhone'
       | 'queryCode'
       | 'queryIdCard';
     const patch: Record<string, string> = {};
     patch[field] = String(e.detail ?? '');
+    // 完整身份证号第 7-14 位即出生日期：自动回填，避免与证件矛盾
+    if (field === 'idCard') {
+      const m = /^(\d{6})(\d{4})(\d{2})(\d{2})/.exec(patch[field]);
+      if (m) this.setData({ birthDate: `${m[2]}-${m[3]}-${m[4]}` });
+    }
     this.setData(patch);
   },
 
@@ -124,8 +129,8 @@ Page({
       wx.showToast({ title: '请选择出生日期', icon: 'none' });
       return;
     }
-    if (!/^\d{4}$/.test(d.idCardLast4)) {
-      wx.showToast({ title: '身份证后4位需为4位数字', icon: 'none' });
+    if (!/^\d{17}[\dXx]$/.test(d.idCard)) {
+      wx.showToast({ title: '请填写完整的18位身份证号', icon: 'none' });
       return;
     }
     if (!district) {
@@ -143,7 +148,7 @@ Page({
         phone: d.phone,
         realName: d.realName.trim(),
         birthDate: d.birthDate,
-        idCardLast4: d.idCardLast4,
+        idCard: d.idCard,
         districtCode: district.code,
         schoolCode: school.code,
         grade: d.gradeIndex >= 0 ? d.grades[d.gradeIndex] : undefined,
