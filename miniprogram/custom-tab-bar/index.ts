@@ -4,10 +4,9 @@
  * - 学生：首页 / 练习 / 成长 / 我的
  * - 家长：看板 / 我的（只有孩子学生信息相关页面，不暴露练习测评入口）
  *
- * 选中态同步双保险：
- * - 点击当下立即 setData（即时反馈）；
- * - 页面 show 后再补一次同步（含 400ms 延时）——切换瞬间 getCurrentPages()
- *   仍指向旧页，只靠 show 同步会让选中态停留在上一个 tab。
+ * 选中态：由各 tab 页在自己的 onShow 里调用 setActive(自身路径) 声明（官方推荐模式）。
+ * 不要在 pageLifetimes.show 里按 getCurrentPages() 反算选中态——切换瞬间页面栈
+ * 仍指向旧页，会把高亮改回旧 tab 造成"延迟选中"。
  */
 const STUDENT_TABS = [
   { pagePath: '/pages/home/index', text: '首页', icon: 'wap-home-o', activeIcon: 'wap-home' },
@@ -28,29 +27,23 @@ Component({
   },
   lifetimes: {
     attached() {
-      this.sync();
-    },
-  },
-  pageLifetimes: {
-    show() {
-      this.sync();
-      setTimeout(() => this.sync(), 400);
+      // 列表按角色初始化（登录后角色不变，attached 时读取即可）
+      const user = wx.getStorageSync('user_info') || null;
+      const isParent = !!user && user.role === 'parent';
+      if (isParent) this.setData({ list: PARENT_TABS });
     },
   },
   methods: {
-    sync() {
-      const user = wx.getStorageSync('user_info') || null;
-      const isParent = !!user && user.role === 'parent';
-      const list = isParent ? PARENT_TABS : STUDENT_TABS;
-      const pages = getCurrentPages();
-      const route = pages.length ? pages[pages.length - 1].route : '';
-      let selected = list.findIndex((t) => '/' + route === t.pagePath);
-      if (selected < 0) selected = 0;
-      this.setData({ list, selected });
+    /** tab 页 onShow 调用：声明自己是当前 tab（按 pagePath 在角色列表中定位，无竞态） */
+    setActive(pagePath: string) {
+      const idx = this.data.list.findIndex((t) => t.pagePath === pagePath);
+      if (idx >= 0 && idx !== this.data.selected) {
+        this.setData({ selected: idx });
+      }
     },
     switchTab(e: WechatMiniprogram.CustomEvent) {
       const index = Number(e.currentTarget.dataset.index ?? 0);
-      this.setData({ selected: index }); // 即时高亮，落定后由 sync 校正
+      this.setData({ selected: index }); // 即时高亮，页面 onShow 的 setActive 会再次确认
       wx.switchTab({ url: String(e.currentTarget.dataset.path ?? '') });
     },
   },

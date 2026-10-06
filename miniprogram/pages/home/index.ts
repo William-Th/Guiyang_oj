@@ -33,6 +33,9 @@ Page({
       wx.reLaunch({ url: '/pages/parent/index' });
       return;
     }
+(
+  this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
+).getTabBar?.()?.setActive?.('/pages/home/index');
     const user = getUser();
     const hour = new Date().getHours();
     const greeting = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好';

@@ -13,6 +13,9 @@ Page({
       wx.switchTab({ url: '/pages/parent/index' });
       return;
     }
+(
+  this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
+).getTabBar?.()?.setActive?.('/pages/growth/index');
     getStreak()
       .then((res) => this.setData({ streakDays: res.data?.current_streak ?? 0 }))
       .catch(() => {

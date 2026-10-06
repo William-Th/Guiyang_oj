@@ -111,6 +111,9 @@ Page({
       wx.switchTab({ url: '/pages/parent/index' });
       return;
     }
+(
+  this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
+).getTabBar?.()?.setActive?.('/pages/practice/index');
     this.loadTab(this.data.activeTab);
   },
 

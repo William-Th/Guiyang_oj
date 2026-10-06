@@ -25,6 +25,9 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
+(
+  this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
+).getTabBar?.()?.setActive?.('/pages/profile/index');
     const user = getUser() ?? { id: 0, username: '', role: '' };
     const isParent = user.role === 'parent';
     const name = user.realName || user.username || '';

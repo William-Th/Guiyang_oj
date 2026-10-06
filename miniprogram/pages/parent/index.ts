@@ -31,6 +31,9 @@ Page({
 
   onShow() {
     if (!requireLogin()) return;
+(
+  this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
+).getTabBar?.()?.setActive?.('/pages/parent/index');
     this.loadChildren();
   },
 
