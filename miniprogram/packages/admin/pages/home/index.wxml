@@ -7,32 +7,24 @@
 </view>
 
 <block wx:if="{{!loading}}">
-  <van-grid column-num="2" border="{{ false }}">
-    <van-grid-item text="学生总数">
-      <view slot="default" class="stat-block">
-        <view class="stat-num">{{stats.totalStudents}}</view>
-        <view class="stat-label">学生总数</view>
-      </view>
-    </van-grid-item>
-    <van-grid-item>
-      <view class="stat-block">
-        <view class="stat-num">{{stats.totalExams}}</view>
-        <view class="stat-label">测评总数</view>
-      </view>
-    </van-grid-item>
-    <van-grid-item>
-      <view class="stat-block">
-        <view class="stat-num">{{stats.thisMonthExams}}</view>
-        <view class="stat-label">本月测评</view>
-      </view>
-    </van-grid-item>
-    <van-grid-item>
-      <view class="stat-block">
-        <view class="stat-num">{{stats.onlineTeachers}}</view>
-        <view class="stat-label">活跃教师</view>
-      </view>
-    </van-grid-item>
-  </van-grid>
+  <view class="card stat-grid">
+    <view class="stat-cell">
+      <view class="stat-num">{{stats.totalStudents}}</view>
+      <view class="stat-label">学生总数</view>
+    </view>
+    <view class="stat-cell">
+      <view class="stat-num">{{stats.totalExams}}</view>
+      <view class="stat-label">测评总数</view>
+    </view>
+    <view class="stat-cell">
+      <view class="stat-num">{{stats.thisMonthExams}}</view>
+      <view class="stat-label">本月测评</view>
+    </view>
+    <view class="stat-cell">
+      <view class="stat-num">{{stats.onlineTeachers}}</view>
+      <view class="stat-label">活跃教师</view>
+    </view>
+  </view>
 
   <van-cell-group inset title="待办">
     <van-cell title="审批中心" icon="todo-list-o" is-link bind:click="goApprovals" label="{{pendingCount > 0 ? '注册申请与教学班待审 ' + pendingCount + ' 项' : '暂无待办'}}">

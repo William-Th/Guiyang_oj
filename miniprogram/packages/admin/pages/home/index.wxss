@@ -1,5 +1,14 @@
-.stat-block {
-  padding: 24rpx 0;
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 28rpx;
+  padding: 30rpx 0;
+  margin-top: 24rpx;
+}
+
+/* 奇数行分隔：右侧格加左描边 */
+.stat-cell:nth-child(even) {
+  border-left: 1rpx solid #f1f2f4;
 }
 
 .stat-num {
