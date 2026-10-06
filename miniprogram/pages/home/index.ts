@@ -62,6 +62,11 @@ Page({
       this.loadAdminData();
       return;
     }
+    if (role === 'teacher') {
+      // 教师无小程序功能：仅提示使用电脑端，不触发任何学生接口
+      this.setData({ role: 'teacher', greeting, realName: user?.realName || user?.username || '' });
+      return;
+    }
     this.setData({ role: 'student', greeting, realName: user?.realName || user?.username || '' });
     this.loadData();
   },

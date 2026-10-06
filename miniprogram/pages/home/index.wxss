@@ -182,3 +182,22 @@
   font-size: 24rpx;
   color: var(--mp-text-secondary);
 }
+
+.teacher-notice {
+  margin-top: 40rpx;
+  padding: 48rpx 40rpx;
+  text-align: center;
+}
+
+.teacher-notice-title {
+  margin-top: 16rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.teacher-notice-desc {
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  color: var(--mp-text-secondary);
+  line-height: 1.8;
+}

@@ -52,6 +52,17 @@
     <view wx:else class="page-loading">加载中…</view>
   </block>
 
+  <!-- 教师：小程序暂无教师功能 -->
+  <block wx:elif="{{role === 'teacher'}}">
+    <view class="card teacher-notice">
+      <van-icon name="info-o" size="56rpx" color="#0ea5e9" />
+      <view class="teacher-notice-title">{{greeting}}，{{realName}} 老师</view>
+      <view class="teacher-notice-desc">
+        教师端功能（出题、组卷、批改、学情分析）请使用电脑端网页操作；本小程序目前面向学生与家长。
+      </view>
+    </view>
+  </block>
+
   <!-- 学生：练习闭环首页 -->
   <block wx:else>
     <view class="home-hero">
