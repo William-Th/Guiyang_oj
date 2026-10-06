@@ -45,7 +45,7 @@ Page({
   },
 
   goAdmin() {
-    wx.navigateTo({ url: '/packages/admin/pages/home/index' });
+    wx.switchTab({ url: '/pages/home/index' });
   },
 
   onFeature() {

@@ -11,7 +11,8 @@ Page({
     // 成长页仅学生使用：家长回看板、管理员回管理工作台
     const role = getUser()?.role ?? '';
     if (role !== 'student') {
-      wx.reLaunch({ url: role === 'parent' ? '/pages/parent/index' : '/packages/admin/pages/home/index' });
+      if (role === 'parent') wx.reLaunch({ url: '/pages/parent/index' });
+      else wx.switchTab({ url: '/pages/home/index' });
       return;
     }
 (

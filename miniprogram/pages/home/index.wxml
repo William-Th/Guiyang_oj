@@ -1,67 +1,123 @@
 <view class="home-page tab-page-padding">
-  <view class="home-hero">
-    <view class="hero-top">
-      <view class="hero-hello-wrap">
-        <view class="hero-hello">{{greeting}}，{{realName}}</view>
-        <view class="hero-status">{{statusText}}</view>
+  <!-- 管理员：本 tab 渲染管理工作台 -->
+  <block wx:if="{{role === 'admin'}}">
+    <view class="admin-hero">
+      <view class="admin-hero-left">
+        <view class="admin-hero-title">管理工作台</view>
+        <view class="admin-hero-sub">{{greeting}}，{{realName}}</view>
       </view>
-      <view class="hero-bell" bind:tap="onNotice">
-        <van-icon name="bell" size="40rpx" color="#ffffff" />
-        <view wx:if="{{unread > 0}}" class="hero-badge">{{unread > 99 ? '99+' : unread}}</view>
-      </view>
-    </view>
-    <view class="hero-stats">
-      <view class="hero-stat">
-        <view class="hero-num">{{streakDays}}</view>
-        <view class="hero-label">连胜天数</view>
-      </view>
-      <view class="hero-divider"></view>
-      <view class="hero-stat">
-        <view class="hero-num">{{maxStreak}}</view>
-        <view class="hero-label">最长连胜</view>
-      </view>
-      <view class="hero-divider"></view>
-      <view class="hero-stat">
-        <view class="hero-num">{{points}}</view>
-        <view class="hero-label">我的积分</view>
+      <view class="admin-hero-me" bind:tap="goProfile">
+        <van-icon name="user-o" size="36rpx" />
+        <text>我的</text>
       </view>
     </view>
-  </view>
 
-  <view class="section-title">今日任务</view>
-  <view class="card home-task" bind:tap="onStartDaily">
-    <view class="home-task-icon">
-      <van-icon name="star-o" size="40rpx" color="#0ea5e9" />
-    </view>
-    <view class="home-task-body">
-      <view class="home-task-title">每日推题</view>
-      <view class="home-task-desc">今日已完成 {{dailyDone}}/{{dailyTarget}} 题，答完积分和连胜都到手</view>
-    </view>
-    <van-icon name="arrow" color="#c8c9cc" />
-  </view>
-  <view class="card home-task" bind:tap="goPractice">
-    <view class="home-task-icon">
-      <van-icon name="edit" size="40rpx" color="#0ea5e9" />
-    </view>
-    <view class="home-task-body">
-      <view class="home-task-title">老师发布的练习</view>
-      <view class="home-task-desc">按科目和状态筛选，随时开练</view>
-    </view>
-    <van-icon name="arrow" color="#c8c9cc" />
-  </view>
+    <block wx:if="{{!adminLoading}}">
+      <view class="card stat-grid">
+        <view class="stat-cell">
+          <view class="stat-num">{{adminStats.totalStudents}}</view>
+          <view class="stat-label"><van-icon name="friends-o" /> 学生总数</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-num">{{adminStats.totalExams}}</view>
+          <view class="stat-label"><van-icon name="todo-list-o" /> 测评总数</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-num">{{adminStats.thisMonthExams}}</view>
+          <view class="stat-label"><van-icon name="calendar-o" /> 本月测评</view>
+        </view>
+        <view class="stat-cell">
+          <view class="stat-num">{{adminStats.onlineTeachers}}</view>
+          <view class="stat-label"><van-icon name="manager-o" /> 活跃教师</view>
+        </view>
+      </view>
 
-<view class="section-title">快捷入口</view>
-<view class="card grid-card">
-  <van-grid column-num="3" border="{{ false }}">
-    <van-grid-item
-      wx:for="{{gridItems}}"
-      wx:key="text"
-      icon="{{item.icon}}"
-      text="{{item.text}}"
-      icon-class="grid-icon"
-      data-path="{{item.path}}"
-      bind:click="onFeature"
-    />
-  </van-grid>
-</view>
+      <van-cell-group inset title="待办">
+        <van-cell title="审批中心" icon="todo-list-o" is-link bind:click="goApprovals" label="{{pendingCount > 0 ? '注册申请与教学班待审 ' + pendingCount + ' 项' : '暂无待办'}}">
+          <van-tag wx:if="{{pendingCount > 0}}" type="danger">待办 {{pendingCount}}</van-tag>
+        </van-cell>
+        <van-cell title="用户查询" label="学生/教师信息检索" icon="search" is-link bind:click="goUsers" />
+      </van-cell-group>
+
+      <view class="section-title">最近测评</view>
+      <view wx:for="{{adminStats.recentExams}}" wx:key="id" class="card exam-item">
+        <view class="exam-item-name">{{item.name}}</view>
+        <view class="exam-item-meta">
+          <text>{{item.date}}</text>
+          <text>{{item.participants}} 人参与 · 均分 {{item.avgScore}}</text>
+        </view>
+      </view>
+      <van-empty wx:if="{{adminStats.recentExams.length === 0}}" description="暂无测评数据" />
+    </block>
+    <view wx:else class="page-loading">加载中…</view>
+  </block>
+
+  <!-- 学生：练习闭环首页 -->
+  <block wx:else>
+    <view class="home-hero">
+      <view class="hero-top">
+        <view class="hero-hello-wrap">
+          <view class="hero-hello">{{greeting}}，{{realName}}</view>
+          <view class="hero-status">{{statusText}}</view>
+        </view>
+        <view class="hero-bell" bind:tap="onNotice">
+          <van-icon name="bell" size="40rpx" color="#ffffff" />
+          <view wx:if="{{unread > 0}}" class="hero-badge">{{unread > 99 ? '99+' : unread}}</view>
+        </view>
+      </view>
+      <view class="hero-stats">
+        <view class="hero-stat">
+          <view class="hero-num">{{streakDays}}</view>
+          <view class="hero-label">连胜天数</view>
+        </view>
+        <view class="hero-divider"></view>
+        <view class="hero-stat">
+          <view class="hero-num">{{maxStreak}}</view>
+          <view class="hero-label">最长连胜</view>
+        </view>
+        <view class="hero-divider"></view>
+        <view class="hero-stat">
+          <view class="hero-num">{{points}}</view>
+          <view class="hero-label">我的积分</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-title">今日任务</view>
+    <view class="card home-task" bind:tap="onStartDaily">
+      <view class="home-task-icon">
+        <van-icon name="star-o" size="40rpx" color="#0ea5e9" />
+      </view>
+      <view class="home-task-body">
+        <view class="home-task-title">每日推题</view>
+        <view class="home-task-desc">今日已完成 {{dailyDone}}/{{dailyTarget}} 题，答完积分和连胜都到手</view>
+      </view>
+      <van-icon name="arrow" color="#c8c9cc" />
+    </view>
+    <view class="card home-task" bind:tap="goPractice">
+      <view class="home-task-icon">
+        <van-icon name="edit" size="40rpx" color="#0ea5e9" />
+      </view>
+      <view class="home-task-body">
+        <view class="home-task-title">老师发布的练习</view>
+        <view class="home-task-desc">按科目和状态筛选，随时开练</view>
+      </view>
+      <van-icon name="arrow" color="#c8c9cc" />
+    </view>
+
+    <view class="section-title">快捷入口</view>
+    <view class="card grid-card">
+      <van-grid column-num="3" border="{{ false }}">
+        <van-grid-item
+          wx:for="{{gridItems}}"
+          wx:key="text"
+          icon="{{item.icon}}"
+          text="{{item.text}}"
+          icon-class="grid-icon"
+          data-path="{{item.path}}"
+          bind:click="onFeature"
+        />
+      </van-grid>
+    </view>
+  </block>
 </view>

@@ -113,3 +113,72 @@
 .grid-icon {
   color: var(--mp-primary);
 }
+
+/* ---------- 管理工作台（管理员角色时本 tab 渲染） ---------- */
+.admin-hero {
+  background: var(--mp-gradient);
+  color: #fff;
+  padding: 36rpx 32rpx;
+  border-radius: 0 0 40rpx 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-hero-title {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.admin-hero-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  opacity: 0.85;
+}
+
+.admin-hero-me {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 28rpx;
+  padding: 30rpx 0;
+  margin-top: 24rpx;
+}
+
+.stat-cell:nth-child(even) {
+  border-left: 1rpx solid #f1f2f4;
+}
+
+.stat-num {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: var(--mp-primary);
+}
+
+.stat-label {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
+
+.exam-item-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.exam-item-meta {
+  margin-top: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}

@@ -1,4 +1,5 @@
 import { BASE_URL, API_PREFIX } from '../config/env';
+import { logger } from './logger';
 import { clearSession, getRefreshToken, getToken } from './auth';
 
 /** wx.request 不支持 PATCH（后端亦未使用 PATCH 路由） */
@@ -37,10 +38,14 @@ function rawRequest<T>(
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data as T);
         } else {
+          logger.warn('request', method, path, res.statusCode);
           reject({ statusCode: res.statusCode, data: res.data } as ApiError);
         }
       },
-      fail: (err) => reject({ statusCode: 0, data: err } as ApiError),
+      fail: (err) => {
+        logger.error('request.network', method, path, err.errMsg);
+        reject({ statusCode: 0, data: err } as ApiError);
+      },
     });
   });
 }
@@ -79,8 +84,10 @@ export async function request<T>(
     if (auth && status === 401) {
       refreshing = refreshing || tryRefresh().finally(() => (refreshing = null));
       if (await refreshing) {
+        logger.info('auth.refresh', '401 后刷新成功，重试原请求');
         return rawRequest<T>(method, path, data, auth);
       }
+      logger.warn('auth.refresh', '刷新失败，回登录页');
       wx.reLaunch({ url: '/pages/login/index' });
     }
     throw err;

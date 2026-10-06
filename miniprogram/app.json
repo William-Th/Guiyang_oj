@@ -36,7 +36,6 @@
     {
       "root": "packages/admin",
       "pages": [
-        "pages/home/index",
         "pages/approvals/index",
         "pages/users/index"
       ]

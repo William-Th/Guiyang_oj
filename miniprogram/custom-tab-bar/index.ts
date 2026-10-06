@@ -3,6 +3,7 @@
  * 按角色分化（计划书 5.4）：
  * - 学生：首页 / 练习 / 成长 / 我的
  * - 家长：看板 / 我的（只有孩子学生信息相关页面，不暴露练习测评入口）
+ * - 管理员：工作台 / 我的（复用首页 tab 按角色渲染工作台内容，数据按各级管理员权限限定）
  *
  * 选中态：由各 tab 页在自己的 onShow 里调用 setActive(自身路径) 声明（官方推荐模式）。
  * 不要在 pageLifetimes.show 里按 getCurrentPages() 反算选中态——切换瞬间页面栈
@@ -20,6 +21,11 @@ const PARENT_TABS = [
   { pagePath: '/pages/profile/index', text: '我的', icon: 'user-o', activeIcon: 'user-o' },
 ];
 
+const ADMIN_TABS = [
+  { pagePath: '/pages/home/index', text: '工作台', icon: 'manager-o', activeIcon: 'manager-o' },
+  { pagePath: '/pages/profile/index', text: '我的', icon: 'user-o', activeIcon: 'user-o' },
+];
+
 Component({
   data: {
     selected: 0,
@@ -28,11 +34,10 @@ Component({
   lifetimes: {
     attached() {
       // 列表按角色初始化（登录后角色不变，attached 时读取即可）
-      // 管理员渲染空列表隐藏整个 bar：工作台与我的均为普通页面互跳（我的页有"管理工作台"入口）
       const user = wx.getStorageSync('user_info') || null;
       const role = (user && user.role) || 'student';
       if (role === 'parent') this.setData({ list: PARENT_TABS });
-      else if (role.includes('admin')) this.setData({ list: [] });
+      else if (role.includes('admin')) this.setData({ list: ADMIN_TABS });
     },
   },
   methods: {

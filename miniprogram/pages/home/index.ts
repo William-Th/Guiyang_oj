@@ -1,4 +1,12 @@
-import { getMpHome, getStreak, getUnreadCount } from '../../services/api';
+import {
+  AdminDashboardStats,
+  getAdminDashboardStats,
+  getMpHome,
+  getRegistrationRequests,
+  getStreak,
+  getUnreadCount,
+} from '../../services/api';
+import { getPendingTeachingClasses } from '../../services/admin';
 import { getUser, requireLogin } from '../../utils/auth';
 
 const GRID_ITEMS = [
@@ -14,6 +22,7 @@ const AVAILABLE_PATHS = new Set(GRID_ITEMS.map((item) => item.path).filter(Boole
 
 Page({
   data: {
+    role: 'student',
     greeting: '',
     realName: '',
     statusText: '',
@@ -24,24 +33,57 @@ Page({
     dailyDone: 0,
     dailyTarget: 10,
     gridItems: GRID_ITEMS,
+    // 管理工作台（管理员角色时本 tab 渲染工作台；数据按各级管理员权限自动限定范围）
+    adminStats: null as AdminDashboardStats | null,
+    pendingCount: 0,
+    adminLoading: false,
   },
 
   onShow() {
     if (!requireLogin()) return;
-    // 学生首页仅学生使用：家长回看板、管理员回管理工作台（避免触发 student-only 接口）
-    const role = getUser()?.role ?? '';
-    if (role !== 'student') {
-      wx.reLaunch({ url: role === 'parent' ? '/pages/parent/index' : '/packages/admin/pages/home/index' });
-      return;
-    }
-(
-  this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
-).getTabBar?.()?.setActive?.('/pages/home/index');
     const user = getUser();
+    const role = user?.role ?? 'student';
+    (
+      this as unknown as { getTabBar?: () => { setActive?: (p: string) => void } | undefined }
+    ).getTabBar?.()?.setActive?.('/pages/home/index');
     const hour = new Date().getHours();
     const greeting = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
-    this.setData({ greeting, realName: user?.realName || user?.username || '' });
+
+    if (role === 'parent') {
+      wx.reLaunch({ url: '/pages/parent/index' });
+      return;
+    }
+    if (role.includes('admin')) {
+      this.setData({
+        role: 'admin',
+        greeting,
+        realName: user?.realName || user?.username || '',
+      });
+      this.loadAdminData();
+      return;
+    }
+    this.setData({ role: 'student', greeting, realName: user?.realName || user?.username || '' });
     this.loadData();
+  },
+
+  /** 管理工作台数据：统计/待办角标（校级本校、区级本区、市级全局，由后端按权限范围过滤） */
+  async loadAdminData() {
+    this.setData({ adminLoading: true });
+    try {
+      const [statsRes, regRes, clsRes] = await Promise.all([
+        getAdminDashboardStats(),
+        getRegistrationRequests(1, 'pending').catch(() => null),
+        getPendingTeachingClasses().catch(() => null),
+      ]);
+      this.setData({
+        adminStats: statsRes,
+        pendingCount: (regRes?.data?.total ?? 0) + (clsRes?.length ?? 0),
+      });
+    } catch (err) {
+      wx.showToast({ title: '工作台数据加载失败', icon: 'none' });
+    } finally {
+      this.setData({ adminLoading: false });
+    }
   },
 
   /** 首选 /api/mp/home 一次聚合（首屏预算）；聚合不可用时降级为多接口并行 */
@@ -103,6 +145,14 @@ Page({
 
   onNotice() {
     wx.showToast({ title: '通知中心将在后续版本开放', icon: 'none' });
+  },
+
+  goApprovals() {
+    wx.navigateTo({ url: '/packages/admin/pages/approvals/index' });
+  },
+
+  goUsers() {
+    wx.navigateTo({ url: '/packages/admin/pages/users/index' });
   },
 
   onFeature(e: WechatMiniprogram.CustomEvent) {
