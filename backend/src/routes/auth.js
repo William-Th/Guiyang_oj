@@ -139,7 +139,8 @@ router.post('/login', [
         id: user.id,
         username: user.username,
         role: user.role,
-        realName: user.real_name
+        realName: user.real_name,
+        phone: user.phone || null
       }
     });
   } catch (error) {

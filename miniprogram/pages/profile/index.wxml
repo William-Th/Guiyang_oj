@@ -5,7 +5,7 @@
       <view class="profile-name">{{user.realName || user.username}}</view>
       <view class="profile-role">
         <van-tag plain type="primary">{{roleText}}</van-tag>
-        <text class="profile-username">{{user.username}}</text>
+        <text class="profile-username">{{user.phone || user.username}}</text>
       </view>
     </view>
   </view>

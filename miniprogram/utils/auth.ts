@@ -3,6 +3,7 @@ export interface UserInfo {
   username: string;
   role: string;
   realName?: string | null;
+  phone?: string | null;
 }
 
 const TOKEN_KEY = 'access_token';

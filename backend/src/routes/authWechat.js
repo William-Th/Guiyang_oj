@@ -22,7 +22,7 @@ function issueSession(user) {
   return {
     token: generateToken(payload),
     refreshToken: generateRefreshToken(payload),
-    user: { id: user.id, username: user.username, role: user.role, realName: user.real_name }
+    user: { id: user.id, username: user.username, role: user.role, realName: user.real_name, phone: user.phone || null }
   };
 }
 
