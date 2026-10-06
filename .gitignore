@@ -93,3 +93,6 @@ docker-compose.local.yml
 .playwright-mcp/
 documents/status/
 nul
+
+# E2E 调试截图
+tests/mp-e2e/shot-*.png
