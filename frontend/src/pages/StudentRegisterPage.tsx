@@ -88,7 +88,7 @@ const StudentRegisterPage: React.FC = () => {
         phone: values.phone,
         realName: values.realName,
         birthDate: values.birthDate.format('YYYY-MM-DD'),
-        idCardLast4: values.idCardLast4,
+        idCard: values.idCard,
         districtCode: values.districtCode,
         schoolCode: values.schoolCode,
         grade: values.grade
@@ -220,32 +220,37 @@ const StudentRegisterPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item
+            label="身份证号"
+            name="idCard"
+            rules={[
+              { required: true, message: '请输入身份证号' },
+              { pattern: /^\d{17}[\dXx]$/, message: '请输入完整的18位身份证号' }
+            ]}
+          >
+            <Input
+              prefix={<IdcardOutlined />}
+              placeholder="请输入18位身份证号，自动识别出生日期"
+              maxLength={18}
+              onChange={(e) => {
+                // 证件第 7-14 位即出生日期：自动回填，避免与证件矛盾
+                const m = /^(\d{6})(\d{4})(\d{2})(\d{2})/.exec(e.target.value || '');
+                if (m) form.setFieldsValue({ birthDate: dayjs(`${m[2]}-${m[3]}-${m[4]}`) });
+              }}
+            />
+          </Form.Item>
+
+          <Form.Item
             label="出生日期"
             name="birthDate"
             rules={[{ required: true, message: '请选择出生日期' }]}
           >
             <DatePicker
               style={{ width: '100%' }}
-              placeholder="请选择出生日期"
+              placeholder="填写身份证号后自动识别"
               disabledDate={(current) => {
                 // 禁用未来日期和30年前的日期
                 return current && (current > dayjs().endOf('day') || current < dayjs().subtract(30, 'year'));
               }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="身份证后4位"
-            name="idCardLast4"
-            rules={[
-              { required: true, message: '请输入身份证后4位' },
-              { pattern: /^\d{4}$/, message: '请输入正确的4位数字' }
-            ]}
-          >
-            <Input
-              prefix={<IdcardOutlined />}
-              placeholder="请输入身份证后4位数字"
-              maxLength={4}
             />
           </Form.Item>
 

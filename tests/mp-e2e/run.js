@@ -209,7 +209,9 @@ async function main() {
   console.log('⏳ 检查后端…');
   await waitBackend();
   const e2eRegPhone = '1390' + String(Date.now()).slice(-7); // 11 位手机号（列宽 varchar(11)） // 每轮轮换，审批建号不撞唯一约束
+  const regFlowPhone = '1381' + String(Date.now()).slice(-7); // 11 位 // 流程⑧注册用（11位，1381 开头合法）
   console.log(`⏳ 应用 E2E 夹具（家长账号/关联/错题/待审注册 ${e2eRegPhone}）…`);
+  console.log(`    流程⑧注册手机号: ${regFlowPhone}`);
   applyFixture(e2eRegPhone);
   console.log('⏳ 连接微信开发者工具…');
   mini = await automator.connect({ wsEndpoint: process.env.MP_WS || 'ws://127.0.0.1:9420' });
@@ -333,6 +335,34 @@ async function main() {
       // 批准后列表刷新，该申请消失
       await waitFor((x) => !(x.list || []).some((i) => i.phone === e2eRegPhone), 20000, '审批完成刷新');
     });
+
+    await step('⑧ 注册申请与身份查询', async () => {
+      await mini.evaluate(() => wx.clearStorageSync()); // 清残留 token，防登录页 onLoad 弹走形成跳转链
+      await mini.reLaunch('/pages/login/index');
+      await waitForRoute('pages/login/index');
+      firePageMethod('goRegister');
+      await waitForRoute('pages/register/index');
+      await waitFor((d) => (d.districts || []).length > 0, 20000, '区县配置加载');
+      await pageSetData({
+        phone: regFlowPhone,
+        realName: 'E2E注册学生',
+        birthDate: '2014-05-20',
+        idCard: '522101201405201234',
+      });
+      firePageMethod('onDistrictChange', { detail: { value: 0 } });
+      await waitFor((d) => (d.schoolNames || []).length > 0, 20000, '学校列表加载');
+      firePageMethod('onSchoolChange', { detail: { value: 0 } });
+      firePageMethod('onGradeChange', { detail: { value: 2 } });
+      firePageMethod('onSubmit');
+      await waitFor((d) => !!d.result && !!d.result.inquiryCode, 20000, '提交成功结果');
+      // 查进度：身份方式（手机号+出生日期+完整证件号）
+      firePageMethod('onTabChange', { detail: { index: 1 } });
+      await pageSetData({ queryPhone: regFlowPhone, queryBirthDate: '2014-05-20', queryIdCard: '522101201405201234' });
+      firePageMethod('onQuery');
+      const d2 = await waitFor((x) => !!x.statusInfo, 20000, '身份查询结果');
+      assert(d2.statusInfo.status === 'pending' && d2.statusInfo.statusText === '审核中', '查询状态异常');
+    });
+
   } finally {
     try {
       if (mini && typeof mini.disconnect === 'function') await mini.disconnect();
