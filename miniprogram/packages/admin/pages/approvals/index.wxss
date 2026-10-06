@@ -40,3 +40,40 @@
   justify-content: flex-end;
   gap: 16rpx;
 }
+
+.seg-bar {
+  display: flex;
+  padding: 20rpx 24rpx 0;
+  gap: 16rpx;
+}
+
+.seg-item {
+  position: relative;
+  padding: 12rpx 30rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  color: var(--mp-text-secondary);
+  font-size: 26rpx;
+}
+
+.seg-item.active {
+  background: var(--mp-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.seg-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  padding: 0 8rpx;
+  border-radius: 999rpx;
+  background: #f5222d;
+  color: #fff;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

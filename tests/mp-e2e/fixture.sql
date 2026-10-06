@@ -47,3 +47,13 @@ WHERE s.username = '13800138003'
     WHERE w.student_id = s.id AND w.question_id = qb.id
   )
 LIMIT 1;
+
+-- 4) E2E 专属待审注册申请（流程⑦管理端审批使用）
+--    手机号由 run.js 按 '{{E2E_REG_PHONE}}' 占位轮换生成：审批会真实建号，同号二次审批会撞唯一约束，
+--    故不做清理、每轮用新号（E2E 库允许留痕）。
+INSERT INTO student_registration_requests (phone, real_name, birth_date, id_card_last4, district_id, district_code, district_name, school_id, school_code, school_name, grade, status, current_reviewer_level)
+SELECT '{{E2E_REG_PHONE}}', 'E2E待审学生', '2014-05-20', '1234', d.id, d.code, d.name, sc.id, sc.code, sc.name, '五年级', 'pending', 2
+FROM schools sc
+JOIN districts d ON d.id = sc.district_id
+WHERE sc.id = 1
+  AND NOT EXISTS (SELECT 1 FROM student_registration_requests WHERE phone = '{{E2E_REG_PHONE}}');

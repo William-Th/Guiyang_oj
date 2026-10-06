@@ -217,7 +217,11 @@ export function getRegistrationRequests(page = 1, status = 'pending') {
 }
 
 export function approveRegistration(id: number) {
-  return request<{ success: boolean; message?: string }>('POST', `/registration/admin/requests/${id}/approve`);
+  // 批准即建号：data.initialPassword 为学生明文初始密码，管理端需转告学生
+  return request<{ success: boolean; message?: string; data?: { username?: string; initialPassword?: string } }>(
+    'POST',
+    `/registration/admin/requests/${id}/approve`
+  );
 }
 
 /** 驳回：后端要求 comment 必填非空 */

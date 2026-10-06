@@ -1,10 +1,12 @@
-import { AdminDashboardStats, getAdminDashboardStats } from '../../../../services/api';
+import { AdminDashboardStats, getAdminDashboardStats, getRegistrationRequests } from '../../../../services/api';
+import { getPendingTeachingClasses } from '../../../../services/admin';
 import { isAdmin, requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
 
 Page({
   data: {
     stats: { totalStudents: 0, totalExams: 0, thisMonthExams: 0, onlineTeachers: 0, recentExams: [] } as AdminDashboardStats,
+    pendingCount: 0,
     loading: true,
   },
 
@@ -21,8 +23,12 @@ Page({
   async load() {
     this.setData({ loading: true });
     try {
-      const stats = await getAdminDashboardStats();
-      this.setData({ stats });
+      const [statsRes, regRes, clsRes] = await Promise.all([
+        getAdminDashboardStats(),
+        getRegistrationRequests(1, 'pending').catch(() => null),
+        getPendingTeachingClasses().catch(() => null),
+      ]);
+      this.setData({ stats: statsRes, pendingCount: (regRes?.data?.total ?? 0) + (clsRes?.length ?? 0) });
     } catch (err) {
       toastError(err, '加载失败');
     } finally {

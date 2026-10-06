@@ -20,6 +20,8 @@ const BACKEND = process.env.MP_BACKEND || 'http://localhost:3003';
 
 const STUDENT = { username: '13800138003', password: 'password123' };
 const PARENT = { username: 'mp_parent_test', password: 'password123' };
+// 校级管理员（admin_permissions.school_id=1，管到种子学生所在校）
+const ADMIN = { username: 'school_admin_01', password: 'password123' };
 
 const results = [];
 let mini = null;
@@ -138,9 +140,10 @@ async function waitBackend() {
   throw new Error(`后端 ${BACKEND} 不可达，请先启动 docker 后端`);
 }
 
-function applyFixture() {
-  const sql = path.join(__dirname, 'fixture.sql');
-  execSync(`docker exec -i guiyang_oj_postgres psql -U postgres -d guiyang_oj < "${sql}"`, { stdio: 'pipe' });
+function applyFixture(regPhone) {
+  const tpl = path.join(__dirname, 'fixture.sql');
+  const sql = require('fs').readFileSync(tpl, 'utf-8').replaceAll('{{E2E_REG_PHONE}}', regPhone);
+  execSync(`docker exec -i guiyang_oj_postgres psql -U postgres -d guiyang_oj`, { input: sql, stdio: ['pipe', 'pipe', 'inherit'] });
 }
 
 const TAB_ROUTES = ['pages/home/index', 'pages/practice/index', 'pages/growth/index', 'pages/profile/index'];
@@ -204,8 +207,9 @@ async function answerCurrentQuestion() {
 async function main() {
   console.log('⏳ 检查后端…');
   await waitBackend();
-  console.log('⏳ 应用 E2E 夹具（家长账号/关联/错题）…');
-  applyFixture();
+  const e2eRegPhone = '1390' + String(Date.now()).slice(-7); // 11 位手机号（列宽 varchar(11)） // 每轮轮换，审批建号不撞唯一约束
+  console.log(`⏳ 应用 E2E 夹具（家长账号/关联/错题/待审注册 ${e2eRegPhone}）…`);
+  applyFixture(e2eRegPhone);
   console.log('⏳ 连接微信开发者工具…');
   mini = await automator.connect({ wsEndpoint: process.env.MP_WS || 'ws://127.0.0.1:9420' });
   console.log('✅ 开发者工具已连接');
@@ -309,6 +313,26 @@ async function main() {
       await waitFor((d) => (d.children || []).length >= 1, 15000, '孩子列表加载');
       const d = await waitFor((x) => !!(x.child && x.child.real_name), 15000, '看板选中孩子');
       assert(d.child.real_name.length > 0, '看板未选中孩子');
+    });
+
+    await step('⑦ 管理端总览与审批', async () => {
+      await login(ADMIN, 'pages/home/index');
+      await mini.navigateTo('/packages/admin/pages/home/index');
+      await waitForRoute('packages/admin/pages/home/index');
+      const stats = await waitFor(
+        (d) => d.loading === false && typeof d.pendingCount === 'number' && d.pendingCount >= 1,
+        20000,
+        '管理总览待办角标'
+      );
+      assert(stats.pendingCount >= 1, '待办角标未统计到夹具申请');
+      await mini.navigateTo('/packages/admin/pages/approvals/index');
+      await waitForRoute('pages/approvals/index');
+      await waitFor((d) => d.loading === false, 20000, '待审列表加载');
+      const item = ((await getPageData()).list || []).find((i) => i.phone === e2eRegPhone);
+      assert(item, '夹具待审申请未出现在列表');
+      firePageMethod('onApprove', { currentTarget: { dataset: { id: item.id } } });
+      // 批准后列表刷新，该申请消失
+      await waitFor((x) => !(x.list || []).some((i) => i.phone === e2eRegPhone), 20000, '审批完成刷新');
     });
   } finally {
     try {

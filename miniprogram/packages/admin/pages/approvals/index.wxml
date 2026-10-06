@@ -1,32 +1,77 @@
-<view class="filter-bar">
+<view class="seg-bar">
   <view
-    wx:for="{{filters}}"
+    wx:for="{{tabs}}"
     wx:key="value"
-    class="filter-item {{status === item.value ? 'active' : ''}}"
-    data-status="{{item.value}}"
-    bind:tap="onStatusChange"
+    class="seg-item {{tab === item.value ? 'active' : ''}}"
+    data-tab="{{item.value}}"
+    bind:tap="onTabChange"
   >
     {{item.label}}
+    <view wx:if="{{item.value === 'registration' && regPending > 0}}" class="seg-badge">{{regPending > 99 ? '99+' : regPending}}</view>
+    <view wx:elif="{{item.value === 'classes' && clsPending > 0}}" class="seg-badge">{{clsPending}}</view>
   </view>
 </view>
 
-<block wx:if="{{!loading}}">
-  <view wx:for="{{list}}" wx:key="id" class="card approval-item">
-    <view class="approval-item-head">
-      <view class="approval-item-name">{{item.real_name || item.username}}</view>
-      <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
-    </view>
-    <view class="approval-item-meta" wx:if="{{item.school_name || item.district_name}}">
-      {{item.school_name || ''}}{{item.district_name ? ' · ' + item.district_name : ''}}
-    </view>
-    <view class="approval-item-meta" wx:if="{{item.submitted_at}}">提交于 {{item.submitted_at}}</view>
-    <view wx:if="{{status === 'pending'}}" class="approval-item-actions">
-      <van-button size="small" round bind:click="onReject" data-id="{{item.id}}">驳回</van-button>
-      <van-button size="small" round type="primary" loading="{{actingId === item.id}}" bind:click="onApprove" data-id="{{item.id}}">
-        通过
-      </van-button>
+<!-- 注册申请审批 -->
+<block wx:if="{{tab === 'registration'}}">
+  <view class="filter-bar">
+    <view
+      wx:for="{{filters}}"
+      wx:key="value"
+      class="filter-item {{status === item.value ? 'active' : ''}}"
+      data-status="{{item.value}}"
+      bind:tap="onStatusChange"
+    >
+      {{item.label}}
     </view>
   </view>
-  <van-empty wx:if="{{list.length === 0}}" description="暂无{{statusText}}" />
+
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{list}}" wx:key="id" class="card approval-item">
+      <view class="approval-item-head">
+        <view class="approval-item-name">{{item.real_name || item.username}}</view>
+        <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+      </view>
+      <view class="approval-item-meta" wx:if="{{item.school_name || item.district_name}}">
+        {{item.school_name || ''}}{{item.district_name ? ' · ' + item.district_name : ''}}{{item.grade ? ' · ' + item.grade : ''}}
+      </view>
+      <view class="approval-item-meta" wx:if="{{item.phone}}">手机号：{{item.phone}}</view>
+      <view class="approval-item-meta" wx:if="{{item.submitted_at}}">提交于 {{item.submitted_at}}</view>
+      <view wx:if="{{status === 'pending'}}" class="approval-item-actions">
+        <van-button size="small" round bind:click="onReject" data-id="{{item.id}}">驳回</van-button>
+        <van-button size="small" round type="primary" loading="{{actingId === item.id}}" bind:click="onApprove" data-id="{{item.id}}">
+          通过
+        </van-button>
+      </view>
+    </view>
+    <van-empty wx:if="{{list.length === 0}}" description="暂无{{statusText}}" />
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
 </block>
-<view wx:if="{{loading}}" class="page-loading">加载中…</view>
+
+<!-- 教学班审批 -->
+<block wx:if="{{tab === 'classes'}}">
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{classList}}" wx:key="id" class="card approval-item">
+      <view class="approval-item-head">
+        <view class="approval-item-name">{{item.name}}</view>
+        <van-tag type="warning">待审核</van-tag>
+      </view>
+      <view class="approval-item-meta">
+        {{item.subject || ''}}{{item.grade ? ' · ' + item.grade : ''}}{{item.academic_year ? ' · ' + item.academic_year : ''}}
+      </view>
+      <view class="approval-item-meta" wx:if="{{item.school_name || item.creator_name}}">
+        {{item.school_name || ''}}{{item.creator_name ? ' · 申请人 ' + item.creator_name : ''}}
+      </view>
+      <view class="approval-item-meta" wx:if="{{item.submitted_at}}">提交于 {{item.submittedAtText}}{{item.pending_days ? ' · 挂起 ' + item.pending_days + ' 天' : ''}}</view>
+      <view class="approval-item-actions">
+        <van-button size="small" round bind:click="onRejectClass" data-id="{{item.id}}">驳回</van-button>
+        <van-button size="small" round type="primary" loading="{{actingId === item.id}}" bind:click="onApproveClass" data-id="{{item.id}}">
+          通过
+        </van-button>
+      </view>
+    </view>
+    <van-empty wx:if="{{classList.length === 0}}" description="暂无待审教学班" />
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</block>
