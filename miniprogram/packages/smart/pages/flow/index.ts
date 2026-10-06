@@ -7,9 +7,11 @@ import {
   submitRecommendAnswer,
 } from '../../../../services/growth';
 import { getStreak } from '../../../../services/api';
+import { recordSubscribe } from '../../../../services/api';
 import { getUser, requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
 import { popStash } from '../../../../utils/transfer';
+import { SUBSCRIBE_TEMPLATES } from '../../../../config/env';
 import { TYPE_TEXT, NormalOption, formatCorrectDisplay, parseOptions } from '../../../../utils/questionFormat';
 
 type AnswerValue = string | string[];
@@ -71,6 +73,7 @@ Page({
     hasNext: false,
     doneCount: 0,
     total: 0,
+    streakTemplate: SUBSCRIBE_TEMPLATES.streak,
     celebration: null as null | { streak: number; todayEarned: number; subject: string },
   },
 
@@ -313,6 +316,22 @@ Page({
 
   goBack() {
     wx.navigateBack();
+  },
+
+  /** 订阅连胜保级提醒（一次性订阅：接受一次=可收一条；后端每日 20:05 扫描发送） */
+  onSubscribeStreak() {
+    const tmpl = SUBSCRIBE_TEMPLATES.streak;
+    if (!tmpl) return;
+    wx.requestSubscribeMessage({
+      tmplIds: [tmpl],
+      complete: (res) => {
+        const accepted = (res as unknown as Record<string, unknown>)[tmpl] === 'accept';
+        recordSubscribe('streak', accepted).catch(() => {
+          /* 上报失败不影响主流程 */
+        });
+        wx.showToast({ title: accepted ? '已订阅，断了连胜会提醒你' : '已取消订阅', icon: 'none' });
+      },
+    });
   },
 
   onShareAppMessage() {

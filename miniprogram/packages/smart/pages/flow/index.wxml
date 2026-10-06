@@ -140,6 +140,9 @@
     </view>
   </view>
   <view class="celebrate-actions">
+    <van-button wx:if="{{streakTemplate}}" block round plain custom-class="subscribe-btn" bind:click="onSubscribeStreak">
+      订阅连胜提醒
+    </van-button>
     <van-button block round type="primary" open-type="share" custom-class="share-btn">分享战绩</van-button>
     <van-button block round custom-class="home-btn" bind:click="goBack">返回</van-button>
   </view>

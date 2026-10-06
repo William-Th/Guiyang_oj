@@ -56,3 +56,26 @@ export interface ChildSubjectStat {
 export function getChildStats(studentId: number) {
   return request<{ success: boolean; data: ChildSubjectStat[] }>('GET', `/parent/children/${studentId}/stats`);
 }
+
+export interface RegistrableAssessment {
+  id: number;
+  title: string;
+  subject?: string;
+  grade?: string;
+  end_time?: string | null;
+}
+
+export function getRegistrableAssessments(studentId: number) {
+  return request<{ success: boolean; data: RegistrableAssessment[] }>(
+    'GET',
+    `/parent/children/${studentId}/registrable-assessments`
+  );
+}
+
+export function registerForChild(studentId: number, activityId: number) {
+  return request<{ success: boolean; message?: string }>(
+    'POST',
+    `/parent/children/${studentId}/register/${activityId}`,
+    {}
+  );
+}

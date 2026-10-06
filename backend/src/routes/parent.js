@@ -159,4 +159,33 @@ router.post('/children/:studentId/register/:activityId', guardianCheck, async (r
   }
 });
 
+/**
+ * 孩子可代报名的测评列表（计划书 5.4 P1）
+ * 口径：已发布测评 + 报名开关开启 + 报名窗口内 + 测评未结束 + 该孩子未报名（含未取消口径）
+ */
+router.get('/children/:studentId/registrable-assessments', guardianCheck, async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT a.id, a.title, a.subject, a.grade, a.end_time
+       FROM activities a
+       WHERE a.status = 'published' AND a.type = 'assessment'
+         AND COALESCE(a.registration_enabled, false) = true
+         AND (a.registration_start_time IS NULL OR a.registration_start_time <= NOW())
+         AND (a.registration_end_time IS NULL OR a.registration_end_time >= NOW())
+         AND (a.end_time IS NULL OR a.end_time > NOW())
+         AND NOT EXISTS (
+           SELECT 1 FROM assessment_registrations r
+           WHERE r.activity_id = a.id AND r.student_id = $1 AND r.status <> 'cancelled'
+         )
+       ORDER BY a.end_time ASC NULLS LAST
+       LIMIT 20`,
+      [req.studentId]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('Error fetching registrable assessments:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

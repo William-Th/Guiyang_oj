@@ -51,6 +51,20 @@
         </view>
       </block>
       <van-empty wx:else description="暂无成绩记录" />
+
+      <view class="section-title">代报名测评</view>
+      <block wx:if="{{registrable.length > 0}}">
+        <view wx:for="{{registrable}}" wx:key="id" class="card pd-result">
+          <view class="pd-result-body">
+            <view class="pd-result-title">{{item.title}}</view>
+            <view class="pd-result-meta">{{item.subject || ''}}{{item.endTimeText ? ' · 截止 ' + item.endTimeText : ''}}</view>
+          </view>
+          <van-button size="small" round type="primary" data-id="{{item.id}}" bind:click="onRegisterForChild">
+            代报名
+          </van-button>
+        </view>
+      </block>
+      <van-empty wx:else description="暂无可报名的测评" />
     </block>
     <view wx:else class="page-loading">加载中…</view>
   </block>

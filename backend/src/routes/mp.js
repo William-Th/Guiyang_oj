@@ -63,4 +63,34 @@ router.get(
   }
 );
 
+/**
+ * 订阅消息配额上报：前端 requestSubscribeMessage 后调用
+ * body: { templateKey: 'streak'|'deadline', accepted: boolean }
+ * 接受 → 配额+1（上限 5，一次性订阅语义）；拒绝 → 清零
+ */
+router.post(
+  '/subscribe-record',
+  authMiddleware,
+  requireRole(['student']),
+  async (req, res) => {
+    try {
+      const { templateKey, accepted } = req.body || {};
+      const key = String(templateKey || '');
+      if (!['streak', 'deadline'].includes(key)) {
+        return res.status(400).json({ success: false, message: '未知的订阅模板' });
+      }
+      const sql = accepted
+        ? `INSERT INTO mp_subscribe_quota (user_id, template_key, quota) VALUES ($1, $2, 1)
+           ON CONFLICT (user_id, template_key) DO UPDATE SET quota = LEAST(mp_subscribe_quota.quota + 1, 5), updated_at = CURRENT_TIMESTAMP`
+        : `INSERT INTO mp_subscribe_quota (user_id, template_key, quota) VALUES ($1, $2, 0)
+           ON CONFLICT (user_id, template_key) DO UPDATE SET quota = 0, updated_at = CURRENT_TIMESTAMP`;
+      await query(sql, [req.user.id, key]);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Subscribe record error:', error);
+      res.status(500).json({ success: false, message: '记录订阅状态失败' });
+    }
+  }
+);
+
 module.exports = router;

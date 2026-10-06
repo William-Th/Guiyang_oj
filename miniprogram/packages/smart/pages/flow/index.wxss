@@ -313,6 +313,13 @@
   font-weight: 700;
 }
 
+.subscribe-btn {
+  margin-bottom: 24rpx;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
 .home-btn {
   margin-top: 24rpx;
   background: rgba(255, 255, 255, 0.16);

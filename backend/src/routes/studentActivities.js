@@ -775,6 +775,25 @@ router.post('/:id/answers',
         });
       }
 
+      // UGC 内容安全（计划书第8章/M4）：问答题文本提交前 msgSecCheck。
+      // 微信凭据未配置或学生未绑定微信时跳过（fail-open），不阻塞答题主链路。
+      if (typeof req.body.answer === 'string' && req.body.answer.trim()) {
+        try {
+          const wechatApi = require('../services/wechat/wechatApi');
+          if (wechatApi.isConfigured()) {
+            const binding = await query('SELECT openid FROM user_wechat_bindings WHERE user_id = $1', [req.user.id]);
+            if (binding.rows[0]) {
+              const check = await wechatApi.msgSecCheck(binding.rows[0].openid, req.body.answer);
+              if (check && check.suggest === 'risky') {
+                return res.status(400).json({ success: false, message: '回答内容包含违规信息，请修改后提交' });
+              }
+            }
+          }
+        } catch (secErr) {
+          console.warn('msgSecCheck skipped:', secErr && secErr.message);
+        }
+      }
+
       const activityId = parseInt(req.params.id);
       const studentId = req.user.id;
       const { questionId, answer } = req.body;

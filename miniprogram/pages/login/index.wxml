@@ -8,34 +8,80 @@
   </view>
 
   <view class="auth-card">
-    <van-cell-group border="{{ false }}">
-      <van-field
-        label="账号"
-        title-width="72rpx"
-        placeholder="手机号或用户名"
-        value="{{ username }}"
-        data-field="username"
-        bind:change="onFieldChange"
-        clearable
-        left-icon="user-o"
-      />
-      <van-field
-        label="密码"
-        title-width="72rpx"
-        password
-        placeholder="请输入密码"
-        value="{{ password }}"
-        data-field="password"
-        bind:change="onFieldChange"
-        left-icon="lock"
-      />
-    </van-cell-group>
+    <!-- 密码登录模式 -->
+    <block wx:if="{{mode === 'password'}}">
+      <van-cell-group border="{{ false }}">
+        <van-field
+          label="账号"
+          title-width="72rpx"
+          placeholder="手机号或用户名"
+          value="{{ username }}"
+          data-field="username"
+          bind:change="onFieldChange"
+          clearable
+          left-icon="user-o"
+        />
+        <van-field
+          label="密码"
+          title-width="72rpx"
+          password
+          placeholder="请输入密码"
+          value="{{ password }}"
+          data-field="password"
+          bind:change="onFieldChange"
+          left-icon="lock"
+        />
+      </van-cell-group>
 
-    <van-button type="primary" block round loading="{{ loading }}" bind:click="onLogin" custom-class="login-btn">
-      登 录
-    </van-button>
+      <van-button type="primary" block round loading="{{ loading }}" bind:click="onLogin" custom-class="login-btn">
+        登 录
+      </van-button>
 
-    <view class="auth-tip">首次登录即完成账号绑定，之后可快捷进入</view>
+      <view class="wx-divider">
+        <view class="wx-divider-line"></view>
+        <text>或</text>
+        <view class="wx-divider-line"></view>
+      </view>
+
+      <van-button block round plain type="info" custom-class="wx-btn" loading="{{ wxLoading }}" bind:click="onWxLogin">
+        微信一键登录
+      </van-button>
+
+      <view class="auth-tip">首次登录即完成账号绑定，之后可快捷进入</view>
+    </block>
+
+    <!-- 微信绑定模式（未绑定微信首次登录） -->
+    <block wx:else>
+      <view class="auth-note">首次微信登录，验证已有账号后即可一键进入</view>
+      <van-cell-group border="{{ false }}">
+        <van-field
+          label="账号"
+          title-width="72rpx"
+          placeholder="手机号或用户名"
+          value="{{ username }}"
+          data-field="username"
+          bind:change="onFieldChange"
+          clearable
+          left-icon="user-o"
+        />
+        <van-field
+          label="密码"
+          title-width="72rpx"
+          password
+          placeholder="请输入密码"
+          value="{{ password }}"
+          data-field="password"
+          bind:change="onFieldChange"
+          left-icon="lock"
+        />
+      </van-cell-group>
+
+      <van-button type="primary" block round loading="{{ loading }}" bind:click="onBind" custom-class="login-btn">
+        绑定并登录
+      </van-button>
+
+      <view class="auth-tip" bind:tap="switchMode">返回密码登录</view>
+    </block>
   </view>
 
   <view class="auth-footer" bind:tap="goRegister">

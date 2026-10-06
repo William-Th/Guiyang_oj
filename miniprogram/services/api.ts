@@ -24,6 +24,31 @@ export function logout() {
   return request<{ message: string }>('POST', '/auth/logout');
 }
 
+// ---------- 微信登录绑定（后端未配置凭据时返回 503 WECHAT_NOT_CONFIGURED） ----------
+
+export interface WechatLoginResponse {
+  success: boolean;
+  needBind?: boolean;
+  bindTicket?: string;
+  message?: string;
+  token?: string;
+  refreshToken?: string;
+  user?: UserInfo;
+}
+
+export function wechatLogin(code: string) {
+  return request<WechatLoginResponse>('POST', '/auth/wechat', { code }, { auth: false });
+}
+
+export function wechatBind(bindTicket: string, username: string, password: string) {
+  return request<LoginResponse>('POST', '/auth/wechat/bind', { bindTicket, username, password }, { auth: false });
+}
+
+/** 订阅消息配额上报（接受累加配额、拒绝清零） */
+export function recordSubscribe(templateKey: string, accepted: boolean) {
+  return request<{ success: boolean }>('POST', '/mp/subscribe-record', { templateKey, accepted });
+}
+
 // ---------- 学生：首页/成长 ----------
 
 export interface StreakInfo {

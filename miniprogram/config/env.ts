@@ -6,3 +6,12 @@
  */
 export const BASE_URL = 'http://localhost:3003';
 export const API_PREFIX = '/api';
+
+/**
+ * 微信订阅消息模板 ID（小程序后台申请后填入；留空则相关入口自动隐藏）。
+ * 后端对应环境变量：WECHAT_APPID / WECHAT_SECRET / MP_SUBSCRIBE_TEMPLATE_STREAK
+ */
+export const SUBSCRIBE_TEMPLATES = {
+  streak: '',
+  deadline: '',
+};

@@ -142,6 +142,7 @@ app.use('/api/admin', require('./routes/admin')); // 管理员管理功能
 app.use('/api/activities', require('./routes/activities')); // New activity system (测评/练习)
 app.use('/api/student/activities', require('./routes/studentActivities')); // 学生答题系统
 app.use('/api/mp', require('./routes/mp')); // 小程序聚合接口（只读包装）
+app.use('/api/auth', require('./routes/authWechat')); // 微信登录绑定（env 未配置时优雅降级）
 app.use('/api/teacher/grading', require('./routes/grading')); // 教师评卷系统
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/question-bank', require('./routes/questionBank'));
@@ -290,5 +291,13 @@ const server = app.listen(PORT, async () => {
   } catch (error) {
     logger.error('Failed to initialize notification service:', error);
     console.error('⚠️  Notification service initialization failed');
+  }
+
+  // 小程序订阅消息调度器（微信凭据未配置时自动跳过）
+  try {
+    require('./services/wechat/subscribeScheduler').start();
+  } catch (error) {
+    logger.error('Failed to start subscribe scheduler:', error);
+    console.error('⚠️  订阅消息调度器启动失败:', error.message);
   }
 });
