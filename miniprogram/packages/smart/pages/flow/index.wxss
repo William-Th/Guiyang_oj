@@ -309,7 +309,8 @@
 .share-btn {
   --button-primary-background-color: #ffffff;
   --button-primary-border-color: #ffffff;
-  color: var(--mp-primary-dark);
+  /* Vant 内部 .van-button--primary 的白字与 custom-class 同优先级且后加载，必须 !important 钉住 */
+  color: #0284c7 !important;
   font-weight: 700;
 }
 
