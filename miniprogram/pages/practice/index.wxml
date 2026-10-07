@@ -83,10 +83,15 @@
             <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
             <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
           </view>
-          <view wx:if="{{item.canCancel}}" class="reg-cancel-row">
-            <van-button size="small" round bind:click="onCancelReg" data-activity-id="{{item.activityId}}">
-              取消报名
-            </van-button>
+          <view class="reg-cancel-row">
+            <van-button
+              wx:if="{{item.canCancel}}"
+              size="small"
+              round
+              bind:click="onCancelReg"
+              data-activity-id="{{item.activityId}}"
+            >取消报名</van-button>
+            <text wx:elif="{{item.cannotCancelReason}}" class="reg-cancel-reason">{{item.cannotCancelReason}}</text>
           </view>
         </view>
         <van-empty wx:if="{{registrationList.length === 0}}" description="暂无报名记录" />

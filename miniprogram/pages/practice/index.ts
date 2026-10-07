@@ -61,6 +61,7 @@ interface RegistrationItem {
   statusType: 'primary' | 'success' | 'danger' | 'warning' | 'default';
   metaText: string;
   canCancel: boolean;
+  cannotCancelReason: string;
 }
 
 function decorateRegistration(r: {
@@ -74,6 +75,8 @@ function decorateRegistration(r: {
   location_name?: string;
   exam_date?: string;
   exam_time_start?: string;
+  attempt_status?: string | null;
+  registration_end_time?: string | null;
 }): RegistrationItem {
   const cancelled = r.status === 'cancelled';
   const examDate = r.exam_date ? String(r.exam_date).slice(0, 10) : '';
@@ -82,6 +85,18 @@ function decorateRegistration(r: {
   if (r.subject) metaParts.push(r.subject);
   if (r.location_name) metaParts.push(r.location_name);
   if (examDate) metaParts.push(`${examDate}${timeRange}`);
+
+  // 取消限制：已开始作答 / 报名截止时间已过 → 不可取消（后端同校验兜底）
+  let cannotCancelReason = '';
+  if (r.attempt_status === 'in_progress' || r.attempt_status === 'completed') {
+    cannotCancelReason = '已开始作答，不可取消';
+  } else if (
+    r.registration_end_time &&
+    new Date(r.registration_end_time).getTime() < Date.now()
+  ) {
+    cannotCancelReason = '报名截止时间已过，不可取消';
+  }
+
   return {
     id: r.id,
     activityId: r.activity_id,
@@ -89,7 +104,8 @@ function decorateRegistration(r: {
     statusText: cancelled ? '已取消' : '已报名',
     statusType: cancelled ? 'default' : 'primary',
     metaText: metaParts.join(' · '),
-    canCancel: !cancelled,
+    canCancel: !cancelled && !cannotCancelReason,
+    cannotCancelReason,
   };
 }
 

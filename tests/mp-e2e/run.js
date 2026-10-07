@@ -562,6 +562,21 @@ async function main() {
       const againItem = again.registrable.find((i) => i.title === '【E2E】小程序测评报名');
       firePageMethod('onRegister', { currentTarget: { dataset: { id: againItem.id } } });
       await waitFor((d) => !(d.registrable || []).some((i) => i.id === againItem.id), 15000, '重报成功刷新');
+      // 取消限制：进行中测评（已作答且报名截止已过）不可取消
+      await mini.switchTab('/pages/practice/index');
+      await sleep(1200);
+      await mini.evaluate(() => {
+        const p = getCurrentPages()[getCurrentPages().length-1];
+        p.onTabChange({ detail: { index: 2 } });
+      });
+      const regs2 = await waitFor(
+        (d) => d.loading === false && (d.registrationList || []).some((i) => i.title === '【E2E】小程序测评进行中'),
+        20000,
+        '我的报名重新加载'
+      );
+      const locked = regs2.registrationList.find((i) => i.title === '【E2E】小程序测评进行中');
+      assert(locked && !locked.canCancel, '已作答/截止测评不应显示取消按钮');
+      assert(String(locked.cannotCancelReason || '').includes('不可取消'), '取消限制原因未显示');
     });
 
   } finally {

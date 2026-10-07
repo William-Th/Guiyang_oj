@@ -514,6 +514,33 @@ router.post('/activities/:activityId/register/cancel',
         return res.status(404).json({ success: false, message: '未找到报名记录' });
       }
 
+      // 校验一：报名截止时间已过，不可取消（防止考试窗已定后临时退出）
+      const activityRow = await query(
+        'SELECT registration_end_time FROM activities WHERE id = $1',
+        [activityId]
+      );
+      const regEnd = activityRow.rows[0]?.registration_end_time;
+      if (regEnd && new Date(regEnd) < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: '报名截止时间已过，无法取消报名'
+        });
+      }
+
+      // 校验二：已开始作答（含已交卷）不可取消
+      const attempt = await query(
+        `SELECT id, status FROM student_activities
+         WHERE student_id = $1 AND activity_id = $2
+         LIMIT 1`,
+        [studentId, activityId]
+      );
+      if (attempt.rows[0]) {
+        return res.status(400).json({
+          success: false,
+          message: '该测评已开始作答，无法取消报名'
+        });
+      }
+
       // 取消报名
       await AssessmentRegistration.cancel(registration.id, {
         reason,
@@ -549,9 +576,31 @@ router.get('/assessments/my-registrations',
         offset: offset ? parseInt(offset) : null
       });
 
+      // 补充作答状态与报名截止时间：前端据此判断能否取消报名
+      const withMeta = await Promise.all(
+        registrations.map(async (r) => {
+          const meta = await query(
+            `SELECT
+               (SELECT sa.status FROM student_activities sa
+                WHERE sa.student_id = ar.student_id AND sa.activity_id = ar.activity_id
+                LIMIT 1) AS attempt_status,
+               a.registration_end_time
+             FROM assessment_registrations ar
+             JOIN activities a ON a.id = ar.activity_id
+             WHERE ar.id = $1`,
+            [r.id]
+          );
+          return {
+            ...r,
+            attempt_status: meta.rows[0]?.attempt_status ?? null,
+            registration_end_time: meta.rows[0]?.registration_end_time ?? null
+          };
+        })
+      );
+
       res.json({
         success: true,
-        registrations
+        registrations: withMeta
       });
     } catch (error) {
       console.error('Get my registrations error:', error);

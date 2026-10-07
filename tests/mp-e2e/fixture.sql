@@ -178,15 +178,18 @@ SET registration_start_time = NOW() - INTERVAL '3 day',
     end_time = NOW() + INTERVAL '1 day'
 WHERE title = '【E2E】小程序测评进行中';
 
+-- 幂等：无论历史状态（confirmed/cancelled/残留），固定为 confirmed
 INSERT INTO assessment_registrations (activity_id, student_id, status, confirmed_at)
 SELECT a.id, u.id, 'confirmed', NOW()
 FROM activities a
 CROSS JOIN (SELECT id FROM users WHERE username = '13800138003') u
 WHERE a.title = '【E2E】小程序测评进行中'
-  AND NOT EXISTS (
-    SELECT 1 FROM assessment_registrations r
-    WHERE r.activity_id = a.id AND r.student_id = u.id
-  );
+ON CONFLICT (activity_id, student_id) DO UPDATE SET
+  status = 'confirmed', cancelled_at = NULL, cancel_reason = NULL, cancelled_by = NULL;
+
+-- 报名活动的报名行每轮清除（流程⑬需从未报名态开始：报名 → 拦截 → 重报）
+DELETE FROM assessment_registrations
+WHERE activity_id = (SELECT id FROM activities WHERE title = '【E2E】小程序测评报名');
 
 -- 给进行中测评绑 2 道单选题（列表可点入作答，与流程③同源选题）
 INSERT INTO activity_questions (activity_id, question_id, order_index, score)

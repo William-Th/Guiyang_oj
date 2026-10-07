@@ -206,6 +206,8 @@ export function getActivityResult(id: number) {
 // ---------- 测评报名（复用 /api/assessmentRegistration） ----------
 
 export interface MyRegistration {
+  attempt_status?: string | null;
+  registration_end_time?: string | null;
   id: number;
   activity_id: number;
   status?: string; // registered | cancelled

@@ -47,3 +47,8 @@
 .item-locked {
   opacity: 0.62;
 }
+
+.reg-cancel-reason {
+  font-size: 22rpx;
+  color: #9ca3af;
+}
