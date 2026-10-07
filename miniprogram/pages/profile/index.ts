@@ -20,6 +20,7 @@ Page({
     roleText: '',
     isAdmin: false,
     isParent: false,
+    isStudent: false,
     version: '0.1.0',
   },
 
@@ -30,6 +31,7 @@ Page({
 ).getTabBar?.()?.setActive?.('/pages/profile/index');
     const user = getUser() ?? { id: 0, username: '', role: '' };
     const isParent = user.role === 'parent';
+    const isStudent = user.role === 'student';
     const name = user.realName || user.username || '';
     this.setData({
       user,
@@ -37,6 +39,7 @@ Page({
       roleText: ROLE_TEXT[user.role] ?? user.role,
       isAdmin: !isParent && isAdmin(),
       isParent,
+      isStudent,
     });
   },
 
