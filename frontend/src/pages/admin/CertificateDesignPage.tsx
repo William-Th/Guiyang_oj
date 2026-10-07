@@ -175,24 +175,24 @@ const CertificateDesignPage: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
-      width: 260,
+      width: 310,
       render: (_: unknown, record: CertificateDesign) => (
-        <Space>
+        <Space size={0} wrap>
           <Tooltip title="预览（示例数据 PDF）">
-            <Button size="small" icon={<EyeOutlined />} onClick={() => handlePreview(record)}>
+            <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => handlePreview(record)}>
               预览
             </Button>
           </Tooltip>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEditor(record)}>
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEditor(record)}>
             编辑
           </Button>
           {!record.is_default && (
-            <Button size="small" icon={<StarOutlined />} onClick={() => handleSetDefault(record)}>
-              设为默认
+            <Button type="link" size="small" icon={<StarOutlined />} onClick={() => handleSetDefault(record)}>
+              设默认
             </Button>
           )}
           {!record.is_default && (
-            <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record)}>
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record)}>
               删除
             </Button>
           )}

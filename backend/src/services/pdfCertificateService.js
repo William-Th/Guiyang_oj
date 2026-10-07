@@ -146,6 +146,10 @@ class PDFCertificateService {
 
   /**
    * 渲染证书内容到 PDFDocument（设计配置驱动）
+   *
+   * 排版约定（勿改回）：所有居中文本一律 x=0 + width=pageW——PDFKit 在省略
+   * width 时按「x 到右边距」计算文本区域，x=0 与 x=80 的居中线会差 40pt，
+   * 历史事故：姓名与正文两套中心线错位。
    */
   _renderCertificate(doc, data, design) {
     const pageW = doc.page.width;
@@ -170,56 +174,68 @@ class PDFCertificateService {
     doc
       .fontSize(14)
       .fillColor('#888888')
-      .text('GUISYANG CITY PRIMARY SCHOOL ASSESSMENT', 0, 52, { align: 'center' });
+      .text('GUISYANG CITY PRIMARY SCHOOL ASSESSMENT', 0, 54, { width: pageW, align: 'center' });
 
     doc.font('CN-Bold');
     doc
       .fontSize(32)
       .fillColor(design.titleColor)
-      .text(design.title, 0, 72, { align: 'center' });
+      .text(design.title, 0, 78, { width: pageW, align: 'center' });
     doc.font('CN');
 
     doc
-      .fontSize(24)
+      .fontSize(22)
       .fillColor(design.subtitleColor)
-      .text(design.subtitle, 0, 110, { align: 'center' });
+      .text(design.subtitle, 0, 122, { width: pageW, align: 'center' });
 
     // 分隔线
+    const lineY = 162;
     doc
-      .moveTo(120, 145)
-      .lineTo(pageW - 120, 145)
+      .moveTo(120, lineY)
+      .lineTo(pageW - 120, lineY)
       .lineWidth(1)
       .strokeColor(design.subtitleColor)
       .stroke();
 
-    // ---------- 正文区域 ----------
-    const contentY = 170;
+    // ---------- 正文区域（垂直居中带：分隔线与页脚之间） ----------
     doc
       .fontSize(16)
       .fillColor('#333333')
-      .text('兹证明', 80, contentY, { align: 'center' });
+      .text('兹证明', 0, 196, { width: pageW, align: 'center' });
 
-    doc.font('CN-Bold');
+    // 姓名与「同学」同行：PDFKit continued 跨字号不按基线对齐（小字会浮到行顶），
+    // 这里手动测宽居中拼接，同学按 26pt 行的基线补 8pt 顶偏移
+    const studentName = data.studentName || '学生';
+    doc.font('CN-Bold').fontSize(26);
+    const nameWidth = doc.widthOfString(studentName);
+    doc.font('CN').fontSize(16);
+    const classmateWidth = doc.widthOfString('同学');
+    const rowGap = 8;
+    const rowStartX = (pageW - (nameWidth + rowGap + classmateWidth)) / 2;
+    const nameY = 228;
     doc
+      .font('CN-Bold')
       .fontSize(26)
       .fillColor(design.accentColor)
-      .text(data.studentName || '学生', 0, contentY + 30, { align: 'center' });
-    doc.font('CN');
-
+      .text(studentName, rowStartX, nameY, { width: nameWidth + 4, lineBreak: false });
     doc
+      .font('CN')
       .fontSize(16)
       .fillColor('#333333')
-      .text('同学', 0, contentY + 60, { align: 'center' });
+      .text('同学', rowStartX + nameWidth + rowGap, nameY + 8, {
+        width: classmateWidth + 4,
+        lineBreak: false
+      });
 
     doc
       .fontSize(15)
       .fillColor('#555555')
-      .text(`在「${data.examName || '测评活动'}」中表现优异，成绩合格`, 80, contentY + 90, { align: 'center' });
+      .text(`在「${data.examName || '测评活动'}」中表现优异，成绩合格`, 0, 288, { width: pageW, align: 'center' });
 
     // ---------- 成绩区域（带背景框） ----------
-    const scoreBoxY = contentY + 130;
-    const scoreBoxH = 70;
-    const scoreBoxW = 400;
+    const scoreBoxY = 326;
+    const scoreBoxH = 80;
+    const scoreBoxW = 420;
     const scoreBoxX = (pageW - scoreBoxW) / 2;
 
     doc.fillColor('#f0f7ff').roundedRect(scoreBoxX, scoreBoxY, scoreBoxW, scoreBoxH, 8).fill();
@@ -235,7 +251,7 @@ class PDFCertificateService {
     doc
       .fontSize(14)
       .fillColor('#666666')
-      .text('获得成绩：', scoreBoxX + 20, scoreBoxY + 12, { continued: true })
+      .text('获得成绩：', scoreBoxX + 24, scoreBoxY + 12, { continued: true })
       .fontSize(28)
       .fillColor(design.accentColor)
       .text(`${data.score || 0} 分`);
@@ -243,7 +259,7 @@ class PDFCertificateService {
     doc
       .fontSize(14)
       .fillColor('#666666')
-      .text('等级评定：', scoreBoxX + 20, scoreBoxY + 44, { continued: true })
+      .text('等级评定：', scoreBoxX + 24, scoreBoxY + 50, { continued: true })
       .fillColor(gradeInfo.color)
       .text(gradeInfo.label);
 
