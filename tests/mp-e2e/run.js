@@ -369,12 +369,23 @@ async function main() {
       await login(TEACHER, 'pages/home/index');
       const home = await waitFor((d) => d.role === 'teacher' && d.teacherReviewPending >= 1, 20000, '教师首页待审角标');
       assert(home.teacherReviewPending >= 1, '教师首页未统计到夹具待审题');
-      await mini.navigateTo('/packages/admin/pages/review/index');
+      // 真实点透首页待办卡（bindtap 事件层验证——曾因 bind:click 误用在原生 view 上整层失效，协议导航测不出）
+      const homePage = await mini.currentPage();
+      const todoCard = await homePage.$('.teacher-todo');
+      assert(todoCard, '首页未找到题目审核待办卡');
+      await todoCard.tap();
       await waitForRoute('pages/review/index');
       let rd = await waitFor((d) => d.loading === false && (d.list || []).length > 0, 20000, '待审列表加载');
       const before = rd.stats.approved;
       const item = rd.list.find((i) => String(i.content || '').includes('【E2E】审核流测试题'));
       assert(item, '夹具待审题未出现在列表');
+      // 真实点透展开详情（首次 .review-head 命中列表第一题）
+      const reviewPage = await mini.currentPage();
+      const head = await reviewPage.$('.review-head');
+      assert(head, '审核页未找到题目卡头');
+      await head.tap();
+      await waitFor((d) => !!(d.list || []).some((i) => i.expanded), 10000, '展开详情');
+      await head.tap(); // 收起还原，不干扰后续断言
       // wx.showModal 原生确认弹窗 automator 点不到：mock 成自动确认
       await mini.mockWxMethod('showModal', { confirm: true, cancel: false });
       firePageMethod('onApprove', { currentTarget: { dataset: { id: item.id } } });

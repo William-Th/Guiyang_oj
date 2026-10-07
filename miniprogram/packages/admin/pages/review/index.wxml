@@ -21,7 +21,7 @@
 
   <block wx:if="{{!loading}}">
     <view wx:for="{{list}}" wx:key="id" class="card review-item">
-      <view class="review-head" bind:click="onToggle" data-id="{{item.id}}">
+      <view class="review-head" bindtap="onToggle" data-id="{{item.id}}">
         <view class="review-title-wrap">
           <van-tag type="primary">{{item.typeText}}</van-tag>
           <text class="review-subject">{{item.subject}}{{item.grade ? ' · ' + item.grade : ''}}</text>

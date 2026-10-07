@@ -61,7 +61,7 @@
         出题、组卷、批改、学情分析等教学功能请使用电脑端网页操作。
       </view>
     </view>
-    <view class="card teacher-todo" bind:click="goReview">
+    <view class="card teacher-todo" bindtap="goReview">
       <view class="teacher-todo-left">
         <view class="teacher-todo-title">题目审核</view>
         <view wx:if="{{teacherReviewPending > 0}}" class="teacher-todo-sub">
