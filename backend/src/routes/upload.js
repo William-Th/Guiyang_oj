@@ -245,6 +245,64 @@ router.post('/question-image', authMiddleware, questionUpload.single('image'), a
   }
 });
 
+// E-CERT 证书背景图上传配置（5MB 上限，横向大图）
+const certBgDir = path.join(__dirname, '../../uploads/certificates/bg');
+if (!fs.existsSync(certBgDir)) {
+  fs.mkdirSync(certBgDir, { recursive: true });
+}
+const certBgStorage = multer.diskStorage({
+  destination: function (req, file, cb) { cb(null, certBgDir); },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'cert-bg-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const certBgUpload = multer({
+  storage: certBgStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: fileFilter
+});
+
+/**
+ * 上传证书背景图
+ * POST /api/upload/certificate-background
+ * 仅 system_admin / municipal_admin（证书设计页同权限）
+ */
+router.post('/certificate-background', authMiddleware, certBgUpload.single('image'), async (req, res) => {
+  try {
+    if (!['system_admin', 'municipal_admin'].includes(req.user.role)) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(403).json({ success: false, message: '没有权限上传证书背景图' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '未选择文件' });
+    }
+
+    if (rejectInvalidImageUpload(req, res)) return;
+
+    const fileUrl = `/uploads/certificates/bg/${req.file.filename}`;
+
+    logger.info('Certificate background uploaded', {
+      userId: req.user.id,
+      filename: req.file.filename,
+      size: req.file.size
+    });
+
+    res.json({
+      success: true,
+      message: '背景图上传成功',
+      data: { url: fileUrl, filename: req.file.filename, size: req.file.size }
+    });
+  } catch (error) {
+    logger.error('Upload certificate background error:', error);
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
+    }
+    res.status(500).json({ success: false, message: error.message || '上传失败' });
+  }
+});
+
 // E1 头像上传配置（500KB 上限）
 const avatarDir = path.join(__dirname, '../../uploads/avatars');
 if (!fs.existsSync(avatarDir)) {

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Card, Table, Button, Space, Tag, Modal, Form, Input, Switch, Alert, Typography, Tooltip,
+  Card, Table, Button, Space, Tag, Modal, Form, Input, Switch, Alert, Typography, Tooltip, Upload,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, StarOutlined, StarFilled,
+  PictureOutlined,
 } from '@ant-design/icons';
+import type { UploadFile, UploadProps } from 'antd';
 import { message } from '../../lib/feedback';
 import api from '@/services/api';
 
@@ -60,6 +62,7 @@ const CertificateDesignPage: React.FC = () => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<CertificateDesign | null>(null);
   const [saving, setSaving] = useState(false);
+  const [bgFileList, setBgFileList] = useState<UploadFile[]>([]);
   const [form] = Form.useForm();
 
   const load = useCallback(async () => {
@@ -81,7 +84,56 @@ const CertificateDesignPage: React.FC = () => {
   const openEditor = (design: CertificateDesign | null) => {
     setEditing(design);
     form.setFieldsValue(design ? { ...EMPTY_FORM, ...design } : EMPTY_FORM);
+    setBgFileList(
+      design?.background_image_url
+        ? [{ uid: design.background_image_url, name: '背景图', status: 'done', url: design.background_image_url }]
+        : []
+    );
     setEditorOpen(true);
+  };
+
+  /** 背景图上传：成功后把返回 URL 写进表单字段（提交时随设计保存） */
+  const handleBgUpload: UploadProps['customRequest'] = async (options) => {
+    const { file, onSuccess, onError } = options;
+    const formData = new FormData();
+    formData.append('image', file as File);
+    try {
+      const response = await api.post('/upload/certificate-background', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (response.data?.success) {
+        const url: string = response.data.data.url;
+        form.setFieldsValue({ background_image_url: url });
+        setBgFileList([{ uid: url, name: '背景图', status: 'done', url }]);
+        message.success('背景图上传成功');
+        onSuccess?.(response.data);
+      } else {
+        message.error(response.data?.message || '背景图上传失败');
+        onError?.(new Error(response.data?.message || '上传失败'));
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      message.error(msg || '背景图上传失败');
+      onError?.(err as Error);
+    }
+  };
+
+  const handleBgRemove = () => {
+    setBgFileList([]);
+    form.setFieldsValue({ background_image_url: '' });
+  };
+
+  const beforeBgUpload = (file: File) => {
+    const okType = /image\/(jpeg|jpg|png|gif|webp)/.test(file.type);
+    if (!okType) {
+      message.error('只支持 jpg / png / gif / webp 图片');
+      return Upload.LIST_IGNORE;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('背景图不能超过 5MB');
+      return Upload.LIST_IGNORE;
+    }
+    return true;
   };
 
   const handleSave = async () => {
@@ -268,12 +320,29 @@ const CertificateDesignPage: React.FC = () => {
             </Space>
           </Form.Item>
 
+          <Form.Item name="background_image_url" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item
-            name="background_image_url"
             label="背景图（可选）"
-            extra="填写站内 /uploads/... 图片路径（横向，建议 1123×794 以上）；留空则使用背景色。素材上传功能随后续版本提供。"
+            extra="横向大图效果最佳；上传后整页铺满，文字自动叠加其上；不传则使用背景色。"
           >
-            <Input placeholder="/uploads/certificates/bg.png" maxLength={500} />
+            <Upload
+              listType="picture-card"
+              maxCount={1}
+              fileList={bgFileList}
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              customRequest={handleBgUpload}
+              beforeUpload={beforeBgUpload}
+              onRemove={handleBgRemove}
+            >
+              {bgFileList.length === 0 && (
+                <Space direction="vertical" size={0} style={{ padding: '8px 0' }}>
+                  <PictureOutlined style={{ fontSize: 22, color: '#0ea5e9' }} />
+                  <span style={{ fontSize: 12 }}>上传背景图</span>
+                </Space>
+              )}
+            </Upload>
           </Form.Item>
 
           <Form.Item name="is_default" label="设为默认设计" valuePropName="checked">
