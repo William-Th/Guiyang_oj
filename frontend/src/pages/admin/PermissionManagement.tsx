@@ -51,7 +51,6 @@ const PermissionManagement: React.FC = () => {
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
 
   useEffect(() => {
@@ -163,22 +162,6 @@ const PermissionManagement: React.FC = () => {
       loadPermissions();
     } catch (error: any) {
       message.error(error.response?.data?.error || '删除失败');
-    }
-  };
-
-  const handleBatchDelete = async () => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('请先选择要删除的权限');
-      return;
-    }
-
-    try {
-      const result = await permissionApi.batchDeletePermissions(selectedRowKeys as number[]);
-      message.success(result.message || '批量删除完成');
-      setSelectedRowKeys([]);
-      loadPermissions();
-    } catch (error: any) {
-      message.error(error.response?.data?.error || '批量删除失败');
     }
   };
 
@@ -491,22 +474,6 @@ const PermissionManagement: React.FC = () => {
         title="权限管理"
         extra={
           <Space>
-            {selectedRowKeys.length > 0 && (
-              <Popconfirm
-                title={`确定要批量删除选中的 ${selectedRowKeys.length} 个权限吗？`}
-                description="只有已失效的权限会被删除"
-                onConfirm={handleBatchDelete}
-                okText="确定"
-                cancelText="取消"
-              >
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                >
-                  批量删除 ({selectedRowKeys.length})
-                </Button>
-              </Popconfirm>
-            )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -537,14 +504,6 @@ const PermissionManagement: React.FC = () => {
               dataSource={permissions}
               rowKey="id"
               scroll={{ x: 1560 }}
-              rowSelection={{
-                selectedRowKeys,
-                onChange: (keys) => setSelectedRowKeys(keys),
-                getCheckboxProps: (record: Permission) => ({
-                  // 只允许选择已失效的权限进行批量删除
-                  disabled: !isPermissionInactive(record),
-                }),
-              }}
               pagination={{
                 showSizeChanger: true,
                 showTotal: (total) => `共 ${total} 条权限记录`,
@@ -562,7 +521,7 @@ const PermissionManagement: React.FC = () => {
         onCancel={() => setGrantModalVisible(false)}
         confirmLoading={submitting}
         width={600}
-        okText="确定"
+        okText={editingPermission ? '保存修改' : '确定'}
         cancelText="取消"
       >
         <Form
@@ -593,6 +552,7 @@ const PermissionManagement: React.FC = () => {
             label="权限类型"
             name="permission_type"
             rules={[{ required: true, message: '请选择权限类型' }]}
+            extra={editingPermission ? '权限类型创建后不可更改；如需变更类型，请撤销本条权限后重新授予' : undefined}
           >
             <Select placeholder="请选择权限类型" disabled={!!editingPermission}>
               {getAvailablePermissionTypes().map(type => (
