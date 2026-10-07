@@ -45,9 +45,10 @@ Page({
     contentHtml: '',
     timeLimit: 0,
     memoryLimit: 0,
-    languages: [] as JudgeLanguage[],
+    /** picker 数据源：{id,name} 对象数组（字符串数组配 range-key 会渲染 undefined） */
+    usableLanguages: [] as JudgeLanguage[],
     languageIndex: 0,
-    supportedIds: [] as string[],
+    templateCode: '',
     samples: [] as SampleCase[],
     code: '',
     cursor: 0,
@@ -72,8 +73,23 @@ Page({
     const questionId = Number(query.questionId || 0);
     // student_activities.id：judge-service 的 student_activity_id 外键指向它
     this.studentActivityId = Number(query.studentActivityId || 0);
+    const submissionId = Number(query.submissionId || 0);
     this.setData({ activityId, questionId });
     this.load(activityId, questionId);
+    // 已提交过的题再次进入：直接展示上次判题结果
+    if (submissionId) {
+      this.lastSubmissionId = submissionId;
+      getStatus(submissionId)
+        .then((res) => {
+          const result = this.normalizeResult(res.data);
+          if (result.status === 'pending' || result.status === 'judging') return;
+          const cfg = STATUS_TEXT[result.status] || { text: result.status, type: 'primary' as const };
+          this.setData({ result, statusText: cfg.text, statusType: cfg.type });
+        })
+        .catch(() => {
+          /* 结果拉取失败不打扰 */
+        });
+    }
   },
 
   /** 切后台暂停轮询（计划书 6.3），回前台恢复剩余次数 */
@@ -111,19 +127,21 @@ Page({
         return;
       }
       const languages = langRes?.data ?? [{ id: 'cpp', name: 'C++', extension: '.cpp' }];
-      const supportedIds = ((raw.supported_languages as string[]) || ['cpp']).filter((id) =>
+      const supported = ((raw.supported_languages as string[]) || ['cpp']).filter((id) =>
         languages.some((l) => l.id === id)
       );
-      const usable = supportedIds.length > 0 ? supportedIds : languages.map((l) => l.id);
-      this.currentRaw = raw;
+      const usableIds = supported.length > 0 ? supported : languages.map((l) => l.id);
+      const usableLanguages = usableIds.map(
+        (id) => languages.find((l) => l.id === id) ?? { id, name: id, extension: '' }
+      );
       this.setData({
         loading: false,
         contentHtml: raw.content || '',
         timeLimit: Number(raw.time_limit ?? 1000),
         memoryLimit: Number(raw.memory_limit ?? 256),
-        languages,
-        supportedIds: usable,
+        usableLanguages,
         languageIndex: 0,
+        templateCode: (raw.code_template as string) || '',
         code: (raw.code_template as string) || '',
       });
       const sampleRes = await getSamples(questionId).catch(() => null);
@@ -163,19 +181,16 @@ Page({
   },
 
   onInjectTemplate() {
-    const q = this.currentRaw;
-    if (q && q.code_template) {
-      this.setData({ code: String(q.code_template), cursor: 0 });
+    const tpl = this.data.templateCode;
+    if (tpl) {
+      this.setData({ code: tpl, cursor: 0 });
       wx.showToast({ title: '已注入模板', icon: 'none' });
     }
   },
 
-  currentRaw: null as QuestionRaw | null,
-
   languageId(): string {
-    const { supportedIds, languages, languageIndex } = this.data;
-    const id = supportedIds[languageIndex] || languages[0]?.id || 'cpp';
-    return id;
+    const { usableLanguages, languageIndex } = this.data;
+    return usableLanguages[languageIndex]?.id ?? usableLanguages[0]?.id ?? 'cpp';
   },
 
   async onSubmit() {
@@ -205,6 +220,14 @@ Page({
     }
   },
 
+  /** judge-service 用例字段是 match——统一映射为 wxml 用的 passed */
+  normalizeResult(result: JudgeStatus): JudgeStatus {
+    return {
+      ...result,
+      testResults: (result.testResults ?? []).map((t) => ({ ...t, passed: t.match ?? t.passed ?? false })),
+    };
+  },
+
   schedulePoll() {
     if (this.pollTimer) clearTimeout(this.pollTimer);
     this.pollTimer = setTimeout(() => this.poll(), POLL_INTERVAL);
@@ -214,7 +237,7 @@ Page({
     if (!this.lastSubmissionId) return;
     try {
       const res = await getStatus(this.lastSubmissionId);
-      const result = res.data;
+      const result = this.normalizeResult(res.data);
       if (result.status === 'pending' || result.status === 'judging') {
         this.pollLeft -= 1;
         if (this.pollLeft <= 0) {

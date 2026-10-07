@@ -31,14 +31,14 @@
         <text class="sec-title">编写代码</text>
         <picker
           mode="selector"
-          range="{{supportedIds}}"
-          range-key="id"
+          range="{{usableLanguages}}"
+          range-key="name"
           value="{{languageIndex}}"
           bindchange="onLanguageChange"
         >
           <view class="lang-picker">
             <van-icon name="arrow-down" size="24rpx" />
-            <text class="lang-text">{{supportedIds[languageIndex]}}</text>
+            <text class="lang-text">{{usableLanguages[languageIndex].name}}</text>
           </view>
         </picker>
       </view>

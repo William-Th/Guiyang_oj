@@ -475,12 +475,18 @@ async function main() {
       firePageMethod('goCodeEditor');
       await waitForRoute('pages/code/index');
       await waitFor((d) => d.loading === false, 20000, '编辑器加载');
+      // 反复运行会积累历史提交：记录进入时的 submissionId，只等「新」结果
+      const beforeId = ((await getPageData()).result || {}).submissionId || 0;
       // 注入 python 解（覆盖模板）
       const code = 'a,b=map(int,input().split())\nprint(a+b)';
       await pageSetData({ code, cursor: code.length });
       // 提交并等判题终态
       firePageMethod('onSubmit');
-      const rd = await waitFor((d) => !!d.result && d.judging === false, 60000, '判题终态');
+      const rd = await waitFor(
+        (d) => !!d.result && d.judging === false && (d.result.submissionId || 0) > beforeId,
+        60000,
+        '判题终态'
+      );
       assert(rd.result.status === 'accepted', `判题结果异常: ${rd.result.status}`);
       assert(rd.result.score >= 10, `判题得分异常: ${rd.result.score}`);
       // 返回答题页：答案已回填

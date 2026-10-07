@@ -205,8 +205,9 @@ Page({
 
   goCodeEditor() {
     const q = this.currentQuestion();
+    const submitted = this.data.codeSubmits[String(q.question_id)] || 0;
     wx.navigateTo({
-      url: `/packages/practice/pages/code/index?activityId=${this.activityId}&studentActivityId=${this.studentActivityId || 0}&questionId=${q.question_id}`,
+      url: `/packages/practice/pages/code/index?activityId=${this.activityId}&studentActivityId=${this.studentActivityId || 0}&questionId=${q.question_id}&submissionId=${submitted}`,
     });
   },
 

@@ -20,7 +20,9 @@ export interface SampleCase {
 
 export interface TestResult {
   index?: number;
+  /** judge-service 用 match，此处归一为 passed */
   passed?: boolean;
+  match?: boolean;
   status?: string;
   input?: string;
   expected_output?: string;
