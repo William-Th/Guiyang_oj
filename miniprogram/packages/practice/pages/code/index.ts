@@ -220,11 +220,25 @@ Page({
     }
   },
 
-  /** judge-service 用例字段是 match——统一映射为 wxml 用的 passed */
+  /** 队列缓存与 DB 两条返回路径字段名不一致，统一归一：
+   *  满分 maxScore→totalScore、总耗时 totalTime→executionTime；
+   *  用例通过判定：match（DB 路径）→ status==='accepted'（队列缓存路径把
+   *  match 剥掉了，用例级 status 在）→ passed（兜底） */
   normalizeResult(result: JudgeStatus): JudgeStatus {
+    const anyResult = result as JudgeStatus & { maxScore?: number; totalTime?: number };
     return {
       ...result,
-      testResults: (result.testResults ?? []).map((t) => ({ ...t, passed: t.match ?? t.passed ?? false })),
+      totalScore: result.totalScore ?? anyResult.maxScore,
+      executionTime: result.executionTime ?? anyResult.totalTime,
+      testResults: (result.testResults ?? []).map((t) => ({
+        ...t,
+        passed:
+          t.match !== undefined
+            ? t.match
+            : t.status
+              ? t.status === 'accepted'
+              : (t.passed ?? false),
+      })),
     };
   },
 
