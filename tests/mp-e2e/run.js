@@ -523,6 +523,30 @@ async function main() {
       const after = await waitFor((d) => (d.assessmentList || []).some((i) => i.title === '【E2E】小程序测评报名'), 20000, '已报名列表出现');
       const regd = after.assessmentList.find((i) => i.title === '【E2E】小程序测评报名');
       assert(regd && !regd.done, '报名后的测评状态异常');
+      // 取消 → 重报（重报走 cancelled 行复活分支，原实现 create 撞唯一约束 500）
+      await mini.switchTab('/pages/practice/index');
+      await sleep(1200);
+      await mini.evaluate(() => {
+        const p = getCurrentPages()[getCurrentPages().length-1];
+        p.onTabChange({ detail: { index: 2 } });
+      });
+      const regs = await waitFor((d) => d.loading === false && (d.registrationList || []).length > 0, 20000, '我的报名加载');
+      const mine = regs.registrationList.find((i) => i.title === '【E2E】小程序测评报名' && i.canCancel);
+      assert(mine, '我的报名未出现该测评');
+      // 取消确认是 wx.showModal 原生弹窗：mock 成自动确认
+      await mini.mockWxMethod('showModal', { confirm: true, cancel: false });
+      firePageMethod('onCancelReg', { currentTarget: { dataset: { activityId: mine.activityId } } });
+      await waitFor((d) => !(d.registrationList || []).some((i) => i.canCancel && i.title === '【E2E】小程序测评报名'), 15000, '取消报名刷新');
+      await mini.restoreWxMethod('showModal');
+      // 重报：回测评 tab 点报名
+      await mini.evaluate(() => {
+        const p = getCurrentPages()[getCurrentPages().length-1];
+        p.onTabChange({ detail: { index: 1 } });
+      });
+      const again = await waitFor((d) => (d.registrable || []).some((i) => i.title === '【E2E】小程序测评报名'), 15000, '取消后可报名区恢复');
+      const againItem = again.registrable.find((i) => i.title === '【E2E】小程序测评报名');
+      firePageMethod('onRegister', { currentTarget: { dataset: { id: againItem.id } } });
+      await waitFor((d) => !(d.registrable || []).some((i) => i.id === againItem.id), 15000, '重报成功刷新');
     });
 
   } finally {

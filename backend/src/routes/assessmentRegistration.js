@@ -458,7 +458,23 @@ router.post('/activities/:activityId/self-register',
         return res.status(400).json({ success: false, message: '您已报名此活动' });
       }
 
-      const reg = await AssessmentRegistration.create({
+      // 表有 (activity_id, student_id) 唯一约束且取消报名保留行——取消后重报走
+      // 复活更新，否则 create 撞唯一约束 500
+      let reg;
+      if (exist) {
+        reg = await AssessmentRegistration.updateStatus(exist.id, 'confirmed');
+        await query(
+          `UPDATE assessment_registrations
+           SET location_id = $2, cancelled_at = NULL, cancel_reason = NULL, cancelled_by = NULL
+           WHERE id = $1`,
+          [exist.id, location_id ?? null]
+        );
+        reg = (await AssessmentRegistration.findById(exist.id)) ?? reg;
+        res.json({ success: true, data: reg, message: '报名成功，可在"我的报名"中查看' });
+        return;
+      }
+
+      reg = await AssessmentRegistration.create({
         activity_id: activityId,
         student_id: req.user.id,
         location_id: location_id ?? null,
