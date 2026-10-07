@@ -1,6 +1,7 @@
 import { getActivityResult, ResultAnswer } from '../../../../services/activities';
 import { requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
+import { formatDateTime } from '../../../../utils/format';
 import {
   TYPE_TEXT,
   NormalOption,
@@ -138,7 +139,7 @@ Page({
         correctCount: stats?.correct_questions ?? 0,
         totalQuestions: stats?.total_questions ?? 0,
         usedTimeText: formatDuration(sa.started_at, sa.submit_time),
-        submittedAt: sa.submit_time ? String(sa.submit_time).slice(5, 16).replace('T', ' ') : '',
+        submittedAt: formatDateTime(sa.submit_time),
         canShow,
         publishText: res.result_publish_time
           ? String(res.result_publish_time).slice(5, 16).replace('T', ' ')

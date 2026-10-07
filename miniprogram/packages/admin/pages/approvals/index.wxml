@@ -37,7 +37,7 @@
         {{item.school_name || ''}}{{item.district_name ? ' · ' + item.district_name : ''}}{{item.grade ? ' · ' + item.grade : ''}}
       </view>
       <view class="approval-item-meta" wx:if="{{item.phone}}">手机号：{{item.phone}}</view>
-      <view class="approval-item-meta" wx:if="{{item.submitted_at}}">提交于 {{item.submitted_at}}</view>
+      <view class="approval-item-meta" wx:if="{{item.submittedAtText}}">提交于 {{item.submittedAtText}}</view>
       <view wx:if="{{status === 'pending'}}" class="approval-item-actions">
         <van-button size="small" round bind:click="onReject" data-id="{{item.id}}">驳回</van-button>
         <van-button size="small" round type="primary" loading="{{actingId === item.id}}" bind:click="onApprove" data-id="{{item.id}}">
@@ -64,7 +64,7 @@
       <view class="approval-item-meta" wx:if="{{item.school_name || item.creator_name}}">
         {{item.school_name || ''}}{{item.creator_name ? ' · 申请人 ' + item.creator_name : ''}}
       </view>
-      <view class="approval-item-meta" wx:if="{{item.submitted_at}}">提交于 {{item.submittedAtText}}{{item.pending_days ? ' · 挂起 ' + item.pending_days + ' 天' : ''}}</view>
+      <view class="approval-item-meta" wx:if="{{item.submittedAtText}}">提交于 {{item.submittedAtText}}{{item.pending_days ? ' · 挂起 ' + item.pending_days + ' 天' : ''}}</view>
       <view class="approval-item-actions">
         <van-button size="small" round bind:click="onRejectClass" data-id="{{item.id}}">驳回</van-button>
         <van-button size="small" round type="primary" loading="{{actingId === item.id}}" bind:click="onApproveClass" data-id="{{item.id}}">

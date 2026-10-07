@@ -2,6 +2,7 @@ import { getPointsSummary, getPointTransactions, PointTransaction } from '../../
 import { getPointsAccount } from '../../../../services/api';
 import { getUser, requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
+import { formatDateTime } from '../../../../utils/format';
 
 Page({
   data: {
@@ -35,7 +36,7 @@ Page({
         summary: summaryRes?.data ?? { todayEarned: 0, weekEarned: 0, totalEarned: 0, totalSpent: 0 },
         list: (txRes?.data ?? []).map((t) => ({
           ...t,
-          created_at: String(t.created_at ?? '').slice(5, 16).replace('T', ' '),
+          created_at: formatDateTime(t.created_at).slice(5),
         })),
       });
     } catch (err) {

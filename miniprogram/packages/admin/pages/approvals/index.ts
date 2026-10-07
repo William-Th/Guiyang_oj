@@ -12,10 +12,12 @@ import {
 } from '../../../../services/admin';
 import { isAdmin, requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
+import { formatDateTime } from '../../../../utils/format';
 
 interface DisplayRequest extends RegistrationRequest {
   statusText: string;
   statusType: 'primary' | 'success' | 'danger' | 'warning' | 'default';
+  submittedAtText: string;
 }
 
 const FILTERS = [
@@ -36,7 +38,7 @@ function decorate(list: RegistrationRequest[]): DisplayRequest[] {
       statusText = '已驳回';
       statusType = 'danger';
     }
-    return { ...r, statusText, statusType };
+    return { ...r, statusText, statusType, submittedAtText: formatDateTime(r.submitted_at) };
   });
 }
 
@@ -86,7 +88,7 @@ Page({
         this.setData({
           classList: classes.map((c) => ({
             ...c,
-            submittedAtText: c.submitted_at ? String(c.submitted_at).slice(0, 10) : '',
+            submittedAtText: formatDateTime(c.submitted_at, 'date'),
           })),
           clsPending: classes.length,
         });

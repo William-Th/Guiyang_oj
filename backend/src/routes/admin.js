@@ -509,7 +509,7 @@ router.get('/dashboard/stats', [
         a.title as name,
         COUNT(DISTINCT sa.student_id) FILTER (WHERE ${participantScope.sql}) as participants,
         ROUND(AVG(sa.score) FILTER (WHERE ${participantScope.sql}), 1) as avg_score,
-        TO_CHAR(a.start_time, 'YYYY-MM-DD') as date
+        TO_CHAR((a.start_time AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD') as date
       FROM activities a
       JOIN users creator ON creator.id = a.created_by
       LEFT JOIN student_activities sa ON a.id = sa.activity_id AND sa.status = 'completed'

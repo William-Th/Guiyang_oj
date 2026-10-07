@@ -10,6 +10,7 @@ import {
 } from '../../services/parent';
 import { requireLogin } from '../../utils/auth';
 import { toastError } from '../../utils/request';
+import { formatDateTime } from '../../utils/format';
 
 interface SubjectDisplay {
   subject: string;
@@ -80,13 +81,13 @@ Page({
       });
       const results = (resultsRes?.data ?? []).slice(0, 20).map((r) => ({
         ...r,
-        timeText: r.submit_time ? String(r.submit_time).slice(5, 10) : '',
+        timeText: formatDateTime(r.submit_time, 'date').slice(5),
       }));
       const registrable = (registrableRes?.data ?? []).map((a) => ({
         id: a.id,
         title: a.title,
         subject: a.subject,
-        endTimeText: a.end_time ? String(a.end_time).slice(5, 10) : '',
+        endTimeText: formatDateTime(a.end_time, 'date').slice(5),
       }));
       this.setData({
         loading: false,

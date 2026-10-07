@@ -1,6 +1,7 @@
 import { WrongQuestionItem, getWrongQuestionStats, getWrongQuestions } from '../../../../services/growth';
 import { requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
+import { formatDateTime } from '../../../../utils/format';
 import { setStash } from '../../../../utils/transfer';
 import { TYPE_TEXT } from '../../../../utils/questionFormat';
 
@@ -41,7 +42,7 @@ function decorate(item: WrongQuestionItem): DisplayWrong {
     contentHtml: item.content || '（题目内容为图片，重练后作答）',
     kpTags: kps,
     error_count: item.error_count ?? 0,
-    lastWrongText: item.last_wrong_at ? String(item.last_wrong_at).slice(0, 10) : '',
+    lastWrongText: formatDateTime(item.last_wrong_at, 'date'),
     canRedo: item.status !== 'removed' && AUTO_JUDGE_TYPES.has(item.type),
     needsPc: !AUTO_JUDGE_TYPES.has(item.type),
   };

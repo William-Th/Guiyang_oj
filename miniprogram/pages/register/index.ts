@@ -9,6 +9,7 @@ import {
   submitRegistration,
 } from '../../services/api';
 import { toastError } from '../../utils/request';
+import { formatDateTime } from '../../utils/format';
 
 const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
 
@@ -199,7 +200,14 @@ Page({
       const info = res.data;
       const statusTagType =
         info.status === 'approved' ? 'success' : info.status === 'rejected' ? 'danger' : 'warning';
-      this.setData({ statusInfo: info, statusTagType });
+      this.setData({
+        statusInfo: {
+          ...info,
+          submitted_at: formatDateTime(info.submitted_at),
+          reviewed_at: formatDateTime(info.reviewed_at),
+        },
+        statusTagType,
+      });
     } catch (err) {
       toastError(err, '申请信息或查询码不正确');
     } finally {
