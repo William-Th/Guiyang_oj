@@ -6,7 +6,9 @@
     "pages/practice/index",
     "pages/growth/index",
     "pages/profile/index",
-    "pages/parent/index"
+    "pages/parent/index",
+    "pages/notifications/index",
+    "pages/settings/index"
   ],
   "subPackages": [
     {

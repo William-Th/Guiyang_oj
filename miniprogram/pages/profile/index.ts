@@ -1,4 +1,5 @@
 import { logout } from '../../services/api';
+import { getUnreadCounts } from '../../services/notification';
 import { clearSession, getUser, isAdmin, requireLogin } from '../../utils/auth';
 
 const ROLE_TEXT: Record<string, string> = {
@@ -21,6 +22,7 @@ Page({
     isAdmin: false,
     isParent: false,
     isStudent: false,
+    unreadLabel: '',
     version: '0.1.0',
   },
 
@@ -41,6 +43,26 @@ Page({
       isParent,
       isStudent,
     });
+    this.loadUnreadLabel();
+  },
+
+  /** 通知中心未读角标（通知+公告；失败静默不显示） */
+  async loadUnreadLabel() {
+    try {
+      const res = await getUnreadCounts();
+      const total = res.count?.total ?? 0;
+      this.setData({ unreadLabel: total > 0 ? `${total > 99 ? 99 : total} 条未读` : '' });
+    } catch {
+      /* 未读数失败不打扰 */
+    }
+  },
+
+  goNotifications() {
+    wx.navigateTo({ url: '/pages/notifications/index' });
+  },
+
+  goSettings() {
+    wx.navigateTo({ url: '/pages/settings/index' });
   },
 
   goParentDashboard() {

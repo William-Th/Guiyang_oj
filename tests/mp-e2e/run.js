@@ -395,6 +395,42 @@ async function main() {
       await mini.restoreWxMethod('showModal');
     });
 
+    await step('⑩ 通知中心与设置', async () => {
+      await login(STUDENT, 'pages/home/index');
+      await mini.switchTab('/pages/profile/index');
+      await sleep(1500);
+      const pd = await getPageData();
+      assert(pd.unreadLabel && String(pd.unreadLabel).includes('未读'), '我的页未读角标未显示');
+      await mini.navigateTo('/pages/notifications/index');
+      await waitForRoute('pages/notifications/index');
+      const nd = await waitFor((d) => d.loading === false && (d.list || []).length > 0, 20000, '通知列表加载');
+      assert(nd.unread.notifications >= 1, '通知未读数未统计到夹具通知');
+      // 真实点击层：tab 切换（公告→通知）、未读筛选、全部已读
+      const np = await mini.currentPage();
+      const segs = await np.$$('.seg-item');
+      assert(segs.length >= 2, '通知页 tab 不全');
+      await segs[1].tap();
+      await waitFor((d) => d.tab === 'announcements' && d.annLoading === false, 15000, '公告 tab 切换');
+      await segs[0].tap();
+      await waitFor((d) => d.tab === 'notifications', 8000, '切回通知 tab');
+      const filters = await (await mini.currentPage()).$$('.filter-item');
+      assert(filters.length === 3, '通知筛选条不全');
+      await filters[1].tap();
+      await waitFor((d) => d.filter === 'unread' && d.loading === false, 8000, '未读筛选');
+      const markAll = await (await mini.currentPage()).$('.mark-all');
+      assert(markAll, '未找到全部已读按钮');
+      await markAll.tap();
+      await waitFor((d) => d.unread.notifications === 0, 8000, '全部已读生效');
+      // 设置页：渲染 + 清缓存
+      await mini.navigateTo('/pages/settings/index');
+      await waitForRoute('pages/settings/index');
+      const sd = await waitFor((d) => typeof d.cacheCount === 'number', 10000, '设置页加载');
+      firePageMethod('onClearCache');
+      await sleep(800);
+      const sd2 = await getPageData();
+      assert(typeof sd2.cacheCount === 'number' && sd2.version.length > 0, '设置页清缓存后状态异常');
+    });
+
   } finally {
     try {
       if (mini && typeof mini.disconnect === 'function') await mini.disconnect();

@@ -1,0 +1,81 @@
+<view class="notif-page tab-page-padding">
+  <!-- tab：通知 / 公告 -->
+  <view class="seg-bar">
+    <view class="seg-item {{tab === 'notifications' ? 'active' : ''}}" data-tab="notifications" bindtap="onTabChange">
+      通知
+      <view wx:if="{{unread.notifications > 0}}" class="seg-badge">{{unread.notifications > 99 ? '99+' : unread.notifications}}</view>
+    </view>
+    <view class="seg-item {{tab === 'announcements' ? 'active' : ''}}" data-tab="announcements" bindtap="onTabChange">
+      公告
+      <view wx:if="{{unread.announcements > 0}}" class="seg-badge">{{unread.announcements > 99 ? '99+' : unread.announcements}}</view>
+    </view>
+  </view>
+
+  <!-- 我的通知 -->
+  <block wx:if="{{tab === 'notifications'}}">
+    <view class="toolbar">
+      <view class="filter-bar">
+        <view
+          wx:for="{{filters}}"
+          wx:key="value"
+          class="filter-item {{filter === item.value ? 'active' : ''}}"
+          data-filter="{{item.value}}"
+          bindtap="onFilterChange"
+        >{{item.label}}</view>
+      </view>
+      <view
+        wx:if="{{unread.notifications > 0}}"
+        class="mark-all {{markingAll ? 'disabled' : ''}}"
+        bindtap="onMarkAllRead"
+      >全部已读</view>
+    </view>
+
+    <block wx:if="{{!loading}}">
+      <view
+        wx:for="{{list}}"
+        wx:key="id"
+        class="card notif-item"
+        data-id="{{item.id}}"
+        bindtap="onTapNotification"
+      >
+        <view class="notif-head">
+          <view class="notif-title-wrap">
+            <view wx:if="{{!item.is_read}}" class="unread-dot" />
+            <text class="notif-title {{item.is_read ? 'read' : ''}}">{{item.title}}</text>
+          </view>
+          <van-tag plain type="primary" custom-class="notif-type">{{item.typeText}}</van-tag>
+        </view>
+        <view wx:if="{{item.content}}" class="notif-content">{{item.content}}</view>
+        <view class="notif-time">{{item.timeText}}</view>
+      </view>
+      <van-empty wx:if="{{list.length === 0}}" description="暂无通知" />
+    </block>
+    <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+  </block>
+
+  <!-- 系统公告 -->
+  <block wx:if="{{tab === 'announcements'}}">
+    <block wx:if="{{!annLoading}}">
+      <view
+        wx:for="{{annList}}"
+        wx:key="id"
+        class="card notif-item"
+        data-id="{{item.id}}"
+        bindtap="onTapAnnouncement"
+      >
+        <view class="notif-head">
+          <view class="notif-title-wrap">
+            <view wx:if="{{item.is_read === false}}" class="unread-dot" />
+            <text class="notif-title {{item.is_read ? 'read' : ''}}">{{item.title}}</text>
+          </view>
+          <van-tag plain type="warning" custom-class="notif-type">公告</van-tag>
+        </view>
+        <view wx:if="{{item.summary && !item.expanded}}" class="notif-content">{{item.summary}}</view>
+        <view wx:if="{{item.expanded}}" class="notif-content expanded">{{item.content}}</view>
+        <view class="notif-time">{{item.timeText}}{{item.expanded ? ' · 点击收起' : ' · 点击展开'}}</view>
+      </view>
+      <van-empty wx:if="{{annList.length === 0}}" description="暂无公告" />
+    </block>
+    <view wx:if="{{annLoading}}" class="page-loading">加载中…</view>
+  </block>
+</view>

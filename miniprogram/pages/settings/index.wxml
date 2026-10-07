@@ -1,0 +1,26 @@
+<view class="settings-page tab-page-padding">
+  <van-cell-group inset title="通知提醒">
+    <van-cell
+      title="连胜提醒"
+      label="{{streakAvailable ? '断签前通过微信订阅消息提醒你' : (streakText || '订阅消息模板配置后将开放')}}"
+      icon="clock-o"
+      is-link
+      link-type="{{streakAvailable ? 'arrow' : 'none'}}"
+      bind:click="onSubscribeStreak"
+    />
+    <van-cell title="通知中心" label="站内通知与系统公告" icon="bell" is-link bind:click="goNotifications" />
+  </van-cell-group>
+
+  <van-cell-group inset title="通用">
+    <van-cell
+      title="清除本地缓存"
+      label="{{cacheCount > 0 ? cacheCount + ' 项草稿缓存，不清除登录状态' : '暂无可清理的缓存'}}"
+      icon="delete-o"
+      is-link
+      bind:click="onClearCache"
+    />
+    <van-cell title="用户协议" icon="notes-o" is-link bind:click="onAgreement" />
+    <van-cell title="隐私政策" icon="shield-o" is-link bind:click="onPrivacy" />
+    <van-cell title="关于" label="贵阳市小学生测评平台 v{{version}}" icon="info-o" is-link bind:click="onAbout" />
+  </van-cell-group>
+</view>

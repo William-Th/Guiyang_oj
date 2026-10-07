@@ -78,3 +78,12 @@ UPDATE question_bank qb
 SET status = 'pending_review', review_comment = NULL, reviewed_at = NULL, is_active = true
 FROM question_drafts d
 WHERE qb.draft_id = d.id AND d.content LIKE '【E2E】审核流测试题%';
+
+-- 6) E2E 专属未读通知（流程⑩通知中心使用）：无未读副本时补种，全部已读后重跑会再种
+INSERT INTO user_notifications (user_id, type, title, content)
+SELECT s.id, 'system', '【E2E】通知中心测试通知', '这是一条 E2E 测试通知，用于验证通知中心、未读角标与全部已读。'
+FROM users s WHERE s.username = '13800138003'
+  AND NOT EXISTS (
+    SELECT 1 FROM user_notifications n
+    WHERE n.user_id = s.id AND n.title = '【E2E】通知中心测试通知' AND n.is_read = false
+  );
