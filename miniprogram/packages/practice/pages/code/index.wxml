@@ -1,0 +1,111 @@
+<view class="code-page">
+  <block wx:if="{{!loading}}">
+    <!-- 题面 -->
+    <view class="card section">
+      <view class="sec-head">
+        <text class="sec-title">题目描述</text>
+        <view class="limits">
+          <text class="limit-tag">限时 {{timeLimit}}ms</text>
+          <text class="limit-tag">内存 {{memoryLimit}}MB</text>
+        </view>
+      </view>
+      <rich-text class="q-content" nodes="{{contentHtml}}" />
+      <view wx:if="{{samples.length > 0}}" class="samples">
+        <view wx:for="{{samples}}" wx:key="index" class="sample-case">
+          <view class="sample-label">样例 {{index + 1}}</view>
+          <view wx:if="{{item.input}}" class="sample-io">
+            <text class="io-key">输入</text>
+            <text class="io-val">{{item.input}}</text>
+          </view>
+          <view wx:if="{{item.output}}" class="sample-io">
+            <text class="io-key">输出</text>
+            <text class="io-val">{{item.output}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 编辑器 -->
+    <view class="card section">
+      <view class="sec-head">
+        <text class="sec-title">编写代码</text>
+        <picker
+          mode="selector"
+          range="{{supportedIds}}"
+          range-key="id"
+          value="{{languageIndex}}"
+          bindchange="onLanguageChange"
+        >
+          <view class="lang-picker">
+            <van-icon name="arrow-down" size="24rpx" />
+            <text class="lang-text">{{supportedIds[languageIndex]}}</text>
+          </view>
+        </picker>
+      </view>
+      <view class="key-bar">
+        <view class="key" hover-class="key-hover" bindtap="onInsertKey" data-key="tab">Tab</view>
+        <view class="key" hover-class="key-hover" bindtap="onInsertKey" data-key="brace">{ }</view>
+        <view class="key" hover-class="key-hover" bindtap="onInsertKey" data-key="paren">( )</view>
+        <view class="key" hover-class="key-hover" bindtap="onInsertKey" data-key="quote">''</view>
+        <view class="key" hover-class="key-hover" bindtap="onInsertKey" data-key="semicolon">;</view>
+        <view class="key key-ghost" hover-class="key-hover" bindtap="onInjectTemplate">注入模板</view>
+      </view>
+      <textarea
+        class="code-area"
+        value="{{code}}"
+        cursor="{{cursor}}"
+        maxlength="-1"
+        bindinput="onCodeInput"
+        auto-height
+      />
+    </view>
+
+    <!-- 判题状态 / 结果 -->
+    <view wx:if="{{judging}}" class="card section judge-card">
+      <view class="judge-running">
+        <van-loading size="28rpx" />
+        <text class="judge-text">正在判题…{{pollPaused ? '（切后台已暂停，回来继续）' : ''}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{result}}" class="card section judge-card">
+      <view class="result-head">
+        <van-tag type="{{statusType}}" size="large">{{statusText}}</van-tag>
+        <text wx:if="{{result.score !== null && result.score !== undefined}}" class="result-score">
+          {{result.score}} / {{result.totalScore}} 分
+        </text>
+        <text wx:if="{{result.executionTime}}" class="result-time">{{result.executionTime}}ms</text>
+      </view>
+      <view wx:if="{{result.compileOutput}}" class="compile-out">
+        <view class="compile-label">编译输出</view>
+        <text class="compile-text">{{result.compileOutput}}</text>
+      </view>
+      <view wx:if="{{result.testResults && result.testResults.length > 0}}" class="cases">
+        <view
+          wx:for="{{result.testResults}}"
+          wx:key="index"
+          class="case-row {{item.passed ? 'pass' : 'fail'}}"
+        >
+          <van-icon name="{{item.passed ? 'passed' : 'close'}}" size="26rpx" />
+          <text class="case-name">用例 {{index + 1}}</text>
+          <text wx:if="{{item.time_used}}" class="case-time">{{item.time_used}}ms</text>
+        </view>
+      </view>
+      <view class="result-tip">结果已记录到答题页，交卷后计入成绩</view>
+    </view>
+
+    <view class="submit-wrap">
+      <van-button
+        block
+        round
+        type="primary"
+        loading="{{submitting}}"
+        disabled="{{judging}}"
+        bind:click="onSubmit"
+      >
+        {{judging ? '判题中…' : (result ? '再次提交' : '提交判题')}}
+      </van-button>
+    </view>
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</view>

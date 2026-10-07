@@ -104,3 +104,44 @@ WHERE s.username = '13800138003'
     SELECT 1 FROM student_registration_requests r
     WHERE r.phone = s.phone AND r.real_name = 'E2E报名学生'
   );
+
+-- 8) E2E 编程题活动（流程⑫移动判题使用）：A+B 题（draft→bank 发布→用例挂 bank id）
+INSERT INTO question_drafts (type, subject, grade, content, code_template, supported_languages, difficulty, suggested_score, knowledge_points, created_by, time_limit, memory_limit)
+SELECT 'code', '信息科技', '五年级',
+       '<p>A+B：输入两个整数（空格分隔），输出它们的和。</p>',
+       E'# 输入两个整数，输出它们的和
+# 在下面补全代码
+',
+       ARRAY['python','cpp','c']::text[], 'easy', 10, ARRAY['编程基础']::text[], ru.id, 1000, 256
+FROM (SELECT id FROM users WHERE username = 'teacher_yy_ps_math') ru
+WHERE NOT EXISTS (SELECT 1 FROM question_drafts WHERE content LIKE '%A+B：输入两个整数%');
+
+INSERT INTO question_bank (draft_id, scope, status, reviewer_id, published_by, question_code)
+SELECT d.id, 'practice_school_6', 'published', ru.id, ru.id, 'E2E-PB-0001'
+FROM question_drafts d
+CROSS JOIN (SELECT id FROM users WHERE username = 'teacher_yy_ps_math') ru
+WHERE d.content LIKE '%A+B：输入两个整数%'
+  AND NOT EXISTS (SELECT 1 FROM question_bank qb WHERE qb.draft_id = d.id);
+
+-- 用例挂 bank id（judge-service 按提交的 questionId=bank.id 取用例）
+INSERT INTO test_cases (question_id, case_number, input_data, expected_output, score, is_sample)
+SELECT qb.id, t.n, t.i, t.o, 5, t.s
+FROM question_bank qb
+JOIN question_drafts d ON d.id = qb.draft_id AND d.content LIKE '%A+B：输入两个整数%'
+CROSS JOIN (VALUES (1, '1 2', '3', true), (2, '10 20', '30', true)) AS t(n, i, o, s)
+WHERE NOT EXISTS (
+  SELECT 1 FROM test_cases tc WHERE tc.question_id = qb.id AND tc.case_number = t.n
+);
+
+INSERT INTO activities (title, description, subject, grade, type, time_limit_type, total_score, pass_score, status, created_by, scope, allow_retake, max_attempts)
+SELECT '【E2E】小程序编程题练习', '小程序 E2E 编程判题专用', '信息科技', NULL, 'practice', 'unlimited', 10, 5, 'published',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'school', true, 999
+WHERE NOT EXISTS (SELECT 1 FROM activities WHERE title = '【E2E】小程序编程题练习');
+
+INSERT INTO activity_questions (activity_id, question_id, order_index, score)
+SELECT a.id, qb.id, 1, 10
+FROM activities a
+JOIN question_bank qb ON qb.is_active = true
+JOIN question_drafts d ON d.id = qb.draft_id AND d.content LIKE '%A+B：输入两个整数%'
+WHERE a.title = '【E2E】小程序编程题练习'
+  AND NOT EXISTS (SELECT 1 FROM activity_questions aq WHERE aq.activity_id = a.id);

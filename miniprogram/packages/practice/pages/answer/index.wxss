@@ -283,3 +283,16 @@
 .sheet-submit {
   margin-top: 8rpx;
 }
+
+.code-done {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  color: #16a34a;
+  margin-bottom: 12rpx;
+}
+
+.code-go {
+  margin-top: 14rpx;
+}

@@ -108,12 +108,19 @@
       <view class="type-hint">{{answers[questions[current].question_id] ? answers[questions[current].question_id].length : 0}} / 1000</view>
     </view>
 
-    <!-- 编程题：只读引导（计划书 6.3 只读期） -->
+    <!-- 编程题：移动编辑器（判题走 /api/judge，链路与 web 共用） -->
     <view wx:elif="{{questions[current].type === 'code'}}" class="code-card">
       <view class="code-tip">
-        <van-icon name="desktop-o" size="32rpx" /> 编程题请在电脑端完成，手机端可查看题目
+        <van-icon name="edit" size="32rpx" /> 手机端可直接编写并提交判题
+      </view>
+      <view wx:if="{{codeSubmits[questions[current].question_id]}}" class="code-done">
+        <van-icon name="checked" size="28rpx" color="#16a34a" />
+        已提交判题 #{{codeSubmits[questions[current].question_id]}}
       </view>
       <view wx:if="{{questions[current].codeTemplate}}" class="code-template">{{questions[current].codeTemplate}}</view>
+      <van-button block round plain type="primary" custom-class="code-go" bind:click="goCodeEditor">
+        {{codeSubmits[questions[current].question_id] ? '重新编辑 / 查看结果' : '去写代码'}}
+      </van-button>
     </view>
   </view>
 

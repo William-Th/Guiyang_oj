@@ -997,7 +997,7 @@ const TakeActivityPage: React.FC = () => {
                         {qType === 'code' && (
                           <CodeQuestionWrapper
                             question={question}
-                            activityId={activityId}
+                            activityId={studentActivity?.id ?? undefined}
                             fieldName={fieldName}
                             form={form}
                             onAnswerChange={() => handleFormChange()}

@@ -202,7 +202,7 @@ const CodeQuestion: React.FC<CodeQuestionProps> = ({
             setActiveTab('submit');
             setSubmitting(false);
 
-            if (result.status === 'AC') {
+            if (result.status === 'accepted') {
               message.success('通过！所有测试用例通过！');
             }
 

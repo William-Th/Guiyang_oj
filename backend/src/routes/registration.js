@@ -568,7 +568,7 @@ router.get('/admin/requests', authMiddleware, requireAdmin, async (req, res) => 
         submitted_at, last_escalated_at, reviewed_at, review_comment
       FROM student_registration_requests
       ${whereClause}
-      ORDER BY submitted_at ASC
+      ORDER BY submitted_at DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...queryParams, limit, offset]
     );

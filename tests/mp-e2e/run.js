@@ -458,6 +458,40 @@ async function main() {
       assert(String(clip).startsWith('GY-'), '复制证书编号未生效');
     });
 
+    await step('⑫ 编程题移动判题', async () => {
+      await login(STUDENT, 'pages/home/index');
+      await mini.switchTab('/pages/practice/index');
+      await sleep(1500);
+      const list = await waitFor((d) => Array.isArray(d.practiceList) && d.practiceList.length > 0, 20000, '练习列表加载');
+      const target = list.practiceList.find((i) => String(i.title || '').startsWith('【E2E】小程序编程题练习'));
+      assert(target, '编程题活动未出现在列表');
+      await mini.navigateTo(`/packages/practice/pages/answer/index?id=${target.id}`);
+      await waitForRoute('pages/answer/index');
+      await waitFor((d) => d.loading === false && (d.questions || []).length > 0, 30000, '答题页加载');
+      const qd = await getPageData();
+      const codeQ = qd.questions.find((q) => q.type === 'code');
+      assert(codeQ, '活动未含编程题');
+      // 进入编辑器
+      firePageMethod('goCodeEditor');
+      await waitForRoute('pages/code/index');
+      await waitFor((d) => d.loading === false, 20000, '编辑器加载');
+      // 注入 python 解（覆盖模板）
+      const code = 'a,b=map(int,input().split())\nprint(a+b)';
+      await pageSetData({ code, cursor: code.length });
+      // 提交并等判题终态
+      firePageMethod('onSubmit');
+      const rd = await waitFor((d) => !!d.result && d.judging === false, 60000, '判题终态');
+      assert(rd.result.status === 'accepted', `判题结果异常: ${rd.result.status}`);
+      assert(rd.result.score >= 10, `判题得分异常: ${rd.result.score}`);
+      // 返回答题页：答案已回填
+      await mini.navigateBack();
+      await waitForRoute('pages/answer/index');
+      await waitFor((d) => Object.keys(d.codeSubmits || {}).length > 0, 10000, '答题页回填');
+      const back = await getPageData();
+      const ans = back.answers[String(codeQ.question_id)];
+      assert(String(ans).includes('submissionId'), '编程答案未写入 answers');
+    });
+
   } finally {
     try {
       if (mini && typeof mini.disconnect === 'function') await mini.disconnect();

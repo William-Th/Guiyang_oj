@@ -9,6 +9,7 @@ import {
 import { requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
 import { TYPE_TEXT, NormalOption, parseOptions } from '../../../../utils/questionFormat';
+import { popStash } from '../../../../utils/transfer';
 
 interface NormalQuestion {
   question_id: number;
@@ -62,6 +63,8 @@ Page({
     questions: [] as NormalQuestion[],
     current: 0,
     total: 0,
+    /** 编程题已提交判题映射：question_id -> submissionId（展示"已提交"） */
+    codeSubmits: {} as Record<string, number>,
     answers: {} as Record<string, AnswerValue>,
     answeredCount: 0,
     showSheet: false,
@@ -73,6 +76,7 @@ Page({
   activityId: 0 as number,
   saveTimers: {} as Record<number, number>,
   deadlineTs: 0 as number,
+  studentActivityId: 0 as number,
   countdownTimer: 0 as number,
 
   async onLoad(query: Record<string, string | undefined>) {
@@ -85,6 +89,8 @@ Page({
     try {
       // 先 start（幂等：已有进行中 attempt 会复用），再拉题目与已存答案
       const startRes = await startActivity(this.activityId);
+      // 编程题提交判题需要 student_activities.id（judge-service 外键指向它）
+      this.studentActivityId = startRes.student_activity_id ?? 0;
       this.deadlineTs = startRes.deadline ? new Date(startRes.deadline).getTime() : 0;
 
       const [questionRes, answerRes] = await Promise.all([
@@ -112,6 +118,7 @@ Page({
         answers,
         answeredCount: questions.filter((q) => hasAnswer(answers[String(q.question_id)])).length,
       });
+      this.refreshCodeSubmits();
       this.startCountdown();
     } catch (err) {
       toastError(err, '无法进入答题');
@@ -143,6 +150,18 @@ Page({
     });
   },
 
+  onShow() {
+    // 编程编辑器页判题终态回填（stash 传值，URL 无法承载）
+    const payload = popStash<{ questionId: number; answer: string }>('mp_code_answer');
+    if (payload && payload.questionId && payload.answer) {
+      const key = String(payload.questionId);
+      if (this.data.questions.some((q) => String(q.question_id) === key)) {
+        this.applyAnswer(payload.answer);
+      }
+    }
+  },
+
+  // ---------- 作答 ----------
   // ---------- 作答 ----------
 
   currentQuestion(): NormalQuestion {
@@ -159,10 +178,36 @@ Page({
         hasAnswer(item.question_id === q.question_id ? value : this.data.answers[String(item.question_id)])
       ).length,
     });
+    if (q.type === 'code') this.refreshCodeSubmits();
     // 本地草稿即时落盘 + 防抖逐题上送（与 web 端 2 秒防抖同策略）
     wx.setStorageSync(`${CACHE_PREFIX}${this.activityId}`, this.data.answers);
     clearTimeout(this.saveTimers[q.question_id]);
     this.saveTimers[q.question_id] = setTimeout(() => this.persist(q.question_id), 800) as unknown as number;
+  },
+
+  /** code 题答案为 JSON（{submissionId,...}）——提取已提交 id 供卡片显示状态 */
+  refreshCodeSubmits() {
+    const codeSubmits: Record<string, number> = {};
+    this.data.questions
+      .filter((q) => q.type === 'code')
+      .forEach((q) => {
+        const raw = this.data.answers[String(q.question_id)];
+        if (typeof raw !== 'string') return;
+        try {
+          const parsed = JSON.parse(raw) as { submissionId?: number };
+          if (parsed?.submissionId) codeSubmits[String(q.question_id)] = parsed.submissionId;
+        } catch {
+          /* 非 JSON 忽略 */
+        }
+      });
+    this.setData({ codeSubmits });
+  },
+
+  goCodeEditor() {
+    const q = this.currentQuestion();
+    wx.navigateTo({
+      url: `/packages/practice/pages/code/index?activityId=${this.activityId}&studentActivityId=${this.studentActivityId || 0}&questionId=${q.question_id}`,
+    });
   },
 
   onSingleTap(e: WechatMiniprogram.CustomEvent) {
