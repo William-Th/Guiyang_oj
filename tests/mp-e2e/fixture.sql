@@ -145,3 +145,20 @@ JOIN question_bank qb ON qb.is_active = true
 JOIN question_drafts d ON d.id = qb.draft_id AND d.content LIKE '%A+B：输入两个整数%'
 WHERE a.title = '【E2E】小程序编程题练习'
   AND NOT EXISTS (SELECT 1 FROM activity_questions aq WHERE aq.activity_id = a.id);
+
+-- 9) E2E 可报名测评（流程⑬学生自助报名使用）：报名窗口开放、未报名
+INSERT INTO activities (title, description, subject, grade, type, time_limit_type, total_score, pass_score, status, created_by, scope, allow_retake, max_attempts, registration_enabled, registration_start_time, registration_end_time)
+SELECT '【E2E】小程序测评报名', '小程序 E2E 报名流程专用', '数学', '五年级', 'assessment', 'unlimited', 100, 60, 'published',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'municipal', true, 999,
+ true, NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 day'
+WHERE NOT EXISTS (SELECT 1 FROM activities WHERE title = '【E2E】小程序测评报名');
+
+-- 报名窗口每次运行前重开（防上轮 E2E 后窗口过期）；unlimited 活动不带起止时间（check_unlimited_no_time）
+UPDATE activities
+SET registration_start_time = NOW() - INTERVAL '1 day',
+    registration_end_time = NOW() + INTERVAL '7 day'
+WHERE title = '【E2E】小程序测评报名';
+
+-- 每轮运行前清掉活动 13 的报名（E2E 流程⑬需从未报名态开始）
+DELETE FROM assessment_registrations
+WHERE activity_id = (SELECT id FROM activities WHERE title = '【E2E】小程序测评报名');

@@ -1,9 +1,13 @@
 import {
+  RegistrableAssessment,
   StudentActivityItem,
   cancelRegistration,
+  checkRegistrationEligibility,
   getMyRegistrations,
+  getRegistrableAssessments,
   getStudentAssessmentList,
   getStudentPracticeList,
+  registerAssessment,
 } from '../../services/activities';
 import { toastError } from '../../utils/request';
 import { getUser, requireLogin } from '../../utils/auth';
@@ -15,6 +19,36 @@ interface DisplayItem {
   statusType: 'primary' | 'success' | 'danger' | 'warning' | 'default';
   metaText: string;
   done: boolean;
+}
+
+interface RegistrableItem {
+  id: number;
+  title: string;
+  subject: string;
+  deadlineText: string;
+  registering: boolean;
+}
+
+function decorateRegistrable(r: RegistrableAssessment): RegistrableItem {
+  const deadline = r.registration_end_time
+    ? formatShort(r.registration_end_time)
+    : r.end_time
+      ? formatShort(r.end_time)
+      : '';
+  return {
+    id: r.id,
+    title: r.title,
+    subject: r.subject ?? '',
+    deadlineText: deadline ? `报名截止 ${deadline}` : '报名开放中',
+    registering: false,
+  };
+}
+
+function formatShort(v: string): string {
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return '';
+  const p = (n: number) => (n < 10 ? '0' + n : String(n));
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 interface RegistrationItem {
@@ -102,6 +136,7 @@ Page({
     practiceList: [] as DisplayItem[],
     assessmentList: [] as DisplayItem[],
     registrationList: [] as RegistrationItem[],
+    registrable: [] as RegistrableItem[],
   },
 
   onShow() {
@@ -132,11 +167,18 @@ Page({
       if (key === 'registrations') {
         const list = await getMyRegistrations();
         this.setData({ registrationList: list.map(decorateRegistration) });
+      } else if (key === 'assessment') {
+        const [list, registrableRes] = await Promise.all([
+          getStudentAssessmentList(),
+          getRegistrableAssessments().catch(() => null),
+        ]);
+        this.setData({
+          assessmentList: decorate(list),
+          registrable: (registrableRes?.data ?? []).map(decorateRegistrable),
+        });
       } else {
-        const list = key === 'practice' ? await getStudentPracticeList() : await getStudentAssessmentList();
-        this.setData(
-          key === 'practice' ? { practiceList: decorate(list) } : { assessmentList: decorate(list) }
-        );
+        const list = await getStudentPracticeList();
+        this.setData({ practiceList: decorate(list) });
       }
     } catch {
       wx.showToast({ title: '加载失败，请稍后重试', icon: 'none' });
@@ -152,6 +194,57 @@ Page({
     } else {
       wx.navigateTo({ url: `/packages/practice/pages/answer/index?id=${id}` });
     }
+  },
+
+  /** 学生自助报名：先查资格；需测评点的活动弹选择 */
+  async onRegister(e: WechatMiniprogram.CustomEvent) {
+    const activityId = Number(e.currentTarget.dataset.id);
+    const item = this.data.registrable.find((r) => r.id === activityId);
+    if (!item || item.registering) return;
+    this.setRegistering(activityId, true);
+    try {
+      const eligibility = await checkRegistrationEligibility(activityId);
+      if (!eligibility.eligible) {
+        wx.showToast({ title: eligibility.reasons?.[0] || '暂不符合报名条件', icon: 'none', duration: 2500 });
+        return;
+      }
+      if (eligibility.requireLocation) {
+        const locations = eligibility.locations ?? [];
+        if (locations.length === 0) {
+          wx.showToast({ title: '测评点暂未公布', icon: 'none' });
+          return;
+        }
+        wx.showActionSheet({
+          itemList: locations.slice(0, 6).map((l) => l.name || l.address || `测评点 ${l.id}`),
+          success: async (res) => {
+            await this.doRegister(activityId, locations[res.tapIndex].id);
+          },
+          fail: () => undefined,
+        });
+        return;
+      }
+      await this.doRegister(activityId);
+    } catch (err) {
+      toastError(err, '报名失败');
+    } finally {
+      this.setRegistering(activityId, false);
+    }
+  },
+
+  async doRegister(activityId: number, locationId?: number) {
+    try {
+      const res = await registerAssessment(activityId, locationId);
+      wx.showToast({ title: res.message || '报名成功', icon: 'success' });
+      this.loadTab(1); // 刷新测评 tab（可报名区消失、列表出现该测评）
+    } catch (err) {
+      toastError(err, '报名失败');
+    }
+  },
+
+  setRegistering(id: number, val: boolean) {
+    this.setData({
+      registrable: this.data.registrable.map((r) => (r.id === id ? { ...r, registering: val } : r)),
+    });
   },
 
   onCancelReg(e: WechatMiniprogram.CustomEvent) {

@@ -425,6 +425,56 @@ router.post('/activities/:activityId/register',
  * 取消报名
  * POST /api/activities/:activityId/register/cancel
  */
+/**
+ * 学生自助报名（小程序）：与家长代报名同表（assessment_registrations）同语义，
+ * 报名后即出现在"我的报名"与"测评"列表；先过 eligibility 硬校验。
+ */
+router.post('/activities/:activityId/self-register',
+  authMiddleware,
+  requireRole(['student']),
+  [body('location_id').optional().isInt().withMessage('测评点ID必须是整数')],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: errors.array()[0].msg });
+      }
+      const activityId = parseInt(req.params.activityId, 10);
+      const { location_id } = req.body;
+
+      const eligibility = await AssessmentRegistration.checkEligibility(activityId, req.user.id);
+      if (!eligibility.eligible) {
+        return res.status(400).json({
+          success: false,
+          message: eligibility.reasons?.join('; ') || '暂不符合报名条件'
+        });
+      }
+      if (eligibility.requireLocation && !location_id) {
+        return res.status(400).json({ success: false, message: '该测评需要选择测评点' });
+      }
+
+      const exist = await AssessmentRegistration.findByActivityAndStudent(activityId, req.user.id);
+      if (exist && exist.status !== 'cancelled') {
+        return res.status(400).json({ success: false, message: '您已报名此活动' });
+      }
+
+      const reg = await AssessmentRegistration.create({
+        activity_id: activityId,
+        student_id: req.user.id,
+        location_id: location_id ?? null,
+        status: 'confirmed'
+      });
+      res.status(201).json({
+        success: true,
+        data: reg,
+        message: '报名成功，可在"我的报名"中查看'
+      });
+    } catch (error) {
+      console.error('Self register error:', error);
+      res.status(500).json({ success: false, message: error.message || '报名失败' });
+    }
+  });
+
 router.post('/activities/:activityId/register/cancel',
   authMiddleware,
   requireRole(['student']),

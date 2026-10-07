@@ -23,6 +23,35 @@ const { body, param, validationResult } = require('express-validator');
 const logger = require('../utils/logger');
 
 // ============================================================================
+// 0. 可报名测评列表（学生自助报名入口；语义与家长端 registrable-assessments 一致）
+// ============================================================================
+router.get('/registrable-assessments', authMiddleware, async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT a.id, a.title, a.subject, a.grade, a.end_time,
+              a.registration_end_time
+       FROM activities a
+       WHERE a.status = 'published' AND a.type = 'assessment'
+         AND COALESCE(a.registration_enabled, false) = true
+         AND (a.registration_start_time IS NULL OR a.registration_start_time <= NOW())
+         AND (a.registration_end_time IS NULL OR a.registration_end_time >= NOW())
+         AND (a.end_time IS NULL OR a.end_time > NOW())
+         AND NOT EXISTS (
+           SELECT 1 FROM assessment_registrations r
+           WHERE r.activity_id = a.id AND r.student_id = $1 AND r.status <> 'cancelled'
+         )
+       ORDER BY a.registration_end_time ASC NULLS LAST
+       LIMIT 20`,
+      [req.user.id]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    logger.error('Get registrable assessments error:', error);
+    res.status(500).json({ success: false, message: '获取可报名测评失败' });
+  }
+});
+
+// ============================================================================
 // 1. 获取可用练习列表
 // ============================================================================
 router.get('/practice', authMiddleware, async (req, res) => {

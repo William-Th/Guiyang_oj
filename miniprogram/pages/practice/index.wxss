@@ -26,3 +26,20 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.registrable-item {
+  border: 1rpx solid #fef3c7;
+}
+
+.reg-actions {
+  margin-top: 12rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.section-title {
+  padding: 20rpx 28rpx 8rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--mp-text-secondary);
+}

@@ -57,6 +57,47 @@ export interface QuestionRaw {
   [key: string]: unknown;
 }
 
+export interface RegistrableAssessment {
+  id: number;
+  title: string;
+  subject?: string;
+  grade?: string;
+  end_time?: string;
+  registration_end_time?: string;
+}
+
+/** 可报名测评（报名窗口内、未报名；语义与家长端 registrable 一致） */
+export function getRegistrableAssessments() {
+  return request<{ success: boolean; data: RegistrableAssessment[] }>(
+    'GET',
+    '/student/activities/registrable-assessments'
+  );
+}
+
+export interface RegistrationEligibility {
+  eligible: boolean;
+  reasons?: string[];
+  requireLocation?: boolean;
+  locations?: { id: number; name?: string; address?: string }[];
+}
+
+export function checkRegistrationEligibility(activityId: number) {
+  // 注意：该接口字段平铺（无 data 包裹）：{success, eligible, reasons, requireLocation, locations}
+  return request<{ success: boolean } & RegistrationEligibility>(
+    'GET',
+    `/activities/${activityId}/registration/eligibility`
+  );
+}
+
+/** 学生自助报名；需测评点的活动带 location_id */
+export function registerAssessment(activityId: number, locationId?: number) {
+  return request<{ success: boolean; message?: string }>(
+    'POST',
+    `/activities/${activityId}/self-register`,
+    locationId ? { location_id: locationId } : {}
+  );
+}
+
 export function startActivity(id: number) {
   // source 埋点：移动端练习占比统计（student_activities.start_source，计划书目标3）
   return request<{

@@ -24,6 +24,33 @@
 
     <van-tab title="测评">
       <block wx:if="{{!loading}}">
+        <block wx:if="{{registrable.length > 0}}">
+          <view class="section-title">可报名测评</view>
+          <view wx:for="{{registrable}}" wx:key="id" class="card practice-item registrable-item">
+            <view class="practice-item-title">
+              <van-icon name="bookmark-o" custom-class="item-icon" />
+              {{item.title}}
+            </view>
+            <view class="practice-item-meta">
+              <van-tag type="warning">待报名</van-tag>
+              <text class="practice-item-time">{{item.subject}}{{item.deadlineText ? ' · ' + item.deadlineText : ''}}</text>
+            </view>
+            <view class="reg-actions">
+              <van-button
+                size="small"
+                round
+                type="primary"
+                loading="{{item.registering}}"
+                data-id="{{item.id}}"
+                bind:click="onRegister"
+              >立即报名</van-button>
+            </view>
+          </view>
+        </block>
+        <view
+          wx:if="{{assessmentList.length > 0}}"
+          class="section-title"
+        >已报名 · 可作答</view>
         <view
           wx:for="{{assessmentList}}"
           wx:key="id"
@@ -40,7 +67,10 @@
           <text class="practice-item-time" wx:if="{{item.metaText}}">{{item.metaText}}</text>
         </view>
       </view>
-      <van-empty wx:if="{{assessmentList.length === 0}}" description="暂无测评" />
+      <van-empty
+        wx:if="{{assessmentList.length === 0 && registrable.length === 0}}"
+        description="暂无测评，可报名的测评会显示在这里"
+      />
       </block>
     </van-tab>
 

@@ -505,6 +505,26 @@ async function main() {
       assert(String(ans).includes('submissionId'), '编程答案未写入 answers');
     });
 
+    await step('⑬ 学生自助报名测评', async () => {
+      await login(STUDENT, 'pages/home/index');
+      await mini.switchTab('/pages/practice/index');
+      await sleep(1200);
+      // 切到测评 tab（index 1）
+      await mini.evaluate(() => {
+        const p = getCurrentPages()[getCurrentPages().length-1];
+        p.onTabChange({ detail: { index: 1 } });
+      });
+      const rd = await waitFor((d) => d.loading === false, 20000, '测评 tab 加载');
+      const item = (rd.registrable || []).find((i) => i.title === '【E2E】小程序测评报名');
+      assert(item, '可报名测评未出现在测评 tab');
+      firePageMethod('onRegister', { currentTarget: { dataset: { id: item.id } } });
+      // 报名成功后：可报名区该项消失、已报名列表出现该活动
+      await waitFor((d) => !(d.registrable || []).some((i) => i.id === item.id), 15000, '可报名区刷新');
+      const after = await waitFor((d) => (d.assessmentList || []).some((i) => i.title === '【E2E】小程序测评报名'), 20000, '已报名列表出现');
+      const regd = after.assessmentList.find((i) => i.title === '【E2E】小程序测评报名');
+      assert(regd && !regd.done, '报名后的测评状态异常');
+    });
+
   } finally {
     try {
       if (mini && typeof mini.disconnect === 'function') await mini.disconnect();
