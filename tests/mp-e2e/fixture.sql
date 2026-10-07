@@ -147,17 +147,61 @@ WHERE a.title = '【E2E】小程序编程题练习'
   AND NOT EXISTS (SELECT 1 FROM activity_questions aq WHERE aq.activity_id = a.id);
 
 -- 9) E2E 可报名测评（流程⑬学生自助报名使用）：报名窗口开放、未报名
-INSERT INTO activities (title, description, subject, grade, type, time_limit_type, total_score, pass_score, status, created_by, scope, allow_retake, max_attempts, registration_enabled, registration_start_time, registration_end_time)
-SELECT '【E2E】小程序测评报名', '小程序 E2E 报名流程专用', '数学', '五年级', 'assessment', 'unlimited', 100, 60, 'published',
+INSERT INTO activities (title, description, subject, grade, type, time_limit_type, total_score, pass_score, status, created_by, scope, allow_retake, max_attempts, registration_enabled, registration_start_time, registration_end_time, start_time, end_time)
+SELECT '【E2E】小程序测评报名', '小程序 E2E 报名流程专用（考试未开始）', '数学', '五年级', 'assessment', 'scheduled', 100, 60, 'published',
  (SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'municipal', true, 999,
- true, NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 day'
+ true, NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 day',
+ NOW() + INTERVAL '8 day', NOW() + INTERVAL '9 day'
 WHERE NOT EXISTS (SELECT 1 FROM activities WHERE title = '【E2E】小程序测评报名');
 
--- 报名窗口每次运行前重开（防上轮 E2E 后窗口过期）；unlimited 活动不带起止时间（check_unlimited_no_time）
+-- 每轮重置报名窗口与考试窗（报名后应在考试窗内才能作答；本活动考试窗始终未开始）
 UPDATE activities
 SET registration_start_time = NOW() - INTERVAL '1 day',
-    registration_end_time = NOW() + INTERVAL '7 day'
+    registration_end_time = NOW() + INTERVAL '7 day',
+    start_time = NOW() + INTERVAL '8 day',
+    end_time = NOW() + INTERVAL '9 day'
 WHERE title = '【E2E】小程序测评报名';
+
+-- 9b) 已报名且考试窗进行中的测评（报名闸门正例：可作答）——直接插报名行
+INSERT INTO activities (title, description, subject, grade, type, time_limit_type, total_score, pass_score, status, created_by, scope, allow_retake, max_attempts, registration_enabled, registration_start_time, registration_end_time, start_time, end_time)
+SELECT '【E2E】小程序测评进行中', '小程序 E2E 已报名可作答专用', '数学', '五年级', 'assessment', 'scheduled', 100, 60, 'published',
+ (SELECT id FROM users WHERE username = 'teacher_yy_ps_math'), 'municipal', true, 999,
+ false, NOW() - INTERVAL '3 day', NOW() - INTERVAL '2 day',
+ NOW() - INTERVAL '1 hour', NOW() + INTERVAL '1 day'
+WHERE NOT EXISTS (SELECT 1 FROM activities WHERE title = '【E2E】小程序测评进行中');
+
+-- 保证该活动考试窗始终"进行中"
+UPDATE activities
+SET registration_start_time = NOW() - INTERVAL '3 day',
+    registration_end_time = NOW() - INTERVAL '2 day',
+    start_time = NOW() - INTERVAL '1 hour',
+    end_time = NOW() + INTERVAL '1 day'
+WHERE title = '【E2E】小程序测评进行中';
+
+INSERT INTO assessment_registrations (activity_id, student_id, status, confirmed_at)
+SELECT a.id, u.id, 'confirmed', NOW()
+FROM activities a
+CROSS JOIN (SELECT id FROM users WHERE username = '13800138003') u
+WHERE a.title = '【E2E】小程序测评进行中'
+  AND NOT EXISTS (
+    SELECT 1 FROM assessment_registrations r
+    WHERE r.activity_id = a.id AND r.student_id = u.id
+  );
+
+-- 给进行中测评绑 2 道单选题（列表可点入作答，与流程③同源选题）
+INSERT INTO activity_questions (activity_id, question_id, order_index, score)
+SELECT a.id, t.qid, t.rn, 10
+FROM activities a
+JOIN (
+  SELECT qb.id AS qid, ROW_NUMBER() OVER (ORDER BY qb.id) AS rn
+  FROM question_bank qb
+  JOIN question_drafts qd ON qd.id = qb.draft_id
+  WHERE qb.is_active = true AND qd.is_active = true AND qd.type = 'single'
+  ORDER BY qb.id
+  LIMIT 2
+) t ON true
+WHERE a.title = '【E2E】小程序测评进行中'
+  AND NOT EXISTS (SELECT 1 FROM activity_questions aq WHERE aq.activity_id = a.id);
 
 -- 每轮运行前清掉活动 13 的报名（E2E 流程⑬需从未报名态开始）
 DELETE FROM assessment_registrations

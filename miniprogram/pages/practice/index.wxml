@@ -54,8 +54,9 @@
         <view
           wx:for="{{assessmentList}}"
           wx:key="id"
-          class="card practice-item"
+          class="card practice-item {{item.notStarted ? 'item-locked' : ''}}"
           data-id="{{item.id}}"
+          data-not-started="{{item.notStarted}}"
           bind:tap="onItemTap"
         >
         <view class="practice-item-title">

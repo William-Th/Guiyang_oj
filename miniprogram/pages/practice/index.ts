@@ -19,6 +19,8 @@ interface DisplayItem {
   statusType: 'primary' | 'success' | 'danger' | 'warning' | 'default';
   metaText: string;
   done: boolean;
+  /** 测评考试窗未开始：列表可见但不可作答 */
+  notStarted: boolean;
 }
 
 interface RegistrableItem {
@@ -116,6 +118,9 @@ function decorate(list: StudentActivityItem[]): DisplayItem[] {
     } else if (a.end_time) {
       metaParts.push(`截止 ${String(a.end_time).slice(5, 10)}`);
     }
+    const notStarted =
+      statusText === '未开始' ||
+      (a.my_status !== 'in_progress' && !!a.start_time && new Date(a.start_time).getTime() > now);
     return {
       id: a.id,
       title: a.title,
@@ -123,6 +128,7 @@ function decorate(list: StudentActivityItem[]): DisplayItem[] {
       statusType,
       metaText: metaParts.join(' · '),
       done: a.my_status === 'submitted' || a.my_status === 'graded',
+      notStarted,
     };
   });
 }
@@ -188,7 +194,16 @@ Page({
   },
 
   onItemTap(e: WechatMiniprogram.CustomEvent) {
-    const { id, done } = e.currentTarget.dataset as { id: number; done: boolean };
+    const { id, done, notStarted } = e.currentTarget.dataset as {
+      id: number;
+      done: boolean;
+      notStarted: boolean;
+    };
+    if (notStarted) {
+      // 测评报名后须等到考试窗开放才能作答（后端 start 同样校验）
+      wx.showToast({ title: '测评未开始，请在考试时间内作答', icon: 'none', duration: 2500 });
+      return;
+    }
     if (done) {
       wx.navigateTo({ url: `/packages/practice/pages/result/index?id=${id}` });
     } else {

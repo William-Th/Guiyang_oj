@@ -43,3 +43,7 @@
   font-weight: 600;
   color: var(--mp-text-secondary);
 }
+
+.item-locked {
+  opacity: 0.62;
+}

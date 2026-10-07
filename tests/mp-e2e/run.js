@@ -515,6 +515,8 @@ async function main() {
         p.onTabChange({ detail: { index: 1 } });
       });
       const rd = await waitFor((d) => d.loading === false, 20000, '测评 tab 加载');
+      // 报名闸门：未报名的测评不得出现在可作答列表
+      assert(!((rd.assessmentList || []).some((i) => i.title === '【E2E】小程序测评报名')), '未报名测评泄漏进可作答列表');
       const item = (rd.registrable || []).find((i) => i.title === '【E2E】小程序测评报名');
       assert(item, '可报名测评未出现在测评 tab');
       firePageMethod('onRegister', { currentTarget: { dataset: { id: item.id } } });
@@ -523,6 +525,19 @@ async function main() {
       const after = await waitFor((d) => (d.assessmentList || []).some((i) => i.title === '【E2E】小程序测评报名'), 20000, '已报名列表出现');
       const regd = after.assessmentList.find((i) => i.title === '【E2E】小程序测评报名');
       assert(regd && !regd.done, '报名后的测评状态异常');
+      // 考试窗未开始：列表可见但点击被拦截（报名后须在考试时间内作答）
+      assert(regd.notStarted, '未开始的测评缺少 notStarted 闸门');
+      await mini.evaluate(() => {
+        const p = getCurrentPages()[getCurrentPages().length-1];
+        const idx = (p.data.assessmentList || []).findIndex((i) => i.title === '【E2E】小程序测评报名');
+        p.onItemTap({ currentTarget: { dataset: { id: p.data.assessmentList[idx].id, notStarted: true } } });
+      });
+      await sleep(800);
+      const stillPractice = String(await mini.evaluate(() => getCurrentPages()[getCurrentPages().length-1].route));
+      assert(stillPractice.includes('pages/practice/index'), '未开始测评点击未被拦截');
+      // 已报名且考试窗进行中的测评可作答（报名闸门正例）
+      const live = after.assessmentList.find((i) => i.title === '【E2E】小程序测评进行中');
+      assert(live && !live.notStarted, '进行中测评应可作答');
       // 取消 → 重报（重报走 cancelled 行复活分支，原实现 create 撞唯一约束 500）
       await mini.switchTab('/pages/practice/index');
       await sleep(1200);

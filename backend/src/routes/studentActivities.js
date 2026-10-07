@@ -428,8 +428,11 @@ router.get('/assessment', authMiddleware, async (req, res) => {
       WHERE a.type = 'assessment'
         AND a.status = 'published'
         AND (a.is_virtual = false OR a.is_virtual IS NULL)
-        AND (a.start_time IS NULL OR a.start_time <= CURRENT_TIMESTAMP)
-        AND (a.end_time IS NULL OR a.end_time >= CURRENT_TIMESTAMP)
+        AND EXISTS (
+          SELECT 1 FROM assessment_registrations r
+          WHERE r.activity_id = a.id AND r.student_id = $1 AND r.status <> 'cancelled'
+        )
+        -- 已报名的测评不再按考试窗过滤：未开始/进行中/已结束统一列出（前端状态化显示，start 有时间闸门拦截作答）
     `;
 
     const params = [studentId];
@@ -596,6 +599,22 @@ router.post('/:id/start',
           attempt_number: row.attempt_number,
           is_continue: true
         });
+      }
+
+      // 报名闸门：测评须先报名（练习无需报名）
+      if (activity.type === 'assessment') {
+        const reg = await query(
+          `SELECT 1 FROM assessment_registrations
+           WHERE activity_id = $1 AND student_id = $2 AND status <> 'cancelled'
+           LIMIT 1`,
+          [activity.id, req.user.id]
+        );
+        if (reg.rows.length === 0) {
+          return res.status(403).json({
+            success: false,
+            message: '请先报名该测评'
+          });
+        }
       }
 
       // 时间闸门：未开始/已结束的活动不允许新的作答（进行中的答题不受影响，见上方 continue 分支）
