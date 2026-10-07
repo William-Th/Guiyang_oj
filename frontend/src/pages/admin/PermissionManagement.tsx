@@ -272,6 +272,9 @@ const PermissionManagement: React.FC = () => {
       assessment_manage: { text: '测评题库管理', color: 'orange' },
       practice_municipal_manage: { text: '市级练习题库管理', color: 'blue' },
       practice_district_manage: { text: '区级练习题库管理', color: 'cyan' },
+      practice_school_manage: { text: '校级练习题库管理', color: 'green' },
+      practice_base_school_manage: { text: '基地校练习题库管理', color: 'green' },
+      practice_municipal_school_manage: { text: '市直校练习题库管理', color: 'green' },
       competition_manage: { text: '竞赛题库管理', color: 'red' },
       // 兼容旧数据显示
       assessment_review: { text: '测评题库审核（旧）', color: 'default' },
@@ -301,7 +304,7 @@ const PermissionManagement: React.FC = () => {
     {
       title: '用户',
       key: 'user',
-      width: 150,
+      width: 140,
       render: (_: any, record: Permission) => (
         <div>
           <div><strong>{record.real_name}</strong></div>
@@ -323,7 +326,7 @@ const PermissionManagement: React.FC = () => {
       title: '授权科目',
       dataIndex: 'subjects',
       key: 'subjects',
-      width: 200,
+      width: 170,
       render: (subjects: string[]) => (
         <div>
           {subjects.map((subject) => (
@@ -349,24 +352,16 @@ const PermissionManagement: React.FC = () => {
       dataIndex: 'district_name',
       key: 'district_name',
       width: 100,
-      render: (text: string) => {
-        if (text) {
-          return <Tag color="geekblue">{text}</Tag>;
-        }
-        return <span style={{ color: '#999' }}>全市</span>;
-      },
+      render: (text: string) =>
+        text ? <Tag color="geekblue">{text}</Tag> : <Tag>全市</Tag>,
     },
     {
       title: '学校',
       dataIndex: 'school_name',
       key: 'school_name',
-      width: 120,
-      render: (text: string) => {
-        if (text) {
-          return <Tag color="green">{text}</Tag>;
-        }
-        return <span style={{ color: '#999' }}>-</span>;
-      },
+      width: 110,
+      render: (text: string) =>
+        text ? <Tag color="green">{text}</Tag> : <Tag>不限</Tag>,
     },
     {
       title: '状态',
@@ -391,21 +386,21 @@ const PermissionManagement: React.FC = () => {
       title: '授权人',
       dataIndex: 'granted_by_name',
       key: 'granted_by_name',
-      width: 100,
+      width: 90,
       render: (text: string) => text || '-',
     },
     {
       title: '授权时间',
       dataIndex: 'granted_at',
       key: 'granted_at',
-      width: 160,
+      width: 150,
       render: (text: string) => new Date(text).toLocaleString('zh-CN'),
     },
     {
       title: '到期时间',
       dataIndex: 'expires_at',
       key: 'expires_at',
-      width: 160,
+      width: 150,
       render: (text: string) => {
         if (!text) return <Tag color="green">永久有效</Tag>;
         const expiryDate = new Date(text);
@@ -423,6 +418,7 @@ const PermissionManagement: React.FC = () => {
       title: '备注',
       dataIndex: 'notes',
       key: 'notes',
+      width: 180,
       ellipsis: true,
       render: (text: string) => (
         <Tooltip title={text}>
@@ -540,6 +536,7 @@ const PermissionManagement: React.FC = () => {
               columns={columns}
               dataSource={permissions}
               rowKey="id"
+              scroll={{ x: 1560 }}
               rowSelection={{
                 selectedRowKeys,
                 onChange: (keys) => setSelectedRowKeys(keys),
@@ -552,7 +549,6 @@ const PermissionManagement: React.FC = () => {
                 showSizeChanger: true,
                 showTotal: (total) => `共 ${total} 条权限记录`,
               }}
-              scroll={{ x: 1520 }}
             />
           )}
         </Spin>
