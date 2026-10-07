@@ -475,6 +475,13 @@ async function main() {
       firePageMethod('goCodeEditor');
       await waitForRoute('pages/code/index');
       await waitFor((d) => d.loading === false, 20000, '编辑器加载');
+      // 切语言 → 未编辑状态下自动换 cpp 骨架模板
+      firePageMethod('onLanguageChange', { detail: { value: 1 } });
+      const cppd = await waitFor((d) => String(d.code || '').includes('#include'), 10000, '切语言模板切换');
+      const cppIdx = cppd.languageIndex;
+      // 切回 python 继续
+      firePageMethod('onLanguageChange', { detail: { value: 0 } });
+      await waitFor((d) => d.languageIndex === 0 && String(d.code || '').includes('#'), 10000, '切回 python');
       // 反复运行会积累历史提交：记录进入时的 submissionId，只等「新」结果
       const beforeId = ((await getPageData()).result || {}).submissionId || 0;
       // 注入 python 解（覆盖模板）

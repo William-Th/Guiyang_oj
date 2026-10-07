@@ -125,18 +125,48 @@
   background: #e5e7eb;
 }
 
-.code-area {
-  width: 100%;
-  min-height: 480rpx;
-  box-sizing: border-box;
-  padding: 20rpx;
+/* 双层代码区：下层高亮 rich-text，上层透明 textarea。
+   两层字体/行高/padding/折行完全一致，外层统一滚动，避免光标与文字错位 */
+.code-wrap {
+  height: 520rpx;
   border-radius: 12rpx;
   background: #0f172a;
-  color: #e2e8f0;
+}
+
+.code-inner {
+  position: relative;
+  padding: 20rpx;
+  min-height: 520rpx;
+  box-sizing: border-box;
+}
+
+.code-highlight {
+  display: block;
+  min-height: 480rpx;
   font-family: Menlo, Consolas, monospace;
   font-size: 26rpx;
   line-height: 1.6;
   white-space: pre-wrap;
+  word-break: break-all;
+  color: #e2e8f0;
+}
+
+.code-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 20rpx;
+  background: transparent;
+  color: transparent;
+  caret-color: #38bdf8;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 26rpx;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* ---------- 判题结果 ---------- */

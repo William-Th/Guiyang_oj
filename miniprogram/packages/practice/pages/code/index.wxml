@@ -50,14 +50,21 @@
         <view class="key" hover-class="key-hover" bindtap="onInsertKey" data-key="semicolon">;</view>
         <view class="key key-ghost" hover-class="key-hover" bindtap="onInjectTemplate">注入模板</view>
       </view>
-      <textarea
-        class="code-area"
-        value="{{code}}"
-        cursor="{{cursor}}"
-        maxlength="-1"
-        bindinput="onCodeInput"
-        auto-height
-      />
+      <!-- 双层结构：下层高亮 rich-text，上层透明 textarea（同层渲染），
+           auto-height 让两层随内容等高，外层 scroll-view 统一滚动无偏差 -->
+      <scroll-view class="code-wrap" scroll-y>
+        <view class="code-inner">
+          <rich-text class="code-highlight" nodes="{{highlightHtml}}" />
+          <textarea
+            class="code-area"
+            value="{{code}}"
+            cursor="{{cursor}}"
+            maxlength="-1"
+            auto-height
+            bindinput="onCodeInput"
+          />
+        </view>
+      </scroll-view>
     </view>
 
     <!-- 判题状态 / 结果 -->

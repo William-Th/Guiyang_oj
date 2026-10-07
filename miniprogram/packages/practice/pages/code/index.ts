@@ -11,6 +11,7 @@ import { getActivityQuestions, QuestionRaw } from '../../../../services/activiti
 import { requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
 import { setStash } from '../../../../utils/transfer';
+import { highlightCode, starterTemplate } from '../../../../utils/highlight';
 
 /** 轮询节奏与上限（计划书 6.3：1s 间隔；切后台暂停、回前台恢复） */
 const POLL_INTERVAL = 1000;
@@ -48,7 +49,12 @@ Page({
     /** picker 数据源：{id,name} 对象数组（字符串数组配 range-key 会渲染 undefined） */
     usableLanguages: [] as JudgeLanguage[],
     languageIndex: 0,
+    /** 题面原始模板（python 注释风格），作为 python 语言的起步模板 */
+    questionTemplate: '',
+    /** 当前语言的起步模板（切语言时更新） */
     templateCode: '',
+    /** 高亮层 HTML（rich-text nodes 直收） */
+    highlightHtml: '',
     samples: [] as SampleCase[],
     code: '',
     cursor: 0,
@@ -134,6 +140,8 @@ Page({
       const usableLanguages = usableIds.map(
         (id) => languages.find((l) => l.id === id) ?? { id, name: id, extension: '' }
       );
+      const questionTemplate = (raw.code_template as string) || '';
+      const initialCode = starterTemplate(usableIds[0] ?? 'python', questionTemplate);
       this.setData({
         loading: false,
         contentHtml: raw.content || '',
@@ -141,8 +149,10 @@ Page({
         memoryLimit: Number(raw.memory_limit ?? 256),
         usableLanguages,
         languageIndex: 0,
-        templateCode: (raw.code_template as string) || '',
-        code: (raw.code_template as string) || '',
+        questionTemplate,
+        templateCode: initialCode,
+        code: initialCode,
+        highlightHtml: highlightCode(initialCode, usableIds[0] ?? 'python'),
       });
       const sampleRes = await getSamples(questionId).catch(() => null);
       if (sampleRes?.data?.length) this.setData({ samples: sampleRes.data });
@@ -152,11 +162,19 @@ Page({
     }
   },
 
+  /** 所有 code 变更统一走这里：同步高亮层（透明 textarea 盖在高亮层上） */
+  applyCode(code: string, cursor?: number) {
+    // 值未变时只刷高亮不回写 code——受控 textarea 回写会让光标跳到末尾
+    const patch: Record<string, unknown> = {
+      highlightHtml: highlightCode(code, this.languageId()),
+    };
+    if (code !== this.data.code) patch.code = code;
+    if (cursor !== undefined) patch.cursor = cursor;
+    this.setData(patch);
+  },
+
   onCodeInput(e: WechatMiniprogram.CustomEvent) {
-    this.setData({
-      code: String(e.detail.value ?? ''),
-      cursor: Number(e.detail.cursor ?? 0),
-    });
+    this.applyCode(String(e.detail.value ?? ''), Number(e.detail.cursor ?? 0));
   },
 
   /** 缩进辅助键：在光标处插入文本（计划书 6.3：Tab/花括号/引号补全）。
@@ -172,18 +190,37 @@ Page({
     const insert = INSERTS[String(e.currentTarget.dataset.key ?? '')] ?? '';
     const { code, cursor } = this.data;
     const pos = Math.min(Math.max(cursor, 0), code.length);
-    const next = code.slice(0, pos) + insert + code.slice(pos);
-    this.setData({ code: next, cursor: pos + insert.length });
+    this.applyCode(code.slice(0, pos) + insert + code.slice(pos), pos + insert.length);
   },
 
   onLanguageChange(e: WechatMiniprogram.CustomEvent) {
-    this.setData({ languageIndex: Number(e.detail.value || 0) });
+    const idx = Number(e.detail.value || 0);
+    if (idx === this.data.languageIndex) return;
+    const langId = this.data.usableLanguages[idx]?.id ?? 'python';
+    const nextTemplate = starterTemplate(langId, this.data.questionTemplate);
+    const switchTo = () => {
+      this.setData({ languageIndex: idx, templateCode: nextTemplate });
+      this.applyCode(nextTemplate, 0);
+    };
+    // 未编辑（仍为上一语言模板）直接换；已编辑需确认覆盖
+    if (this.data.code === this.data.templateCode) {
+      switchTo();
+      return;
+    }
+    wx.showModal({
+      title: '切换语言',
+      content: '切换后代码区将被该语言的起步模板覆盖，确定切换吗？',
+      success: (res) => {
+        if (res.confirm) switchTo();
+        else this.setData({ languageIndex: this.data.languageIndex }); // 取消，保持原语言
+      },
+    });
   },
 
   onInjectTemplate() {
     const tpl = this.data.templateCode;
     if (tpl) {
-      this.setData({ code: tpl, cursor: 0 });
+      this.applyCode(tpl, 0);
       wx.showToast({ title: '已注入模板', icon: 'none' });
     }
   },
