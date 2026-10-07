@@ -80,9 +80,43 @@
         <view class="explain-title">解析</view>
         <rich-text nodes="{{item.explanationHtml}}" />
       </view>
+      <view class="report-link" hover-class="report-link-hover" bind:tap="openReport" data-index="{{index}}">
+        <van-icon name="warning-o" size="26rpx" />
+        发现这道题有问题？点击纠错
+      </view>
     </view>
     <van-empty wx:if="{{list.length === 0}}" description="暂无解析数据" />
   </block>
+
+  <!-- 纠错弹层 -->
+  <view wx:if="{{reportOpen}}" class="report-mask" bind:tap="closeReport">
+    <view class="report-sheet" catchtap="noop">
+      <view class="report-head">
+        <text class="report-title">题目纠错</text>
+        <van-icon name="cross" size="36rpx" color="#6b7280" bind:tap="closeReport" />
+      </view>
+      <view class="report-types">
+        <view
+          wx:for="{{reportTypes}}"
+          wx:key="value"
+          class="report-type {{reportTypeIndex === index ? 'active' : ''}}"
+          data-index="{{index}}"
+          bind:tap="onReportType"
+        >{{item.label}}</view>
+      </view>
+      <textarea
+        class="report-text"
+        value="{{reportText}}"
+        maxlength="300"
+        placeholder="请具体描述问题（至少 5 个字），如：正确答案应为 B / 解析中公式有误"
+        bindinput="onReportText"
+      />
+      <view class="report-count">{{reportText.length}}/300</view>
+      <van-button block round type="primary" loading="{{reportSubmitting}}" bind:click="submitReport">
+        提交纠错
+      </van-button>
+    </view>
+  </view>
 
   <view class="result-footer">
     <van-button block round type="primary" bind:click="goBack">返回练习列表</van-button>

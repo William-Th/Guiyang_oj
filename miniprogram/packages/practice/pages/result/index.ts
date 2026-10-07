@@ -1,4 +1,5 @@
 import { getActivityResult, ResultAnswer } from '../../../../services/activities';
+import { ERROR_TYPES, submitErrorReport } from '../../../../services/errorReport';
 import { requireLogin } from '../../../../utils/auth';
 import { toastError } from '../../../../utils/request';
 import { formatDateTime } from '../../../../utils/format';
@@ -18,6 +19,7 @@ interface AnalysisOption extends NormalOption {
 }
 
 interface AnalysisItem {
+  questionId: number;
   typeText: string;
   contentHtml: string;
   statusClass: 'correct' | 'wrong' | 'pending' | 'unknown';
@@ -88,6 +90,13 @@ Page({
     publishText: '',
     strip: [] as { status: StripStatus }[],
     list: [] as AnalysisItem[],
+    /** 纠错弹层 */
+    reportOpen: false,
+    reportIndex: -1,
+    reportTypes: ERROR_TYPES,
+    reportTypeIndex: 0,
+    reportText: '',
+    reportSubmitting: false,
   },
 
   activityId: 0 as number,
@@ -109,6 +118,7 @@ Page({
           ? buildOptionStates(type, a.question_options, normalizeAnswer(type, a.my_answer), a.correct_answer)
           : [];
         return {
+          questionId: a.question_id,
           typeText: TYPE_TEXT[type] ?? type,
           contentHtml: a.question_content ?? '',
           statusClass: statusOf(a, canShow) === 'unknown' ? 'unknown' : statusOf(a, canShow),
@@ -151,6 +161,57 @@ Page({
       toastError(err, '成绩加载失败');
       setTimeout(() => wx.navigateBack(), 1200);
     }
+  },
+
+  // ---------- 题目纠错 ----------
+  openReport(e: WechatMiniprogram.CustomEvent) {
+    this.setData({
+      reportOpen: true,
+      reportIndex: Number(e.currentTarget.dataset.index ?? -1),
+      reportTypeIndex: 0,
+      reportText: '',
+    });
+  },
+
+  closeReport() {
+    this.setData({ reportOpen: false, reportIndex: -1 });
+  },
+
+  onReportType(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ reportTypeIndex: Number(e.currentTarget.dataset.index ?? 0) });
+  },
+
+  onReportText(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ reportText: String(e.detail.value ?? '') });
+  },
+
+  async submitReport() {
+    if (this.data.reportSubmitting) return;
+    const desc = this.data.reportText.trim();
+    if (desc.length < 5) {
+      wx.showToast({ title: '请至少写 5 个字说明问题', icon: 'none' });
+      return;
+    }
+    const item = this.data.list[this.data.reportIndex];
+    if (!item?.questionId) return;
+    this.setData({ reportSubmitting: true });
+    try {
+      const res = await submitErrorReport({
+        questionId: item.questionId,
+        errorType: ERROR_TYPES[this.data.reportTypeIndex].value,
+        errorDescription: desc,
+      });
+      wx.showToast({ title: res.message || '纠错已提交', icon: 'none', duration: 2500 });
+      this.closeReport();
+    } catch (err) {
+      toastError(err, '提交失败');
+    } finally {
+      this.setData({ reportSubmitting: false });
+    }
+  },
+
+  noop() {
+    /* 阻止弹层冒泡关闭 */
   },
 
   goBack() {

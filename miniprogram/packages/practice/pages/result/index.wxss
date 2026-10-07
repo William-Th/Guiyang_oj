@@ -229,3 +229,87 @@
 .result-footer {
   margin: 40rpx 24rpx 0;
 }
+
+/* ---------- 题目纠错 ---------- */
+.report-link {
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #f1f5f9;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.report-link-hover {
+  color: var(--mp-primary);
+}
+
+.report-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.report-sheet {
+  width: 100%;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 28rpx 28rpx calc(28rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.report-title {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.report-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-bottom: 20rpx;
+}
+
+.report-type {
+  padding: 10rpx 26rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  font-size: 26rpx;
+  color: var(--mp-text-secondary);
+}
+
+.report-type.active {
+  background: var(--mp-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.report-text {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 180rpx;
+  padding: 18rpx;
+  border-radius: 12rpx;
+  background: #f9fafb;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.report-count {
+  text-align: right;
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin: 8rpx 0 16rpx;
+}
