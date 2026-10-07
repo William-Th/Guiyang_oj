@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireAdmin } = require('../middleware/auth');
 const {
   generateCertificate,
   downloadCertificatePDF,
@@ -10,6 +10,7 @@ const {
   batchGenerateCertificates,
   getCertificateStatistics
 } = require('../controllers/certificateController');
+const designController = require('../controllers/certificateDesignController');
 
 // 公开路由：证书验证（无需登录）
 router.get('/verify/:certNumber', verifyCertificate);
@@ -34,5 +35,13 @@ router.post('/batch/:examId', batchGenerateCertificates);
 
 // 获取证书统计信息（教师/管理员）
 router.get('/statistics', getCertificateStatistics);
+
+// ---------- 证书自定义设计（管理端） ----------
+router.get('/designs', requireAdmin, designController.list);
+router.post('/designs', requireAdmin, designController.create);
+router.get('/designs/:id/preview', requireAdmin, designController.preview);
+router.put('/designs/:id', requireAdmin, designController.update);
+router.put('/designs/:id/default', requireAdmin, designController.setDefault);
+router.delete('/designs/:id', requireAdmin, designController.remove);
 
 module.exports = router;

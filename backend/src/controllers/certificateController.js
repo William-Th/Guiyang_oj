@@ -57,10 +57,12 @@ const generateCertificate = async (req, res) => {
     // 生成证书文件 (HTML for verification, PDF for download)  
     const fileResult = await certificateService.generateCertificateFile(certificateData);
     
-    // Generate PDF version using the new PDF service
+    // Generate PDF version using the new PDF service（按当前默认证书设计渲染）
     const pdfService = require('../services/pdfCertificateService');
     try {
-      await pdfService.generatePDF(certificateData);
+      const CertificateDesign = require('../models/CertificateDesign');
+      const design = await CertificateDesign.getDefault();
+      await pdfService.generatePDF(certificateData, design);
     } catch (pdfError) {
       console.warn('PDF generation failed, continuing with HTML only:', pdfError);
     }
@@ -174,15 +176,17 @@ const downloadCertificatePDF = async (req, res) => {
 
     const detail = detailResult.rows[0] || {};
 
-    // 使用 PDFKit 动态生成 PDF
+    // 使用 PDFKit 动态生成 PDF（按当前默认证书设计渲染）
     const pdfService = require('../services/pdfCertificateService');
+    const CertificateDesign = require('../models/CertificateDesign');
+    const design = await CertificateDesign.getDefault();
     const pdfBuffer = await pdfService.generatePDFBuffer({
       certNumber: certNumber,
       studentName: detail.student_name || '学生',
       examName: detail.exam_name || '测评活动',
       score: detail.score || 0,
       issueDate: certificate.issue_date || new Date()
-    });
+    }, design);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="certificate_${certNumber}.pdf"`);

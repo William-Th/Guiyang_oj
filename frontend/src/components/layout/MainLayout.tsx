@@ -2,6 +2,7 @@ import React from 'react';
 import { Layout, Avatar, Button, Drawer, Dropdown, Space, Menu } from 'antd';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import {
+  FileDoneOutlined,
   UserOutlined,
   LogoutOutlined,
   HomeOutlined,
@@ -142,6 +143,11 @@ const MainLayout: React.FC = () => {
         icon: <TrophyOutlined />,
         label: '成就管理',
       });
+      items.push({
+        key: '/admin/certificate-designs',
+        icon: <FileDoneOutlined />,
+        label: '证书设计',
+      });
     }
 
     return items;
@@ -261,6 +267,7 @@ const MainLayout: React.FC = () => {
     if (path.includes('/admin/question-governance')) return '/admin/question-governance';
     if (path.includes('/admin/permissions')) return '/admin/permissions';
     if (path.includes('/admin/achievements')) return '/admin/achievements';
+    if (path.includes('/admin/certificate-designs')) return '/admin/certificate-designs';
     return '/admin/home';
   };
 

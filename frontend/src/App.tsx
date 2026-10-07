@@ -40,6 +40,7 @@ import SmartPracticePage from './pages/student/SmartPracticePage';
 import ShopPage from './pages/student/ShopPage';
 import ErrorReportsPage from './pages/teacher/ErrorReportsPage';
 import QuestionGovernancePage from './pages/admin/QuestionGovernancePage';
+import CertificateDesignPage from './pages/admin/CertificateDesignPage';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import DataAnalytics from './pages/teacher/DataAnalytics';
 import TeachingClassList from './pages/teacher/TeachingClassList';
@@ -84,6 +85,7 @@ const App: React.FC = () => {
                 <Route path="approval-center" element={<ApprovalCenter />} />
                 <Route path="question-governance" element={<QuestionGovernancePage />} />
                 <Route path="achievements" element={<AchievementManagementPage />} />
+                <Route path="certificate-designs" element={<CertificateDesignPage />} />
                 <Route path="assessments">
                   <Route index element={<AssessmentManagementPage />} />
                   <Route path="create/:type?" element={<ActivityFormPage />} />
