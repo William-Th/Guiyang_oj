@@ -319,9 +319,9 @@ async function main() {
     });
 
     await step('⑦ 管理端总览与审批', async () => {
-      await login(ADMIN, 'packages/admin/pages/home/index'); // 管理员登录直落管理工作台
+      await login(ADMIN, 'pages/home/index'); // 管理员登录落在首页 tab，按角色渲染管理工作台
       const stats = await waitFor(
-        (d) => d.loading === false && typeof d.pendingCount === 'number' && d.pendingCount >= 1,
+        (d) => typeof d.pendingCount === 'number' && d.pendingCount >= 1,
         20000,
         '管理总览待办角标'
       );
