@@ -13,8 +13,9 @@
 <van-cell-group inset>
   <van-cell wx:if="{{isParent}}" title="孩子学习看板" label="成绩 / 科目掌握 / 最近动态" icon="friends-o" is-link bind:click="goParentDashboard" />
   <van-cell wx:if="{{isAdmin}}" title="管理工作台" label="总览待办 / 审批中心 / 用户查询" icon="manager-o" is-link bind:click="goAdmin" />
-  <van-cell wx:if="{{isStudent}}" title="报名记录" icon="calendar-o" is-link bind:click="onFeature" />
-  <van-cell wx:if="{{isStudent}}" title="我的证书" icon="medal" is-link bind:click="onFeature" />
+  <van-cell wx:if="{{isStudent}}" title="报名记录" label="注册审核进度 / 历史申请" icon="calendar-o" is-link bind:click="goRegistrations" />
+  <van-cell wx:if="{{isStudent}}" title="我的证书" label="已获证书 / 下载验证" icon="medal" is-link bind:click="goCertificates" />
+  <van-cell wx:if="{{role === 'teacher'}}" title="题目审核" label="{{teacherReviewLabel || '出题人提交的待审题目'}}" icon="edit" is-link bind:click="goTeacherReview" />
   <van-cell title="通知中心" label="{{unreadLabel}}" icon="bell" is-link bind:click="goNotifications" />
   <van-cell title="设置" icon="setting-o" is-link bind:click="goSettings" />
 </van-cell-group>

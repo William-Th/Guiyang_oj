@@ -87,3 +87,20 @@ FROM users s WHERE s.username = '13800138003'
     SELECT 1 FROM user_notifications n
     WHERE n.user_id = s.id AND n.title = '【E2E】通知中心测试通知' AND n.is_read = false
   );
+
+-- 7) E2E 专属报名记录（流程⑪学生"我的-报名记录"使用）：已驳回态，不进审批队列、
+--    展示驳回原因字段；按 real_name 幂等。
+INSERT INTO student_registration_requests
+  (phone, real_name, birth_date, id_card_last4, district_id, district_code, district_name,
+   school_id, school_code, school_name, grade, status, current_reviewer_level,
+   reviewed_at, review_comment)
+SELECT s.phone, 'E2E报名学生', '2014-05-20', '1234', sc.district_id, sc.code, sc.name,
+       sc.id, sc.code, sc.name, '四年级', 'rejected', 3,
+       CURRENT_TIMESTAMP, 'E2E：信息填写不完整，请补充后重新提交'
+FROM users s
+JOIN schools sc ON sc.id = 1
+WHERE s.username = '13800138003'
+  AND NOT EXISTS (
+    SELECT 1 FROM student_registration_requests r
+    WHERE r.phone = s.phone AND r.real_name = 'E2E报名学生'
+  );

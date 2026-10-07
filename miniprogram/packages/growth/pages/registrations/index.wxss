@@ -1,0 +1,43 @@
+.reg-page {
+  padding-top: 20rpx;
+}
+
+.reg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.reg-school {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--mp-text-primary, #1f2937);
+}
+
+.reg-name {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
+
+.reg-meta {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.reg-comment {
+  margin-top: 12rpx;
+  padding: 14rpx 16rpx;
+  background: #fef2f2;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  color: #dc2626;
+  line-height: 1.6;
+}
+
+.reg-footer {
+  padding: 16rpx 24rpx 0;
+}

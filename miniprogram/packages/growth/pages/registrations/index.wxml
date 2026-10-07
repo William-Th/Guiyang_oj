@@ -1,0 +1,21 @@
+<view class="reg-page tab-page-padding">
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{list}}" wx:key="id" class="card reg-item">
+      <view class="reg-head">
+        <view class="reg-school">{{item.school_name}}{{item.grade ? ' · ' + item.grade : ''}}</view>
+        <van-tag type="{{item.statusType}}">{{item.statusText}}</van-tag>
+      </view>
+      <view class="reg-name">{{item.real_name}}</view>
+      <view class="reg-meta">提交于：{{item.submittedText || '—'}}</view>
+      <view wx:if="{{item.reviewedText}}" class="reg-meta">审核于：{{item.reviewedText}}</view>
+      <view wx:if="{{item.status === 'rejected' && item.review_comment}}" class="reg-comment">
+        驳回原因：{{item.review_comment}}
+      </view>
+    </view>
+    <van-empty wx:if="{{list.length === 0}}" description="暂无报名记录" />
+    <view class="reg-footer">
+      <van-button block round plain type="primary" bind:click="goRegister">去报名测评</van-button>
+    </view>
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</view>

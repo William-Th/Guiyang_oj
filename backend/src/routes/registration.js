@@ -445,6 +445,38 @@ router.post('/status', registrationStatusLimiter, async (req, res) => {
 });
 
 /**
+ * GET /api/registration/my
+ * 当前登录用户自己的报名/注册申请记录（小程序"我的-报名记录"）：
+ * 审批通过后 student_user_id 回填；未关联的历史申请按手机号匹配本人。
+ */
+router.get('/my', authMiddleware, async (req, res) => {
+  try {
+    // req.user 不含 phone（auth 中间件只带 id/username/role），库内补查
+    const userRow = await pool.query('SELECT phone FROM users WHERE id = $1', [req.user.id]);
+    const phone = userRow.rows[0]?.phone;
+    const params = [req.user.id];
+    let where = 'WHERE student_user_id = $1';
+    if (phone) {
+      where += ' OR phone = $2';
+      params.push(phone);
+    }
+    const result = await pool.query(
+      `SELECT id, real_name, school_name, grade, status,
+              submitted_at, reviewed_at, review_comment
+       FROM student_registration_requests
+       ${where}
+       ORDER BY submitted_at DESC
+       LIMIT 50`,
+      params
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    logger.error('Error fetching my registrations', { error: error.message });
+    res.status(500).json({ success: false, message: '获取报名记录失败' });
+  }
+});
+
+/**
  * GET /api/registration/admin/requests
  * 获取待审核申请列表（管理员用）
  * 需要认证中间件

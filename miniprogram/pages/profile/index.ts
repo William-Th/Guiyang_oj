@@ -1,5 +1,6 @@
 import { logout } from '../../services/api';
 import { getUnreadCounts } from '../../services/notification';
+import { getPendingQuestions } from '../../services/review';
 import { clearSession, getUser, isAdmin, requireLogin } from '../../utils/auth';
 
 const ROLE_TEXT: Record<string, string> = {
@@ -23,6 +24,7 @@ Page({
     isParent: false,
     isStudent: false,
     unreadLabel: '',
+    teacherReviewLabel: '',
     version: '0.1.0',
   },
 
@@ -44,6 +46,7 @@ Page({
       isStudent,
     });
     this.loadUnreadLabel();
+    if (user.role === 'teacher') this.loadTeacherReviewLabel();
   },
 
   /** 通知中心未读角标（通知+公告；失败静默不显示） */
@@ -59,6 +62,29 @@ Page({
 
   goNotifications() {
     wx.navigateTo({ url: '/pages/notifications/index' });
+  },
+
+  goRegistrations() {
+    wx.navigateTo({ url: '/packages/growth/pages/registrations/index' });
+  },
+
+  goCertificates() {
+    wx.navigateTo({ url: '/packages/growth/pages/certificates/index' });
+  },
+
+  /** 教师待审题数（与教师首页同一接口，失败静默） */
+  async loadTeacherReviewLabel() {
+    try {
+      const res = await getPendingQuestions();
+      const count = res.data?.length ?? 0;
+      this.setData({ teacherReviewLabel: count > 0 ? `${count} 道题目待你审核` : '' });
+    } catch {
+      /* 失败不打扰 */
+    }
+  },
+
+  goTeacherReview() {
+    wx.navigateTo({ url: '/packages/admin/pages/review/index' });
   },
 
   goSettings() {

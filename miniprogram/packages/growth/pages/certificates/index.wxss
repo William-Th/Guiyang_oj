@@ -1,0 +1,42 @@
+.cert-page {
+  padding-top: 20rpx;
+}
+
+.cert-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.cert-exam {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--mp-text-primary, #1f2937);
+}
+
+.cert-no {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
+
+.cert-copy {
+  margin-left: 10rpx;
+  color: var(--mp-primary);
+}
+
+.cert-date {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.cert-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f1f5f9;
+}

@@ -32,7 +32,9 @@
         "pages/ranking/index",
         "pages/wrong-questions/index",
         "pages/statistics/index",
-        "pages/shop/index"
+        "pages/shop/index",
+        "pages/registrations/index",
+        "pages/certificates/index"
       ]
     },
     {

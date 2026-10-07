@@ -1,0 +1,28 @@
+<view class="cert-page tab-page-padding">
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{list}}" wx:key="id" class="card cert-item">
+      <view class="cert-head">
+        <view class="cert-exam">{{item.exam_name || '测评证书'}}</view>
+        <van-tag type="success" wx:if="{{item.level}}">{{item.level}}</van-tag>
+      </view>
+      <view class="cert-no" data-no="{{item.cert_no}}" bindtap="onCopyCertNo">
+        证书编号：{{item.cert_no}}
+        <text class="cert-copy">复制</text>
+      </view>
+      <view class="cert-date">颁发日期：{{item.dateText || '—'}}</view>
+      <view class="cert-actions">
+        <van-button
+          size="small"
+          round
+          plain
+          type="primary"
+          loading="{{item.downloading}}"
+          data-id="{{item.id}}"
+          bind:click="onDownload"
+        >下载证书</van-button>
+      </view>
+    </view>
+    <van-empty wx:if="{{list.length === 0}}" description="暂无证书，参加测评可获得证书" />
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</view>

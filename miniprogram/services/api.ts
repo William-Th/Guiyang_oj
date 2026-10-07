@@ -76,6 +76,41 @@ export function getPointsAccount(studentId: number) {
   return request<{ success: boolean; data: PointsAccount }>('GET', `/points/account/${studentId}`);
 }
 
+// ---------- 报名记录 / 我的证书（"我的"页，20261007） ----------
+
+export interface MyRegistration {
+  id: number;
+  real_name: string;
+  school_name: string;
+  grade?: string;
+  status: 'pending' | 'approved' | 'rejected' | string;
+  submitted_at?: string;
+  reviewed_at?: string;
+  review_comment?: string;
+}
+
+/** 当前登录用户自己的报名/注册申请（后端按 student_user_id/手机号匹配本人） */
+export function getMyRegistrations() {
+  return request<{ success: boolean; data: MyRegistration[] }>('GET', '/registration/my');
+}
+
+export interface MyCertificate {
+  id: number;
+  cert_no: string;
+  level?: string;
+  issue_date?: string;
+  exam_name?: string;
+  file_url?: string;
+}
+
+/** 学生自己的证书（后端限定只能查自己） */
+export function getMyCertificates(studentId: number) {
+  return request<{ message?: string; certificates: MyCertificate[] }>(
+    'GET',
+    `/certificates/student/${studentId}`
+  );
+}
+
 export function getUnreadCount() {
   // 后端返回 {count: {notifications, announcements, total}}
   return request<{

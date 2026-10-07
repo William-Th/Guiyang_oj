@@ -393,6 +393,10 @@ async function main() {
       rd = await waitFor((d) => d.loading === false && d.stats.approved === before + 1, 25000, '审核通过后统计刷新');
       assert(!((rd.list || []).some((i) => i.id === item.id)), '通过后题目仍在待审列表');
       await mini.restoreWxMethod('showModal');
+      // 教师"我的"页：题目审核入口显示待审数
+      await mini.switchTab('/pages/profile/index');
+      await sleep(1200);
+      await waitFor((d) => String(d.teacherReviewLabel || '').includes('待你审核'), 8000, '教师我的页审核角标');
     });
 
     await step('⑩ 通知中心与设置', async () => {
@@ -429,6 +433,29 @@ async function main() {
       await sleep(800);
       const sd2 = await getPageData();
       assert(typeof sd2.cacheCount === 'number' && sd2.version.length > 0, '设置页清缓存后状态异常');
+    });
+
+    await step('⑪ 报名记录与我的证书', async () => {
+      await login(STUDENT, 'pages/home/index');
+      // 报名记录：夹具已驳回记录
+      await mini.navigateTo('/packages/growth/pages/registrations/index');
+      await waitForRoute('pages/registrations/index');
+      const rg = await waitFor((d) => d.loading === false && (d.list || []).length > 0, 20000, '报名记录加载');
+      const mine = rg.list.find((i) => i.real_name === 'E2E报名学生');
+      assert(mine, '夹具报名记录未出现');
+      assert(mine.statusText === '已驳回' && String(mine.review_comment || '').includes('E2E'), '驳回记录字段缺失');
+      // 我的证书：种子学生有 2 张
+      await mini.navigateTo('/packages/growth/pages/certificates/index');
+      await waitForRoute('pages/certificates/index');
+      const cd = await waitFor((d) => d.loading === false && (d.list || []).length > 0, 20000, '证书加载');
+      assert(cd.list.length >= 1 && String(cd.list[0].cert_no || '').startsWith('GY-'), '证书列表异常');
+      // 真实点击层：点证书编号行复制
+      const cp = await (await mini.currentPage()).$('.cert-no');
+      assert(cp, '未找到证书编号行');
+      await cp.tap();
+      await sleep(800);
+      const clip = await mini.evaluate(() => new Promise((resolve) => wx.getClipboardData({ success: (r) => resolve(r.data), fail: () => resolve('') })));
+      assert(String(clip).startsWith('GY-'), '复制证书编号未生效');
     });
 
   } finally {
