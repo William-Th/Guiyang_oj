@@ -37,7 +37,8 @@
       "root": "packages/admin",
       "pages": [
         "pages/approvals/index",
-        "pages/users/index"
+        "pages/users/index",
+        "pages/review/index"
       ]
     }
   ],

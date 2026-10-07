@@ -22,6 +22,8 @@ const STUDENT = { username: '13800138003', password: 'password123' };
 const PARENT = { username: 'mp_parent_test', password: 'password123' };
 // 校级管理员（admin_permissions.school_id=1，管到种子学生所在校）
 const ADMIN = { username: 'school_admin_01', password: 'password123' };
+// 审核人教师（夹具待审题目指定 reviewer；teacher 角色首页有审核入口）
+const TEACHER = { username: 'teacher_yy_ps_math', password: 'password123' };
 
 const results = [];
 let mini = null;
@@ -361,6 +363,25 @@ async function main() {
       firePageMethod('onQuery');
       const d2 = await waitFor((x) => !!x.statusInfo, 20000, '身份查询结果');
       assert(d2.statusInfo.status === 'pending' && d2.statusInfo.statusText === '审核中', '查询状态异常');
+    });
+
+    await step('⑨ 教师题目审核流', async () => {
+      await login(TEACHER, 'pages/home/index');
+      const home = await waitFor((d) => d.role === 'teacher' && d.teacherReviewPending >= 1, 20000, '教师首页待审角标');
+      assert(home.teacherReviewPending >= 1, '教师首页未统计到夹具待审题');
+      await mini.navigateTo('/packages/admin/pages/review/index');
+      await waitForRoute('pages/review/index');
+      let rd = await waitFor((d) => d.loading === false && (d.list || []).length > 0, 20000, '待审列表加载');
+      const before = rd.stats.approved;
+      const item = rd.list.find((i) => String(i.content || '').includes('【E2E】审核流测试题'));
+      assert(item, '夹具待审题未出现在列表');
+      // wx.showModal 原生确认弹窗 automator 点不到：mock 成自动确认
+      await mini.mockWxMethod('showModal', { confirm: true, cancel: false });
+      firePageMethod('onApprove', { currentTarget: { dataset: { id: item.id } } });
+      // 通过后列表刷新且统计的已通过数 +1（弹窗未确认则不会变化）
+      rd = await waitFor((d) => d.loading === false && d.stats.approved === before + 1, 25000, '审核通过后统计刷新');
+      assert(!((rd.list || []).some((i) => i.id === item.id)), '通过后题目仍在待审列表');
+      await mini.restoreWxMethod('showModal');
     });
 
   } finally {

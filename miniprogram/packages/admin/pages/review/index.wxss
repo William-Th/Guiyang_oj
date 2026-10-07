@@ -1,0 +1,159 @@
+.review-page {
+  padding: 20rpx 0 40rpx;
+}
+
+/* ---------- 审核统计 ---------- */
+.stats-row {
+  display: flex;
+  align-items: center;
+}
+
+.stat-cell {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--mp-primary-dark);
+}
+
+.stat-num.warn {
+  color: var(--mp-warning);
+}
+
+.stat-num.ok {
+  color: var(--mp-success);
+}
+
+.stat-num.bad {
+  color: var(--mp-danger, #f5222d);
+}
+
+.stat-label {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}
+
+/* ---------- 待审题目卡 ---------- */
+.review-head {
+  position: relative;
+}
+
+.review-title-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.review-subject {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--mp-text-primary, #1f2937);
+}
+
+.review-diff,
+.review-score {
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}
+
+.review-meta {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: var(--mp-text-secondary);
+}
+
+/* 富文本默认 3 行截断，展开后全量 */
+.review-content {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: var(--mp-text-primary, #1f2937);
+  max-height: 150rpx;
+  overflow: hidden;
+}
+
+.review-content.expanded {
+  max-height: none;
+}
+
+.review-toggle {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--mp-primary);
+}
+
+.review-image {
+  display: block;
+  width: 100%;
+  margin-top: 16rpx;
+  border-radius: 12rpx;
+}
+
+/* ---------- 展开详情 ---------- */
+.review-options {
+  margin-top: 16rpx;
+}
+
+.review-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 12rpx 16rpx;
+  margin-top: 10rpx;
+  background: #f7f8fa;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+}
+
+.option-letter {
+  font-weight: 700;
+  margin-right: 14rpx;
+  color: var(--mp-primary-dark);
+}
+
+.option-text {
+  flex: 1;
+  color: var(--mp-text-primary, #1f2937);
+}
+
+.review-answer {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--mp-success);
+}
+
+.review-explain {
+  margin-top: 14rpx;
+  padding: 16rpx;
+  background: #f0f9ff;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.review-explain-label {
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+
+.review-kps {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f1f5f9;
+}

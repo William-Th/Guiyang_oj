@@ -7,6 +7,7 @@ import {
   getUnreadCount,
 } from '../../services/api';
 import { getPendingTeachingClasses } from '../../services/admin';
+import { getPendingQuestions } from '../../services/review';
 import { getUser, requireLogin } from '../../utils/auth';
 
 const GRID_ITEMS = [
@@ -37,6 +38,8 @@ Page({
     adminStats: null as AdminDashboardStats | null,
     pendingCount: 0,
     adminLoading: false,
+    // 教师端：题目审核待办（审核人是出题人指定的教师，非管理员体系）
+    teacherReviewPending: -1,
   },
 
   onShow() {
@@ -63,12 +66,27 @@ Page({
       return;
     }
     if (role === 'teacher') {
-      // 教师无小程序功能：仅提示使用电脑端，不触发任何学生接口
+      // 教师端：题目审核工作台入口（其余教师功能仍引导电脑端，不触发学生接口）
       this.setData({ role: 'teacher', greeting, realName: user?.realName || user?.username || '' });
+      this.loadTeacherReviewPending();
       return;
     }
     this.setData({ role: 'student', greeting, realName: user?.realName || user?.username || '' });
     this.loadData();
+  },
+
+  /** 教师待审题目数（失败静默为 0，不阻塞首页） */
+  async loadTeacherReviewPending() {
+    try {
+      const res = await getPendingQuestions();
+      this.setData({ teacherReviewPending: res.data?.length ?? 0 });
+    } catch {
+      this.setData({ teacherReviewPending: 0 });
+    }
+  },
+
+  goReview() {
+    wx.navigateTo({ url: '/packages/admin/pages/review/index' });
   },
 
   /** 管理工作台数据：统计/待办角标（校级本校、区级本区、市级全局，由后端按权限范围过滤） */

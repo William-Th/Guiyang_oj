@@ -201,3 +201,38 @@
   color: var(--mp-text-secondary);
   line-height: 1.8;
 }
+
+/* 教师端待办卡：题目审核入口 */
+.teacher-todo {
+  margin-top: 16rpx;
+  display: flex;
+  align-items: center;
+  padding: 32rpx 28rpx;
+}
+
+.teacher-todo-left {
+  flex: 1;
+}
+
+.teacher-todo-title {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.teacher-todo-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--mp-text-secondary);
+}
+
+.teacher-todo-badge {
+  min-width: 36rpx;
+  padding: 4rpx 12rpx;
+  margin-right: 12rpx;
+  border-radius: 999rpx;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 22rpx;
+  font-weight: 700;
+  text-align: center;
+}

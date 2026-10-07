@@ -1,0 +1,69 @@
+<view class="review-page">
+  <!-- 审核统计 -->
+  <view class="card stats-row">
+    <view class="stat-cell">
+      <view class="stat-num warn">{{stats.pending}}</view>
+      <view class="stat-label">待审</view>
+    </view>
+    <view class="stat-cell">
+      <view class="stat-num ok">{{stats.approved}}</view>
+      <view class="stat-label">已通过</view>
+    </view>
+    <view class="stat-cell">
+      <view class="stat-num bad">{{stats.rejected}}</view>
+      <view class="stat-label">已驳回</view>
+    </view>
+    <view class="stat-cell">
+      <view class="stat-num">{{stats.rate}}%</view>
+      <view class="stat-label">通过率</view>
+    </view>
+  </view>
+
+  <block wx:if="{{!loading}}">
+    <view wx:for="{{list}}" wx:key="id" class="card review-item">
+      <view class="review-head" bind:click="onToggle" data-id="{{item.id}}">
+        <view class="review-title-wrap">
+          <van-tag type="primary">{{item.typeText}}</van-tag>
+          <text class="review-subject">{{item.subject}}{{item.grade ? ' · ' + item.grade : ''}}</text>
+          <text wx:if="{{item.difficultyText}}" class="review-diff">{{item.difficultyText}}</text>
+          <text wx:if="{{item.suggested_score}}" class="review-score">{{item.suggested_score}} 分</text>
+        </view>
+        <view class="review-meta">
+          {{item.creator_name || '未知出题人'}}{{item.submittedAtText ? ' · 提交于 ' + item.submittedAtText : ''}}
+        </view>
+        <rich-text class="review-content {{item.expanded ? 'expanded' : ''}}" nodes="{{item.content}}" />
+        <view class="review-toggle">{{item.expanded ? '收起' : '展开详情'}}</view>
+      </view>
+
+      <block wx:if="{{item.expanded}}">
+        <image
+          wx:if="{{item.image_url}}"
+          class="review-image"
+          src="{{item.image_url}}"
+          mode="widthFix"
+        />
+        <view wx:if="{{item.parsedOptions.length > 0}}" class="review-options">
+          <view wx:for="{{item.parsedOptions}}" wx:for-item="opt" wx:key="letter" class="review-option">
+            <text class="option-letter">{{opt.letter}}</text>
+            <text class="option-text">{{opt.text}}</text>
+          </view>
+        </view>
+        <view class="review-answer">正确答案：{{item.answerText}}</view>
+        <view wx:if="{{item.explanation}}" class="review-explain">
+          <view class="review-explain-label">解析</view>
+          <rich-text nodes="{{item.explanation}}" />
+        </view>
+        <view wx:if="{{item.knowledge_points.length > 0}}" class="review-kps">
+          <van-tag wx:for="{{item.knowledge_points}}" wx:for-item="kp" wx:key="*this" plain custom-class="kp-tag">{{kp}}</van-tag>
+        </view>
+
+        <view class="review-actions">
+          <van-button size="small" round plain type="danger" loading="{{item.acting}}" bind:click="onReject" data-id="{{item.id}}">驳回</van-button>
+          <van-button size="small" round type="primary" loading="{{item.acting}}" bind:click="onApprove" data-id="{{item.id}}">通过</van-button>
+        </view>
+      </block>
+    </view>
+    <van-empty wx:if="{{list.length === 0}}" description="暂无待你审核的题目" />
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</view>

@@ -52,14 +52,25 @@
     <view wx:else class="page-loading">加载中…</view>
   </block>
 
-  <!-- 教师：小程序暂无教师功能 -->
+  <!-- 教师：题目审核工作台入口（其余教师功能引导电脑端） -->
   <block wx:elif="{{role === 'teacher'}}">
     <view class="card teacher-notice">
       <van-icon name="info-o" size="56rpx" color="#0ea5e9" />
       <view class="teacher-notice-title">{{greeting}}，{{realName}} 老师</view>
       <view class="teacher-notice-desc">
-        教师端功能（出题、组卷、批改、学情分析）请使用电脑端网页操作；本小程序目前面向学生与家长。
+        出题、组卷、批改、学情分析等教学功能请使用电脑端网页操作。
       </view>
+    </view>
+    <view class="card teacher-todo" bind:click="goReview">
+      <view class="teacher-todo-left">
+        <view class="teacher-todo-title">题目审核</view>
+        <view wx:if="{{teacherReviewPending > 0}}" class="teacher-todo-sub">
+          有 {{teacherReviewPending}} 道题目等待你审核
+        </view>
+        <view wx:else class="teacher-todo-sub">暂无待你审核的题目</view>
+      </view>
+      <view wx:if="{{teacherReviewPending > 0}}" class="teacher-todo-badge">{{teacherReviewPending > 99 ? '99+' : teacherReviewPending}}</view>
+      <van-icon name="arrow" color="#c4cbd4" />
     </view>
   </block>
 

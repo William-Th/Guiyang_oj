@@ -57,3 +57,24 @@ FROM schools sc
 JOIN districts d ON d.id = sc.district_id
 WHERE sc.id = 1
   AND NOT EXISTS (SELECT 1 FROM student_registration_requests WHERE phone = '{{E2E_REG_PHONE}}');
+
+-- 5) E2E 专属待审题目（教师审核流使用）：审核人固定 teacher_yy_ps_math。
+--    审核动作会真实消费状态（approved→published / rejected→inactive），故每次运行前重置为待审。
+INSERT INTO question_drafts (type, subject, grade, content, options, correct_answer, explanation, difficulty, suggested_score, knowledge_points, created_by)
+SELECT 'single', '数学', '四年级',
+       '【E2E】审核流测试题：小明有 12 个苹果，平均分给 3 个同学，每人分得几个？',
+       '["3","4","6","12"]'::jsonb, '"B"'::jsonb, '12÷3=4，选 B。', 'easy', 5, ARRAY['除法']::text[], ru.id
+FROM (SELECT id FROM users WHERE username = 'teacher_yy_ps_math') ru
+WHERE NOT EXISTS (SELECT 1 FROM question_drafts WHERE content LIKE '【E2E】审核流测试题%');
+
+INSERT INTO question_bank (draft_id, scope, status, reviewer_id, published_by)
+SELECT d.id, 'practice_school_6', 'pending_review', ru.id, d.created_by
+FROM question_drafts d
+CROSS JOIN (SELECT id FROM users WHERE username = 'teacher_yy_ps_math') ru
+WHERE d.content LIKE '【E2E】审核流测试题%'
+  AND NOT EXISTS (SELECT 1 FROM question_bank qb WHERE qb.draft_id = d.id);
+
+UPDATE question_bank qb
+SET status = 'pending_review', review_comment = NULL, reviewed_at = NULL, is_active = true
+FROM question_drafts d
+WHERE qb.draft_id = d.id AND d.content LIKE '【E2E】审核流测试题%';
