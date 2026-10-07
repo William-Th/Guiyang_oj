@@ -234,7 +234,9 @@ Page({
   async doRegister(activityId: number, locationId?: number) {
     try {
       const res = await registerAssessment(activityId, locationId);
-      wx.showToast({ title: res.message || '报名成功', icon: 'success' });
+      // showToast 带 success 图标最多显示 7 个汉字，后端长文案会截断，用固定短文案
+      void res;
+      wx.showToast({ title: '报名成功', icon: 'success' });
       this.loadTab(1); // 刷新测评 tab（可报名区消失、列表出现该测评）
     } catch (err) {
       toastError(err, '报名失败');
