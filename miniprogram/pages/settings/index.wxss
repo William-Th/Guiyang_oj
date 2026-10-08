@@ -1,3 +1,55 @@
 .settings-page {
   padding-top: 24rpx;
 }
+
+/* ---------- 协议/隐私半屏文档 ---------- */
+.doc-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.doc-sheet {
+  width: 100%;
+  height: 78vh;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 28rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.doc-title {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.doc-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.doc-h {
+  font-size: 28rpx;
+  font-weight: 700;
+  margin: 24rpx 0 10rpx;
+  color: #1f2937;
+}
+
+.doc-p {
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: #4b5563;
+  margin-bottom: 12rpx;
+}

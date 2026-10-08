@@ -49,7 +49,22 @@
       </view>
       <van-empty wx:if="{{adminStats.recentExams.length === 0}}" description="暂无测评数据" />
     </block>
-    <view wx:else class="page-loading">加载中…</view>
+    <view wx:else class="sk-root">
+      <view class="sk-hero"></view>
+      <view class="sk-card">
+        <view class="sk-row">
+          <view class="sk-grow"><view class="sk-line sk-line-lg"></view><view class="sk-line sk-line-sm" style="width: 60%"></view></view>
+          <view class="sk-grow"><view class="sk-line sk-line-lg"></view><view class="sk-line sk-line-sm" style="width: 60%"></view></view>
+          <view class="sk-grow"><view class="sk-line sk-line-lg"></view><view class="sk-line sk-line-sm" style="width: 60%"></view></view>
+        </view>
+      </view>
+      <view class="sk-card">
+        <view class="sk-row" wx:for="{{[1, 2]}}" wx:key="*this">
+          <view class="sk-circle"></view>
+          <view class="sk-grow"><view class="sk-line" style="width: 45%"></view><view class="sk-line sk-line-sm" style="width: 80%"></view></view>
+        </view>
+      </view>
+    </view>
   </block>
 
   <!-- 教师：题目审核工作台入口（其余教师功能引导电脑端） -->

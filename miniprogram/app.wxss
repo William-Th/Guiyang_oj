@@ -109,3 +109,74 @@ page {
   font-weight: 600;
 }
 
+/* ---------- 骨架屏（全局通用）：模拟卡片结构 + 呼吸动画 ---------- */
+.sk-card {
+  background: #fff;
+  border-radius: var(--mp-card-radius);
+  padding: 24rpx;
+  margin: 0 24rpx 16rpx;
+}
+
+.sk-line {
+  background: #eef1f5;
+  border-radius: 8rpx;
+  height: 28rpx;
+}
+
+.sk-line-lg {
+  height: 40rpx;
+  border-radius: 10rpx;
+}
+
+.sk-line-sm {
+  height: 22rpx;
+}
+
+.sk-circle {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: #eef1f5;
+}
+
+.sk-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.sk-grow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.sk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.sk-grid-item {
+  height: 120rpx;
+  border-radius: 12rpx;
+  background: #eef1f5;
+}
+
+.sk-hero {
+  height: 180rpx;
+  border-radius: var(--mp-card-radius);
+  background: #eef1f5;
+  margin: 0 24rpx 16rpx;
+}
+
+@keyframes sk-breath {
+  0% { opacity: 1; }
+  50% { opacity: 0.45; }
+  100% { opacity: 1; }
+}
+
+.sk-card, .sk-line, .sk-line-lg, .sk-line-sm, .sk-circle, .sk-grid-item, .sk-hero {
+  animation: sk-breath 1.3s ease-in-out infinite;
+}

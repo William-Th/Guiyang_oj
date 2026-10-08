@@ -15,6 +15,8 @@ Page({
     /** 上次订阅结果提示（仅本次会话内反馈） */
     streakText: '',
     cacheCount: 0,
+    /** 当前打开的文档：agreement | privacy | 空 */
+    doc: '',
   },
 
   onShow() {
@@ -80,21 +82,17 @@ Page({
     wx.navigateTo({ url: '/pages/notifications/index' });
   },
 
-  onAgreement() {
-    wx.showModal({
-      title: '用户协议',
-      content: '本平台为贵阳市小学生测评平台，仅用于校内教学与测评服务。完整协议将在正式发布时提供。',
-      showCancel: false,
-    });
+  /** 半屏文档查看（协议/隐私） */
+  openDoc(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ doc: String(e.currentTarget.dataset.doc ?? '') });
   },
 
-  onPrivacy() {
-    wx.showModal({
-      title: '隐私政策',
-      content:
-        '本平台收集的信息仅用于学情分析与测评服务（含姓名、学校、答题记录），不向第三方提供。隐私指引将随正式发布上线。',
-      showCancel: false,
-    });
+  closeDoc() {
+    this.setData({ doc: '' });
+  },
+
+  noop() {
+    /* 阻止冒泡关闭 */
   },
 
   onAbout() {

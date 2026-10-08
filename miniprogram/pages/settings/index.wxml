@@ -19,8 +19,46 @@
       is-link
       bind:click="onClearCache"
     />
-    <van-cell title="用户协议" icon="notes-o" is-link bind:click="onAgreement" />
-    <van-cell title="隐私政策" icon="shield-o" is-link bind:click="onPrivacy" />
+    <van-cell title="用户协议" icon="notes-o" is-link data-doc="agreement" bind:click="openDoc" />
+    <van-cell title="隐私政策" icon="shield-o" is-link data-doc="privacy" bind:click="openDoc" />
     <van-cell title="关于" label="贵阳市小学生测评平台 v{{version}}" icon="info-o" is-link bind:click="onAbout" />
   </van-cell-group>
+
+  <!-- 协议/隐私半屏文档 -->
+  <view wx:if="{{doc}}" class="doc-mask" bind:tap="closeDoc">
+    <view class="doc-sheet" catchtap="noop">
+      <view class="doc-head">
+        <text class="doc-title">{{doc === 'privacy' ? '隐私政策' : '用户协议'}}</text>
+        <van-icon name="cross" size="36rpx" color="#6b7280" bind:tap="closeDoc" />
+      </view>
+      <scroll-view scroll-y class="doc-body">
+        <block wx:if="{{doc === 'privacy'}}">
+          <view class="doc-p">更新日期：2026-10-07</view>
+          <view class="doc-p">
+            贵阳市小学生测评平台（以下简称"本平台"）由贵阳市教育局主办，仅面向本市小学的校内教学与测评服务。我们深知学生信息（含未成年人信息）的重要性，将依法最小化收集并保护您的信息。
+          </view>
+          <view class="doc-h">一、我们收集的信息</view>
+          <view class="doc-p">1. 账号信息：手机号、姓名、密码（加密存储），用于登录与身份识别。</view>
+          <view class="doc-p">2. 学籍信息：所在区县、学校、年级（注册审核制填写）；注册时提供的身份证号仅用于学籍身份核验，系统仅保存后四位校验位，不保存完整号码。</view>
+          <view class="doc-p">3. 学习数据：答题记录、判题结果、错题、积分、成就与连胜，用于学情分析与个性化练习推荐。</view>
+          <view class="doc-p">4. 微信信息：仅在小程序登录/订阅消息场景收集 OpenID（用于免登与提醒下发），不获取微信昵称、头像以外的社交信息。</view>
+          <view class="doc-h">二、信息的使用</view>
+          <view class="doc-p">所有数据仅用于教学测评与学情反馈，存储于教育部门管理的服务器，不向任何第三方提供、不出用于商业营销。教师与管理员仅可在其管理范围内查看学生的学业数据。</view>
+          <view class="doc-h">三、未成年人保护</view>
+          <view class="doc-p">本平台用户以未成年人为主：学生账号由学校审核注册，家长通过绑定关系查看孩子的学业数据；涉及不满 14 周岁儿童个人信息的处理，已按有关规定取得监护人同意并采取更严格的保护措施。</view>
+          <view class="doc-h">四、信息存储与删除</view>
+          <view class="doc-p">数据存储于境内服务器。如需更正或删除孩子的个人信息，可联系所在学校管理员或通过客服渠道提出，我们将在核实后及时处理。</view>
+          <view class="doc-p">如对本政策有疑问，可通过学校管理员转交意见反馈。</view>
+        </block>
+        <block wx:else>
+          <view class="doc-p">更新日期：2026-10-07</view>
+          <view class="doc-p">1. 本平台（贵阳市小学生测评平台小程序）仅用于贵阳市小学校内教学与测评，学生账号经学校管理员审核后开通。</view>
+          <view class="doc-p">2. 用户应保证注册与使用过程中提交的信息真实、准确，并妥善保管账号密码；请勿将账号转借他人。</view>
+          <view class="doc-p">3. 平台内的练习、测评、编程判题等功能仅限学习用途，请独立完成作答，禁止提交任何违法违规内容。</view>
+          <view class="doc-p">4. 积分、成就、商店等虚拟权益仅限平台内使用，不可转让、不可兑换现金。</view>
+          <view class="doc-p">5. 平台会持续优化服务并可能调整功能；对违规使用账号的行为，平台有权暂停或终止服务。</view>
+        </block>
+      </scroll-view>
+    </view>
+  </view>
 </view>

@@ -99,5 +99,15 @@
     </van-tab>
   </van-tabs>
 
-  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+  <view wx:if="{{loading}}" class="sk-root">
+    <view class="sk-card" wx:for="{{[1, 2, 3]}}" wx:key="*this">
+      <view class="sk-row">
+        <view class="sk-grow">
+          <view class="sk-line" style="width: 62%"></view>
+          <view class="sk-line sk-line-sm" style="width: 40%"></view>
+        </view>
+        <view class="sk-line sk-line-sm" style="width: 64rpx; height: 36rpx; border-radius: 999rpx"></view>
+      </view>
+    </view>
+  </view>
 </view>
