@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Select, DatePicker, Space, Typography, Alert, ConfigProvider, Popover } from 'antd';
 import { message, modal } from '../lib/feedback';
-import { UserOutlined, PhoneOutlined, IdcardOutlined, BankOutlined, BookOutlined } from '@ant-design/icons';
+import { UserOutlined, PhoneOutlined, IdcardOutlined, BankOutlined, BookOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
 import dayjs from 'dayjs';
@@ -245,6 +245,8 @@ const StudentRegisterPage: React.FC = () => {
             <DatePicker
               style={{ width: '100%' }}
               placeholder="填写身份证号后自动识别"
+              prefix={<CalendarOutlined />}
+              suffixIcon={null}
               disabledDate={(current) => {
                 // 禁用未来日期和30年前的日期
                 return current && (current > dayjs().endOf('day') || current < dayjs().subtract(30, 'year'));
