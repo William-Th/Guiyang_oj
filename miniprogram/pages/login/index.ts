@@ -124,6 +124,10 @@ Page({
     }
   },
 
+  goQueryProgress() {
+    wx.navigateTo({ url: '/pages/register/index?tab=query' });
+  },
+
   goRegister() {
     wx.navigateTo({ url: '/pages/register/index' });
   },

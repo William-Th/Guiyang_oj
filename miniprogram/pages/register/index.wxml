@@ -53,13 +53,10 @@
       </van-tab>
 
       <van-tab title="查进度">
-        <view class="auth-note">{{queryMode === 'id' ? '用本人手机号、出生日期和身份证号查询，无需查询码' : '使用提交申请时保存的查询码查询'}}</view>
+        <view class="auth-note">{{queryMode === 'id' ? '用本人手机号和身份证号查询，无需查询码' : '使用提交申请时保存的查询码查询'}}</view>
         <van-cell-group border="{{ false }}">
           <van-field label="手机号" title-width="132rpx" left-icon="phone-o" type="number" maxlength="11" placeholder="注册时填写的手机号" value="{{ queryPhone }}" data-field="queryPhone" bind:change="onField" clearable />
           <block wx:if="{{queryMode === 'id'}}">
-            <picker mode="date" start="2005-01-01" end="2019-12-31" value="{{ queryBirthDate }}" bindchange="onQueryBirthChange">
-              <van-field label="出生日期" title-width="132rpx" left-icon="calendar-o" readonly value="{{ queryBirthDate }}" placeholder="请选择出生日期" right-icon="arrow-down" />
-            </picker>
             <van-field label="身份证号" title-width="132rpx" left-icon="lock" type="idcard" maxlength="18" placeholder="18 位完整身份证号" value="{{ queryIdCard }}" data-field="queryIdCard" bind:change="onField" clearable />
           </block>
           <block wx:else>

@@ -22,3 +22,8 @@
   border-color: var(--mp-primary);
   font-weight: 600;
 }
+
+.footer-divider {
+  margin: 0 16rpx;
+  color: #d1d5db;
+}

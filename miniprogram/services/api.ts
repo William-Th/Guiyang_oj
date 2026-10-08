@@ -189,11 +189,11 @@ export interface RegistrationStatusInfo {
 }
 
 /** 方式二：手机号 + 出生日期 + 完整身份证号（无需查询码） */
-export function queryRegistrationStatusByIdentity(phone: string, birthDate: string, idCard: string) {
+export function queryRegistrationStatusByIdentity(phone: string, idCard: string) {
   return request<{ success: boolean; data: RegistrationStatusInfo }>(
     'POST',
     '/registration/status',
-    { phone, birthDate, idCard },
+    { phone, idCard },
     { auth: false }
   );
 }

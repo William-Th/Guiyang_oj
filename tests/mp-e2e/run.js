@@ -357,12 +357,19 @@ async function main() {
       firePageMethod('onGradeChange', { detail: { value: 2 } });
       firePageMethod('onSubmit');
       await waitFor((d) => !!d.result && !!d.result.inquiryCode, 20000, '提交成功结果');
-      // 查进度：身份方式（手机号+出生日期+完整证件号）
+      // 查进度：身份方式（手机号+完整证件号，2026-10 起取消生日）
       firePageMethod('onTabChange', { detail: { index: 1 } });
-      await pageSetData({ queryPhone: regFlowPhone, queryBirthDate: '2014-05-20', queryIdCard: '522101201405201234' });
+      await pageSetData({ queryPhone: regFlowPhone, queryIdCard: '522101201405201234' });
       firePageMethod('onQuery');
       const d2 = await waitFor((x) => !!x.statusInfo, 20000, '身份查询结果');
       assert(d2.statusInfo.status === 'pending' && d2.statusInfo.statusText === '审核中', '查询状态异常');
+      // 登录页入口直达查询 tab（goQueryProgress → register?tab=query）
+      await mini.reLaunch('/pages/login/index');
+      await waitForRoute('pages/login/index');
+      firePageMethod('goQueryProgress');
+      await waitForRoute('pages/register/index');
+      const qd = await waitFor((d) => d.activeTab === 1, 10000, '登录页入口直达查询 tab');
+      assert(qd.activeTab === 1, '未定位到查询 tab');
     });
 
     await step('⑨ 教师题目审核流', async () => {

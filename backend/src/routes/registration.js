@@ -340,7 +340,7 @@ router.get('/config/schools/:districtCode', (req, res) => {
  */
 router.post('/status', registrationStatusLimiter, async (req, res) => {
   try {
-    const { phone, inquiryCode, birthDate, idCard } = req.body || {};
+    const { phone, inquiryCode, idCard } = req.body || {};
 
     if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
       return res.status(404).json({
@@ -349,12 +349,13 @@ router.post('/status', registrationStatusLimiter, async (req, res) => {
       });
     }
 
-    // 方式二：手机号 + 出生日期 + 完整身份证号（本人永远知晓的信息，无需依赖一次性查询码）
-    if (birthDate || idCard) {
-      if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(String(birthDate)) || !idCard || !/^\d{17}[\dXx]$/.test(String(idCard))) {
+    // 方式二：手机号 + 完整身份证号（本人永远知晓的信息，无需依赖一次性查询码）。
+    // 2026-10-07 起取消出生日期（身份证号已含出生信息，避免重复输入）。
+    if (idCard) {
+      if (!idCard || !/^\d{17}[\dXx]$/.test(String(idCard))) {
         return res.status(400).json({
           success: false,
-          message: '请填写出生日期和完整的18位身份证号'
+          message: '请填写完整的18位身份证号'
         });
       }
       const idLast4 = String(idCard).slice(-4).toUpperCase();
@@ -363,10 +364,10 @@ router.post('/status', registrationStatusLimiter, async (req, res) => {
                 status, current_reviewer_level,
                 submitted_at, reviewed_at, review_comment
          FROM student_registration_requests
-         WHERE phone = $1 AND birth_date = $2 AND id_card_last4 = $3
+         WHERE phone = $1 AND id_card_last4 = $2
          ORDER BY submitted_at DESC
          LIMIT 1`,
-        [phone, birthDate, idLast4]
+        [phone, idLast4]
       );
 
       if (result.rows.length === 0) {

@@ -84,7 +84,9 @@
     </block>
   </view>
 
-  <view class="auth-footer" bind:tap="goRegister">
-    还没有账号？<text class="link">去注册</text>
+  <view class="auth-footer">
+    还没有账号？<text class="link" bind:tap="goRegister">去注册</text>
+    <text class="footer-divider">|</text>
+    <text class="link" bind:tap="goQueryProgress">查询注册进度</text>
   </view>
 </view>
