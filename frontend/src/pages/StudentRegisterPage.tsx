@@ -263,7 +263,8 @@ const StudentRegisterPage: React.FC = () => {
               placeholder="请选择所在区县"
               loading={loadingDistricts}
               onChange={handleDistrictChange}
-              suffixIcon={<BankOutlined />}
+              prefix={<BankOutlined />}
+              suffixIcon={null}
               virtual={false}  // 禁用虚拟滚动以支持 E2E 测试
             >
               {districts.map(district => (
@@ -283,7 +284,8 @@ const StudentRegisterPage: React.FC = () => {
               placeholder="请先选择区县"
               loading={loadingSchools}
               disabled={!selectedDistrict}
-              suffixIcon={<BankOutlined />}
+              prefix={<BankOutlined />}
+              suffixIcon={null}
               virtual={false}  // 禁用虚拟滚动以支持 E2E 测试
             >
               {schools.map(school => (
@@ -301,7 +303,8 @@ const StudentRegisterPage: React.FC = () => {
           >
             <Select
               placeholder="请选择年级"
-              suffixIcon={<BookOutlined />}
+              prefix={<BookOutlined />}
+              suffixIcon={null}
               virtual={false}  // 禁用虚拟滚动以支持 E2E 测试
             >
               {gradeOptions.map(grade => (
