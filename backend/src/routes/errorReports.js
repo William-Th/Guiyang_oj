@@ -32,6 +32,26 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'questionId/errorType/errorDescription 必填' });
     }
 
+    // UGC 内容安全（计划书第8章/M4）：纠错描述与学生问答回答同为 UGC 文本，
+    // 提交前 msgSecCheck。微信凭据未配置或未绑定微信时跳过（fail-open）。
+    try {
+      const wechatApi = require('../services/wechat/wechatApi');
+      if (wechatApi.isConfigured()) {
+        const binding = await require('../database/connection').query(
+          'SELECT openid FROM user_wechat_bindings WHERE user_id = $1',
+          [req.user.id]
+        );
+        if (binding.rows[0]) {
+          const check = await wechatApi.msgSecCheck(binding.rows[0].openid, errorDescription);
+          if (check && check.suggest === 'risky') {
+            return res.status(400).json({ success: false, error: '纠错内容包含违规信息，请修改后提交' });
+          }
+        }
+      }
+    } catch (secErr) {
+      console.warn('msgSecCheck skipped:', secErr && secErr.message);
+    }
+
     const question = await QuestionBank.findById(questionId);
     if (!question || question.status !== 'published' || question.is_hidden) {
       return res.status(404).json({ success: false, error: '题目不存在' });
