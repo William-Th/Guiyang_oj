@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Descriptions, Badge, Button, Spin, Alert, Typography, Space, Input } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined, PhoneOutlined, UserOutlined, IdcardOutlined } from '@ant-design/icons';
 import api from '@/services/api';
 import dayjs from 'dayjs';
 
@@ -130,6 +130,7 @@ const RegisterStatusPage: React.FC = () => {
               onPressEnter={() => fetchStatus(phoneInput, idCard)}
               maxLength={18}
               placeholder="注册时填写的 18 位身份证号"
+              prefix={<IdcardOutlined />}
             />
             <Button type="primary" block loading={loading} onClick={() => fetchStatus(phoneInput, idCard)}>
               查询审核进度
