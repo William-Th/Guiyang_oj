@@ -43,8 +43,8 @@
       <view wx:for="{{adminStats.recentExams}}" wx:key="id" class="card exam-item">
         <view class="exam-item-name">{{item.name}}</view>
         <view class="exam-item-meta">
-          <text>{{item.date}}</text>
-          <text>{{item.participants}} 人参与 · 均分 {{item.avgScore}}</text>
+          <text>{{item.date || '未排期'}}</text>
+          <text>{{item.participants || 0}} 人参与 · 均分 {{item.avgScore || 0}}</text>
         </view>
       </view>
       <van-empty wx:if="{{adminStats.recentExams.length === 0}}" description="暂无测评数据" />
