@@ -9,3 +9,19 @@
   color: var(--mp-text-secondary);
   line-height: 1.6;
 }
+
+.growth-summary-link {
+  position: relative;
+}
+
+.growth-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.growth-summary-arrow {
+  font-size: 22rpx;
+  color: var(--mp-primary);
+}

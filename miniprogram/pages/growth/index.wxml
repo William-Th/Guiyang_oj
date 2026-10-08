@@ -1,8 +1,11 @@
 <view class="tab-page-padding">
-  <view class="card growth-summary">
-    <view class="growth-summary-title">学习画像</view>
+  <view class="card growth-summary growth-summary-link" bind:tap="goProfile">
+    <view class="growth-summary-head">
+      <view class="growth-summary-title">学习画像</view>
+      <view class="growth-summary-arrow">查看完整画像 ›</view>
+    </view>
     <view class="growth-summary-desc">
-      连续练习 {{streakDays}} 天。知识掌握与能力值分析将随版本开放，先从每日推题开始积累吧。
+      连续练习 {{streakDays}} 天<block wx:if="{{profileAbility !== null}}"> · 综合掌握度 {{profileAbility}}%</block> · 近 7 天练题 {{profileLast7d}} 题。完成每日推题，画像会持续更新。
     </view>
   </view>
 

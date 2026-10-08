@@ -98,6 +98,24 @@ export function registerAssessment(activityId: number, locationId?: number) {
   );
 }
 
+export interface LearningProfile {
+  subject: string | null;
+  /** 综合掌握度 0~1（null 表示暂无作答数据） */
+  ability: number | null;
+  weakPoints: { knowledge_point: string; accuracy_rate: number; total_questions: number; correct_count: number }[];
+  practice: { total: number; correct: number; correctRate: number | null; last7d: number };
+  dailyTotal: number;
+}
+
+/** 智能学习效率画像：能力估计 + 薄弱知识点 + 推荐练习统计 */
+export function getLearningProfile(subject?: string) {
+  const q = subject ? `?subject=${encodeURIComponent(subject)}` : '';
+  return request<{ success: boolean; data: LearningProfile }>(
+    'GET',
+    `/student/activities/learning-profile${q}`
+  );
+}
+
 export function startActivity(id: number) {
   // source 埋点：移动端练习占比统计（student_activities.start_source，计划书目标3）
   return request<{

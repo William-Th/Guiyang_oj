@@ -1,0 +1,54 @@
+<view class="tab-page-padding">
+  <block wx:if="{{!loading}}">
+    <!-- 能力概览 -->
+    <view class="card profile-hero">
+      <view class="hero-left">
+        <view class="hero-label">综合掌握度</view>
+        <view class="hero-num">
+          {{abilityPercent === null ? '—' : abilityPercent}}<text class="hero-unit">%</text>
+        </view>
+        <van-tag type="{{abilityPercent === null ? 'default' : (abilityPercent >= 80 ? 'success' : abilityPercent >= 60 ? 'warning' : 'danger')}}">
+          {{abilityText}}
+        </van-tag>
+      </view>
+      <view class="hero-stats">
+        <view class="stat-row">
+          <text class="stat-num">{{practiceTotal}}</text>
+          <text class="stat-label">累计练题</text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-num">{{practiceCorrectRate}}</text>
+          <text class="stat-label">练习正确率</text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-num">{{last7d}}</text>
+          <text class="stat-label">近 7 天练题</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 每日推题 -->
+    <view class="card daily-card">
+      <van-icon name="clock-o" size="30rpx" color="#0ea5e9" />
+      <text class="daily-text">今日已推 {{dailyTotal}} 题，坚持完成每日推题可持续提升掌握度</text>
+    </view>
+
+    <!-- 薄弱知识点 -->
+    <view class="section-title">薄弱知识点 Top{{weakPoints.length > 0 ? weakPoints.length : 5}}</view>
+    <view class="card weak-card" wx:if="{{weakPoints.length > 0}}">
+      <view wx:for="{{weakPoints}}" wx:key="knowledge_point" class="weak-item">
+        <view class="weak-head">
+          <text class="weak-name">{{item.knowledge_point}}</text>
+          <text class="weak-rate" style="color: {{item.color}}">{{item.accuracy_rate}}%</text>
+        </view>
+        <view class="weak-bar">
+          <view class="weak-bar-fill" style="width: {{item.accuracy_rate}}%; background: {{item.color}}"></view>
+        </view>
+        <view class="weak-meta">作答 {{item.total_questions}} 题 · 答对 {{item.correct_count}} 题</view>
+      </view>
+      <view class="weak-tip">建议优先练习正确率最低的知识点，完成每日推题即可针对性提升</view>
+    </view>
+    <van-empty wx:if="{{weakPoints.length === 0}}" description="暂无知识点数据，完成练习后这里会分析你的薄弱点" />
+  </block>
+  <view wx:if="{{loading}}" class="page-loading">加载中…</view>
+</view>

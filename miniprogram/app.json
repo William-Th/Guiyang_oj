@@ -35,7 +35,8 @@
         "pages/statistics/index",
         "pages/shop/index",
         "pages/registrations/index",
-        "pages/certificates/index"
+        "pages/certificates/index",
+        "pages/profile/index"
       ]
     },
     {

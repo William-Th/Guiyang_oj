@@ -586,6 +586,29 @@ async function main() {
       assert(String(locked.cannotCancelReason || '').includes('不可取消'), '取消限制原因未显示');
     });
 
+    await step('⑭ 学习画像', async () => {
+      await login(STUDENT, 'pages/home/index');
+      await mini.switchTab('/pages/growth/index');
+      await sleep(2000);
+      const gd = await getPageData();
+      assert(gd.profileAbility !== null && gd.profileAbility > 0, `成长页画像摘要异常: ${gd.profileAbility}`);
+      // 进入画像子页：能力值 + 薄弱知识点
+      await mini.evaluate(() => {
+        const p = getCurrentPages()[getCurrentPages().length-1];
+        p.goProfile();
+      });
+      await waitForRoute('pages/profile/index');
+      const pd = await waitFor(
+        (d) => d.loading === false && d.abilityPercent !== null && (d.weakPoints || []).length > 0,
+        20000,
+        '画像子页数据'
+      );
+      assert(pd.abilityPercent > 0, '综合掌握度异常');
+      assert(pd.practiceTotal >= 1, '练题统计为空');
+      const wp = pd.weakPoints[0];
+      assert(wp.knowledge_point && wp.accuracy_rate >= 0 && wp.total_questions >= 1, '薄弱知识点数据异常');
+    });
+
   } finally {
     try {
       if (mini && typeof mini.disconnect === 'function') await mini.disconnect();

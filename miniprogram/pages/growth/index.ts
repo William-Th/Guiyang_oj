@@ -1,9 +1,12 @@
 import { getStreak } from '../../services/api';
 import { getUser, requireLogin } from '../../utils/auth';
+import { getLearningProfile } from '../../services/activities';
 
 Page({
   data: {
     streakDays: 0,
+    profileAbility: null as number | null,
+    profileLast7d: 0,
   },
 
   onShow() {
@@ -20,6 +23,16 @@ Page({
 ).getTabBar?.()?.setActive?.('/pages/growth/index');
     getStreak()
       .then((res) => this.setData({ streakDays: res.data?.current_streak ?? 0 }))
+      .finally(() => {
+        getLearningProfile()
+          .then((res) => {
+            this.setData({
+              profileAbility: res.data?.ability == null ? null : Math.round(res.data.ability * 100),
+              profileLast7d: res.data?.practice?.last7d ?? 0,
+            });
+          })
+          .catch(() => undefined);
+      })
       .catch(() => {
         /* 画像摘要允许降级 */
       });
@@ -42,5 +55,9 @@ Page({
       return;
     }
     wx.showToast({ title: '该功能将在后续版本开放', icon: 'none' });
+  },
+
+  goProfile() {
+    wx.navigateTo({ url: '/packages/growth/pages/profile/index' });
   },
 });
