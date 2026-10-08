@@ -15,28 +15,8 @@
   margin-bottom: 10rpx;
 }
 
-.reg-code-card {
-  margin: 28rpx 0;
-  padding: 28rpx;
-  border-radius: 20rpx;
-  background: var(--mp-primary-bg);
-  border: 2rpx dashed var(--mp-primary);
-  text-align: center;
-}
 
-.reg-code-label {
-  font-size: 24rpx;
-  color: var(--mp-text-secondary);
-}
 
-.reg-code {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: var(--mp-primary);
-  letter-spacing: 2rpx;
-  margin: 16rpx 0 20rpx;
-  word-break: break-all;
-}
 
 .status-card {
   margin-top: 36rpx;

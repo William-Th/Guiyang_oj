@@ -97,20 +97,18 @@ const StudentRegisterPage: React.FC = () => {
       if (response.data.success) {
         message.success(response.data.message || '注册申请提交成功');
 
-        // 显示申请ID和预计审核时间
-        const { id, estimatedReviewTime, inquiryCode } = response.data.data;
-        sessionStorage.setItem(`registration-inquiry:${values.phone}`, inquiryCode);
+        // 查询方式：手机号 + 身份证号（查询码方式退役）
+        const { estimatedReviewTime } = response.data.data;
         modal.success({
-          title: '请保存注册查询码',
+          title: '注册申请已提交',
           width: 520,
           content: (
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Text>申请ID：{id}，预计{estimatedReviewTime}完成审核。</Text>
-              <Text>查询码仅在本次提交后显示，请妥善保存：</Text>
-              <Text code copyable>{inquiryCode}</Text>
+              <Text>预计{estimatedReviewTime}完成审核。</Text>
+              <Text>可用注册手机号和身份证号随时查询审核进度。</Text>
             </Space>
           ),
-          okText: '已保存，查看状态',
+          okText: '查看审核进度',
           onOk: () => navigate(`/register-status/${values.phone}`)
         });
       } else {
@@ -130,7 +128,7 @@ const StudentRegisterPage: React.FC = () => {
       <li>请确保填写的信息真实准确</li>
       <li>手机号将用于接收审核通知和登录账号</li>
       <li>审核通过后，初始密码为：身份证后4位 + 出生年月日（如：12342015年05月15日）</li>
-      <li>提交后需使用手机号和随机查询码查询审核状态</li>
+      <li>提交后可用手机号和身份证号查询审核进度</li>
     </ul>
   );
 

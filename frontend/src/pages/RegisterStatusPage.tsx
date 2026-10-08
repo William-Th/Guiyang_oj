@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Descriptions, Badge, Button, Spin, Alert, Typography, Space, Input } from 'antd';
-import { message } from '../lib/feedback';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
 import api from '@/services/api';
@@ -23,52 +22,40 @@ interface RegistrationStatus {
 const RegisterStatusPage: React.FC = () => {
   const { phone } = useParams<{ phone: string }>();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<RegistrationStatus | null>(null);
   const [error, setError] = useState<string>('');
-  const storedCode = phone ? sessionStorage.getItem(`registration-inquiry:${phone}`) || '' : '';
-  const [inquiryCode, setInquiryCode] = useState<string>(storedCode);
-  const [draftCode, setDraftCode] = useState<string>(storedCode);
+  // 与小程序一致：手机号 + 完整身份证号查询（2026-10 起查询码方式退役）
+  const [phoneInput, setPhoneInput] = useState<string>(phone ?? '');
+  const [idCard, setIdCard] = useState<string>('');
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      if (!phone || !inquiryCode) {
-        setError(!phone ? '未提供手机号' : '请输入提交申请时获得的查询码');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError('');
-        const response = await api.post('/registration/status', { phone, inquiryCode });
-        if (response.data.success) {
-          setStatus(response.data.data);
-        } else {
-          setError(response.data.message || '查询失败');
-        }
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          setError('手机号或查询码不正确');
-        } else {
-          setError(error.response?.data?.message || '查询失败');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStatus();
-  }, [phone, inquiryCode]);
-
-  const handleQuery = () => {
-    if (!phone || draftCode.trim().length < 20) {
-      message.warning('请输入完整的注册查询码');
+  const fetchStatus = async (targetPhone: string, targetIdCard: string) => {
+    if (!/^1[3-9]\d{9}$/.test(targetPhone)) {
+      setError('请输入正确的 11 位手机号');
       return;
     }
-    const code = draftCode.trim();
-    sessionStorage.setItem(`registration-inquiry:${phone}`, code);
-    setInquiryCode(code);
+    if (!/^\d{17}[\dXx]$/.test(targetIdCard)) {
+      setError('请输入完整的 18 位身份证号');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      const response = await api.post('/registration/status', { phone: targetPhone, idCard: targetIdCard });
+      if (response.data.success) {
+        setStatus(response.data.data);
+      } else {
+        setError(response.data.message || '查询失败');
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setError('手机号或身份证号不正确，未找到匹配的注册申请');
+      } else {
+        setError(error.response?.data?.message || '查询失败');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 获取审核层级名称
@@ -124,24 +111,30 @@ const RegisterStatusPage: React.FC = () => {
         padding: '20px'
       }}>
         <Card style={{ maxWidth: '500px', width: '100%' }}>
-          <Alert
-            message="查询失败"
-            description={error}
-            type="error"
-            showIcon
-            style={{ marginBottom: '16px' }}
-          />
-          {phone && (
-            <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-              <Input.Password
-                value={draftCode}
-                onChange={(event) => setDraftCode(event.target.value)}
-                onPressEnter={handleQuery}
-                placeholder="请输入提交申请时获得的查询码"
-              />
-              <Button type="primary" block onClick={handleQuery}>重新查询</Button>
-            </Space>
+          <Title level={3} style={{ marginTop: 0 }}>查询注册进度</Title>
+          {error && (
+            <Alert message={error} type="error" showIcon style={{ marginBottom: '16px' }} />
           )}
+          <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }} size="middle">
+            <Input
+              value={phoneInput}
+              onChange={(event) => setPhoneInput(event.target.value)}
+              onPressEnter={() => fetchStatus(phoneInput, idCard)}
+              maxLength={11}
+              placeholder="注册时填写的手机号"
+              prefix={<PhoneOutlined />}
+            />
+            <Input
+              value={idCard}
+              onChange={(event) => setIdCard(event.target.value)}
+              onPressEnter={() => fetchStatus(phoneInput, idCard)}
+              maxLength={18}
+              placeholder="注册时填写的 18 位身份证号"
+            />
+            <Button type="primary" block loading={loading} onClick={() => fetchStatus(phoneInput, idCard)}>
+              查询审核进度
+            </Button>
+          </Space>
           <Space wrap>
             <Button onClick={() => navigate('/register')}>
               返回注册
@@ -172,7 +165,7 @@ const RegisterStatusPage: React.FC = () => {
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <Title level={2}>注册申请状态</Title>
             <Paragraph type="secondary">
-              手机号：{phone ? phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '-'}
+              手机号：{(phone || phoneInput) ? (phone || phoneInput).replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '-'}
             </Paragraph>
           </div>
 

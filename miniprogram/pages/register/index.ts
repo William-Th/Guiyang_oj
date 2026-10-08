@@ -33,10 +33,8 @@ Page({
     // 提交成功结果（查询码仅此一次展示）
     result: null as null | { id: number; estimatedReviewTime: string; inquiryCode: string },
     // 查进度
-    queryMode: 'id' as 'id' | 'code',
     queryPhone: '',
     queryIdCard: '',
-    queryCode: '',
     querying: false,
     statusInfo: null as RegistrationStatusInfo | null,
     statusTagType: 'warning' as 'warning' | 'success' | 'danger',
@@ -52,10 +50,6 @@ Page({
 
   onTabChange(e: WechatMiniprogram.CustomEvent) {
     this.setData({ activeTab: Number(e.detail.index ?? 0) });
-  },
-
-  toggleQueryMode() {
-    this.setData({ queryMode: this.data.queryMode === 'id' ? 'code' : 'id', statusInfo: null });
   },
 
   onField(e: WechatMiniprogram.CustomEvent) {
@@ -161,9 +155,6 @@ Page({
     }
   },
 
-  copyInquiryCode() {
-    wx.setClipboardData({ data: this.data.result?.inquiryCode ?? '' });
-  },
 
   backToLogin() {
     wx.navigateBack();
@@ -178,20 +169,11 @@ Page({
     if (d.querying) return;
     this.setData({ querying: true, statusInfo: null });
     try {
-      let res;
-      if (d.queryMode === 'id') {
-        if (!/^\d{17}[\dXx]$/.test(d.queryIdCard)) {
-          wx.showToast({ title: '请填写完整的18位身份证号', icon: 'none' });
-          return;
-        }
-        res = await queryRegistrationStatusByIdentity(d.queryPhone, d.queryIdCard);
-      } else {
-        if (!d.queryCode.trim() || d.queryCode.trim().length < 20) {
-          wx.showToast({ title: '查询码不正确', icon: 'none' });
-          return;
-        }
-        res = await queryRegistrationStatus(d.queryPhone, d.queryCode.trim());
+      if (!/^\d{17}[\dXx]$/.test(d.queryIdCard)) {
+        wx.showToast({ title: '请填写完整的18位身份证号', icon: 'none' });
+        return;
       }
+      const res = await queryRegistrationStatusByIdentity(d.queryPhone, d.queryIdCard);
       const info = res.data;
       const statusTagType =
         info.status === 'approved' ? 'success' : info.status === 'rejected' ? 'danger' : 'warning';

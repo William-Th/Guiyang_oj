@@ -356,7 +356,7 @@ async function main() {
       firePageMethod('onSchoolChange', { detail: { value: 0 } });
       firePageMethod('onGradeChange', { detail: { value: 2 } });
       firePageMethod('onSubmit');
-      await waitFor((d) => !!d.result && !!d.result.inquiryCode, 20000, '提交成功结果');
+      await waitFor((d) => !!d.result && !!d.result.id, 20000, '提交成功结果');
       // 查进度：身份方式（手机号+完整证件号，2026-10 起取消生日）
       firePageMethod('onTabChange', { detail: { index: 1 } });
       await pageSetData({ queryPhone: regFlowPhone, queryIdCard: '522101201405201234' });
