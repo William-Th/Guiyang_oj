@@ -182,6 +182,10 @@ const LoginPage: React.FC = () => {
             <Button type="link" onClick={() => navigate('/register')}>
               学生注册
             </Button>
+            <span style={{ color: '#d1d5db', margin: '0 8px' }}>|</span>
+            <Button type="link" onClick={() => navigate('/register-status')}>
+              查询注册进度
+            </Button>
           </Text>
         </div>
         </Card>

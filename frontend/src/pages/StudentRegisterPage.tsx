@@ -332,22 +332,7 @@ const StudentRegisterPage: React.FC = () => {
         </Form>
 
         <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <Text type="secondary">
-            已提交申请？
-            <Button
-              type="link"
-              onClick={() => {
-                const phone = form.getFieldValue('phone');
-                if (phone && /^1[3-9]\d{9}$/.test(phone)) {
-                  navigate(`/register-status/${phone}`);
-                } else {
-                  message.warning('请输入正确的手机号查询状态');
-                }
-              }}
-            >
-              查询审核状态
-            </Button>
-          </Text>
+          <Text type="secondary">如需查询审核进度，可在登录页点击「查询注册进度」</Text>
         </div>
       </Card>
     </div>
