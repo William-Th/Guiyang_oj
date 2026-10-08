@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Select, DatePicker, Space, Typography, Alert, ConfigProvider, Popover } from 'antd';
 import { message, modal } from '../lib/feedback';
-import { UserOutlined, PhoneOutlined, IdcardOutlined, BankOutlined, BookOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, PhoneOutlined, IdcardOutlined, BankOutlined, BookOutlined, CalendarOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '@/services/api';
 import dayjs from 'dayjs';
@@ -263,7 +263,7 @@ const StudentRegisterPage: React.FC = () => {
               placeholder="请选择所在区县"
               loading={loadingDistricts}
               onChange={handleDistrictChange}
-              prefix={<BankOutlined />}
+              prefix={<EnvironmentOutlined />}
               suffixIcon={null}
               virtual={false}  // 禁用虚拟滚动以支持 E2E 测试
             >
