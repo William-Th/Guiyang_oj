@@ -33,6 +33,22 @@
       <text class="daily-text">今日已推 {{dailyTotal}} 题，坚持完成每日推题可持续提升掌握度</text>
     </view>
 
+    <!-- 知识点掌握度雷达 -->
+    <view wx:if="{{hasRadar}}" class="card chart-card">
+      <view class="chart-title">知识点掌握度分布</view>
+      <view class="chart-box">
+        <ec-canvas options="{{radarOption}}" bind:inited="onChartInited" />
+      </view>
+    </view>
+
+    <!-- 近 14 天练习趋势 -->
+    <view class="card chart-card">
+      <view class="chart-title">近 14 天练习趋势</view>
+      <view class="chart-box trend-box">
+        <ec-canvas options="{{trendOption}}" bind:inited="onChartInited" />
+      </view>
+    </view>
+
     <!-- 薄弱知识点 -->
     <view class="section-title">薄弱知识点 Top{{weakPoints.length > 0 ? weakPoints.length : 5}}</view>
     <view class="card weak-card" wx:if="{{weakPoints.length > 0}}">

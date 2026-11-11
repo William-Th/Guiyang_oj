@@ -11,6 +11,7 @@
     "@vant/weapp": "^1.11.6"
   },
   "devDependencies": {
+    "echarts": "^5.5.1",
     "miniprogram-api-typings": "^4.0.5",
     "typescript": "^5.6.3"
   }

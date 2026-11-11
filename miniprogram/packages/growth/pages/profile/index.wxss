@@ -121,3 +121,22 @@
   color: #9ca3af;
   line-height: 1.6;
 }
+
+.chart-card {
+  padding: 24rpx;
+}
+
+.chart-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--mp-text-primary, #1f2937);
+  margin-bottom: 12rpx;
+}
+
+.chart-box {
+  height: 480rpx;
+}
+
+.trend-box {
+  height: 400rpx;
+}

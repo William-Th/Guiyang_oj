@@ -1,0 +1,2 @@
+<canvas type="2d" id="ec-canvas" class="ec-canvas"
+  bindtouchstart="onWxTouch" bindtouchmove="onWxTouch" bindtouchend="onWxTouch" bindtouchcancel="onWxTouch"></canvas>

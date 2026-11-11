@@ -241,6 +241,28 @@ router.get('/learning-profile', authMiddleware, async (req, res) => {
       last7d: p.last7d || 0
     };
 
+    // 3.5) 全量知识点掌握度（雷达图用；题数>=1，按掌握度降序，最多 8 项）
+    const knowledgeStats = await query(
+      `SELECT knowledge_point, accuracy_rate, total_questions, correct_count
+       FROM student_knowledge_stats
+       WHERE student_id = $1 AND ($2::text IS NULL OR subject = $2) AND total_questions >= 1
+       ORDER BY accuracy_rate DESC
+       LIMIT 8`,
+      [studentId, subject || null]
+    );
+
+    // 3.6) 近 14 天练习趋势（每日题数与正确数，折线图用）
+    const dailyTrend = await query(
+      `SELECT to_char(d.day, 'MM-DD') AS label,
+              COALESCE(COUNT(p.answered_at), 0)::int AS total,
+              COALESCE(SUM(CASE WHEN p.is_correct THEN 1 ELSE 0 END), 0)::int AS correct
+       FROM generate_series(CURRENT_DATE - INTERVAL '13 days', CURRENT_DATE, INTERVAL '1 day') AS d(day)
+       LEFT JOIN student_question_practice p
+         ON p.answered_at::date = d.day AND p.student_id = $1 AND ($2::text IS NULL OR p.subject = $2)
+       GROUP BY d.day ORDER BY d.day`,
+      [studentId, subject || null]
+    );
+
     // 4) 每日推题今日完成度（全部科目口径）
     const dailyDone = await query(
       `SELECT COALESCE(SUM(cardinality(question_ids)), 0)::int AS total
@@ -254,6 +276,13 @@ router.get('/learning-profile', authMiddleware, async (req, res) => {
       data: {
         subject: subject || null,
         ability,
+        knowledgeStats: knowledgeStats.rows.map((r) => ({
+          knowledge_point: r.knowledge_point,
+          accuracy_rate: parseFloat(r.accuracy_rate) || 0,
+          total_questions: r.total_questions,
+          correct_count: r.correct_count
+        })),
+        dailyTrend: dailyTrend.rows,
         weakPoints: weak.rows.map((r) => ({
           knowledge_point: r.knowledge_point,
           accuracy_rate: parseFloat(r.accuracy_rate) || 0,
