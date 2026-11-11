@@ -1,4 +1,7 @@
 -- 小程序 E2E 夹具（幂等）：由 tests/mp-e2e/run.js 通过 docker exec psql 应用
+
+-- 备份恢复的旧 FK 指向 question_drafts，与判题链路（test_cases.question_id=question_bank.id）冲突，移除
+ALTER TABLE test_cases DROP CONSTRAINT IF EXISTS fk_test_cases_question;
 -- 1) 家长测试账号（密码同种子 password123 的 bcrypt）
 INSERT INTO users (username, password, role, real_name, phone, email)
 VALUES ('mp_parent_test', '$2a$10$voL/Nblc4bsRqoqs28ShquticOcxSjNJsQzfUerYTY3sacXaiG0EC', 'parent', 'E2E家长', '13800139999', 'mp_parent_test@guiyang.edu')
@@ -93,17 +96,56 @@ FROM users s WHERE s.username = '13800138003'
 INSERT INTO student_registration_requests
   (phone, real_name, birth_date, id_card_last4, district_id, district_code, district_name,
    school_id, school_code, school_name, grade, status, current_reviewer_level,
-   reviewed_at, review_comment)
-SELECT s.phone, 'E2E报名学生', '2014-05-20', '1234', sc.district_id, sc.code, sc.name,
+   reviewed_at, review_comment, student_user_id)
+SELECT COALESCE(NULLIF(s.phone, ''), s.username), 'E2E报名学生', '2014-05-20', '1234', sc.district_id, sc.code, sc.name,
        sc.id, sc.code, sc.name, '四年级', 'rejected', 3,
-       CURRENT_TIMESTAMP, 'E2E：信息填写不完整，请补充后重新提交'
+       CURRENT_TIMESTAMP, 'E2E：信息填写不完整，请补充后重新提交', s.id
 FROM users s
 JOIN schools sc ON sc.id = 1
 WHERE s.username = '13800138003'
   AND NOT EXISTS (
     SELECT 1 FROM student_registration_requests r
-    WHERE r.phone = s.phone AND r.real_name = 'E2E报名学生'
+    WHERE r.real_name = 'E2E报名学生'
   );
+
+-- 归属兜底：历史遗留行可能只靠 phone 兜底匹配（users.phone 为空时 /my 查不到），统一回填归属
+UPDATE student_registration_requests r
+SET student_user_id = s.id
+FROM users s
+WHERE r.real_name = 'E2E报名学生' AND s.username = '13800138003'
+  AND (r.student_user_id IS NULL OR r.student_user_id = 0);
+
+-- 9c) 学习画像底表数据（流程⑭使用）：知识点统计 + 练题记录（幂等 upsert，
+--     不依赖流程④恰好答中带知识点题目——重建库/新库画像页必须有确定性数据）
+INSERT INTO student_knowledge_stats
+  (student_id, knowledge_point, subject, total_questions, correct_count, accuracy_rate, last_updated_at)
+SELECT s.id, t.kp, t.subj, t.total, t.correct, t.rate, CURRENT_TIMESTAMP
+FROM users s
+CROSS JOIN (VALUES
+  ('数与运算', '数学', 12, 9, 75.00),
+  ('图形与几何', '数学', 8, 5, 62.50),
+  ('编程基础', '信息科技', 10, 8, 80.00),
+  ('算法初步', '信息科技', 6, 3, 50.00)
+) AS t(kp, subj, total, correct, rate)
+WHERE s.username = '13800138003'
+ON CONFLICT (student_id, knowledge_point) DO UPDATE SET
+  total_questions = EXCLUDED.total_questions,
+  correct_count = EXCLUDED.correct_count,
+  accuracy_rate = EXCLUDED.accuracy_rate,
+  last_updated_at = CURRENT_TIMESTAMP;
+
+-- 练习表兜底：若学生尚无任何练题记录（新库），取 3 道已发布单选造数
+INSERT INTO student_question_practice
+  (student_id, question_id, draft_id, subject, is_correct, source, answered_at)
+SELECT s.id, qb.id, qb.draft_id, qd.subject, (row_number() OVER (ORDER BY qb.id) % 3 <> 0), 'recommend', CURRENT_TIMESTAMP
+FROM users s
+JOIN question_bank qb ON qb.is_active = true
+JOIN question_drafts qd ON qd.id = qb.draft_id AND qd.is_active = true AND qd.type = 'single'
+WHERE s.username = '13800138003'
+  AND NOT EXISTS (SELECT 1 FROM student_question_practice p WHERE p.student_id = s.id)
+ORDER BY qb.id
+LIMIT 3
+ON CONFLICT (student_id, question_id) DO NOTHING;
 
 -- 8) E2E 编程题活动（流程⑫移动判题使用）：A+B 题（draft→bank 发布→用例挂 bank id）
 INSERT INTO question_drafts (type, subject, grade, content, code_template, supported_languages, difficulty, suggested_score, knowledge_points, created_by, time_limit, memory_limit)

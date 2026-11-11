@@ -254,8 +254,10 @@ async function main() {
       await mini.switchTab('/pages/practice/index');
       await sleep(1500); // tab 切换过渡期内发起 navigateTo 会被吞掉
       const list = await waitFor((d) => Array.isArray(d.practiceList) && d.practiceList.length > 0, 20000, '练习列表加载');
-      // 优先选夹具造的可无限重做活动，与运行历史解耦
-      const target = list.practiceList.find((i) => String(i.title || '').startsWith('【E2E】')) || list.practiceList[0];
+      // 明确选夹具整卷活动（编程题活动首题不可即答，混入会 0 答案交卷导致统计为空）
+      const target = list.practiceList.find((i) => i.title === '【E2E】小程序整卷作答练习')
+        || list.practiceList.find((i) => String(i.title || '').startsWith('【E2E】'))
+        || list.practiceList[0];
       assert(target, '练习列表为空');
       await mini.navigateTo(`/packages/practice/pages/answer/index?id=${target.id}`);
       await waitForRoute('pages/answer/index');
@@ -607,6 +609,10 @@ async function main() {
       assert(pd.practiceTotal >= 1, '练题统计为空');
       const wp = pd.weakPoints[0];
       assert(wp.knowledge_point && wp.accuracy_rate >= 0 && wp.total_questions >= 1, '薄弱知识点数据异常');
+      // 图表渲染断言：雷达 option 已组装 + 页面存在两个 echarts canvas
+      assert(pd.hasRadar === true && !!pd.radarOption, '雷达图 option 未组装');
+      const withCharts = await waitFor((d) => (d.chartsInited || 0) >= 2, 15000, 'echarts 图表挂载');
+      void withCharts;
     });
 
   } finally {

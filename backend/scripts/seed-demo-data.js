@@ -23,9 +23,50 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
-// 教师账号（users 表中已存在）
-const TEACHER_YY_PS_MATH = 24; // 蒋磊-云岩一小（数学）
-const TEACHER_YY_PS_IT = 25;   // 韩雪-云岩一小（信息科技）
+// 教师账号（按用户名动态解析 users.id——不同环境 id 会漂移，不能硬编码）
+let TEACHER_YY_PS_MATH = 24; // 蒋磊-云岩一小（数学）
+let TEACHER_YY_PS_IT = 25;   // 韩雪-云岩一小（信息科技）
+let CAO_BIN_ID = 165;         // 曹斌-云岩一中（数学，区级/测评审核人）
+let STUDENT_DEMO_ID = 30;     // 演示学生（张小明）
+let DEMO_STUDENT_IDS = [30, 33, 34, 35]; // 演示学生组（启动时按用户名动态解析）
+let STUDENT_WANG = 33;        // 王明 13812340001
+let STUDENT_LI = 34;          // 李华 13812340002
+let STUDENT_ZHANG = 35;       // 张伟 13812340003
+
+async function resolveTeacherIds() {
+  const r = await pool.query(
+    "SELECT id, username FROM users WHERE username IN ('teacher_yy_ps_math', 'teacher_yy_ps_it')"
+  );
+  for (const row of r.rows) {
+    if (row.username === 'teacher_yy_ps_math') TEACHER_YY_PS_MATH = row.id;
+    if (row.username === 'teacher_yy_ps_it') TEACHER_YY_PS_IT = row.id;
+  }
+  const r2 = await pool.query(
+    "SELECT id, username FROM users WHERE username IN ('teacher_yy_ms_math', '13800138003')"
+  );
+  for (const row of r2.rows) {
+    if (row.username === 'teacher_yy_ms_math') CAO_BIN_ID = row.id;
+    if (row.username === '13800138003') {
+      STUDENT_DEMO_ID = row.id;
+      if (!DEMO_STUDENT_IDS.includes(row.id)) DEMO_STUDENT_IDS.unshift(row.id);
+    }
+  }
+  // 演示学生资料规范化（历史备份里 real_name 可能是遗留测试数据）
+  await pool.query(
+    "UPDATE users SET real_name = '张小明', phone = '13800138003' WHERE id = $1",
+    [STUDENT_DEMO_ID]
+  );
+  const r3 = await pool.query(
+    "SELECT id, username FROM users WHERE username IN ('13812340001', '13812340002', '13812340003')"
+  );
+  for (const row of r3.rows) {
+    DEMO_STUDENT_IDS.push(row.id);
+    if (row.username === '13812340001') STUDENT_WANG = row.id;
+    if (row.username === '13812340002') STUDENT_LI = row.id;
+    if (row.username === '13812340003') STUDENT_ZHANG = row.id;
+  }
+  console.log('  | 账号解析: 曹斌=' + CAO_BIN_ID + ' 学生=' + STUDENT_DEMO_ID + ' 演示学生组=[' + DEMO_STUDENT_IDS.join(',') + '] 数学=' + TEACHER_YY_PS_MATH + ' 信息=' + TEACHER_YY_PS_IT);
+}
 
 // ============================================================================
 // 科目配置（subjects 表；2022 课程方案，幂等）
@@ -252,7 +293,7 @@ const PAPERS = [
   {
     title: '【练习】三年级数学基础练习（一）',
     description: '三年级数学上学期基础知识巩固：口算、单位换算与简单应用。',
-    subject: '数学', grade: '三年级', type: 'practice', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '三年级', type: 'practice', creator: 'math',
     abilityLevel: 'L2', duration: 40, passRatio: 0.6,
     composition: [
       [MATH3, 'single', 4], [MATH3, 'true_false', 3], [MATH3, 'blank', 1], [MATH3, 'essay', 2],
@@ -262,7 +303,7 @@ const PAPERS = [
   {
     title: '【练习】三年级数学巩固练习（二）',
     description: '三年级数学提高巩固：乘除法巧算、图形与质量单位综合。',
-    subject: '数学', grade: '三年级', type: 'practice', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '三年级', type: 'practice', creator: 'math',
     abilityLevel: 'L3', duration: 40, passRatio: 0.6,
     composition: [
       [MATH3, 'single', 4, 4], [MATH3, 'true_false', 3, 4], [MATH3, 'multiple', 2], [MATH3, 'essay', 1, 2],
@@ -272,7 +313,7 @@ const PAPERS = [
   {
     title: '【练习】四年级数学期中复习',
     description: '四年级数学期中复习：大数的认识、角的度量与平均数。',
-    subject: '数学', grade: '四年级', type: 'practice', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '四年级', type: 'practice', creator: 'math',
     abilityLevel: 'L3', duration: 45, passRatio: 0.6,
     composition: [
       [MATH4, 'single', 5], [MATH4, 'true_false', 3], [MATH4, 'blank', 1], [MATH4, 'essay', 1],
@@ -282,7 +323,7 @@ const PAPERS = [
   {
     title: '【练习】五年级数学综合练习',
     description: '五年级数学综合：小数乘除法、简易方程与多边形面积。',
-    subject: '数学', grade: '五年级', type: 'practice', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '五年级', type: 'practice', creator: 'math',
     abilityLevel: 'L4', duration: 45, passRatio: 0.6,
     composition: [
       [MATH5, 'single', 5], [MATH5, 'true_false', 3], [MATH5, 'multiple', 1], [MATH5, 'essay', 1],
@@ -293,7 +334,7 @@ const PAPERS = [
   {
     title: '【练习】三年级信息科技基础入门',
     description: '认识计算机的组成、正确开关机与良好用机习惯。',
-    subject: '信息科技', grade: '三年级', type: 'practice', creator: TEACHER_YY_PS_IT,
+    subject: '信息科技', grade: '三年级', type: 'practice', creator: 'it',
     abilityLevel: 'L2', duration: 30, passRatio: 0.6,
     composition: [
       [IT3, 'single', 3], [IT3, 'true_false', 3], [IT3, 'multiple', 1], [IT3, 'essay', 1],
@@ -304,7 +345,7 @@ const PAPERS = [
   {
     title: '【测评】三年级数学期中综合测评',
     description: '三年级数学期中综合测评，涵盖计算、概念与应用三大板块，请认真作答。',
-    subject: '数学', grade: '三年级', type: 'assessment', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '三年级', type: 'assessment', creator: 'math',
     abilityLevel: 'L3', duration: 60, passRatio: 0.6,
     composition: [
       [MATH3, 'single', 8], [MATH3, 'true_false', 4], [MATH3, 'blank', 2], [MATH3, 'essay', 1],
@@ -314,7 +355,7 @@ const PAPERS = [
   {
     title: '【测评】三年级信息科技期末测评',
     description: '三年级信息科技期末测评：计算机组成、信息安全与上机习惯。',
-    subject: '信息科技', grade: '三年级', type: 'assessment', creator: TEACHER_YY_PS_IT,
+    subject: '信息科技', grade: '三年级', type: 'assessment', creator: 'it',
     abilityLevel: 'L2', duration: 45, passRatio: 0.6,
     composition: [
       [IT3, 'single', 5], [IT3, 'true_false', 4], [IT3, 'multiple', 1], [IT3, 'essay', 2],
@@ -325,7 +366,7 @@ const PAPERS = [
   {
     title: '【测试】学生答题流程测试活动',
     description: '用于学生答题流程回归测试的活动',
-    subject: '数学', grade: '三年级', type: 'practice', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '三年级', type: 'practice', creator: 'math',
     abilityLevel: 'L2', duration: 60, passRatio: 0.6, allowRetake: true, maxAttempts: 5,
     composition: [
       [MATH3, 'single', 2], [MATH3, 'true_false', 2], [MATH3, 'essay', 1],
@@ -335,7 +376,7 @@ const PAPERS = [
   {
     title: '【完整流程测试】测试活动',
     description: '完整流程回归测试：开始答题、作答、提交、查看结果',
-    subject: '数学', grade: '三年级', type: 'practice', creator: TEACHER_YY_PS_MATH,
+    subject: '数学', grade: '三年级', type: 'practice', creator: 'math',
     abilityLevel: 'L3', duration: 60, passRatio: 0.6, allowRetake: true, maxAttempts: 5,
     composition: [
       [MATH3, 'single', 2], [MATH3, 'true_false', 2], [MATH3, 'essay', 1],
@@ -503,6 +544,8 @@ async function seedActivities(idMap) {
     const timeLimitType = isAssessment ? 'timed' : 'unlimited';
     const duration = isAssessment ? paper.duration : null;
 
+    // creator 标记运行时解析为当前环境的教师 users.id（模块加载时变量尚未更新）
+    const creatorId = paper.creator === 'it' ? TEACHER_YY_PS_IT : TEACHER_YY_PS_MATH;
     const activity = await pool.query(
       `INSERT INTO activities
         (title, description, subject, grade, duration, total_score, pass_score,
@@ -515,7 +558,7 @@ async function seedActivities(idMap) {
        RETURNING id`,
       [
         paper.title, paper.description, paper.subject, paper.grade,
-        duration, totalScore, passScore, paper.creator, paper.type,
+        duration, totalScore, passScore, creatorId, paper.type,
         paper.abilityLevel, !!paper.allowRetake, paper.maxAttempts || 1,
         timeLimitType, paperQuestions.length,
       ]
@@ -618,12 +661,14 @@ async function seedWorkflows(idMap) {
   // 曹斌（云岩一中数学，user 26）：云岩区区级审核人（E2E R405 依赖其出现在审核人下拉中）
   await pool.query(
     `INSERT INTO teacher_permissions (user_id, permission_type, subjects, scope_level, district_id, granted_by, notes, is_active)
-     VALUES (26, 'practice_district_manage', ARRAY['数学','信息科技']::text[], 'district', 1, 1, '演示数据：云岩区区级审核权限（数学/信息科技）', true)`
+     VALUES ($1, 'practice_district_manage', ARRAY['数学','信息科技']::text[], 'district', 1, 1, '演示数据：云岩区区级审核权限（数学/信息科技）', true)`,
+    [CAO_BIN_ID]
   );
   // 曹斌：测评题库审核人（E2E R409 依赖其出现在测评题库审核人下拉中）
   await pool.query(
     `INSERT INTO teacher_permissions (user_id, permission_type, subjects, scope_level, granted_by, notes, is_active)
-     VALUES (26, 'assessment_manage', ARRAY['数学','信息科技']::text[], 'municipal', 1, '演示数据：测评题库审核权限', true)`
+     VALUES ($1, 'assessment_manage', ARRAY['数学','信息科技']::text[], 'municipal', 1, '演示数据：测评题库审核权限', true)`,
+    [CAO_BIN_ID]
   );
   console.log('✓ 审核权限：蒋磊校级审核 + 韩雪/曹斌云岩区区级审核 + 曹斌测评题库审核');
 
@@ -657,7 +702,7 @@ async function seedWorkflows(idMap) {
        VALUES ($1, $2, $3, '数学', $4::text[], $5, $6, 0,
          CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '1 day',
          (SELECT id FROM activities WHERE title LIKE '%基础练习（一）%' LIMIT 1), 'active')`,
-      [30, row.bank_id, row.draft_id, w.knowledge, row.difficulty, w.errorCount]
+      [STUDENT_DEMO_ID, row.bank_id, row.draft_id, w.knowledge, row.difficulty, w.errorCount]
     );
   }
   console.log('✓ 错题集：张小明新增 5 道数学错题（含错误次数与知识点）');
@@ -684,17 +729,23 @@ async function seedWorkflows(idMap) {
   const c1 = class1.rows[0].id;
   const c2 = class2.rows[0].id;
 
-  // 任课教师（teachers 表行 id：user 24 → 13，user 25 → 14）
+  // 任课教师（teachers 表行 id 按 user_id 动态解析）
+  const tid = await pool.query(
+    `SELECT user_id, id FROM teachers WHERE user_id IN ($1, $2)`,
+    [TEACHER_YY_PS_MATH, TEACHER_YY_PS_IT]
+  );
+  const teacherIdMath = tid.rows.find((r) => r.user_id === TEACHER_YY_PS_MATH)?.id;
+  const teacherIdIt = tid.rows.find((r) => r.user_id === TEACHER_YY_PS_IT)?.id;
   await pool.query(
-    `INSERT INTO teaching_class_teachers (teaching_class_id, teacher_id=教师users.id, role, is_active)
-     VALUES ($1, 24, 'creator', true), ($2, 25, 'teacher', true)
+    `INSERT INTO teaching_class_teachers (teaching_class_id, teacher_id, role, is_active)
+     VALUES ($1, $2, 'creator', true), ($1, $3, 'teacher', true)
      ON CONFLICT DO NOTHING`,
-    [c1, c2]
+    [class1.rows[0].id, teacherIdMath, teacherIdIt]
   );
 
   // 学生成员（users.id：33 王明 / 34 李华 / 35 张伟，云岩一小三年级；
   // teaching_class_members.student_id 统一为 users.id 口径）
-  for (const sid of [33, 34, 35]) {
+  for (const sid of [STUDENT_WANG, STUDENT_LI, STUDENT_ZHANG]) {
     await pool.query(
       `INSERT INTO teaching_class_members (teaching_class_id, student_id, is_active)
        VALUES ($1, $2, true), ($3, $2, true)
@@ -748,9 +799,9 @@ async function seedAnalytics(idMap) {
   // 每个学生的正确率（影响统计图表的多样性）
   // 张小明（users.id=30）整卷已评完：供「成绩查看」等学生演示页面开箱有数据
   const students = [
-    { userId: 30, name: '张小明', correctRatio: 0.8, fullyGraded: true },
-    { userId: 33, name: '王明', correctRatio: 0.8 },
-    { userId: 34, name: '李华', correctRatio: 0.5 },
+    { userId: STUDENT_DEMO_ID, name: '张小明', correctRatio: 0.8, fullyGraded: true },
+    { userId: STUDENT_WANG, name: '王明', correctRatio: 0.8 },
+    { userId: STUDENT_LI, name: '李华', correctRatio: 0.5 },
   ];
 
   for (const stu of students) {
@@ -808,9 +859,9 @@ async function seedAnalytics(idMap) {
 // （张小明=30、王明=33、李华=34，与答卷/错题等表一致，不再有双 ID 空间）
 async function seedRewards() {
   const students = [
-    { sid: 30, name: '张小明', streak: 7, maxStreak: 12 },
-    { sid: 33, name: '王明', streak: 3, maxStreak: 5 },
-    { sid: 34, name: '李华', streak: 1, maxStreak: 2 },
+    { sid: STUDENT_DEMO_ID, name: '张小明', streak: 7, maxStreak: 12 },
+    { sid: STUDENT_WANG, name: '王明', streak: 3, maxStreak: 5 },
+    { sid: STUDENT_LI, name: '李华', streak: 1, maxStreak: 2 },
   ];
 
   // 12.1 连胜
@@ -827,7 +878,7 @@ async function seedRewards() {
 
   // 12.2 积分流水 + 账户（balance 前后衔接）
   const txSets = {
-    30: [
+    [STUDENT_DEMO_ID]: [
       ['shop_purchase', '兑换「满分错题本」', -60],
       ['shop_purchase', '兑换「学习加油包」', -45],
       ['achievement', '解锁成就「初次试炼」', 20],
@@ -845,13 +896,13 @@ async function seedRewards() {
       ['practice', '完成练习「判断题专项」', 18],
       ['streak', '连胜奖励', 14],
     ],
-    33: [
+    [STUDENT_WANG]: [
       ['achievement', '解锁成就「初次试炼」', 20],
       ['practice', '完成练习「三年级数学基础练习（一）」', 30],
       ['daily_task', '完成每日任务：今日 5 题', 10],
       ['shop_purchase', '兑换「错题本」', -25],
     ],
-    34: [
+    [STUDENT_LI]: [
       ['achievement', '解锁成就「初次试炼」', 15],
       ['practice', '完成练习「三年级数学基础练习（一）」', 20],
       ['daily_task', '完成每日任务：今日 5 题', 10],
@@ -912,9 +963,9 @@ async function seedRewards() {
   );
   if (defs.rows.length >= 13) {
     const plan = [
-      { sid: 30, ids: defs.rows.slice(0, 8), days: [21, 18, 15, 12, 9, 6, 3, 1] },
-      { sid: 33, ids: defs.rows.slice(8, 11), days: [10, 5, 2] },
-      { sid: 34, ids: defs.rows.slice(11, 13), days: [8, 3] },
+      { sid: STUDENT_DEMO_ID, ids: defs.rows.slice(0, 8), days: [21, 18, 15, 12, 9, 6, 3, 1] },
+      { sid: STUDENT_WANG, ids: defs.rows.slice(8, 11), days: [10, 5, 2] },
+      { sid: STUDENT_LI, ids: defs.rows.slice(11, 13), days: [8, 3] },
     ];
     for (const p of plan) {
       for (let i = 0; i < p.ids.length; i++) {
@@ -944,7 +995,7 @@ async function seedRewards() {
       `INSERT INTO certificates (student_id, exam_id, cert_no, issue_date, level, file_url)
        VALUES ($1, $2, $3, CURRENT_DATE - $4::int, $5, '')
        ON CONFLICT (cert_no) DO NOTHING`,
-      [30, act.id, certNos[i], 10 + i, certLevels[i]]
+      [STUDENT_DEMO_ID, act.id, certNos[i], 10 + i, certLevels[i]]
     );
   }
   console.log(`✓ 证书：张小明 ${certActs.rows.length} 张（${certNos.slice(0, certActs.rows.length).join(' / ')}）`);
@@ -965,18 +1016,60 @@ async function seedRewards() {
 // 不再存在双 ID 空间。本自检逐表解析学生名，任何一行“张冠李戴”
 // （解析不到或解析成非演示学生）都直接报错，
 // 防止再出现「证书验证显示别人名字」这类 ID 错位问题。
+// ---------- 学习画像底表：知识点统计 + 练题记录（画像页/成长摘要数据源） ----------
+async function seedLearningProfile() {
+  // 知识点统计（upsert 幂等）：依赖 ux_student_knowledge_stats 唯一索引（ensure-db-support.js 创建）
+  const kps = [
+    ['数与运算', '数学', 12, 9, 75.00],
+    ['图形与几何', '数学', 8, 5, 62.50],
+    ['编程基础', '信息科技', 10, 8, 80.00],
+    ['算法初步', '信息科技', 6, 3, 50.00],
+  ];
+  for (const [kp, subj, total, correct, rate] of kps) {
+    await pool.query(
+      `INSERT INTO student_knowledge_stats
+         (student_id, knowledge_point, subject, total_questions, correct_count, accuracy_rate, last_updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+       ON CONFLICT (student_id, knowledge_point) DO UPDATE SET
+         total_questions = EXCLUDED.total_questions,
+         correct_count = EXCLUDED.correct_count,
+         accuracy_rate = EXCLUDED.accuracy_rate,
+         last_updated_at = CURRENT_TIMESTAMP`,
+      [STUDENT_DEMO_ID, kp, subj, total, correct, rate]
+    );
+  }
+
+  // 练题记录：clean 已清空本表，取已发布单选题造 3 条
+  const qs = await pool.query(
+    `SELECT qb.id, qb.draft_id, qd.subject
+       FROM question_bank qb JOIN question_drafts qd ON qd.id = qb.draft_id
+      WHERE qb.is_active = true AND qd.is_active = true AND qd.type = 'single'
+      ORDER BY qb.id LIMIT 3`
+  );
+  for (const [i, q] of qs.rows.entries()) {
+    await pool.query(
+      `INSERT INTO student_question_practice
+         (student_id, question_id, draft_id, subject, is_correct, source, answered_at)
+       VALUES ($1, $2, $3, $4, $5, 'recommend', CURRENT_TIMESTAMP - ($6 || ' hours')::interval)
+       ON CONFLICT (student_id, question_id) DO NOTHING`,
+      [STUDENT_DEMO_ID, q.id, q.draft_id, q.subject, i % 3 !== 2, String(i * 20)]
+    );
+  }
+  console.log(`✓ 学习画像：${kps.length} 项知识点统计 + ${qs.rows.length} 条练题记录`);
+}
+
 async function verifyIdentity() {
   const expectedUsers = ['13800138003', '13812340001', '13812340002', '13812340003'];
   const checks = [
-    ['student_activities', 't.student_id IN (30,33,34)', 3],
-    ['student_wrong_questions', "t.student_id = 30 AND t.status = 'active'", 5],
-    ['student_points', 't.student_id IN (30,33,34)', 3],
-    ['points_transactions', 't.student_id IN (30,33,34)', 23],
-    ['student_points_daily', 't.student_id IN (30,33,34)', 42],
-    ['student_streaks', 't.student_id IN (30,33,34)', 3],
-    ['student_achievements', 't.student_id IN (30,33,34)', 13],
-    ['certificates', 't.student_id = 30', 2],
-    ['teaching_class_members', 't.student_id IN (30,33,34,35)', 6],
+    ['student_activities', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 3],
+    ['student_wrong_questions', 't.student_id = ' + STUDENT_DEMO_ID + " AND t.status = 'active'", 5],
+    ['student_points', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 3],
+    ['points_transactions', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 23],
+    ['student_points_daily', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 42],
+    ['student_streaks', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 3],
+    ['student_achievements', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 13],
+    ['certificates', 't.student_id = ' + STUDENT_DEMO_ID, 2],
+    ['teaching_class_members', 't.student_id IN (' + DEMO_STUDENT_IDS.join(',') + ')', 6],
   ];
 
   const problems = [];
@@ -1052,12 +1145,14 @@ async function verify() {
 async function main() {
   console.log('开始重建演示数据…\n');
   await clean();
+  await resolveTeacherIds();
   await seedSubjects();
   const idMap = await seedQuestions();
   await seedActivities(idMap);
   await seedWorkflows(idMap);
   await seedAnalytics(idMap);
   await seedRewards();
+  await seedLearningProfile();
   await verifyIdentity();
   await verify();
   await pool.end();
